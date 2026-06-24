@@ -1,0 +1,12 @@
+/Users/van/projects/opendev-desktop/target/debug/deps/ignore-486fec4e8c66ae13.d: /Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/lib.rs /Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/default_types.rs /Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/dir.rs /Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/gitignore.rs /Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/overrides.rs /Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/pathutil.rs /Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/types.rs /Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/walk.rs
+
+/Users/van/projects/opendev-desktop/target/debug/deps/libignore-486fec4e8c66ae13.rmeta: /Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/lib.rs /Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/default_types.rs /Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/dir.rs /Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/gitignore.rs /Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/overrides.rs /Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/pathutil.rs /Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/types.rs /Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/walk.rs
+
+/Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/lib.rs:
+/Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/default_types.rs:
+/Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/dir.rs:
+/Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/gitignore.rs:
+/Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/overrides.rs:
+/Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/pathutil.rs:
+/Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/types.rs:
+/Users/van/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ignore-0.4.26/src/walk.rs:

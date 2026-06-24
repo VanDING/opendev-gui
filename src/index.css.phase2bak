@@ -1,0 +1,491 @@
+@import '@xyflow/react/dist/style.css';
+@import 'tailwindcss';
+
+@theme {
+  /* ===== Surface ===== */
+  --color-surface-primary: hsl(222 20% 10%);
+  --color-surface-elevated: hsl(222 20% 14%);
+  --color-surface-2: hsl(222 20% 18%);
+  --color-surface-3: hsl(222 20% 22%);
+  --color-surface-muted: hsl(222 20% 16%);
+  --color-surface-overlay: hsl(0 0% 0% / 0.6);
+  --color-surface-floating: hsl(225 15% 18%);
+  --color-surface-input: hsl(222 20% 12%);
+  --color-surface-sidebar: hsl(222 20% 12%);
+
+  /* ===== Content ===== */
+  --color-content-primary: hsl(0 0% 93%);
+  --color-content-secondary: hsl(0 0% 70%);
+  --color-content-tertiary: hsl(0 0% 50%);
+  --color-content-inverse: hsl(0 0% 100%);
+  --color-content-link: hsl(217 91% 60%);
+  --color-content-disabled: hsl(0 0% 40%);
+
+  /* ===== Accent Primary ===== */
+  --color-accent-primary: hsl(217 91% 60%);
+  --color-accent-primary-hover: hsl(217 91% 70%);
+  --color-accent-primary-muted: hsl(217 91% 60% / 0.15);
+  --color-accent-primary-fg: hsl(217 91% 95%);
+
+  /* ===== Accent Secondary ===== */
+  --color-accent-secondary: hsl(210 70.9% 51.6%);
+  --color-accent-secondary-hover: hsl(210 70.9% 70%);
+  --color-accent-secondary-muted: hsl(210 70.9% 51.6% / 0.12);
+  --color-accent-secondary-fg: hsl(211 72% 90%);
+
+  /* ===== Intent Success ===== */
+  --color-intent-success: hsl(142 71% 45%);
+  --color-intent-success-hover: hsl(142 71% 55%);
+  --color-intent-success-muted: hsl(142 71% 45% / 0.15);
+  --color-intent-success-fg: hsl(142 71% 85%);
+
+  /* ===== Intent Danger ===== */
+  --color-intent-danger: hsl(0 84% 60%);
+  --color-intent-danger-hover: hsl(0 84% 70%);
+  --color-intent-danger-muted: hsl(0 84% 60% / 0.15);
+  --color-intent-danger-fg: hsl(0 84% 90%);
+
+  /* ===== Intent Warning ===== */
+  --color-intent-warning: hsl(39 100% 50%);
+  --color-intent-warning-hover: hsl(39 100% 60%);
+  --color-intent-warning-muted: hsl(39 100% 50% / 0.15);
+  --color-intent-warning-fg: hsl(39 100% 90%);
+
+  /* ===== Intent Info ===== */
+  --color-intent-info: hsl(199 89% 48%);
+  --color-intent-info-hover: hsl(199 89% 58%);
+  --color-intent-info-muted: hsl(199 89% 48% / 0.15);
+  --color-intent-info-fg: hsl(199 89% 85%);
+
+  /* ===== Intent Purple ===== */
+  --color-intent-purple: hsl(271 81% 56%);
+  --color-intent-purple-hover: hsl(271 81% 66%);
+  --color-intent-purple-muted: hsl(271 81% 56% / 0.15);
+  --color-intent-purple-fg: hsl(271 81% 90%);
+
+  /* ===== Border ===== */
+  --color-border-default: hsl(222 15% 22%);
+  --color-border-subtle: hsl(222 15% 18%);
+  --color-border-emphasis: hsl(222 15% 30%);
+  --color-border-hairline: hsl(222 15% 12%);
+
+  /* ===== Code / Syntax ===== */
+  --color-code-block-bg: hsl(222 20% 12%);
+  --color-code-block-border: hsl(222 15% 18%);
+  --color-code-block-text: hsl(0 0% 85%);
+  --color-code-inline-bg: hsl(222 20% 16%);
+  --color-code-inline-text: hsl(0 0% 85%);
+
+
+
+  /* ===== Diff ===== */
+  --color-diff-added-bg: hsl(142 71% 45% / 0.15);
+  --color-diff-added-border: hsl(142 71% 45% / 0.4);
+  --color-diff-added-text: hsl(142 71% 60%);
+  --color-diff-removed-bg: hsl(0 84% 60% / 0.15);
+  --color-diff-removed-border: hsl(0 84% 60% / 0.4);
+  --color-diff-removed-text: hsl(0 84% 70%);
+  --color-diff-header-bg: hsl(217 91% 60% / 0.12);
+  --color-diff-header-border: hsl(217 91% 60% / 0.3);
+  --color-diff-header-text: hsl(217 91% 70%);
+
+  /* ===== Shadow ===== */
+  --color-shadow-xs: 0 1px 2px hsl(0 0% 0% / 0.2);
+  --color-shadow-sm: 0 2px 4px hsl(0 0% 0% / 0.3);
+  --color-shadow-md: 0 4px 12px hsl(0 0% 0% / 0.4);
+  --color-shadow-lg: 0 8px 24px hsl(0 0% 0% / 0.5);
+  --color-shadow-popover: 0 4px 16px hsl(0 0% 0% / 0.5);
+  --color-shadow-none: none;
+
+  /* ===== Typography ===== */
+  --font-size-2xs: 0.625rem;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ===== Radius ===== */
+  --radius-none: 0;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  /* ===== Focus ===== */
+  --color-focus-ring: hsl(217 91% 60%);
+
+  /* ===== Scrollbar ===== */
+  --color-scrollbar-thumb: hsl(222 15% 25%);
+  --color-scrollbar-track: transparent;
+
+  /* ===== Icon ===== */
+  --color-icon-primary: hsl(0 0% 70%);
+  --color-icon-secondary: hsl(0 0% 50%);
+  --color-icon-accent: hsl(217 91% 60%);
+
+  /* ===== Z-Index ===== */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-sidebar: 250;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
+
+  /* ===== Duration ===== */
+  --duration-instant: 0ms;
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --duration-very-slow: 500ms;
+
+  /* ===== Easing ===== */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ===== Preserved from Phase 1 (functional, not color) ===== */
+  --font-sans: -apple-system, BlinkMacSystemFont, Inter, Segoe UI, Helvetica Neue, Arial, sans-serif;
+  --font-mono: JetBrains Mono, Fira Code, Monaco, Courier New, monospace;
+  --spacing-18: 4.5rem;
+  --spacing-88: 22rem;
+
+  --animate-slide-up: slide-up 0.3s ease-out;
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-breathe: breathe 4s ease-in-out infinite;
+  --animate-spin-slow: spin-slow 40s linear infinite;
+  --animate-scale-in: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-shimmer: shimmer 2.5s ease-in-out infinite;
+  --animate-border-breathe: border-breathe 2.5s ease-in-out infinite;
+  --animate-pulse-dot: pulse-dot 1.4s ease-in-out infinite;
+  --animate-content-fade: content-fade 0.15s ease-out;
+
+  @keyframes slide-up { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+  @keyframes fade-in { 0% { opacity: 0; } 100% { opacity: 1; } }
+  @keyframes breathe { 0%, 100% { opacity: 0.04; } 50% { opacity: 0.10; } }
+  @keyframes spin-slow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  @keyframes scale-in { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+  @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+  @keyframes border-breathe { 0%, 100% { border-left-color: hsl(39 100% 50% / 0.5); } 50% { border-left-color: hsl(39 100% 50% / 1); } }
+  @keyframes pulse-dot { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.4); opacity: 1; } }
+  @keyframes content-fade { 0% { opacity: 0; } 100% { opacity: 1; } }
+}
+
+/* === Base styles (in @layer base to match Tailwind Preflight specificity) === */
+@layer base {
+  * {
+    border-color: var(--color-border-default);
+  }
+
+  body {
+    background-color: var(--color-surface-elevated);
+    color: var(--color-content-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* === Custom scrollbar === */
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-border-default) 30%, transparent);
+  border-radius: 9999px;
+}
+
+*:hover > ::-webkit-scrollbar-thumb,
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--color-border-default) 50%, transparent);
+  width: 6px;
+}
+
+/* === Focus styles === */
+:focus-visible {
+  outline: 2px solid var(--color-accent-secondary);
+  outline-offset: 2px;
+}
+
+/* === Smooth transitions === */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, transform, box-shadow;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* === Markdown content === */
+.prose {
+  color: var(--color-content-secondary);
+}
+
+.prose p {
+  margin-bottom: 1rem;
+}
+
+.prose ul, .prose ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.prose li {
+  margin-bottom: 0.5rem;
+}
+
+.prose strong {
+  font-weight: 600;
+  color: var(--color-content-primary);
+}
+
+.prose a {
+  color: var(--color-accent-secondary);
+}
+
+.prose a:hover {
+  text-decoration: underline;
+}
+
+.prose blockquote {
+  border-left-width: 4px;
+  padding-left: 1rem;
+  font-style: italic;
+  border-color: color-mix(in srgb, var(--color-border-default) 30%, transparent);
+  color: var(--color-content-secondary);
+}
+
+/* === Extra small prose === */
+.prose-xs {
+  color: var(--color-content-secondary);
+  font-size: 0.75rem;
+}
+
+.prose-xs p {
+  margin-bottom: 0.375rem;
+  line-height: 1.25rem;
+}
+
+.prose-xs p:last-child {
+  margin-bottom: 0;
+}
+
+.prose-xs ul, .prose-xs ol {
+  margin-bottom: 0.375rem;
+  padding-left: 1rem;
+}
+
+.prose-xs li {
+  margin-bottom: 0.125rem;
+  line-height: 1.25rem;
+}
+
+.prose-xs strong {
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--color-content-primary);
+}
+
+.prose-xs a {
+  text-decoration: underline;
+  font-size: 0.75rem;
+  color: var(--color-accent-secondary);
+}
+
+.prose-xs blockquote {
+  border-left-width: 4px;
+  padding-left: 0.75rem;
+  font-style: italic;
+  font-size: 0.75rem;
+  border-color: color-mix(in srgb, var(--color-border-default) 30%, transparent);
+  color: var(--color-content-secondary);
+}
+
+.prose-xs h1, .prose-xs h2, .prose-xs h3,
+.prose-xs h4, .prose-xs h5, .prose-xs h6 {
+  font-weight: 600;
+  font-size: 0.75rem;
+  margin-bottom: 0.375rem;
+  line-height: 1.25rem;
+  color: var(--color-content-primary);
+}
+
+.prose-xs h1 { font-size: 1rem; }
+.prose-xs h2 { font-size: 0.875rem; }
+
+/* === Skeleton shimmer === */
+.skeleton-shimmer {
+  background: linear-gradient(90deg, var(--color-surface-2) 25%, var(--color-surface-3) 50%, var(--color-surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* === Thinking block shimmer === */
+.thinking-shimmer {
+  background: linear-gradient(90deg, transparent 25%, color-mix(in srgb, var(--color-accent-secondary) 8%, transparent) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s ease-in-out infinite;
+}
+
+/* === Link underline animation === */
+.link-underline {
+  position: relative;
+  text-decoration: none !important;
+}
+
+.link-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0%;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.25s ease;
+}
+
+.link-underline:hover::after {
+  width: 100%;
+}
+
+/* === Hover effects === */
+.hover-lift:hover {
+  transform: translateY(-1px);
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-border-default) 10%, transparent);
+}
+
+.hover-scale-pill:hover {
+  transform: scale(1.03);
+}
+
+.delete-glow:hover {
+  box-shadow: 0 0 8px color-mix(in srgb, color-mix(in srgb, var(--color-intent-danger-hover) 25%, transparent) 25%, transparent);
+  transform: scale(1.08);
+}
+
+/* === Pulse dots loading === */
+.pulse-dots {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.pulse-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-accent-primary);
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+
+.pulse-dots span:nth-child(2) { animation-delay: 0.2s; }
+.pulse-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+/* === Tool executing state === */
+.tool-executing {
+  border-left: 3px solid var(--color-accent-secondary);
+  animation: shimmer 2s ease-in-out infinite;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-accent-secondary) 3%, transparent) 0%, transparent 30%);
+  background-size: 200% 100%;
+}
+
+/* === Code hover === */
+.code-hover pre {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.code-hover pre:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-border-default) 8%, transparent);
+}
+
+/* === React Flow overrides === */
+.react-flow__background {
+  background: var(--color-surface-elevated) !important;
+}
+
+.react-flow__edge-path {
+  stroke: color-mix(in srgb, var(--color-border-default) 40%, transparent) !important;
+}
+
+.react-flow__controls button {
+  background: var(--color-surface-primary) !important;
+  border-color: color-mix(in srgb, var(--color-border-default) 30%, transparent) !important;
+  fill: var(--color-content-tertiary) !important;
+}
+
+.react-flow__controls button:hover {
+  background: var(--color-surface-2) !important;
+}
+
+.react-flow__minimap {
+  background: var(--color-surface-elevated) !important;
+  border: 1px solid color-mix(in srgb, var(--color-border-default) 30%, transparent) !important;
+}
+
+.react-flow-wrapper *,
+.react-flow *,
+.react-flow__node * {
+  transition: none !important;
+}
+
+.react-flow__controls button {
+  transition: background-color 0.15s ease !important;
+}
+
+/* === Shiki Code Block Container === */
+.shiki-code-block,
+pre:has(code[class]) {
+  margin: 0.5rem 0;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-code-block-bg);
+  border: 1px solid var(--color-code-block-border);
+  overflow-x: auto;
+  font-size: var(--font-size-xs);
+  font-family: var(--font-mono);
+}
+.shiki-code-block code,
+pre:has(code[class]) code {
+  background: transparent !important;
+  padding: 0 !important;
+  border: 0 !important;
+  font-size: inherit;
+}
+
+/* === Inline Code === */
+code:not(pre code) {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius-sm);
+  background: var(--color-code-inline-bg);
+  color: var(--color-code-inline-text);
+}
+
+/* === Modal Animations === */
+@keyframes modal-overlay-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-overlay-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes modal-content-in  { from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@keyframes modal-content-out { from { opacity: 1; transform: translate(-50%, -50%) scale(1); } to { opacity: 0; transform: translate(-50%, -48%) scale(0.96); } }
+
+.animate-modal-overlay-in  { animation: modal-overlay-in  200ms var(--ease-out); }
+.animate-modal-overlay-out { animation: modal-overlay-out 150ms var(--ease-in); }
+.animate-modal-content-in  { animation: modal-content-in  200ms var(--ease-out); }
+.animate-modal-content-out { animation: modal-content-out 150ms var(--ease-in); }

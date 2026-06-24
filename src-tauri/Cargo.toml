@@ -1,0 +1,26 @@
+[package]
+name = "opendev-desktop"
+version = "0.1.0"
+edition = "2024"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+axum = "0.8"
+
+# Internal crates
+opendev-web = { path = "../crates/opendev-web" }
+opendev-config = { path = "../crates/opendev-config" }
+opendev-history = { path = "../crates/opendev-history" }
+opendev-models = { path = "../crates/opendev-models" }
+opendev-http = { path = "../crates/opendev-http" }
+opendev-runtime = { path = "../crates/opendev-runtime" }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
