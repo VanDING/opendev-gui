@@ -14,4 +14,8 @@ ignore = [
     # hickory-proto 0.25.2 transitive via microsandbox → opendev-sandbox
     "RUSTSEC-2026-0118",
     "RUSTSEC-2026-0119",
+    # rsa 0.9 — transitive, no fixed version available
+    "RUSTSEC-2023-0071",
+    # Tauri GTK3 glib — unsoundness in VariantStrIter, cannot remove
+    "RUSTSEC-2024-0429",
 ]
