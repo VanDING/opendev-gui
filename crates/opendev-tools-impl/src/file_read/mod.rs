@@ -50,7 +50,7 @@ impl FileReadTool {
                 let entry = match entry {
                     Ok(e) => e,
                     Err(e) => {
-                        return ToolResult::fail(format!("Failed to read directory entry: {e}"))
+                        return ToolResult::fail(format!("Failed to read directory entry: {e}"));
                     }
                 };
                 let name = entry.file_name().to_string_lossy().into_owned();
@@ -180,12 +180,12 @@ impl BaseTool for FileReadTool {
 
         // Check file size
         let path_for_meta = path.clone();
-        let meta = match tokio::task::spawn_blocking(move || std::fs::metadata(&path_for_meta)).await
-        {
-            Ok(Ok(m)) => m,
-            Ok(Err(e)) => return ToolResult::fail(format!("Cannot read file metadata: {e}")),
-            Err(join_err) => return ToolResult::fail(format!("Task join error: {join_err}")),
-        };
+        let meta =
+            match tokio::task::spawn_blocking(move || std::fs::metadata(&path_for_meta)).await {
+                Ok(Ok(m)) => m,
+                Ok(Err(e)) => return ToolResult::fail(format!("Cannot read file metadata: {e}")),
+                Err(join_err) => return ToolResult::fail(format!("Task join error: {join_err}")),
+            };
         if meta.len() > Self::MAX_FILE_SIZE {
             return ToolResult::fail(format!(
                 "File too large: {} bytes (max {} bytes)",

@@ -152,8 +152,11 @@ impl BaseTool for FileEditTool {
                 if count > 1 && !replace_all {
                     let positions =
                         edit_replacers::find_occurrence_positions(&content, &actual_old);
-                    let locations: String =
-                        positions.iter().map(|n| format!("line {n}")).collect::<Vec<_>>().join(", ");
+                    let locations: String = positions
+                        .iter()
+                        .map(|n| format!("line {n}"))
+                        .collect::<Vec<_>>()
+                        .join(", ");
                     return Err(format!(
                         "old_string found {count} times at {locations} in {file_path}. \
                          Provide more surrounding context to make the match unique, \
@@ -175,8 +178,7 @@ impl BaseTool for FileEditTool {
                 let additions = new_line_parts.len();
 
                 // --- Generate unified diff preview ---
-                let diff_text =
-                    edit_replacers::unified_diff(&file_path, &content, &new_content, 3);
+                let diff_text = edit_replacers::unified_diff(&file_path, &content, &new_content, 3);
 
                 // --- Atomic write ---
                 let dir = path.parent().unwrap_or(Path::new("."));
@@ -191,10 +193,8 @@ impl BaseTool for FileEditTool {
                 }
 
                 // Auto-format if a formatter is available
-                let formatted = formatter::format_file(
-                    path.to_str().unwrap_or(&file_path),
-                    &ctx.working_dir,
-                );
+                let formatted =
+                    formatter::format_file(path.to_str().unwrap_or(&file_path), &ctx.working_dir);
 
                 let replacements = if replace_all { count } else { 1 };
 
@@ -215,11 +215,8 @@ impl BaseTool for FileEditTool {
                     "Edited {file_path}: {replacements} replacement(s), \
                      {additions} addition(s) and {removals} removal(s){fmt_note}"
                 );
-                let output_text = if diff_text.is_empty() {
-                    summary
-                } else {
-                    format!("{summary}\n{diff_text}")
-                };
+                let output_text =
+                    if diff_text.is_empty() { summary } else { format!("{summary}\n{diff_text}") };
 
                 Ok::<_, String>((output_text, metadata))
             })
@@ -228,9 +225,7 @@ impl BaseTool for FileEditTool {
             match result {
                 Ok(Ok(data)) => data,
                 Ok(Err(e)) => return ToolResult::fail(e),
-                Err(join_err) => {
-                    return ToolResult::fail(format!("Task join error: {join_err}"))
-                }
+                Err(join_err) => return ToolResult::fail(format!("Task join error: {join_err}")),
             }
         };
 

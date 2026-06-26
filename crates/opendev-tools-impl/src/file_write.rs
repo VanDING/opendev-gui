@@ -89,10 +89,10 @@ impl BaseTool for FileWriteTool {
                 match tokio::task::spawn_blocking(move || std::fs::create_dir_all(&parent)).await {
                     Ok(Ok(())) => {}
                     Ok(Err(e)) => {
-                        return ToolResult::fail(format!("Failed to create directories: {e}"))
+                        return ToolResult::fail(format!("Failed to create directories: {e}"));
                     }
                     Err(join_err) => {
-                        return ToolResult::fail(format!("Task join error: {join_err}"))
+                        return ToolResult::fail(format!("Task join error: {join_err}"));
                     }
                 }
             }

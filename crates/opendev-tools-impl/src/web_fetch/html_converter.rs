@@ -28,15 +28,15 @@ static HEADING_RES: LazyLock<Vec<(usize, Regex)>> = LazyLock::new(|| {
         .map(|level| {
             (
                 level,
-                Regex::new(&format!(r"(?i)<h{level}[^>]*>(.*?)</h{level}>"))
-                    .expect("valid regex"),
+                Regex::new(&format!(r"(?i)<h{level}[^>]*>(.*?)</h{level}>")).expect("valid regex"),
             )
         })
         .collect()
 });
 
-static PRE_CODE_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?is)<pre[^>]*>\s*<code[^>]*>(.*?)</code>\s*</pre>").expect("valid regex"));
+static PRE_CODE_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?is)<pre[^>]*>\s*<code[^>]*>(.*?)</code>\s*</pre>").expect("valid regex")
+});
 
 static PRE_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?is)<pre[^>]*>(.*?)</pre>").expect("valid regex"));
@@ -44,11 +44,13 @@ static PRE_RE: LazyLock<Regex> =
 static CODE_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?i)<code[^>]*>(.*?)</code>").expect("valid regex"));
 
-static LINK_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"(?i)<a[^>]*href="([^"]*)"[^>]*>(.*?)</a>"#).expect("valid regex"));
+static LINK_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"(?i)<a[^>]*href="([^"]*)"[^>]*>(.*?)</a>"#).expect("valid regex")
+});
 
-static IMG_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"(?i)<img[^>]*alt="([^"]*)"[^>]*src="([^"]*)"[^>]*/?>"#).expect("valid regex"));
+static IMG_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r#"(?i)<img[^>]*alt="([^"]*)"[^>]*src="([^"]*)"[^>]*/?>"#).expect("valid regex")
+});
 
 static STRONG_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?i)<(?:strong|b)>(.*?)</(?:strong|b)>").expect("valid regex"));
@@ -68,8 +70,9 @@ static BR_RE: LazyLock<Regex> =
 static HR_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?i)<hr\s*/?>").expect("valid regex"));
 
-static P_DIV_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?i)</?(?:p|div|section|article|main)[^>]*>").expect("valid regex"));
+static P_DIV_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)</?(?:p|div|section|article|main)[^>]*>").expect("valid regex")
+});
 
 static MULTI_NEWLINE_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\n{3,}").expect("valid regex"));
@@ -149,9 +152,7 @@ pub(super) fn html_to_markdown(html: &str) -> String {
 
     // Convert list items
     text = LI_RE
-        .replace_all(&text, |caps: &regex::Captures| {
-            format!("\n- {}", strip_tags(&caps[1]).trim())
-        })
+        .replace_all(&text, |caps: &regex::Captures| format!("\n- {}", strip_tags(&caps[1]).trim()))
         .to_string();
 
     // Convert blockquotes

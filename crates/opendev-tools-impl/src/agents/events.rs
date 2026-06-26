@@ -82,7 +82,7 @@ pub enum SubagentEvent {
 ///
 /// Used to bridge subagent execution progress back to the TUI event loop.
 pub struct ChannelProgressCallback {
-    tx: mpsc::UnboundedSender<SubagentEvent>,
+    tx: mpsc::Sender<SubagentEvent>,
     /// Unique identifier for this subagent instance (disambiguates parallel subagents).
     subagent_id: String,
     /// Per-subagent cancellation token (child of parent's token).
@@ -92,7 +92,7 @@ pub struct ChannelProgressCallback {
 impl ChannelProgressCallback {
     /// Create a new channel-based progress callback with a unique subagent ID.
     pub fn new(
-        tx: mpsc::UnboundedSender<SubagentEvent>,
+        tx: mpsc::Sender<SubagentEvent>,
         subagent_id: String,
         cancel_token: Option<tokio_util::sync::CancellationToken>,
     ) -> Self {
@@ -108,7 +108,7 @@ impl std::fmt::Debug for ChannelProgressCallback {
 
 impl opendev_agents::SubagentProgressCallback for ChannelProgressCallback {
     fn on_started(&self, subagent_name: &str, task: &str) {
-        let _ = self.tx.send(SubagentEvent::Started {
+        let _ = self.tx.try_send(SubagentEvent::Started {
             subagent_id: self.subagent_id.clone(),
             subagent_name: subagent_name.to_string(),
             task: task.to_string(),
@@ -123,7 +123,7 @@ impl opendev_agents::SubagentProgressCallback for ChannelProgressCallback {
         tool_id: &str,
         args: &HashMap<String, serde_json::Value>,
     ) {
-        let _ = self.tx.send(SubagentEvent::ToolCall {
+        let _ = self.tx.try_send(SubagentEvent::ToolCall {
             subagent_id: self.subagent_id.clone(),
             subagent_name: subagent_name.to_string(),
             tool_name: tool_name.to_string(),
@@ -133,7 +133,7 @@ impl opendev_agents::SubagentProgressCallback for ChannelProgressCallback {
     }
 
     fn on_tool_complete(&self, subagent_name: &str, tool_name: &str, tool_id: &str, success: bool) {
-        let _ = self.tx.send(SubagentEvent::ToolComplete {
+        let _ = self.tx.try_send(SubagentEvent::ToolComplete {
             subagent_id: self.subagent_id.clone(),
             subagent_name: subagent_name.to_string(),
             tool_name: tool_name.to_string(),
@@ -148,7 +148,7 @@ impl opendev_agents::SubagentProgressCallback for ChannelProgressCallback {
     }
 
     fn on_token_usage(&self, subagent_name: &str, input_tokens: u64, output_tokens: u64) {
-        let _ = self.tx.send(SubagentEvent::TokenUpdate {
+        let _ = self.tx.try_send(SubagentEvent::TokenUpdate {
             subagent_id: self.subagent_id.clone(),
             subagent_name: subagent_name.to_string(),
             input_tokens,
@@ -163,13 +163,13 @@ impl opendev_agents::SubagentProgressCallback for ChannelProgressCallback {
 /// All other methods (chunk, reasoning, context_usage) are no-ops to
 /// prevent background tool events from leaking into the foreground display.
 pub struct BackgroundProgressCallback {
-    tx: mpsc::UnboundedSender<SubagentEvent>,
+    tx: mpsc::Sender<SubagentEvent>,
     task_id: String,
     tool_count: std::sync::atomic::AtomicUsize,
 }
 
 impl BackgroundProgressCallback {
-    pub fn new(tx: mpsc::UnboundedSender<SubagentEvent>, task_id: String) -> Self {
+    pub fn new(tx: mpsc::Sender<SubagentEvent>, task_id: String) -> Self {
         Self { tx, task_id, tool_count: std::sync::atomic::AtomicUsize::new(0) }
     }
 }
@@ -191,12 +191,12 @@ impl opendev_agents::SubagentProgressCallback for BackgroundProgressCallback {
         _args: &HashMap<String, serde_json::Value>,
     ) {
         let count = self.tool_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
-        let _ = self.tx.send(SubagentEvent::BackgroundProgress {
+        let _ = self.tx.try_send(SubagentEvent::BackgroundProgress {
             task_id: self.task_id.clone(),
             tool_name: tool_name.to_string(),
             tool_count: count,
         });
-        let _ = self.tx.send(SubagentEvent::BackgroundActivity {
+        let _ = self.tx.try_send(SubagentEvent::BackgroundActivity {
             task_id: self.task_id.clone(),
             line: format!("\u{25b8} {tool_name}"),
         });
@@ -210,7 +210,7 @@ impl opendev_agents::SubagentProgressCallback for BackgroundProgressCallback {
         success: bool,
     ) {
         let icon = if success { "\u{2713}" } else { "\u{2717}" };
-        let _ = self.tx.send(SubagentEvent::BackgroundActivity {
+        let _ = self.tx.try_send(SubagentEvent::BackgroundActivity {
             task_id: self.task_id.clone(),
             line: format!("  \u{23bf} {icon} {tool_name}"),
         });

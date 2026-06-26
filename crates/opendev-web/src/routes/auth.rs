@@ -55,14 +55,22 @@ struct TokenPayload {
 }
 
 /// Secret key for HMAC signing. In production this should come from
-/// an environment variable or config; we provide a default for development.
+/// the `OPENDEV_SECRET_KEY` environment variable.
+///
+/// In debug builds a hardcoded default is used for development convenience.
+/// In release builds, the binary will panic at startup if the env var is
+/// not set, forcing explicit configuration.
 fn secret_key() -> &'static [u8] {
-    // Allow override via env at startup. We leak a small allocation so
-    // the reference is 'static — acceptable for a single-value config.
     static KEY: std::sync::OnceLock<&'static [u8]> = std::sync::OnceLock::new();
     KEY.get_or_init(|| match std::env::var("OPENDEV_SECRET_KEY") {
         Ok(val) => Box::leak(val.into_bytes().into_boxed_slice()) as &[u8],
-        Err(_) => b"change-me-in-production",
+        Err(_) => {
+            if cfg!(debug_assertions) {
+                b"change-me-in-production"
+            } else {
+                panic!("OPENDEV_SECRET_KEY environment variable must be set in production");
+            }
+        }
     })
 }
 
@@ -154,13 +162,19 @@ fn verify_password(password: &str, hash: &str) -> bool {
 }
 
 /// Build a cookie for the session token.
+///
+/// In release builds, the Secure flag is set to ensure the cookie is only
+/// transmitted over HTTPS. Debug builds omit it for local HTTP development.
 fn build_session_cookie(token: &str) -> Cookie<'static> {
-    Cookie::build((TOKEN_COOKIE.to_string(), token.to_string()))
+    let mut builder = Cookie::build((TOKEN_COOKIE.to_string(), token.to_string()))
         .http_only(true)
         .same_site(SameSite::Lax)
         .max_age(time::Duration::seconds(TOKEN_TTL_SECONDS))
-        .path("/")
-        .build()
+        .path("/");
+    if !cfg!(debug_assertions) {
+        builder = builder.secure(true);
+    }
+    builder.build()
 }
 
 /// Build the auth router.

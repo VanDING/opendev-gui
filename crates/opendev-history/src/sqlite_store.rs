@@ -148,8 +148,8 @@ impl SqliteSessionStore {
                  VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
             )
             .bind(&session.id)
-            .bind(&session.created_at.to_rfc3339())
-            .bind(&session.updated_at.to_rfc3339())
+            .bind(session.created_at.to_rfc3339())
+            .bind(session.updated_at.to_rfc3339())
             .bind(title)
             .bind(&session.working_directory)
             .bind(&session.parent_id)
@@ -227,10 +227,10 @@ impl SqliteSessionStore {
     }
 
     pub fn search_messages(&self, query: &str) -> Result<Vec<(String, Vec<usize>)>, String> {
-        let pattern = format!("%{}%", query);
+        let pattern = format!("%{}%", escape_like(query));
         block_on(async {
             let rows = sqlx::query(
-                "SELECT session_id, seq FROM messages WHERE content LIKE ?1 ORDER BY session_id, seq",
+                "SELECT session_id, seq FROM messages WHERE content LIKE ?1 ESCAPE '\\' ORDER BY session_id, seq",
             )
             .bind(&pattern)
             .fetch_all(&self.pool)
@@ -241,11 +241,11 @@ impl SqliteSessionStore {
             for row in &rows {
                 let session_id: String = row.get("session_id");
                 let seq: i64 = row.get("seq");
-                if let Some(last) = results.last_mut() {
-                    if last.0 == session_id {
-                        last.1.push(seq as usize);
-                        continue;
-                    }
+                if let Some(last) = results.last_mut()
+                    && last.0 == session_id
+                {
+                    last.1.push(seq as usize);
+                    continue;
                 }
                 results.push((session_id, vec![seq as usize]));
             }
@@ -254,6 +254,7 @@ impl SqliteSessionStore {
     }
 
     /// Record a cost entry (synchronous convenience).
+    #[allow(clippy::too_many_arguments)]
     pub fn record_cost(
         &self,
         session_id: &str,
@@ -535,7 +536,7 @@ async fn insert_message(
     .bind(seq)
     .bind(msg.role.to_string())
     .bind(&msg.content)
-    .bind(&msg.timestamp.to_rfc3339())
+    .bind(msg.timestamp.to_rfc3339())
     .bind(&extra)
     .bind(&tool_calls_json)
     .bind(msg.tokens.map(|t| t as i64))
@@ -546,6 +547,19 @@ async fn insert_message(
     .map_err(|e| format!("Failed to insert message: {}", e))?;
 
     Ok(())
+}
+
+fn escape_like(pattern: &str) -> String {
+    let mut escaped = String::with_capacity(pattern.len() + 8);
+    for ch in pattern.chars() {
+        match ch {
+            '\\' => escaped.push_str("\\\\"),
+            '%' => escaped.push_str("\\%"),
+            '_' => escaped.push_str("\\_"),
+            _ => escaped.push(ch),
+        }
+    }
+    escaped
 }
 
 #[cfg(test)]

@@ -5,7 +5,7 @@
 //!
 //! Ported from `opendev/core/runtime/cost_tracker.py`.
 
-use std::sync::{Arc, Mutex as StdMutex};
+use std::sync::Mutex as StdMutex;
 
 use opendev_history::cost::CostTracker as HistoryCostTracker;
 use serde::{Deserialize, Serialize};

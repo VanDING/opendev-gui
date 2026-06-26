@@ -122,6 +122,7 @@ impl MemoryFacade {
         guard.take().map_or(Ok(()), Err)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn save(
         &self,
         content: &str,
@@ -217,6 +218,7 @@ impl MemoryFacade {
         Ok(ids)
     }
 
+    #[allow(clippy::too_many_arguments)]
     async fn write_to_long_term(
         &self,
         content: &str,
@@ -259,7 +261,7 @@ impl MemoryFacade {
         }
 
         let repo = MemoryRepo::new(self.pool.clone());
-        repo.insert(&entry).await.map_err(|e| MemoryError::Storage(e))?;
+        repo.insert(&entry).await.map_err(MemoryError::Storage)?;
 
         Ok(id)
     }
@@ -531,10 +533,10 @@ fn spawn_write_worker(
         while let Some(task) = rx.recv().await {
             if let Err(e) = provider.store(task.entry).await {
                 tracing::error!(error = %e, "long-term memory background store failed");
-                if let Ok(mut guard) = error_slot.lock() {
-                    if guard.is_none() {
-                        *guard = Some(MemoryError::Provider(e));
-                    }
+                if let Ok(mut guard) = error_slot.lock()
+                    && guard.is_none()
+                {
+                    *guard = Some(MemoryError::Provider(e));
                 }
             }
             if pending.fetch_sub(1, AtomicOrdering::SeqCst) == 1 {

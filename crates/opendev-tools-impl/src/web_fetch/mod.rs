@@ -38,7 +38,11 @@ fn is_private_url(host: &str) -> bool {
             || ip.is_multicast()
             || match ip {
                 IpAddr::V4(v4) => v4.is_private() || v4.is_link_local(),
-                IpAddr::V6(v6) => v6.is_loopback(),
+                IpAddr::V6(v6) => {
+                    v6.is_loopback()
+                        || v6.is_unicast_link_local()
+                        || (v6.segments()[0] & 0xfe00) == 0xfc00
+                }
             };
     }
 
@@ -49,7 +53,11 @@ fn is_private_url(host: &str) -> bool {
             ip.is_loopback()
                 || match ip {
                     IpAddr::V4(v4) => v4.is_private() || v4.is_link_local(),
-                    IpAddr::V6(v6) => v6.is_loopback(),
+                    IpAddr::V6(v6) => {
+                        v6.is_loopback()
+                            || v6.is_unicast_link_local()
+                            || (v6.segments()[0] & 0xfe00) == 0xfc00
+                    }
                 }
         });
     }

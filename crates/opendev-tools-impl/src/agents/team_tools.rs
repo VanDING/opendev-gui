@@ -20,7 +20,7 @@ use super::events::SubagentEvent;
 #[derive(Debug)]
 pub struct CreateTeamTool {
     team_manager: Arc<TeamManager>,
-    event_tx: Option<mpsc::UnboundedSender<SubagentEvent>>,
+    event_tx: Option<mpsc::Sender<SubagentEvent>>,
 }
 
 impl CreateTeamTool {
@@ -28,7 +28,7 @@ impl CreateTeamTool {
         Self { team_manager, event_tx: None }
     }
 
-    pub fn with_event_sender(mut self, tx: mpsc::UnboundedSender<SubagentEvent>) -> Self {
+    pub fn with_event_sender(mut self, tx: mpsc::Sender<SubagentEvent>) -> Self {
         self.event_tx = Some(tx);
         self
     }
@@ -151,7 +151,7 @@ impl BaseTool for CreateTeamTool {
                 .filter_map(|m| m.get("name").and_then(|v| v.as_str()))
                 .map(|s| s.to_string())
                 .collect();
-            let _ = tx.send(SubagentEvent::TeamCreated {
+            let _ = tx.try_send(SubagentEvent::TeamCreated {
                 team_id: team_name.to_string(),
                 leader: "leader".to_string(),
                 members: member_names,
@@ -176,7 +176,7 @@ impl BaseTool for CreateTeamTool {
 #[derive(Debug)]
 pub struct SendMessageTool {
     team_manager: Arc<TeamManager>,
-    event_tx: Option<mpsc::UnboundedSender<SubagentEvent>>,
+    event_tx: Option<mpsc::Sender<SubagentEvent>>,
 }
 
 impl SendMessageTool {
@@ -184,7 +184,7 @@ impl SendMessageTool {
         Self { team_manager, event_tx: None }
     }
 
-    pub fn with_event_sender(mut self, tx: mpsc::UnboundedSender<SubagentEvent>) -> Self {
+    pub fn with_event_sender(mut self, tx: mpsc::Sender<SubagentEvent>) -> Self {
         self.event_tx = Some(tx);
         self
     }
@@ -285,7 +285,7 @@ impl BaseTool for SendMessageTool {
 
             // Notify TUI
             if let Some(ref tx) = self.event_tx {
-                let _ = tx.send(SubagentEvent::TeamMessageSent {
+                let _ = tx.try_send(SubagentEvent::TeamMessageSent {
                     from: sender.to_string(),
                     to: "*".to_string(),
                     preview: message.chars().take(50).collect(),
@@ -311,7 +311,7 @@ impl BaseTool for SendMessageTool {
 
             // Notify TUI
             if let Some(ref tx) = self.event_tx {
-                let _ = tx.send(SubagentEvent::TeamMessageSent {
+                let _ = tx.try_send(SubagentEvent::TeamMessageSent {
                     from: sender.to_string(),
                     to: to.to_string(),
                     preview: message.chars().take(50).collect(),
@@ -331,7 +331,7 @@ impl BaseTool for SendMessageTool {
 #[derive(Debug)]
 pub struct DeleteTeamTool {
     team_manager: Arc<TeamManager>,
-    event_tx: Option<mpsc::UnboundedSender<SubagentEvent>>,
+    event_tx: Option<mpsc::Sender<SubagentEvent>>,
 }
 
 impl DeleteTeamTool {
@@ -339,7 +339,7 @@ impl DeleteTeamTool {
         Self { team_manager, event_tx: None }
     }
 
-    pub fn with_event_sender(mut self, tx: mpsc::UnboundedSender<SubagentEvent>) -> Self {
+    pub fn with_event_sender(mut self, tx: mpsc::Sender<SubagentEvent>) -> Self {
         self.event_tx = Some(tx);
         self
     }
@@ -428,7 +428,7 @@ impl BaseTool for DeleteTeamTool {
 
         // Notify TUI
         if let Some(ref tx) = self.event_tx {
-            let _ = tx.send(SubagentEvent::TeamDeleted { team_id: team_name.to_string() });
+            let _ = tx.try_send(SubagentEvent::TeamDeleted { team_id: team_name.to_string() });
         }
 
         info!(team = %team_name, "Team deleted");

@@ -157,6 +157,96 @@ fn test_sqlite_store_search_messages() {
 }
 
 #[test]
+fn test_sqlite_store_search_messages_like_wildcard_percent() {
+    let tmp = tempfile::tempdir().unwrap();
+    let store = SqliteSessionStore::open(tmp.path().join("test.db")).unwrap();
+
+    let mut session = Session::new();
+    session.messages.push(ChatMessage {
+        role: Role::User,
+        content: "50% discount on rust books".to_string(),
+        timestamp: chrono::Utc::now(),
+        metadata: std::collections::HashMap::new(),
+        tool_calls: vec![],
+        tokens: None,
+        thinking_trace: None,
+        reasoning_content: None,
+        token_usage: None,
+        provenance: None,
+    });
+    session.messages.push(ChatMessage {
+        role: Role::Assistant,
+        content: "the sale is over".to_string(),
+        timestamp: chrono::Utc::now(),
+        metadata: std::collections::HashMap::new(),
+        tool_calls: vec![],
+        tokens: None,
+        thinking_trace: None,
+        reasoning_content: None,
+        token_usage: None,
+        provenance: None,
+    });
+    store.save_session(&session).unwrap();
+
+    // Searching for literal '%' should only match the message containing '%',
+    // NOT all messages via wildcard expansion.
+    let results = store.search_messages("%").unwrap();
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].0, session.id);
+    assert_eq!(results[0].1.len(), 1); // only "50% discount..." contains literal %
+}
+
+#[test]
+fn test_sqlite_store_search_messages_like_wildcard_underscore() {
+    let tmp = tempfile::tempdir().unwrap();
+    let store = SqliteSessionStore::open(tmp.path().join("test.db")).unwrap();
+
+    let mut session = Session::new();
+    session.messages.push(ChatMessage {
+        role: Role::User,
+        content: "the variable name is foo_bar".to_string(),
+        timestamp: chrono::Utc::now(),
+        metadata: std::collections::HashMap::new(),
+        tool_calls: vec![],
+        tokens: None,
+        thinking_trace: None,
+        reasoning_content: None,
+        token_usage: None,
+        provenance: None,
+    });
+    session.messages.push(ChatMessage {
+        role: Role::Assistant,
+        content: "refactored to fooBar".to_string(),
+        timestamp: chrono::Utc::now(),
+        metadata: std::collections::HashMap::new(),
+        tool_calls: vec![],
+        tokens: None,
+        thinking_trace: None,
+        reasoning_content: None,
+        token_usage: None,
+        provenance: None,
+    });
+    store.save_session(&session).unwrap();
+
+    // Searching for literal '_' should only match the message containing '_',
+    // NOT match every single-character position via wildcard.
+    let results = store.search_messages("_").unwrap();
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].0, session.id);
+    assert_eq!(results[0].1.len(), 1); // only "foo_bar" contains literal _
+}
+
+#[test]
+fn test_escape_like_unit() {
+    assert_eq!(escape_like("hello"), "hello");
+    assert_eq!(escape_like("50%"), "50\\%");
+    assert_eq!(escape_like("foo_bar"), "foo\\_bar");
+    assert_eq!(escape_like(r"test\path"), "test\\\\path");
+    assert_eq!(escape_like("%like_"), "\\%like\\_");
+    assert_eq!(escape_like(""), "");
+}
+
+#[test]
 fn test_sqlite_store_append_message() {
     let tmp = tempfile::tempdir().unwrap();
     let store = SqliteSessionStore::open(tmp.path().join("test.db")).unwrap();

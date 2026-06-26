@@ -29,7 +29,7 @@ pub struct SpawnSubagentTool {
     /// Working directory for tool execution.
     working_dir: String,
     /// Optional channel for sending progress events to the TUI.
-    event_tx: Option<mpsc::UnboundedSender<SubagentEvent>>,
+    event_tx: Option<mpsc::Sender<SubagentEvent>>,
     /// Parent agent's max_tokens from model registry (subagents inherit this as fallback).
     parent_max_tokens: u64,
     /// Parent agent's reasoning effort (subagents inherit this).
@@ -71,7 +71,7 @@ impl SpawnSubagentTool {
     }
 
     /// Set the event channel for progress reporting.
-    pub fn with_event_sender(mut self, tx: mpsc::UnboundedSender<SubagentEvent>) -> Self {
+    pub fn with_event_sender(mut self, tx: mpsc::Sender<SubagentEvent>) -> Self {
         self.event_tx = Some(tx);
         self
     }
@@ -408,7 +408,7 @@ impl BaseTool for SpawnSubagentTool {
                 // Send finished event to TUI
                 let effective_success = run_result.agent_result.success && !interrupted;
                 if let Some(ref tx) = self.event_tx {
-                    let _ = tx.send(SubagentEvent::Finished {
+                    let _ = tx.try_send(SubagentEvent::Finished {
                         subagent_id: subagent_id.clone(),
                         subagent_name: agent_type.to_string(),
                         success: effective_success,
@@ -440,7 +440,7 @@ impl BaseTool for SpawnSubagentTool {
                 warn!(agent_type = %agent_type, error = %e, "Subagent failed");
                 // Send finished event to TUI
                 if let Some(ref tx) = self.event_tx {
-                    let _ = tx.send(SubagentEvent::Finished {
+                    let _ = tx.try_send(SubagentEvent::Finished {
                         subagent_id,
                         subagent_name: agent_type.to_string(),
                         success: false,
@@ -483,7 +483,7 @@ impl SpawnSubagentTool {
 
         // Notify TUI to register the background task
         if let Some(ref tx) = self.event_tx {
-            let _ = tx.send(SubagentEvent::BackgroundSpawned {
+            let _ = tx.try_send(SubagentEvent::BackgroundSpawned {
                 task_id: task_id.clone(),
                 agent_type: params.agent_type.to_string(),
                 query: params.task.to_string(),
@@ -581,7 +581,7 @@ impl SpawnSubagentTool {
                     };
 
                     if let Some(ref tx) = event_tx {
-                        let _ = tx.send(SubagentEvent::BackgroundCompleted {
+                        let _ = tx.try_send(SubagentEvent::BackgroundCompleted {
                             task_id: task_id_clone,
                             success,
                             result_summary: summary,
@@ -599,7 +599,7 @@ impl SpawnSubagentTool {
                         "Background agent failed"
                     );
                     if let Some(ref tx) = event_tx {
-                        let _ = tx.send(SubagentEvent::BackgroundCompleted {
+                        let _ = tx.try_send(SubagentEvent::BackgroundCompleted {
                             task_id: task_id_clone,
                             success: false,
                             result_summary: e.to_string(),

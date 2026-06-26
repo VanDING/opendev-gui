@@ -1,9 +1,4 @@
 use super::*;
-use tempfile::TempDir;
-
-fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
-}
 
 #[test]
 fn test_find_symbol_range_rust_fn() {

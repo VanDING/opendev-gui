@@ -33,7 +33,7 @@ pub struct SpawnTeammateTool {
     working_dir: String,
     parent_max_tokens: u64,
     parent_reasoning_effort: Option<String>,
-    event_tx: Option<mpsc::UnboundedSender<SubagentEvent>>,
+    event_tx: Option<mpsc::Sender<SubagentEvent>>,
     debug_logger: Option<Arc<opendev_runtime::SessionDebugLogger>>,
     worktree_manager: Option<Arc<Mutex<WorktreeManager>>>,
 }
@@ -65,7 +65,7 @@ impl SpawnTeammateTool {
         }
     }
 
-    pub fn with_event_sender(mut self, tx: mpsc::UnboundedSender<SubagentEvent>) -> Self {
+    pub fn with_event_sender(mut self, tx: mpsc::Sender<SubagentEvent>) -> Self {
         self.event_tx = Some(tx);
         self
     }
@@ -254,7 +254,7 @@ impl BaseTool for SpawnTeammateTool {
 
         // Notify TUI
         if let Some(ref tx) = self.event_tx {
-            let _ = tx.send(SubagentEvent::BackgroundSpawned {
+            let _ = tx.try_send(SubagentEvent::BackgroundSpawned {
                 task_id: task_id.clone(),
                 agent_type: member.agent_type.clone(),
                 query: member.task.clone(),
@@ -405,7 +405,7 @@ impl BaseTool for SpawnTeammateTool {
 
             if let Some(ref tx) = event_tx {
                 let tool_call_count = result.as_ref().map(|r| r.tool_call_count).unwrap_or(0);
-                let _ = tx.send(SubagentEvent::BackgroundCompleted {
+                let _ = tx.try_send(SubagentEvent::BackgroundCompleted {
                     task_id: task_id_clone,
                     success,
                     result_summary: summary,

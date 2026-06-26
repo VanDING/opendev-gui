@@ -115,7 +115,7 @@ impl MemoryRepo {
         project: Option<&Path>,
         limit: usize,
     ) -> Result<Vec<MemoryEntry>, String> {
-        let pattern = format!("%{}%", query);
+        let pattern = format!("%{}%", escape_like(query));
         let project_str = project.map(|p| p.to_string_lossy().to_string());
 
         if let Some(ref p) = project_str {
@@ -123,7 +123,7 @@ impl MemoryRepo {
                 "SELECT id, content, category, confidence, source, project_path, importance, \
                  access_count, last_accessed_at, expires_at, created_at, tags_json \
                  FROM long_term_memory \
-                 WHERE content LIKE ?1 AND project_path = ?2 \
+                  WHERE content LIKE ?1 ESCAPE '\\' AND project_path = ?2 \
                  ORDER BY importance DESC LIMIT ?3",
             )
             .bind(&pattern)
@@ -140,7 +140,7 @@ impl MemoryRepo {
                 "SELECT id, content, category, confidence, source, project_path, importance, \
                  access_count, last_accessed_at, expires_at, created_at, tags_json \
                  FROM long_term_memory \
-                 WHERE content LIKE ?1 \
+                  WHERE content LIKE ?1 ESCAPE '\\' \
                  ORDER BY importance DESC LIMIT ?2",
             )
             .bind(&pattern)
@@ -356,6 +356,19 @@ fn parse_source(s: &str) -> MemorySource {
         "Subagent" => MemorySource::Subagent,
         _ => MemorySource::User,
     }
+}
+
+fn escape_like(pattern: &str) -> String {
+    let mut escaped = String::with_capacity(pattern.len() + 8);
+    for ch in pattern.chars() {
+        match ch {
+            '\\' => escaped.push_str("\\\\"),
+            '%' => escaped.push_str("\\%"),
+            '_' => escaped.push_str("\\_"),
+            _ => escaped.push(ch),
+        }
+    }
+    escaped
 }
 
 #[cfg(test)]

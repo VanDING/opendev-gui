@@ -54,6 +54,12 @@ impl BashTool {
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped());
 
+        // SAFETY: `pre_exec` runs in the child process after `fork()` and
+        // before `exec()`. At this point only a single thread exists, so
+        // there is no risk of data races. `setpgid(0, 0)` creates a new
+        // process group with the child as leader — this is standard
+        // practice for clean process-group termination and cannot fail
+        // in ways that corrupt parent state.
         // Create new process group on Unix for clean kill
         #[cfg(unix)]
         unsafe {

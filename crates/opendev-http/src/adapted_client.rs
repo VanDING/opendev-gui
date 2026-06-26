@@ -101,7 +101,9 @@ impl AdaptedClient {
             None => {
                 if payload.get("_reasoning_effort").is_some() {
                     let mut cleaned = payload.clone();
-                    cleaned.as_object_mut().unwrap().remove("_reasoning_effort");
+                    if let Some(obj) = cleaned.as_object_mut() {
+                        obj.remove("_reasoning_effort");
+                    }
                     effective_owned = cleaned;
                     &effective_owned
                 } else {

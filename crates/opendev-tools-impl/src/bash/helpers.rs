@@ -169,10 +169,16 @@ pub(crate) fn prepare_command(command: &str) -> String {
 pub(crate) fn kill_process_group(pgid: u32) {
     #[cfg(unix)]
     {
+        // SAFETY: `pgid` is a valid process group ID obtained from
+        // `child.id()` (see foreground.rs and background.rs). We only
+        // signal our own child process groups; sending SIGTERM/SIGKILL
+        // to a process group we own is safe. Signal 0 is a null probe
+        // that does not deliver any actual signal.
         unsafe {
             libc::kill(-(pgid as i32), libc::SIGTERM);
         }
         std::thread::sleep(std::time::Duration::from_millis(500));
+        // SAFETY: same invariants as above — valid pgid, owned process group.
         unsafe {
             let alive = libc::kill(-(pgid as i32), 0) == 0;
             if alive {

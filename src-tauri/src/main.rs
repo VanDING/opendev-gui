@@ -46,7 +46,8 @@ fn main() {
             if let tauri::WindowEvent::Destroyed = event {
                 let app = window.app_handle();
                 let state = app.state::<AppState>();
-                if let Some(handle) = state.server.lock().unwrap_or_else(|e| e.into_inner()).take() {
+                if let Some(handle) = state.server.lock().unwrap_or_else(|e| e.into_inner()).take()
+                {
                     let _ = handle.shutdown_tx.send(());
                 }
             }

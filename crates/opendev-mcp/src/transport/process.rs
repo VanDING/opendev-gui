@@ -1,5 +1,6 @@
 //! Process tree management for cleaning up MCP server child processes.
 
+#[cfg(unix)]
 use tracing::debug;
 
 /// Recursively collect all descendant PIDs of a process using `pgrep -P`.

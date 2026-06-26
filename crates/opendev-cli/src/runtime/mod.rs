@@ -92,8 +92,7 @@ pub struct ToolChannelReceivers {
     pub ask_user_rx: opendev_runtime::AskUserReceiver,
     pub plan_approval_rx: opendev_runtime::PlanApprovalReceiver,
     pub tool_approval_rx: opendev_runtime::ToolApprovalReceiver,
-    pub subagent_event_rx:
-        Option<tokio::sync::mpsc::UnboundedReceiver<opendev_tools_impl::SubagentEvent>>,
+    pub subagent_event_rx: Option<tokio::sync::mpsc::Receiver<opendev_tools_impl::SubagentEvent>>,
 }
 
 impl AgentRuntime {
@@ -419,7 +418,7 @@ impl AgentRuntime {
         let subagent_manager = Arc::new(subagent_manager);
         // Create subagent event channel for TUI bridging
         let (subagent_event_tx, subagent_event_rx) =
-            tokio::sync::mpsc::unbounded_channel::<opendev_tools_impl::SubagentEvent>();
+            tokio::sync::mpsc::channel::<opendev_tools_impl::SubagentEvent>(512);
 
         // Create team manager and shared task list for agent team tools
         let app_paths = opendev_config::paths::Paths::new(Some(working_dir.to_path_buf()));

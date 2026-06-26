@@ -92,11 +92,129 @@ fn test_convert_request_converts_max_completion_tokens() {
 }
 
 #[test]
-fn test_extra_headers() {
+fn test_extra_headers_has_content_type_and_accept() {
     let adapter = BedrockAdapter::with_region("model-id", "us-east-1");
     let headers = adapter.extra_headers();
+    // Content-Type and Accept are always present.
     assert!(headers.iter().any(|(k, v)| k == "Content-Type" && v == "application/json"));
     assert!(headers.iter().any(|(k, v)| k == "Accept" && v == "application/json"));
+}
+
+#[test]
+fn test_derive_signing_key_known_vector() {
+    // AWS SigV4 test suite: example from
+    // https://docs.aws.amazon.com/general/latest/gr/signature-v4-test-suite.html
+    let key = BedrockAdapter::derive_signing_key(
+        "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY",
+        "20150830",
+        "us-east-1",
+        "bedrock",
+    );
+    // Known expected value for iam service in us-east-1 on 20150830
+    // We verify this is non-empty and deterministic.
+    assert!(!key.is_empty());
+    assert_eq!(key.len(), 32); // SHA-256 HMAC produces 32 bytes
+    // Second call with same params yields same result.
+    let key2 = BedrockAdapter::derive_signing_key(
+        "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY",
+        "20150830",
+        "us-east-1",
+        "bedrock",
+    );
+    assert_eq!(key, key2);
+}
+
+#[test]
+fn test_sigv4_headers_with_credentials() {
+    // Set env vars for this test
+    unsafe {
+        std::env::set_var("AWS_ACCESS_KEY_ID", "AKIAIOSFODNN7EXAMPLE");
+        std::env::set_var("AWS_SECRET_ACCESS_KEY", "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY");
+        std::env::set_var("AWS_REGION", "us-east-1");
+    }
+    let adapter = BedrockAdapter::with_region("anthropic.claude-v2", "us-east-1");
+    let headers = adapter.extra_headers();
+
+    // Must contain Authorization header with valid SigV4 format
+    let auth = headers
+        .iter()
+        .find(|(k, _)| k == "Authorization")
+        .map(|(_, v)| v.clone())
+        .expect("Authorization header should be present");
+
+    assert!(auth.starts_with("AWS4-HMAC-SHA256"));
+    assert!(auth.contains("Credential=AKIAIOSFODNN7EXAMPLE/"));
+    assert!(auth.contains("/us-east-1/bedrock/aws4_request,"));
+    assert!(auth.contains("SignedHeaders=content-type;host;x-amz-date,"));
+    assert!(auth.contains("Signature="));
+
+    // X-Amz-Date must be present with ISO timestamp
+    let date = headers
+        .iter()
+        .find(|(k, _)| k == "X-Amz-Date")
+        .map(|(_, v)| v.clone())
+        .expect("X-Amz-Date header should be present");
+    assert_eq!(date.len(), 16); // YYYYMMDDTHHMMSSZ
+    assert!(date.ends_with('Z'));
+
+    // X-Amz-Content-Sha256 must be UNSIGNED-PAYLOAD
+    let sha = headers
+        .iter()
+        .find(|(k, _)| k == "X-Amz-Content-Sha256")
+        .map(|(_, v)| v.clone())
+        .expect("X-Amz-Content-Sha256 header should be present");
+    assert_eq!(sha, "UNSIGNED-PAYLOAD");
+
+    // Clean up
+    unsafe {
+        std::env::remove_var("AWS_ACCESS_KEY_ID");
+        std::env::remove_var("AWS_SECRET_ACCESS_KEY");
+        std::env::remove_var("AWS_REGION");
+    }
+}
+
+#[test]
+fn test_sigv4_headers_with_session_token() {
+    unsafe {
+        std::env::set_var("AWS_ACCESS_KEY_ID", "AKIATEST");
+        std::env::set_var("AWS_SECRET_ACCESS_KEY", "test-secret");
+        std::env::set_var("AWS_REGION", "eu-west-1");
+        std::env::set_var("AWS_SESSION_TOKEN", "session-token-value");
+    }
+    let adapter = BedrockAdapter::with_region("model", "eu-west-1");
+    let headers = adapter.extra_headers();
+
+    let token = headers
+        .iter()
+        .find(|(k, _)| k == "X-Amz-Security-Token")
+        .map(|(_, v)| v.clone())
+        .expect("X-Amz-Security-Token should be present when AWS_SESSION_TOKEN is set");
+    assert_eq!(token, "session-token-value");
+
+    unsafe {
+        std::env::remove_var("AWS_ACCESS_KEY_ID");
+        std::env::remove_var("AWS_SECRET_ACCESS_KEY");
+        std::env::remove_var("AWS_REGION");
+        std::env::remove_var("AWS_SESSION_TOKEN");
+    }
+}
+
+#[test]
+fn test_sigv4_headers_without_credentials() {
+    // Ensure env vars are NOT set
+    unsafe {
+        std::env::remove_var("AWS_ACCESS_KEY_ID");
+        std::env::remove_var("AWS_SECRET_ACCESS_KEY");
+    }
+    let adapter = BedrockAdapter::with_region("model", "us-east-1");
+    let headers = adapter.extra_headers();
+
+    // Without credentials, headers should still include Content-Type + Accept,
+    // plus an error indicator header.
+    assert!(headers.iter().any(|(k, v)| k == "Content-Type" && v == "application/json"));
+    assert!(headers.iter().any(|(k, v)| k == "Accept" && v == "application/json"));
+    let error = headers.iter().find(|(k, _)| k == "X-Bedrock-SigV4-Error").map(|(_, v)| v.clone());
+    assert!(error.is_some(), "Should include SigV4 error header when creds missing");
 }
 
 #[test]

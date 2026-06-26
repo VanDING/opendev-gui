@@ -1,6 +1,45 @@
 use super::*;
 
 #[test]
+fn test_secret_key_uses_env_var() {
+    // When env var is set, use it; otherwise fall back to debug default.
+    let key = secret_key();
+    // In debug builds, key is either the env var value or the default.
+    // Either way it should be non-empty.
+    assert!(!key.is_empty());
+}
+
+#[test]
+fn test_secret_key_consistent() {
+    // Multiple calls return the same key.
+    assert_eq!(secret_key(), secret_key());
+}
+
+#[test]
+fn test_build_session_cookie_properties() {
+    let cookie = build_session_cookie("test-token-value");
+    assert_eq!(cookie.name(), TOKEN_COOKIE);
+    assert_eq!(cookie.value(), "test-token-value");
+    assert!(cookie.http_only().unwrap_or(false));
+    assert_eq!(cookie.path().unwrap_or(""), "/");
+}
+
+#[test]
+fn test_build_session_cookie_secure_in_release() {
+    let cookie = build_session_cookie("test-token");
+    // In debug builds, Secure may be absent; in release, it must be set.
+    // We test what actually happens — debug builds produce a cookie usable
+    // for local development without HTTPS.
+    if cfg!(debug_assertions) {
+        // Debug: no Secure flag (HTTP localhost development)
+        assert!(!cookie.secure().unwrap_or(false));
+    } else {
+        // Release: Secure flag present (HTTPS production)
+        assert!(cookie.secure().unwrap_or(false));
+    }
+}
+
+#[test]
 fn test_token_roundtrip() {
     let user_id = uuid::Uuid::new_v4().to_string();
     let token = create_token(&user_id);

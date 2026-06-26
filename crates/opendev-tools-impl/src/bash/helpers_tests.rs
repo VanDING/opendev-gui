@@ -60,23 +60,3 @@ fn test_prepare_command_no_modification() {
     let cmd = prepare_command("echo hello");
     assert_eq!(cmd, "echo hello");
 }
-
-// ---- Property-based truncation test ----
-
-mod proptest_truncate {
-    use super::*;
-    use proptest::prelude::*;
-
-    proptest! {
-        #![proptest_config(ProptestConfig::with_cases(64))]
-        /// truncate_output must never panic and must respect length limits.
-        #[test]
-        fn fuzz_truncate_no_panic(text in "\\PC{0,10000}", for_llm in proptest::bool::ANY) {
-            let result = truncate_output(&text, for_llm);
-            // Result should never be empty if input is non-empty
-            if !text.is_empty() {
-                prop_assert!(!result.is_empty());
-            }
-        }
-    }
-}

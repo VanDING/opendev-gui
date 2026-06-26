@@ -24,7 +24,7 @@ fn test_subagent_event_variants() {
 
 #[tokio::test]
 async fn test_channel_progress_callback() {
-    let (tx, mut rx) = mpsc::unbounded_channel();
+    let (tx, mut rx) = mpsc::channel(16);
     let cb = ChannelProgressCallback::new(tx, "test-id".into(), None);
 
     use opendev_agents::SubagentProgressCallback;
@@ -47,7 +47,7 @@ async fn test_channel_progress_callback() {
 #[tokio::test]
 async fn test_bridge_to_channel_end_to_end() {
     // Verify the full chain: SubagentEventBridge → ChannelProgressCallback → channel
-    let (tx, mut rx) = mpsc::unbounded_channel();
+    let (tx, mut rx) = mpsc::channel(16);
     let subagent_id = "test-sa-id".to_string();
     let cb: Arc<dyn opendev_agents::SubagentProgressCallback> =
         Arc::new(ChannelProgressCallback::new(tx, subagent_id.clone(), None));
