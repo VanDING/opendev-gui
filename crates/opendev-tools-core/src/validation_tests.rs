@@ -23,11 +23,7 @@ fn test_validate_required_missing() {
     let args = HashMap::new();
     let result = validate_args(&args, &schema);
     assert!(result.is_err());
-    assert!(
-        result
-            .unwrap_err()
-            .contains("Missing required parameter: 'name'")
-    );
+    assert!(result.unwrap_err().contains("Missing required parameter: 'name'"));
 }
 
 #[test]
@@ -107,10 +103,7 @@ fn test_validate_type_object_ok() {
 
 #[test]
 fn test_validate_enum_ok() {
-    let schema = make_schema(
-        json!({"mode": {"type": "string", "enum": ["fast", "slow"]}}),
-        vec![],
-    );
+    let schema = make_schema(json!({"mode": {"type": "string", "enum": ["fast", "slow"]}}), vec![]);
     let mut args = HashMap::new();
     args.insert("mode".into(), json!("fast"));
     assert!(validate_args(&args, &schema).is_ok());
@@ -118,19 +111,12 @@ fn test_validate_enum_ok() {
 
 #[test]
 fn test_validate_enum_invalid() {
-    let schema = make_schema(
-        json!({"mode": {"type": "string", "enum": ["fast", "slow"]}}),
-        vec![],
-    );
+    let schema = make_schema(json!({"mode": {"type": "string", "enum": ["fast", "slow"]}}), vec![]);
     let mut args = HashMap::new();
     args.insert("mode".into(), json!("turbo"));
     let result = validate_args(&args, &schema);
     assert!(result.is_err());
-    assert!(
-        result
-            .unwrap_err()
-            .contains("not one of the allowed values")
-    );
+    assert!(result.unwrap_err().contains("not one of the allowed values"));
 }
 
 #[test]
@@ -233,10 +219,7 @@ fn test_detailed_error_has_path_and_message() {
 
 #[test]
 fn test_validate_min_length_ok() {
-    let schema = make_schema(
-        json!({"name": {"type": "string", "minLength": 1}}),
-        vec!["name"],
-    );
+    let schema = make_schema(json!({"name": {"type": "string", "minLength": 1}}), vec!["name"]);
     let mut args = HashMap::new();
     args.insert("name".into(), json!("hello"));
     assert!(validate_args(&args, &schema).is_ok());
@@ -244,10 +227,7 @@ fn test_validate_min_length_ok() {
 
 #[test]
 fn test_validate_min_length_empty_string_rejected() {
-    let schema = make_schema(
-        json!({"name": {"type": "string", "minLength": 1}}),
-        vec!["name"],
-    );
+    let schema = make_schema(json!({"name": {"type": "string", "minLength": 1}}), vec!["name"]);
     let mut args = HashMap::new();
     args.insert("name".into(), json!(""));
     let result = validate_args(&args, &schema);
@@ -297,10 +277,8 @@ fn test_validate_min_items_rejected() {
 
 #[test]
 fn test_validate_array_items_string_type() {
-    let schema = make_schema(
-        json!({"tags": {"type": "array", "items": {"type": "string"}}}),
-        vec![],
-    );
+    let schema =
+        make_schema(json!({"tags": {"type": "array", "items": {"type": "string"}}}), vec![]);
     let mut args = HashMap::new();
     args.insert("tags".into(), json!(["a", "b"]));
     assert!(validate_args(&args, &schema).is_ok());
@@ -308,10 +286,8 @@ fn test_validate_array_items_string_type() {
 
 #[test]
 fn test_validate_array_items_wrong_type() {
-    let schema = make_schema(
-        json!({"tags": {"type": "array", "items": {"type": "string"}}}),
-        vec![],
-    );
+    let schema =
+        make_schema(json!({"tags": {"type": "array", "items": {"type": "string"}}}), vec![]);
     let mut args = HashMap::new();
     args.insert("tags".into(), json!(["a", 42]));
     let result = validate_args(&args, &schema);
@@ -331,10 +307,7 @@ fn test_validate_array_items_min_length() {
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert!(err.contains("tags[1]"), "Expected tags[1] in: {err}");
-    assert!(
-        err.contains("below minimum"),
-        "Expected 'below minimum' in: {err}"
-    );
+    assert!(err.contains("below minimum"), "Expected 'below minimum' in: {err}");
 }
 
 // --- oneOf tests ---
@@ -363,10 +336,7 @@ fn test_validate_array_one_of_object_accepted() {
         vec![],
     );
     let mut args = HashMap::new();
-    args.insert(
-        "todos".into(),
-        json!([{"content": "Step A"}, {"content": "Step B"}]),
-    );
+    args.insert("todos".into(), json!([{"content": "Step A"}, {"content": "Step B"}]));
     assert!(validate_args(&args, &schema).is_ok());
 }
 
@@ -395,15 +365,9 @@ fn test_validate_array_one_of_empty_content_rejected() {
         vec![],
     );
     let mut args = HashMap::new();
-    args.insert(
-        "todos".into(),
-        json!([{"content": "Valid"}, {"content": ""}]),
-    );
+    args.insert("todos".into(), json!([{"content": "Valid"}, {"content": ""}]));
     let result = validate_args(&args, &schema);
-    assert!(
-        result.is_err(),
-        "Object with empty content should be rejected"
-    );
+    assert!(result.is_err(), "Object with empty content should be rejected");
 }
 
 #[test]
@@ -418,8 +382,5 @@ fn test_validate_array_one_of_missing_content_rejected() {
     let mut args = HashMap::new();
     args.insert("todos".into(), json!([{"status": "in_progress"}]));
     let result = validate_args(&args, &schema);
-    assert!(
-        result.is_err(),
-        "Object missing required 'content' should be rejected"
-    );
+    assert!(result.is_err(), "Object missing required 'content' should be rejected");
 }

@@ -9,9 +9,7 @@ pub struct TodoStateCollector {
 
 impl TodoStateCollector {
     pub fn new(interval: usize) -> Self {
-        Self {
-            cadence: CadenceGate::new(interval),
-        }
+        Self { cadence: CadenceGate::new(interval) }
     }
 }
 
@@ -45,11 +43,7 @@ impl ContextCollector for TodoStateCollector {
              Here are the existing tasks:\n\n{status}"
         );
 
-        Some(Attachment {
-            name: "todo_state",
-            content,
-            class: MessageClass::Nudge,
-        })
+        Some(Attachment { name: "todo_state", content, class: MessageClass::Nudge })
     }
 
     fn did_fire(&self, turn: usize) {

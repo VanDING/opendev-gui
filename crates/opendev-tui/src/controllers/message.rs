@@ -21,9 +21,7 @@ impl MessageController {
 
     /// Handle user message submission — adds it to the display state.
     pub fn handle_user_submit(&self, state: &mut AppState, text: &str) {
-        state
-            .messages
-            .push(DisplayMessage::new(DisplayRole::User, text));
+        state.messages.push(DisplayMessage::new(DisplayRole::User, text));
         // Reset scroll to follow new content
         state.scroll_offset = 0;
         state.user_scrolled = false;
@@ -41,9 +39,7 @@ impl MessageController {
             return;
         }
         // Start a new assistant message
-        state
-            .messages
-            .push(DisplayMessage::new(DisplayRole::Assistant, text));
+        state.messages.push(DisplayMessage::new(DisplayRole::Assistant, text));
     }
 
     /// Handle a complete agent message (non-streaming path or final message).

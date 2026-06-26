@@ -20,11 +20,7 @@ pub struct ToolPermission {
 
 impl Default for ToolPermission {
     fn default() -> Self {
-        Self {
-            enabled: true,
-            always_allow: false,
-            deny_patterns: Vec::new(),
-        }
+        Self { enabled: true, always_allow: false, deny_patterns: Vec::new() }
     }
 }
 
@@ -37,11 +33,10 @@ impl ToolPermission {
         if self.always_allow {
             return true;
         }
-        !self.deny_patterns.iter().any(|pattern| {
-            Regex::new(pattern)
-                .map(|re| re.is_match(target))
-                .unwrap_or(false)
-        })
+        !self
+            .deny_patterns
+            .iter()
+            .any(|pattern| Regex::new(pattern).map(|re| re.is_match(target)).unwrap_or(false))
     }
 }
 

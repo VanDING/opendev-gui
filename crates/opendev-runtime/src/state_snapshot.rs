@@ -104,16 +104,13 @@ impl SnapshotPersistence {
 
     /// Create a persistence manager using a custom directory (useful for tests).
     pub fn with_dir(dir: impl Into<PathBuf>) -> Self {
-        Self {
-            snapshot_dir: dir.into(),
-        }
+        Self { snapshot_dir: dir.into() }
     }
 
     /// Return the path where a session's snapshot would be stored.
     pub fn snapshot_path(&self, session_id: &str) -> PathBuf {
         let sanitized_id = session_id.replace(['/', '\\'], "_");
-        self.snapshot_dir
-            .join(format!("{sanitized_id}_{SNAPSHOT_FILENAME}"))
+        self.snapshot_dir.join(format!("{sanitized_id}_{SNAPSHOT_FILENAME}"))
     }
 
     /// Save a snapshot to disk atomically (write tmp then rename).
@@ -133,9 +130,8 @@ impl SnapshotPersistence {
             use std::os::unix::fs::OpenOptionsExt;
             let mut opts = std::fs::OpenOptions::new();
             opts.write(true).create_new(true).mode(0o600);
-            let mut file = opts
-                .open(&tmp_path)
-                .map_err(|e| format!("Failed to open tmp snapshot: {e}"))?;
+            let mut file =
+                opts.open(&tmp_path).map_err(|e| format!("Failed to open tmp snapshot: {e}"))?;
             file.write_all(json.as_bytes())
                 .map_err(|e| format!("Failed to write tmp snapshot: {e}"))?;
         }
@@ -144,9 +140,8 @@ impl SnapshotPersistence {
             use std::io::Write;
             let mut opts = std::fs::OpenOptions::new();
             opts.write(true).create_new(true);
-            let mut file = opts
-                .open(&tmp_path)
-                .map_err(|e| format!("Failed to open tmp snapshot: {e}"))?;
+            let mut file =
+                opts.open(&tmp_path).map_err(|e| format!("Failed to open tmp snapshot: {e}"))?;
             file.write_all(json.as_bytes())
                 .map_err(|e| format!("Failed to write tmp snapshot: {e}"))?;
         }

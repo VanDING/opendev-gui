@@ -32,11 +32,7 @@ pub struct WelcomePanelWidget<'a> {
 
 impl<'a> WelcomePanelWidget<'a> {
     pub fn new(state: &'a WelcomePanelState) -> Self {
-        Self {
-            state,
-            version: env!("CARGO_PKG_VERSION"),
-            mode: "NORMAL",
-        }
+        Self { state, version: env!("CARGO_PKG_VERSION"), mode: "NORMAL" }
     }
 
     pub fn version(mut self, version: &'a str) -> Self {
@@ -98,14 +94,7 @@ impl<'a> WelcomePanelWidget<'a> {
         };
 
         // Top: ╭───╮
-        Self::put(
-            buf,
-            area,
-            bx,
-            by,
-            style_tokens::BOX_TL.chars().next().unwrap(),
-            border_color(0),
-        );
+        Self::put(buf, area, bx, by, style_tokens::BOX_TL.chars().next().unwrap(), border_color(0));
         for i in 1..bw - 1 {
             Self::put(
                 buf,
@@ -157,14 +146,7 @@ impl<'a> WelcomePanelWidget<'a> {
         let v = style_tokens::BOX_V.chars().next().unwrap();
         for j in 1..bh - 1 {
             Self::put(buf, area, bx, by + j, v, border_color(bw + j));
-            Self::put(
-                buf,
-                area,
-                bx + bw - 1,
-                by + j,
-                v,
-                border_color(2 * bw + bh + j),
-            );
+            Self::put(buf, area, bx + bw - 1, by + j, v, border_color(2 * bw + bh + j));
         }
     }
 

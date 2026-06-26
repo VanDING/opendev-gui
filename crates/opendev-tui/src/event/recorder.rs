@@ -37,26 +37,22 @@ impl RecordedEvent {
             AppEvent::Resize(w, h) => ("Resize".to_string(), serde_json::json!({"w": w, "h": h})),
             AppEvent::ScrollUp => ("ScrollUp".to_string(), serde_json::Value::Null),
             AppEvent::ScrollDown => ("ScrollDown".to_string(), serde_json::Value::Null),
-            AppEvent::MouseDown { col, row } => (
-                "MouseDown".to_string(),
-                serde_json::json!({"col": col, "row": row}),
-            ),
-            AppEvent::MouseDrag { col, row } => (
-                "MouseDrag".to_string(),
-                serde_json::json!({"col": col, "row": row}),
-            ),
-            AppEvent::MouseUp { col, row } => (
-                "MouseUp".to_string(),
-                serde_json::json!({"col": col, "row": row}),
-            ),
+            AppEvent::MouseDown { col, row } => {
+                ("MouseDown".to_string(), serde_json::json!({"col": col, "row": row}))
+            }
+            AppEvent::MouseDrag { col, row } => {
+                ("MouseDrag".to_string(), serde_json::json!({"col": col, "row": row}))
+            }
+            AppEvent::MouseUp { col, row } => {
+                ("MouseUp".to_string(), serde_json::json!({"col": col, "row": row}))
+            }
             AppEvent::FocusGained => ("FocusGained".to_string(), serde_json::Value::Null),
             AppEvent::Tick => ("Tick".to_string(), serde_json::Value::Null),
             AppEvent::AgentStarted => ("AgentStarted".to_string(), serde_json::Value::Null),
             AppEvent::AgentChunk(s) => ("AgentChunk".to_string(), serde_json::json!({"chunk": s})),
-            AppEvent::ReasoningContent(s) => (
-                "ReasoningContent".to_string(),
-                serde_json::json!({"content": s}),
-            ),
+            AppEvent::ReasoningContent(s) => {
+                ("ReasoningContent".to_string(), serde_json::json!({"content": s}))
+            }
             AppEvent::ReasoningBlockStart => {
                 ("ReasoningBlockStart".to_string(), serde_json::Value::Null)
             }
@@ -66,11 +62,7 @@ impl RecordedEvent {
             ),
             AppEvent::AgentFinished => ("AgentFinished".to_string(), serde_json::Value::Null),
             AppEvent::AgentError(e) => ("AgentError".to_string(), serde_json::json!({"error": e})),
-            AppEvent::ToolStarted {
-                tool_id,
-                tool_name,
-                args,
-            } => (
+            AppEvent::ToolStarted { tool_id, tool_name, args } => (
                 "ToolStarted".to_string(),
                 serde_json::json!({"tool_id": tool_id, "tool_name": tool_name, "args": args}),
             ),
@@ -78,13 +70,7 @@ impl RecordedEvent {
                 "ToolOutput".to_string(),
                 serde_json::json!({"tool_id": tool_id, "output": output}),
             ),
-            AppEvent::ToolResult {
-                tool_id,
-                tool_name,
-                output,
-                success,
-                args,
-            } => (
+            AppEvent::ToolResult { tool_id, tool_name, output, success, args } => (
                 "ToolResult".to_string(),
                 serde_json::json!({
                     "tool_id": tool_id,
@@ -98,11 +84,7 @@ impl RecordedEvent {
                 "ToolFinished".to_string(),
                 serde_json::json!({"tool_id": tool_id, "success": success}),
             ),
-            AppEvent::ToolApprovalRequired {
-                tool_id,
-                tool_name,
-                description,
-            } => (
+            AppEvent::ToolApprovalRequired { tool_id, tool_name, description } => (
                 "ToolApprovalRequired".to_string(),
                 serde_json::json!({
                     "tool_id": tool_id,
@@ -110,31 +92,22 @@ impl RecordedEvent {
                     "description": description,
                 }),
             ),
-            AppEvent::SubagentStarted {
-                subagent_id,
-                subagent_name,
-                task,
-                cancel_token: _,
-            } => (
+            AppEvent::SubagentStarted { subagent_id, subagent_name, task, cancel_token: _ } => (
                 "SubagentStarted".to_string(),
                 serde_json::json!({"subagent_id": subagent_id, "subagent_name": subagent_name, "task": task}),
             ),
-            AppEvent::SubagentToolCall {
-                subagent_id,
-                subagent_name,
-                tool_name,
-                tool_id,
-                args,
-            } => (
-                "SubagentToolCall".to_string(),
-                serde_json::json!({
-                    "subagent_id": subagent_id,
-                    "subagent_name": subagent_name,
-                    "tool_name": tool_name,
-                    "tool_id": tool_id,
-                    "args": args,
-                }),
-            ),
+            AppEvent::SubagentToolCall { subagent_id, subagent_name, tool_name, tool_id, args } => {
+                (
+                    "SubagentToolCall".to_string(),
+                    serde_json::json!({
+                        "subagent_id": subagent_id,
+                        "subagent_name": subagent_name,
+                        "tool_name": tool_name,
+                        "tool_id": tool_id,
+                        "args": args,
+                    }),
+                )
+            }
             AppEvent::SubagentToolComplete {
                 subagent_id,
                 subagent_name,
@@ -183,25 +156,17 @@ impl RecordedEvent {
                     "output_tokens": output_tokens,
                 }),
             ),
-            AppEvent::TaskProgressStarted { description } => (
-                "TaskProgressStarted".to_string(),
-                serde_json::json!({"description": description}),
-            ),
+            AppEvent::TaskProgressStarted { description } => {
+                ("TaskProgressStarted".to_string(), serde_json::json!({"description": description}))
+            }
             AppEvent::TaskProgressFinished => {
                 ("TaskProgressFinished".to_string(), serde_json::Value::Null)
             }
-            AppEvent::BudgetExhausted {
-                cost_usd,
-                budget_usd,
-            } => (
+            AppEvent::BudgetExhausted { cost_usd, budget_usd } => (
                 "BudgetExhausted".to_string(),
                 serde_json::json!({"cost_usd": cost_usd, "budget_usd": budget_usd}),
             ),
-            AppEvent::FileChangeSummary {
-                files,
-                additions,
-                deletions,
-            } => (
+            AppEvent::FileChangeSummary { files, additions, deletions } => (
                 "FileChangeSummary".to_string(),
                 serde_json::json!({"files": files, "additions": additions, "deletions": deletions}),
             ),
@@ -215,20 +180,11 @@ impl RecordedEvent {
                 "CompactionFinished".to_string(),
                 serde_json::json!({"success": success, "message": message}),
             ),
-            AppEvent::ToolApprovalRequested {
-                command,
-                working_dir,
-                ..
-            } => (
+            AppEvent::ToolApprovalRequested { command, working_dir, .. } => (
                 "ToolApprovalRequested".to_string(),
                 serde_json::json!({"command": command, "working_dir": working_dir}),
             ),
-            AppEvent::AskUserRequested {
-                question,
-                options,
-                default,
-                ..
-            } => (
+            AppEvent::AskUserRequested { question, options, default, .. } => (
                 "AskUserRequested".to_string(),
                 serde_json::json!({"question": question, "options": options, "default": default}),
             ),
@@ -246,10 +202,7 @@ impl RecordedEvent {
             AppEvent::AgentInterrupted => ("AgentInterrupted".to_string(), serde_json::Value::Null),
             AppEvent::ModeChanged(m) => ("ModeChanged".to_string(), serde_json::json!({"mode": m})),
             AppEvent::KillTask(id) => ("KillTask".to_string(), serde_json::json!({"task_id": id})),
-            AppEvent::AgentBackgrounded {
-                task_id,
-                query_summary,
-            } => (
+            AppEvent::AgentBackgrounded { task_id, query_summary } => (
                 "AgentBackgrounded".to_string(),
                 serde_json::json!({"task_id": task_id, "query_summary": query_summary}),
             ),
@@ -264,34 +217,26 @@ impl RecordedEvent {
                 "BackgroundAgentCompleted".to_string(),
                 serde_json::json!({"task_id": task_id, "success": success, "result_summary": result_summary, "full_result": full_result, "cost_usd": cost_usd, "tool_call_count": tool_call_count}),
             ),
-            AppEvent::BackgroundAgentProgress {
-                task_id,
-                tool_name,
-                tool_count,
-            } => (
+            AppEvent::BackgroundAgentProgress { task_id, tool_name, tool_count } => (
                 "BackgroundAgentProgress".to_string(),
                 serde_json::json!({"task_id": task_id, "tool_name": tool_name, "tool_count": tool_count}),
             ),
-            AppEvent::BackgroundAgentKilled { task_id } => (
-                "BackgroundAgentKilled".to_string(),
-                serde_json::json!({"task_id": task_id}),
-            ),
-            AppEvent::BackgroundNudge { content } => (
-                "BackgroundNudge".to_string(),
-                serde_json::json!({"content": content}),
-            ),
+            AppEvent::BackgroundAgentKilled { task_id } => {
+                ("BackgroundAgentKilled".to_string(), serde_json::json!({"task_id": task_id}))
+            }
+            AppEvent::BackgroundNudge { content } => {
+                ("BackgroundNudge".to_string(), serde_json::json!({"content": content}))
+            }
             AppEvent::BackgroundAgentActivity { task_id, line } => (
                 "BackgroundAgentActivity".to_string(),
                 serde_json::json!({"task_id": task_id, "line": line}),
             ),
-            AppEvent::SetBackgroundAgentToken { task_id, .. } => (
-                "SetBackgroundAgentToken".to_string(),
-                serde_json::json!({"task_id": task_id}),
-            ),
-            AppEvent::TurnCheckpointed { undo_depth } => (
-                "TurnCheckpointed".to_string(),
-                serde_json::json!({"undo_depth": undo_depth}),
-            ),
+            AppEvent::SetBackgroundAgentToken { task_id, .. } => {
+                ("SetBackgroundAgentToken".to_string(), serde_json::json!({"task_id": task_id}))
+            }
+            AppEvent::TurnCheckpointed { undo_depth } => {
+                ("TurnCheckpointed".to_string(), serde_json::json!({"undo_depth": undo_depth}))
+            }
             AppEvent::UndoResult { success, message } => (
                 "UndoResult".to_string(),
                 serde_json::json!({"success": success, "message": message}),
@@ -303,46 +248,30 @@ impl RecordedEvent {
             AppEvent::ShareResult { path } => {
                 ("ShareResult".to_string(), serde_json::json!({"path": path}))
             }
-            AppEvent::FileChanged { paths } => (
-                "FileChanged".to_string(),
-                serde_json::json!({"paths": paths}),
-            ),
+            AppEvent::FileChanged { paths } => {
+                ("FileChanged".to_string(), serde_json::json!({"paths": paths}))
+            }
             AppEvent::CostUpdate(cost) => {
                 ("CostUpdate".to_string(), serde_json::json!({"cost": cost}))
             }
             AppEvent::Quit => ("Quit".to_string(), serde_json::Value::Null),
-            AppEvent::SessionTitleUpdated(title) => (
-                "SessionTitleUpdated".to_string(),
-                serde_json::json!({"title": title}),
-            ),
-            AppEvent::TeamCreated {
-                team_id,
-                member_names,
-                ..
-            } => (
+            AppEvent::SessionTitleUpdated(title) => {
+                ("SessionTitleUpdated".to_string(), serde_json::json!({"title": title}))
+            }
+            AppEvent::TeamCreated { team_id, member_names, .. } => (
                 "TeamCreated".to_string(),
                 serde_json::json!({"team_id": team_id, "members": member_names}),
             ),
-            AppEvent::TeamMessageSent {
-                from,
-                to,
-                content_preview,
-            } => (
+            AppEvent::TeamMessageSent { from, to, content_preview } => (
                 "TeamMessageSent".to_string(),
                 serde_json::json!({"from": from, "to": to, "preview": content_preview}),
             ),
-            AppEvent::TeamDeleted { team_id } => (
-                "TeamDeleted".to_string(),
-                serde_json::json!({"team_id": team_id}),
-            ),
+            AppEvent::TeamDeleted { team_id } => {
+                ("TeamDeleted".to_string(), serde_json::json!({"team_id": team_id}))
+            }
         };
 
-        RecordedEvent {
-            seq,
-            timestamp_ms: elapsed_ms,
-            variant,
-            payload,
-        }
+        RecordedEvent { seq, timestamp_ms: elapsed_ms, variant, payload }
     }
 
     /// Try to reconstruct an `AppEvent` from a recorded event.
@@ -375,11 +304,7 @@ impl RecordedEvent {
                 let tool_name = self.payload.get("tool_name")?.as_str()?.to_string();
                 let args: std::collections::HashMap<String, serde_json::Value> =
                     serde_json::from_value(self.payload.get("args")?.clone()).ok()?;
-                Some(AppEvent::ToolStarted {
-                    tool_id,
-                    tool_name,
-                    args,
-                })
+                Some(AppEvent::ToolStarted { tool_id, tool_name, args })
             }
             "ToolOutput" => {
                 let tool_id = self.payload.get("tool_id")?.as_str()?.to_string();
@@ -393,13 +318,7 @@ impl RecordedEvent {
                 let success = self.payload.get("success")?.as_bool()?;
                 let args: std::collections::HashMap<String, serde_json::Value> =
                     serde_json::from_value(self.payload.get("args")?.clone()).ok()?;
-                Some(AppEvent::ToolResult {
-                    tool_id,
-                    tool_name,
-                    output,
-                    success,
-                    args,
-                })
+                Some(AppEvent::ToolResult { tool_id, tool_name, output, success, args })
             }
             "ToolFinished" => {
                 let tool_id = self.payload.get("tool_id")?.as_str()?.to_string();
@@ -410,11 +329,7 @@ impl RecordedEvent {
                 let tool_id = self.payload.get("tool_id")?.as_str()?.to_string();
                 let tool_name = self.payload.get("tool_name")?.as_str()?.to_string();
                 let description = self.payload.get("description")?.as_str()?.to_string();
-                Some(AppEvent::ToolApprovalRequired {
-                    tool_id,
-                    tool_name,
-                    description,
-                })
+                Some(AppEvent::ToolApprovalRequired { tool_id, tool_name, description })
             }
             "SubagentStarted" => {
                 let subagent_id = self.payload.get("subagent_id")?.as_str()?.to_string();
@@ -463,11 +378,8 @@ impl RecordedEvent {
                 let success = self.payload.get("success")?.as_bool()?;
                 let result_summary = self.payload.get("result_summary")?.as_str()?.to_string();
                 let tool_call_count = self.payload.get("tool_call_count")?.as_u64()? as usize;
-                let shallow_warning = self
-                    .payload
-                    .get("shallow_warning")
-                    .and_then(|v| v.as_str())
-                    .map(String::from);
+                let shallow_warning =
+                    self.payload.get("shallow_warning").and_then(|v| v.as_str()).map(String::from);
                 Some(AppEvent::SubagentFinished {
                     subagent_id,
                     subagent_name,
@@ -499,20 +411,13 @@ impl RecordedEvent {
             "BudgetExhausted" => {
                 let cost_usd = self.payload.get("cost_usd")?.as_f64()?;
                 let budget_usd = self.payload.get("budget_usd")?.as_f64()?;
-                Some(AppEvent::BudgetExhausted {
-                    cost_usd,
-                    budget_usd,
-                })
+                Some(AppEvent::BudgetExhausted { cost_usd, budget_usd })
             }
             "FileChangeSummary" => {
                 let files = self.payload.get("files")?.as_u64()? as usize;
                 let additions = self.payload.get("additions")?.as_u64()?;
                 let deletions = self.payload.get("deletions")?.as_u64()?;
-                Some(AppEvent::FileChangeSummary {
-                    files,
-                    additions,
-                    deletions,
-                })
+                Some(AppEvent::FileChangeSummary { files, additions, deletions })
             }
             "ContextUsage" => {
                 let pct = self.payload.get("pct")?.as_f64()?;
@@ -570,11 +475,7 @@ impl EventRecorder {
     /// Returns `None` if the file cannot be created.
     pub fn new(path: &Path) -> Option<Self> {
         let file = std::fs::File::create(path).ok()?;
-        Some(Self {
-            file: std::io::BufWriter::new(file),
-            seq: 0,
-            start: std::time::Instant::now(),
-        })
+        Some(Self { file: std::io::BufWriter::new(file), seq: 0, start: std::time::Instant::now() })
     }
 
     /// Create a recorder if `OPENDEV_DEBUG_EVENTS=1` is set.

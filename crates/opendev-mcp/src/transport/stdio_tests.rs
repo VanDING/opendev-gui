@@ -2,11 +2,8 @@ use super::*;
 
 #[test]
 fn test_stdio_transport_not_connected() {
-    let transport = StdioTransport::new(
-        "node".to_string(),
-        vec!["server.js".to_string()],
-        HashMap::new(),
-    );
+    let transport =
+        StdioTransport::new("node".to_string(), vec!["server.js".to_string()], HashMap::new());
     assert!(!transport.is_connected());
     assert_eq!(transport.command(), "node");
     assert_eq!(transport.args(), &["server.js"]);

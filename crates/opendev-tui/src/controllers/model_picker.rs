@@ -77,9 +77,7 @@ impl ModelPickerController {
             let mut provider_models: Vec<&ModelInfo> = provider.models.values().collect();
             // Sort: recommended first, then by context length descending
             provider_models.sort_by(|a, b| {
-                b.recommended
-                    .cmp(&a.recommended)
-                    .then(b.context_length.cmp(&a.context_length))
+                b.recommended.cmp(&a.recommended).then(b.context_length.cmp(&a.context_length))
             });
             for model in provider_models {
                 models.push(ModelOption {

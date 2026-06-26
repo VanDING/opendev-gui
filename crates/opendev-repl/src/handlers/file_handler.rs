@@ -28,9 +28,7 @@ pub struct FileHandler {
 impl FileHandler {
     /// Create a new file handler.
     pub fn new() -> Self {
-        Self {
-            read_files: std::sync::Mutex::new(std::collections::HashSet::new()),
-        }
+        Self { read_files: std::sync::Mutex::new(std::collections::HashSet::new()) }
     }
 
     /// Record that a file was read.
@@ -42,10 +40,7 @@ impl FileHandler {
 
     /// Check if a file was previously read.
     pub fn was_read(&self, path: &str) -> bool {
-        self.read_files
-            .lock()
-            .map(|set| set.contains(path))
-            .unwrap_or(false)
+        self.read_files.lock().map(|set| set.contains(path)).unwrap_or(false)
     }
 }
 
@@ -88,10 +83,7 @@ impl ToolHandler for FileHandler {
             output: output.map(|s| s.to_string()),
             error: error.map(|s| s.to_string()),
             success,
-            meta: HandlerMeta {
-                changed_files,
-                ..Default::default()
-            },
+            meta: HandlerMeta { changed_files, ..Default::default() },
         }
     }
 

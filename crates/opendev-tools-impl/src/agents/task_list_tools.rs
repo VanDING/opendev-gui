@@ -22,10 +22,7 @@ pub struct TeamAddTaskTool {
 
 impl TeamAddTaskTool {
     pub fn new(team_manager: Arc<TeamManager>, task_list: Arc<TeamTaskList>) -> Self {
-        Self {
-            team_manager,
-            task_list,
-        }
+        Self { team_manager, task_list }
     }
 }
 
@@ -88,11 +85,8 @@ impl BaseTool for TeamAddTaskTool {
 
         let mut task = TeamTask::new(title, description);
         if let Some(deps) = args.get("dependencies").and_then(|v| v.as_array()) {
-            task.dependencies = deps
-                .iter()
-                .filter_map(|v| v.as_str())
-                .map(|s| s.to_string())
-                .collect();
+            task.dependencies =
+                deps.iter().filter_map(|v| v.as_str()).map(|s| s.to_string()).collect();
         }
 
         match self.task_list.add_task(&team, task) {
@@ -110,10 +104,7 @@ impl TeamAddTaskTool {
         let teams = self.team_manager.list_teams();
         let filter = args.get("team_name").and_then(|v| v.as_str());
         if let Some(name) = filter {
-            teams
-                .iter()
-                .find(|t| t.name == name)
-                .map(|t| t.name.clone())
+            teams.iter().find(|t| t.name == name).map(|t| t.name.clone())
         } else {
             teams.first().map(|t| t.name.clone())
         }
@@ -133,10 +124,7 @@ pub struct TeamListTasksTool {
 
 impl TeamListTasksTool {
     pub fn new(team_manager: Arc<TeamManager>, task_list: Arc<TeamTaskList>) -> Self {
-        Self {
-            team_manager,
-            task_list,
-        }
+        Self { team_manager, task_list }
     }
 }
 
@@ -188,10 +176,7 @@ impl BaseTool for TeamListTasksTool {
             }
         };
 
-        let status_filter = args
-            .get("status_filter")
-            .and_then(|v| v.as_str())
-            .unwrap_or("all");
+        let status_filter = args.get("status_filter").and_then(|v| v.as_str()).unwrap_or("all");
 
         let tasks = match self.task_list.list_tasks(&team_name) {
             Ok(t) => t,
@@ -251,11 +236,7 @@ impl TeamClaimTaskTool {
         task_list: Arc<TeamTaskList>,
         agent_name: impl Into<String>,
     ) -> Self {
-        Self {
-            team_manager,
-            task_list,
-            agent_name: agent_name.into(),
-        }
+        Self { team_manager, task_list, agent_name: agent_name.into() }
     }
 }
 
@@ -303,18 +284,12 @@ impl BaseTool for TeamClaimTaskTool {
         };
 
         // Use explicit claimed_by from args if provided, fallback to self.agent_name
-        let claimer = args
-            .get("claimed_by")
-            .and_then(|v| v.as_str())
-            .unwrap_or(&self.agent_name);
+        let claimer = args.get("claimed_by").and_then(|v| v.as_str()).unwrap_or(&self.agent_name);
 
         let teams = self.team_manager.list_teams();
         let filter = args.get("team_name").and_then(|v| v.as_str());
         let team_name = if let Some(name) = filter {
-            teams
-                .iter()
-                .find(|t| t.name == name)
-                .map(|t| t.name.clone())
+            teams.iter().find(|t| t.name == name).map(|t| t.name.clone())
         } else {
             teams.first().map(|t| t.name.clone())
         };
@@ -351,10 +326,7 @@ pub struct TeamCompleteTaskTool {
 
 impl TeamCompleteTaskTool {
     pub fn new(team_manager: Arc<TeamManager>, task_list: Arc<TeamTaskList>) -> Self {
-        Self {
-            team_manager,
-            task_list,
-        }
+        Self { team_manager, task_list }
     }
 }
 
@@ -400,18 +372,12 @@ impl BaseTool for TeamCompleteTaskTool {
             Some(id) => id,
             None => return ToolResult::fail("Missing required parameter: task_id"),
         };
-        let success = args
-            .get("success")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(true);
+        let success = args.get("success").and_then(|v| v.as_bool()).unwrap_or(true);
 
         let teams = self.team_manager.list_teams();
         let filter = args.get("team_name").and_then(|v| v.as_str());
         let team_name = if let Some(name) = filter {
-            teams
-                .iter()
-                .find(|t| t.name == name)
-                .map(|t| t.name.clone())
+            teams.iter().find(|t| t.name == name).map(|t| t.name.clone())
         } else {
             teams.first().map(|t| t.name.clone())
         };

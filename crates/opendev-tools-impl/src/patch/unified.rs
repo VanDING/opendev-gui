@@ -74,11 +74,7 @@ pub(super) fn apply_patch_manually(patch: &str, cwd: &Path, strip: usize) -> Too
 
 pub(super) fn strip_path(path: &str, strip: usize) -> String {
     let parts: Vec<&str> = path.splitn(strip + 1, '/').collect();
-    if parts.len() > strip {
-        parts[strip..].join("/")
-    } else {
-        path.to_string()
-    }
+    if parts.len() > strip { parts[strip..].join("/") } else { path.to_string() }
 }
 
 pub(super) struct HunkBuilder {
@@ -93,10 +89,7 @@ pub(super) struct Hunk {
 
 impl HunkBuilder {
     fn build(self) -> Hunk {
-        Hunk {
-            old_start: self.old_start,
-            lines: self.lines,
-        }
+        Hunk { old_start: self.old_start, lines: self.lines }
     }
 }
 
@@ -109,10 +102,7 @@ pub(super) fn parse_hunk_header(line: &str) -> Option<HunkBuilder> {
     let old_range = parts[1].strip_prefix('-')?;
     let old_start: usize = old_range.split(',').next()?.parse().ok()?;
 
-    Some(HunkBuilder {
-        old_start,
-        lines: Vec::new(),
-    })
+    Some(HunkBuilder { old_start, lines: Vec::new() })
 }
 
 fn apply_hunks(cwd: &Path, file: &str, hunks: &[Hunk]) -> Result<(), String> {
@@ -159,11 +149,8 @@ fn apply_hunks(cwd: &Path, file: &str, hunks: &[Hunk]) -> Result<(), String> {
 
     let content = file_lines.join("\n");
     // Preserve trailing newline if original had one
-    let content = if original.ends_with('\n') && !content.ends_with('\n') {
-        content + "\n"
-    } else {
-        content
-    };
+    let content =
+        if original.ends_with('\n') && !content.ends_with('\n') { content + "\n" } else { content };
 
     std::fs::write(&path, content).map_err(|e| format!("Cannot write {file}: {e}"))
 }

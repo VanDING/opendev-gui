@@ -70,18 +70,9 @@ fn test_parse_plan_steps_empty() {
 
 #[test]
 fn test_extract_numbered_step_formats() {
-    assert_eq!(
-        extract_numbered_step("1. Do something"),
-        Some("Do something".into())
-    );
-    assert_eq!(
-        extract_numbered_step("12. Multi digit"),
-        Some("Multi digit".into())
-    );
-    assert_eq!(
-        extract_numbered_step("1) Paren format"),
-        Some("Paren format".into())
-    );
+    assert_eq!(extract_numbered_step("1. Do something"), Some("Do something".into()));
+    assert_eq!(extract_numbered_step("12. Multi digit"), Some("Multi digit".into()));
+    assert_eq!(extract_numbered_step("1) Paren format"), Some("Paren format".into()));
     assert_eq!(extract_numbered_step("Not a step"), None);
     assert_eq!(extract_numbered_step(""), None);
     assert_eq!(extract_numbered_step("  "), None);

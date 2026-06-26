@@ -15,11 +15,7 @@ pub struct SpinnerController {
 impl SpinnerController {
     /// Create a new inactive spinner.
     pub fn new() -> Self {
-        Self {
-            current_frame: 0,
-            message: String::new(),
-            active: false,
-        }
+        Self { current_frame: 0, message: String::new(), active: false }
     }
 
     /// Whether the spinner is currently active.

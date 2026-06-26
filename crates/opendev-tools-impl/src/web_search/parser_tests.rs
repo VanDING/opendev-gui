@@ -9,18 +9,12 @@ fn test_urlencoded() {
 
 #[test]
 fn test_extract_domain() {
-    assert_eq!(
-        extract_domain("https://www.example.com/page"),
-        Some("example.com".to_string())
-    );
+    assert_eq!(extract_domain("https://www.example.com/page"), Some("example.com".to_string()));
     assert_eq!(
         extract_domain("https://docs.rust-lang.org/book/"),
         Some("docs.rust-lang.org".to_string())
     );
-    assert_eq!(
-        extract_domain("http://localhost:8080/test"),
-        Some("localhost".to_string())
-    );
+    assert_eq!(extract_domain("http://localhost:8080/test"), Some("localhost".to_string()));
     assert_eq!(extract_domain("ftp://files.example.com"), None);
 }
 
@@ -73,19 +67,13 @@ fn test_html_decode() {
 #[test]
 fn test_urldecode() {
     assert_eq!(urldecode("hello%20world"), "hello world");
-    assert_eq!(
-        urldecode("https%3A%2F%2Fexample.com"),
-        "https://example.com"
-    );
+    assert_eq!(urldecode("https%3A%2F%2Fexample.com"), "https://example.com");
 }
 
 #[test]
 fn test_extract_redirect_url() {
     let url = "//duckduckgo.com/l/?uddg=https%3A%2F%2Fexample.com%2Fpage&rut=abc";
-    assert_eq!(
-        extract_redirect_url(url),
-        Some("https://example.com/page".to_string())
-    );
+    assert_eq!(extract_redirect_url(url), Some("https://example.com/page".to_string()));
 }
 
 #[test]

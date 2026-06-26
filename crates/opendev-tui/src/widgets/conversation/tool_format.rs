@@ -24,9 +24,7 @@ pub(crate) fn format_tool_call(tc: &DisplayToolCall, working_dir: Option<&str>) 
             Span::styled(format!("{icon} "), Style::default().fg(icon_color)),
             Span::styled(
                 "User answered Claude's questions:",
-                Style::default()
-                    .fg(style_tokens::PRIMARY)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(style_tokens::PRIMARY).add_modifier(Modifier::BOLD),
             ),
         ]);
     }
@@ -57,12 +55,5 @@ pub(crate) fn format_nested_tool_call(
         vec![Span::raw("     ")]
     };
 
-    tool_line_completed(
-        continuation_prefix,
-        tc.success,
-        verb,
-        arg,
-        None,
-        ToolLineStyle::Nested,
-    )
+    tool_line_completed(continuation_prefix, tc.success, verb, arg, None, ToolLineStyle::Nested)
 }

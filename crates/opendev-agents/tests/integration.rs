@@ -87,10 +87,7 @@ fn process_response_continues_on_failure() {
 /// check_iteration_limit returns false when unlimited.
 #[test]
 fn unlimited_iterations_never_hit_limit() {
-    let rl = ReactLoop::new(ReactLoopConfig {
-        max_iterations: None,
-        ..Default::default()
-    });
+    let rl = ReactLoop::new(ReactLoopConfig { max_iterations: None, ..Default::default() });
     assert!(!rl.check_iteration_limit(1));
     assert!(!rl.check_iteration_limit(10_000));
 }
@@ -185,14 +182,8 @@ fn extract_task_complete_defaults() {
 /// Error classification covers all known patterns.
 #[test]
 fn error_classification_covers_patterns() {
-    assert_eq!(
-        ReactLoop::classify_error("Permission denied"),
-        "permission_error"
-    );
-    assert_eq!(
-        ReactLoop::classify_error("old_content mismatch"),
-        "edit_mismatch"
-    );
+    assert_eq!(ReactLoop::classify_error("Permission denied"), "permission_error");
+    assert_eq!(ReactLoop::classify_error("old_content mismatch"), "edit_mismatch");
     assert_eq!(ReactLoop::classify_error("No such file"), "file_not_found");
     assert_eq!(ReactLoop::classify_error("SyntaxError"), "syntax_error");
     assert_eq!(ReactLoop::classify_error("429 Rate Limit"), "rate_limit");
@@ -421,16 +412,10 @@ fn response_cleaner_strips_all_token_types() {
     let cleaner = ResponseCleaner::new();
 
     // Chat template tokens
-    assert_eq!(
-        cleaner.clean(Some("Hello<|im_end|> world")),
-        Some("Hello world".to_string())
-    );
+    assert_eq!(cleaner.clean(Some("Hello<|im_end|> world")), Some("Hello world".to_string()));
 
     // Tool call tags
-    assert_eq!(
-        cleaner.clean(Some("<tool_call>content</tool_call>")),
-        Some("content".to_string())
-    );
+    assert_eq!(cleaner.clean(Some("<tool_call>content</tool_call>")), Some("content".to_string()));
 
     // Parameter tags
     assert_eq!(
@@ -473,10 +458,7 @@ fn prompt_composer_assembles_in_priority_order() {
     let identity_pos = prompt.find("You are an AI assistant.").unwrap();
     let security_pos = prompt.find("Security rules here.").unwrap();
     let tools_pos = prompt.find("Tool instructions here.").unwrap();
-    assert!(
-        identity_pos < security_pos,
-        "identity (1) before security (10)"
-    );
+    assert!(identity_pos < security_pos, "identity (1) before security (10)");
     assert!(security_pos < tools_pos, "security (10) before tools (50)");
 }
 
@@ -539,10 +521,7 @@ fn agent_deps_builder() {
         .with_context("session_id", serde_json::json!("s-123"));
 
     assert_eq!(deps.context.get("model"), Some(&serde_json::json!("gpt-4")));
-    assert_eq!(
-        deps.context.get("session_id"),
-        Some(&serde_json::json!("s-123"))
-    );
+    assert_eq!(deps.context.get("session_id"), Some(&serde_json::json!("s-123")));
 }
 
 // ========================================================================
@@ -643,11 +622,7 @@ fn doom_loop_varied_calls_no_detection() {
             "function": {"name": "read_file", "arguments": format!("{{\"path\": \"file{i}.rs\"}}")}
         });
         let (action, _) = det.check(&[tc]);
-        assert_eq!(
-            action,
-            DoomLoopAction::None,
-            "varied calls should not trigger"
-        );
+        assert_eq!(action, DoomLoopAction::None, "varied calls should not trigger");
     }
 }
 
@@ -702,16 +677,10 @@ fn all_embedded_templates_load() {
     use opendev_agents::prompts::embedded::{TEMPLATE_COUNT, TEMPLATES};
 
     assert_eq!(TEMPLATE_COUNT, TEMPLATES.len());
-    assert!(
-        TEMPLATE_COUNT >= 75,
-        "expected at least 75 templates, got {TEMPLATE_COUNT}"
-    );
+    assert!(TEMPLATE_COUNT >= 75, "expected at least 75 templates, got {TEMPLATE_COUNT}");
 
     for (key, content) in TEMPLATES.iter() {
-        assert!(
-            !content.is_empty(),
-            "embedded template '{key}' should not be empty"
-        );
+        assert!(!content.is_empty(), "embedded template '{key}' should not be empty");
     }
 }
 
@@ -763,10 +732,7 @@ fn prompt_variable_substitution() {
     let template = "Session: {{session_id}}, Model: {{model}}, Unknown: {{unknown}}";
     let result = substitute_variables(template, &vars);
 
-    assert_eq!(
-        result,
-        "Session: abc-123, Model: gpt-4o, Unknown: {{unknown}}"
-    );
+    assert_eq!(result, "Session: abc-123, Model: gpt-4o, Unknown: {{unknown}}");
 }
 
 // ========================================================================
@@ -806,10 +772,7 @@ fn load_builtin_skill_strips_frontmatter() {
     let skill = loader.load_skill("commit").unwrap();
     assert_eq!(skill.metadata.name, "commit");
     assert!(!skill.content.is_empty());
-    assert!(
-        !skill.content.starts_with("---"),
-        "frontmatter should be stripped"
-    );
+    assert!(!skill.content.starts_with("---"), "frontmatter should be stripped");
 }
 
 /// Project-local skills override builtins with the same name.
@@ -974,9 +937,7 @@ fn mock_llm_tool_call_dispatch() {
 
     // Process the iteration
     let mut no_tool_count = 0;
-    let result = rl
-        .process_iteration(&llm_response, &mut messages, 1, &mut no_tool_count)
-        .unwrap();
+    let result = rl.process_iteration(&llm_response, &mut messages, 1, &mut no_tool_count).unwrap();
 
     // Verify the result is a ToolCall
     match result {
@@ -984,9 +945,7 @@ fn mock_llm_tool_call_dispatch() {
             assert_eq!(tool_calls.len(), 1);
             let tc = &tool_calls[0];
             assert_eq!(
-                tc.get("function")
-                    .and_then(|f| f.get("name"))
-                    .and_then(|n| n.as_str()),
+                tc.get("function").and_then(|f| f.get("name")).and_then(|n| n.as_str()),
                 Some("read_file")
             );
             assert_eq!(tc.get("id").and_then(|v| v.as_str()), Some("tc-mock-001"));
@@ -1017,9 +976,8 @@ fn mock_llm_tool_call_dispatch() {
         completion_msg,
     );
 
-    let result2 = rl
-        .process_iteration(&completion_response, &mut messages, 2, &mut no_tool_count)
-        .unwrap();
+    let result2 =
+        rl.process_iteration(&completion_response, &mut messages, 2, &mut no_tool_count).unwrap();
 
     // Should be Complete
     match result2 {
@@ -1054,9 +1012,7 @@ fn mock_llm_task_complete_flow() {
     let mut messages = vec![serde_json::json!({"role": "user", "content": "Fix the tests"})];
     let mut no_tool_count = 0;
 
-    let result = rl
-        .process_iteration(&llm_response, &mut messages, 1, &mut no_tool_count)
-        .unwrap();
+    let result = rl.process_iteration(&llm_response, &mut messages, 1, &mut no_tool_count).unwrap();
 
     // process_iteration returns ToolCall; the caller detects task_complete
     match result {
@@ -1091,9 +1047,7 @@ fn mock_llm_parallel_tool_calls() {
     let mut messages = vec![serde_json::json!({"role": "user", "content": "explore"})];
     let mut no_tool_count = 0;
 
-    let result = rl
-        .process_iteration(&llm_response, &mut messages, 1, &mut no_tool_count)
-        .unwrap();
+    let result = rl.process_iteration(&llm_response, &mut messages, 1, &mut no_tool_count).unwrap();
 
     match result {
         TurnResult::ToolCall { ref tool_calls } => {

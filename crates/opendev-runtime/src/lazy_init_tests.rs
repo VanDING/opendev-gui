@@ -48,9 +48,8 @@ async fn test_lazy_init_only_once() {
 async fn test_lazy_fallible_init_success() {
     let lazy: LazySubsystem<String> = LazySubsystem::new("fallible");
 
-    let result: Result<&String, &str> = lazy
-        .get_or_try_init(|| async { Ok("success".to_string()) })
-        .await;
+    let result: Result<&String, &str> =
+        lazy.get_or_try_init(|| async { Ok("success".to_string()) }).await;
 
     assert_eq!(result.unwrap(), "success");
     assert!(lazy.is_initialized());

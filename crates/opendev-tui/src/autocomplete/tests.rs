@@ -112,29 +112,13 @@ fn test_engine_accept_when_hidden() {
 #[test]
 fn test_detect_trigger_slash_arg() {
     let result = detect_trigger("/mode pl");
-    assert_eq!(
-        result,
-        Some((
-            Trigger::SlashArg {
-                command: "mode".to_string()
-            },
-            "pl".to_string()
-        ))
-    );
+    assert_eq!(result, Some((Trigger::SlashArg { command: "mode".to_string() }, "pl".to_string())));
 }
 
 #[test]
 fn test_detect_trigger_slash_arg_empty() {
     let result = detect_trigger("/mode ");
-    assert_eq!(
-        result,
-        Some((
-            Trigger::SlashArg {
-                command: "mode".to_string()
-            },
-            String::new()
-        ))
-    );
+    assert_eq!(result, Some((Trigger::SlashArg { command: "mode".to_string() }, String::new())));
 }
 
 #[test]

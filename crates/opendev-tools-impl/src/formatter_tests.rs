@@ -76,11 +76,8 @@ fn test_format_file_nonexistent() {
 #[test]
 fn test_formatter_extensions_coverage() {
     // Verify common extensions are covered
-    let all_exts: Vec<&str> = FORMATTERS
-        .iter()
-        .flat_map(|f| f.extensions.iter())
-        .copied()
-        .collect();
+    let all_exts: Vec<&str> =
+        FORMATTERS.iter().flat_map(|f| f.extensions.iter()).copied().collect();
     assert!(all_exts.contains(&".rs"));
     assert!(all_exts.contains(&".py"));
     assert!(all_exts.contains(&".js"));
@@ -138,11 +135,7 @@ fn test_config_custom_formatter() {
         "my-fmt".to_string(),
         FormatterOverride {
             disabled: false,
-            command: vec![
-                "my-fmt".to_string(),
-                "--write".to_string(),
-                "$FILE".to_string(),
-            ],
+            command: vec!["my-fmt".to_string(), "--write".to_string(), "$FILE".to_string()],
             extensions: vec![".xyz".to_string()],
             environment: HashMap::new(),
         },
@@ -183,8 +176,5 @@ fn test_format_file_with_real_formatter() {
 
     // Verify the file was actually formatted
     let content = std::fs::read_to_string(&file_path).unwrap();
-    assert!(
-        content.contains("fn main()"),
-        "formatted code should still have fn main()"
-    );
+    assert!(content.contains("fn main()"), "formatted code should still have fn main()");
 }

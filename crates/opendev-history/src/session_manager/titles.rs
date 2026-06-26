@@ -22,9 +22,8 @@ pub fn generate_title_from_messages(messages: &[opendev_models::ChatMessage]) ->
 /// Otherwise, `(fork #1)` is appended.
 pub fn get_forked_title(title: &str) -> String {
     // Match trailing " (fork #N)" pattern
-    if let Some(caps) = regex::Regex::new(r"^(.+) \(fork #(\d+)\)$")
-        .ok()
-        .and_then(|re| re.captures(title))
+    if let Some(caps) =
+        regex::Regex::new(r"^(.+) \(fork #(\d+)\)$").ok().and_then(|re| re.captures(title))
     {
         let base = caps.get(1).map_or("", |m| m.as_str());
         let num: u32 = caps.get(2).map_or(1, |m| m.as_str().parse().unwrap_or(1));

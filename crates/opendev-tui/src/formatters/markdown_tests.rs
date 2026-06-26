@@ -50,33 +50,12 @@ fn test_nested_bullets() {
     let lines = MarkdownRenderer::render(md);
     assert_eq!(lines.len(), 3);
     // Check prefixes
-    let first: String = lines[0]
-        .spans
-        .iter()
-        .map(|s| s.content.to_string())
-        .collect();
-    assert!(
-        first.starts_with("  - "),
-        "top-level should start with '  - '"
-    );
-    let second: String = lines[1]
-        .spans
-        .iter()
-        .map(|s| s.content.to_string())
-        .collect();
-    assert!(
-        second.starts_with("    - "),
-        "nested should start with '    - '"
-    );
-    let third: String = lines[2]
-        .spans
-        .iter()
-        .map(|s| s.content.to_string())
-        .collect();
-    assert!(
-        third.starts_with("      - "),
-        "deep nested should start with '      - '"
-    );
+    let first: String = lines[0].spans.iter().map(|s| s.content.to_string()).collect();
+    assert!(first.starts_with("  - "), "top-level should start with '  - '");
+    let second: String = lines[1].spans.iter().map(|s| s.content.to_string()).collect();
+    assert!(second.starts_with("    - "), "nested should start with '    - '");
+    let third: String = lines[2].spans.iter().map(|s| s.content.to_string()).collect();
+    assert!(third.starts_with("      - "), "deep nested should start with '      - '");
 }
 
 #[test]
@@ -84,17 +63,9 @@ fn test_ordered_list() {
     let md = "1. first\n2. second\n3. third";
     let lines = MarkdownRenderer::render(md);
     assert_eq!(lines.len(), 3);
-    let first: String = lines[0]
-        .spans
-        .iter()
-        .map(|s| s.content.to_string())
-        .collect();
+    let first: String = lines[0].spans.iter().map(|s| s.content.to_string()).collect();
     assert!(first.contains("1. "));
-    let second: String = lines[1]
-        .spans
-        .iter()
-        .map(|s| s.content.to_string())
-        .collect();
+    let second: String = lines[1].spans.iter().map(|s| s.content.to_string()).collect();
     assert!(second.contains("2. "));
 }
 
@@ -104,10 +75,7 @@ fn test_bullet_with_inline_formatting() {
     let lines = MarkdownRenderer::render(md);
     assert_eq!(lines.len(), 1);
     // Should have more than 2 spans (prefix + inline formatted content)
-    assert!(
-        lines[0].spans.len() > 2,
-        "bullet content should preserve inline formatting"
-    );
+    assert!(lines[0].spans.len() > 2, "bullet content should preserve inline formatting");
 }
 
 #[test]
@@ -149,20 +117,14 @@ fn test_bold_with_code_inside() {
     let text: String = spans.iter().map(|s| s.content.as_ref()).collect();
     assert_eq!(text, "bold code more");
     // "bold " should be bold
-    let bold_span = spans
-        .iter()
-        .find(|s| s.content.as_ref() == "bold ")
-        .unwrap();
+    let bold_span = spans.iter().find(|s| s.content.as_ref() == "bold ").unwrap();
     assert!(bold_span.style.add_modifier.contains(Modifier::BOLD));
     // "code" should have code styling and bold
     let code_span = spans.iter().find(|s| s.content.as_ref() == "code").unwrap();
     assert!(code_span.style.add_modifier.contains(Modifier::BOLD));
     assert_eq!(code_span.style.fg, Some(MdPalette::default().code_fg));
     // " more" should be bold
-    let more_span = spans
-        .iter()
-        .find(|s| s.content.as_ref() == " more")
-        .unwrap();
+    let more_span = spans.iter().find(|s| s.content.as_ref() == " more").unwrap();
     assert!(more_span.style.add_modifier.contains(Modifier::BOLD));
 }
 
@@ -185,10 +147,7 @@ fn test_italic_text() {
     let spans = parse_inline_spans("this is *italic* text");
     let text: String = spans.iter().map(|s| s.content.as_ref()).collect();
     assert_eq!(text, "this is italic text");
-    let italic_span = spans
-        .iter()
-        .find(|s| s.content.as_ref() == "italic")
-        .unwrap();
+    let italic_span = spans.iter().find(|s| s.content.as_ref() == "italic").unwrap();
     assert!(italic_span.style.add_modifier.contains(Modifier::ITALIC));
 }
 
@@ -199,10 +158,7 @@ fn test_bold_and_italic() {
     assert_eq!(text, "bold and italic");
     let bold_span = spans.iter().find(|s| s.content.as_ref() == "bold").unwrap();
     assert!(bold_span.style.add_modifier.contains(Modifier::BOLD));
-    let italic_span = spans
-        .iter()
-        .find(|s| s.content.as_ref() == "italic")
-        .unwrap();
+    let italic_span = spans.iter().find(|s| s.content.as_ref() == "italic").unwrap();
     assert!(italic_span.style.add_modifier.contains(Modifier::ITALIC));
 }
 
@@ -211,10 +167,7 @@ fn test_unmatched_bold_renders_literally() {
     let spans = parse_inline_spans("this **has no closing");
     let text: String = spans.iter().map(|s| s.content.as_ref()).collect();
     // Should contain ** literally since it's unmatched
-    assert!(
-        text.contains("**"),
-        "unmatched ** should render literally, got: {text}"
-    );
+    assert!(text.contains("**"), "unmatched ** should render literally, got: {text}");
 }
 
 #[test]
@@ -222,10 +175,7 @@ fn test_triple_star_bold_italic() {
     let spans = parse_inline_spans("***bold italic***");
     let text: String = spans.iter().map(|s| s.content.as_ref()).collect();
     assert_eq!(text, "bold italic");
-    let styled = spans
-        .iter()
-        .find(|s| s.content.as_ref() == "bold italic")
-        .unwrap();
+    let styled = spans.iter().find(|s| s.content.as_ref() == "bold italic").unwrap();
     assert!(styled.style.add_modifier.contains(Modifier::BOLD));
     assert!(styled.style.add_modifier.contains(Modifier::ITALIC));
 }
@@ -236,10 +186,7 @@ fn test_multi_backtick_code_span() {
     let spans = parse_inline_spans("use ``code with `backtick` inside`` here");
     let text: String = spans.iter().map(|s| s.content.as_ref()).collect();
     assert_eq!(text, "use code with `backtick` inside here");
-    let code_span = spans
-        .iter()
-        .find(|s| s.content.as_ref().contains("`backtick`"))
-        .unwrap();
+    let code_span = spans.iter().find(|s| s.content.as_ref().contains("`backtick`")).unwrap();
     assert_eq!(code_span.style.fg, Some(MdPalette::default().code_fg));
 }
 
@@ -250,10 +197,7 @@ fn test_bold_italic_nested() {
     let text: String = spans.iter().map(|s| s.content.as_ref()).collect();
     assert_eq!(text, "bold and italic text");
     // "and italic" should be bold+italic
-    let both = spans
-        .iter()
-        .find(|s| s.content.as_ref() == "and italic")
-        .unwrap();
+    let both = spans.iter().find(|s| s.content.as_ref() == "and italic").unwrap();
     assert!(both.style.add_modifier.contains(Modifier::BOLD));
     assert!(both.style.add_modifier.contains(Modifier::ITALIC));
 }

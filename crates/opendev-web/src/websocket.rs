@@ -133,14 +133,8 @@ async fn handle_client_message(
 
 /// Handle a query message from a WebSocket client.
 async fn handle_query(state: &AppState, data: &serde_json::Value) {
-    let message = data
-        .get("data")
-        .and_then(|d| d.get("message"))
-        .and_then(|m| m.as_str());
-    let session_id = data
-        .get("data")
-        .and_then(|d| d.get("session_id"))
-        .and_then(|s| s.as_str());
+    let message = data.get("data").and_then(|d| d.get("message")).and_then(|m| m.as_str());
+    let session_id = data.get("data").and_then(|d| d.get("session_id")).and_then(|s| s.as_str());
 
     let message = match message {
         Some(m) if !m.trim().is_empty() => m.trim(),
@@ -181,10 +175,7 @@ async fn handle_query(state: &AppState, data: &serde_json::Value) {
             }),
         ));
 
-        match state
-            .try_inject_message(&session_id, message.to_string())
-            .await
-        {
+        match state.try_inject_message(&session_id, message.to_string()).await {
             Ok(()) => {}
             Err(e) => {
                 state.broadcast(WsBroadcast::new(
@@ -200,10 +191,7 @@ async fn handle_query(state: &AppState, data: &serde_json::Value) {
 
     // If session is already running, inject into live queue.
     if state.is_session_running(&session_id).await {
-        match state
-            .try_inject_message(&session_id, message.to_string())
-            .await
-        {
+        match state.try_inject_message(&session_id, message.to_string()).await {
             Ok(()) => {
                 state.broadcast(WsBroadcast::new(
                     WsMessageType::UserMessage.as_str().to_string(),
@@ -244,9 +232,8 @@ async fn handle_query(state: &AppState, data: &serde_json::Value) {
         let message_owned = message.to_string();
         let session_id_owned = session_id.clone();
         tokio::spawn(async move {
-            if let Err(e) = executor
-                .execute_query(message_owned, session_id_owned, state_clone)
-                .await
+            if let Err(e) =
+                executor.execute_query(message_owned, session_id_owned, state_clone).await
             {
                 error!("Agent executor error: {}", e);
             }
@@ -262,18 +249,9 @@ async fn handle_query(state: &AppState, data: &serde_json::Value) {
 /// Handle an approval response from a WebSocket client.
 async fn handle_approval(state: &AppState, data: &serde_json::Value) {
     let approval_data = data.get("data").cloned().unwrap_or_default();
-    let approval_id = approval_data
-        .get("approvalId")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
-    let approved = approval_data
-        .get("approved")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(false);
-    let auto_approve = approval_data
-        .get("autoApprove")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(false);
+    let approval_id = approval_data.get("approvalId").and_then(|v| v.as_str()).unwrap_or("");
+    let approved = approval_data.get("approved").and_then(|v| v.as_bool()).unwrap_or(false);
+    let auto_approve = approval_data.get("autoApprove").and_then(|v| v.as_bool()).unwrap_or(false);
 
     if approval_id.is_empty() {
         state.broadcast(WsBroadcast::new(
@@ -283,9 +261,7 @@ async fn handle_approval(state: &AppState, data: &serde_json::Value) {
         return;
     }
 
-    let resolved = state
-        .resolve_approval(approval_id, approved, auto_approve)
-        .await;
+    let resolved = state.resolve_approval(approval_id, approved, auto_approve).await;
 
     if let Some(approval) = resolved {
         info!("Approval {} resolved: approved={}", approval_id, approved);
@@ -305,15 +281,9 @@ async fn handle_approval(state: &AppState, data: &serde_json::Value) {
 /// Handle an ask-user response from a WebSocket client.
 async fn handle_ask_user_response(state: &AppState, data: &serde_json::Value) {
     let response_data = data.get("data").cloned().unwrap_or_default();
-    let request_id = response_data
-        .get("requestId")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
+    let request_id = response_data.get("requestId").and_then(|v| v.as_str()).unwrap_or("");
     let answers = response_data.get("answers").cloned();
-    let cancelled = response_data
-        .get("cancelled")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(false);
+    let cancelled = response_data.get("cancelled").and_then(|v| v.as_bool()).unwrap_or(false);
 
     if request_id.is_empty() {
         state.broadcast(WsBroadcast::new(
@@ -342,20 +312,10 @@ async fn handle_ask_user_response(state: &AppState, data: &serde_json::Value) {
 /// Handle a plan approval response from a WebSocket client.
 async fn handle_plan_approval_response(state: &AppState, data: &serde_json::Value) {
     let response_data = data.get("data").cloned().unwrap_or_default();
-    let request_id = response_data
-        .get("requestId")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
-    let action = response_data
-        .get("action")
-        .and_then(|v| v.as_str())
-        .unwrap_or("reject")
-        .to_string();
-    let feedback = response_data
-        .get("feedback")
-        .and_then(|v| v.as_str())
-        .unwrap_or("")
-        .to_string();
+    let request_id = response_data.get("requestId").and_then(|v| v.as_str()).unwrap_or("");
+    let action =
+        response_data.get("action").and_then(|v| v.as_str()).unwrap_or("reject").to_string();
+    let feedback = response_data.get("feedback").and_then(|v| v.as_str()).unwrap_or("").to_string();
 
     if request_id.is_empty() {
         state.broadcast(WsBroadcast::new(
@@ -365,9 +325,7 @@ async fn handle_plan_approval_response(state: &AppState, data: &serde_json::Valu
         return;
     }
 
-    let resolved = state
-        .resolve_plan_approval(request_id, action.clone(), feedback)
-        .await;
+    let resolved = state.resolve_plan_approval(request_id, action.clone(), feedback).await;
 
     if let Some(plan_approval) = resolved {
         info!("Plan approval {} resolved: action={}", request_id, action);
@@ -403,11 +361,8 @@ async fn handle_sync(
     data: &serde_json::Value,
     direct_tx: &tokio::sync::mpsc::Sender<WsBroadcast>,
 ) {
-    let last_seq = data
-        .get("data")
-        .and_then(|d| d.get("last_seq"))
-        .and_then(|v| v.as_u64())
-        .unwrap_or(0);
+    let last_seq =
+        data.get("data").and_then(|d| d.get("last_seq")).and_then(|v| v.as_u64()).unwrap_or(0);
 
     debug!("Sync requested with last_seq={}", last_seq);
 

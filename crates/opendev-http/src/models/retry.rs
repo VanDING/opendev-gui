@@ -192,9 +192,7 @@ pub(super) fn extract_error_message(body: &serde_json::Value) -> Option<String> 
         return Some(msg.to_string());
     }
     // Generic message field
-    body.get("message")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
+    body.get("message").and_then(|v| v.as_str()).map(|s| s.to_string())
 }
 
 #[cfg(test)]

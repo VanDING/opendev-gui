@@ -25,9 +25,7 @@ pub struct PromptLoader {
 impl PromptLoader {
     /// Create a new loader rooted at the given templates directory.
     pub fn new(templates_dir: impl Into<PathBuf>) -> Self {
-        Self {
-            templates_dir: templates_dir.into(),
-        }
+        Self { templates_dir: templates_dir.into() }
     }
 
     /// Get the path to a prompt file.

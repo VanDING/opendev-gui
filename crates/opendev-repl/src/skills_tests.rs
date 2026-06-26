@@ -58,14 +58,8 @@ fn test_url_to_cache_filename_deterministic() {
 
 #[test]
 fn test_extract_name_from_url() {
-    assert_eq!(
-        extract_name_from_url("https://example.com/my-skill.md"),
-        "my skill"
-    );
-    assert_eq!(
-        extract_name_from_url("https://example.com/repo/commit_helper.md"),
-        "commit helper"
-    );
+    assert_eq!(extract_name_from_url("https://example.com/my-skill.md"), "my skill");
+    assert_eq!(extract_name_from_url("https://example.com/repo/commit_helper.md"), "commit helper");
 }
 
 #[test]
@@ -88,11 +82,7 @@ fn test_load_skill_invalid_url() {
 fn test_load_skill_from_file() {
     let dir = TempDir::new().unwrap();
     let path = dir.path().join("test-skill.md");
-    std::fs::write(
-        &path,
-        "# Test Skill\n\nA test skill.\n\n## Steps\n\n1. Step one\n",
-    )
-    .unwrap();
+    std::fs::write(&path, "# Test Skill\n\nA test skill.\n\n## Steps\n\n1. Step one\n").unwrap();
 
     let skill = load_skill_from_file(&path).unwrap();
     assert_eq!(skill.name, "Test Skill");

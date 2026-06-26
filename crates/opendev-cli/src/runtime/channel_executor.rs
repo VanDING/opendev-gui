@@ -74,10 +74,7 @@ impl AgentExecutor for ChannelAgentExecutor {
         runtime.resolve_mcp_instructions().await;
         let system_prompt = runtime.compose_system_prompt();
 
-        match runtime
-            .run_query(message_text, &system_prompt, None, None, false)
-            .await
-        {
+        match runtime.run_query(message_text, &system_prompt, None, None, false).await {
             Ok(result) => Ok(result.content),
             Err(e) => {
                 error!(session_id, error = %e, "Agent execution failed");

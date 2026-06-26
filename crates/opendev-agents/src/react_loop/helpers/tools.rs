@@ -45,21 +45,14 @@ impl ReactLoop {
             .and_then(|s| s.as_str())
             .unwrap_or("Task completed")
             .to_string();
-        let status = args
-            .get("status")
-            .and_then(|s| s.as_str())
-            .unwrap_or("success")
-            .to_string();
+        let status = args.get("status").and_then(|s| s.as_str()).unwrap_or("success").to_string();
 
         (summary, status)
     }
 
     /// Format a tool execution result into a string for the message history.
     pub fn format_tool_result(_tool_name: &str, result: &Value) -> String {
-        let success = result
-            .get("success")
-            .and_then(|s| s.as_bool())
-            .unwrap_or(false);
+        let success = result.get("success").and_then(|s| s.as_bool()).unwrap_or(false);
 
         let base = if success {
             let output = result
@@ -76,10 +69,8 @@ impl ReactLoop {
                 output.to_string()
             }
         } else {
-            let error = result
-                .get("error")
-                .and_then(|e| e.as_str())
-                .unwrap_or("Tool execution failed");
+            let error =
+                result.get("error").and_then(|e| e.as_str()).unwrap_or("Tool execution failed");
             format!("Error: {error}")
         };
 

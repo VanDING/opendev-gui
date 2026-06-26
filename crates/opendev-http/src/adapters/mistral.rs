@@ -24,16 +24,12 @@ pub struct MistralAdapter {
 impl MistralAdapter {
     /// Create a new Mistral adapter with the default API URL.
     pub fn new() -> Self {
-        Self {
-            api_url: DEFAULT_API_URL.to_string(),
-        }
+        Self { api_url: DEFAULT_API_URL.to_string() }
     }
 
     /// Create with a custom API URL.
     pub fn with_url(url: impl Into<String>) -> Self {
-        Self {
-            api_url: url.into(),
-        }
+        Self { api_url: url.into() }
     }
 
     /// Normalize tool calls in the response.
@@ -97,9 +93,7 @@ impl super::base::ProviderAdapter for MistralAdapter {
     fn convert_request(&self, mut payload: Value) -> Value {
         Self::clean_request(&mut payload);
         // Strip internal reasoning effort field
-        payload
-            .as_object_mut()
-            .map(|obj| obj.remove("_reasoning_effort"));
+        payload.as_object_mut().map(|obj| obj.remove("_reasoning_effort"));
         payload
     }
 

@@ -26,11 +26,7 @@ pub(super) async fn get_session_model(
         .load_session(&id)
         .map_err(|e| WebError::NotFound(format!("Session {} not found: {}", id, e)))?;
 
-    let overlay = session
-        .metadata
-        .get("session_model")
-        .cloned()
-        .unwrap_or(serde_json::json!({}));
+    let overlay = session.metadata.get("session_model").cloned().unwrap_or(serde_json::json!({}));
 
     Ok(Json(overlay))
 }
@@ -67,10 +63,7 @@ pub(super) async fn update_session_model(
     }
 
     // Store overlay in session metadata.
-    session.metadata.insert(
-        "session_model".to_string(),
-        serde_json::Value::Object(overlay),
-    );
+    session.metadata.insert("session_model".to_string(), serde_json::Value::Object(overlay));
 
     mgr.save_session(&session)
         .map_err(|e| WebError::Internal(format!("Failed to save session: {}", e)))?;

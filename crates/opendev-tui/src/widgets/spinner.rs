@@ -56,12 +56,7 @@ pub struct SpinnerState {
 impl SpinnerState {
     /// Create a new spinner state starting at frame 0.
     pub fn new() -> Self {
-        Self {
-            frame_index: 0,
-            tick_count: 0,
-            verb_index: 0,
-            verb_tick: 0,
-        }
+        Self { frame_index: 0, tick_count: 0, verb_index: 0, verb_tick: 0 }
     }
 
     /// Advance to the next frame and return the current character.

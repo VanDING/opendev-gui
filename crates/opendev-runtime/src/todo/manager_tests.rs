@@ -32,11 +32,7 @@ fn test_todo_manager_basic() {
 
 #[test]
 fn test_todo_manager_from_steps() {
-    let steps = vec![
-        "Set up project".to_string(),
-        "Write code".to_string(),
-        "Test".to_string(),
-    ];
+    let steps = vec!["Set up project".to_string(), "Write code".to_string(), "Test".to_string()];
     let mgr = TodoManager::from_steps(&steps);
     assert_eq!(mgr.total(), 3);
     let items = mgr.all();
@@ -115,18 +111,8 @@ fn test_add_with_status() {
 fn test_write_todos() {
     let mut mgr = TodoManager::from_steps(&["Old".into()]);
     mgr.write_todos(vec![
-        (
-            "New A".into(),
-            TodoStatus::Pending,
-            String::new(),
-            Vec::new(),
-        ),
-        (
-            "New B".into(),
-            TodoStatus::InProgress,
-            "Working on B".into(),
-            Vec::new(),
-        ),
+        ("New A".into(), TodoStatus::Pending, String::new(), Vec::new()),
+        ("New B".into(), TodoStatus::InProgress, "Working on B".into(), Vec::new()),
     ]);
     assert_eq!(mgr.total(), 2);
     assert_eq!(mgr.get(1).unwrap().title, "New A");
@@ -142,21 +128,15 @@ fn test_write_todos_with_children() {
             TodoStatus::Pending,
             "Implementing auth".into(),
             vec![
-                SubTodoItem {
-                    title: "Add login endpoint".into(),
-                },
-                SubTodoItem {
-                    title: "Add token validation".into(),
-                },
+                SubTodoItem { title: "Add login endpoint".into() },
+                SubTodoItem { title: "Add token validation".into() },
             ],
         ),
         (
             "Write tests".into(),
             TodoStatus::Pending,
             "Writing tests".into(),
-            vec![SubTodoItem {
-                title: "Unit tests".into(),
-            }],
+            vec![SubTodoItem { title: "Unit tests".into() }],
         ),
     ]);
     // total() counts only parents
@@ -175,16 +155,8 @@ fn test_write_todos_with_children() {
 #[test]
 fn test_get_active_todo_message() {
     let mut mgr = TodoManager::new();
-    mgr.add_with_status(
-        "Task".into(),
-        TodoStatus::InProgress,
-        "Doing task".into(),
-        Vec::new(),
-    );
-    assert_eq!(
-        mgr.get_active_todo_message(),
-        Some("Doing task".to_string())
-    );
+    mgr.add_with_status("Task".into(), TodoStatus::InProgress, "Doing task".into(), Vec::new());
+    assert_eq!(mgr.get_active_todo_message(), Some("Doing task".to_string()));
 }
 
 #[test]
@@ -316,18 +288,8 @@ fn test_write_todos_after_interrupt() {
 
     // Write entirely new todos
     mgr.write_todos(vec![
-        (
-            "New X".into(),
-            TodoStatus::Pending,
-            String::new(),
-            Vec::new(),
-        ),
-        (
-            "New Y".into(),
-            TodoStatus::InProgress,
-            "Working on Y".into(),
-            Vec::new(),
-        ),
+        ("New X".into(), TodoStatus::Pending, String::new(), Vec::new()),
+        ("New Y".into(), TodoStatus::InProgress, "Working on Y".into(), Vec::new()),
     ]);
 
     assert_eq!(mgr.total(), 2);

@@ -27,10 +27,7 @@ fn select_runner(
     match SubagentType::from_name(&spec.name) {
         SubagentType::CodeExplorer => {
             let max_iterations = spec.max_steps.unwrap_or(100) as usize;
-            Box::new(SimpleReactRunner::new(
-                max_iterations,
-                std::time::Duration::from_secs(600),
-            ))
+            Box::new(SimpleReactRunner::new(max_iterations, std::time::Duration::from_secs(600)))
         }
         _ => {
             // Default to 25 iterations for non-Explorer agents (matches old behavior)
@@ -77,9 +74,7 @@ impl SubagentManager {
 
         // Block spawning disabled agents.
         if spec.disable {
-            return Err(AgentError::ConfigError(format!(
-                "Agent '{subagent_name}' is disabled"
-            )));
+            return Err(AgentError::ConfigError(format!("Agent '{subagent_name}' is disabled")));
         }
 
         info!(
@@ -94,17 +89,11 @@ impl SubagentManager {
         progress.on_started(&spec.name, task);
 
         // Determine model: model_override > spec.model > parent_model
-        let model = model_override
-            .or(spec.model.as_deref())
-            .unwrap_or(parent_model)
-            .to_string();
+        let model = model_override.or(spec.model.as_deref()).unwrap_or(parent_model).to_string();
 
         // Build restricted tool list (if specified)
-        let mut allowed_tools = if spec.has_tool_restriction() {
-            Some(spec.tools.clone())
-        } else {
-            None
-        };
+        let mut allowed_tools =
+            if spec.has_tool_restriction() { Some(spec.tools.clone()) } else { None };
 
         // Remove tools that have blanket deny in permission rules.
         // These are completely hidden from the LLM so it won't even attempt them.
@@ -138,10 +127,7 @@ impl SubagentManager {
             ));
 
             // Inject project structure into system prompt for Explore
-            if matches!(
-                SubagentType::from_name(&spec.name),
-                SubagentType::CodeExplorer
-            ) {
+            if matches!(SubagentType::from_name(&spec.name), SubagentType::CodeExplorer) {
                 let structure = scan_project_structure(wd, 3);
                 if !structure.is_empty() {
                     let top_dirs = scan_top_level_dirs(wd);
@@ -167,10 +153,7 @@ impl SubagentManager {
                 parts.push("\n\n# Project Instructions\n".to_string());
                 for instr in &instructions {
                     let filename = instr.path.file_name().unwrap_or_default().to_string_lossy();
-                    parts.push(format!(
-                        "## {} ({})\n{}",
-                        filename, instr.scope, instr.content
-                    ));
+                    parts.push(format!("## {} ({})\n{}", filename, instr.scope, instr.content));
                 }
             }
             parts.join("\n")
@@ -215,10 +198,7 @@ impl SubagentManager {
         tool_context.cancel_token = cancel_token;
 
         // Wire event bridge so subagent tool calls are visible to the TUI
-        let bridge = Arc::new(SubagentEventBridge::new(
-            spec.name.clone(),
-            Arc::clone(&progress),
-        ));
+        let bridge = Arc::new(SubagentEventBridge::new(spec.name.clone(), Arc::clone(&progress)));
 
         // Select the runner based on subagent type
         let runner = select_runner(spec, task);
@@ -280,11 +260,7 @@ impl SubagentManager {
                 };
                 progress.on_finished(&spec.name, agent_result.success, &summary);
 
-                Ok(SubagentRunResult {
-                    agent_result,
-                    tool_call_count,
-                    shallow_warning,
-                })
+                Ok(SubagentRunResult { agent_result, tool_call_count, shallow_warning })
             }
             Err(e) => {
                 let err_msg = e.to_string();

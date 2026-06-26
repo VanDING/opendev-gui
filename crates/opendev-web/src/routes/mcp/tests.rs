@@ -13,13 +13,7 @@ fn make_state_with_workdir(work_dir: &str) -> AppState {
     let config = AppConfig::default();
     let user_store = opendev_http::UserStore::new(tmp_path).unwrap();
     let model_registry = opendev_config::ModelRegistry::new();
-    AppState::new(
-        session_manager,
-        config,
-        work_dir.to_string(),
-        user_store,
-        model_registry,
-    )
+    AppState::new(session_manager, config, work_dir.to_string(), user_store, model_registry)
 }
 
 #[tokio::test]
@@ -29,19 +23,12 @@ async fn test_list_servers_empty() {
 
     let app = crate::server::build_app(state, None);
     let response = app
-        .oneshot(
-            Request::builder()
-                .uri("/api/mcp/servers")
-                .body(Body::empty())
-                .unwrap(),
-        )
+        .oneshot(Request::builder().uri("/api/mcp/servers").body(Body::empty()).unwrap())
         .await
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     // May or may not have servers depending on user's ~/.opendev/mcp.json
     assert!(json["servers"].is_array());
@@ -55,10 +42,7 @@ async fn test_get_server_not_found() {
     let app = crate::server::build_app(state, None);
     let response = app
         .oneshot(
-            Request::builder()
-                .uri("/api/mcp/servers/nonexistent")
-                .body(Body::empty())
-                .unwrap(),
+            Request::builder().uri("/api/mcp/servers/nonexistent").body(Body::empty()).unwrap(),
         )
         .await
         .unwrap();
@@ -103,18 +87,13 @@ async fn test_create_and_get_server() {
     let app = crate::server::build_app(state.clone(), None);
     let response = app
         .oneshot(
-            Request::builder()
-                .uri("/api/mcp/servers/test-server")
-                .body(Body::empty())
-                .unwrap(),
+            Request::builder().uri("/api/mcp/servers/test-server").body(Body::empty()).unwrap(),
         )
         .await
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["name"], "test-server");
     assert_eq!(json["config"]["command"], "uvx");

@@ -2,10 +2,7 @@ use super::*;
 use tempfile::TempDir;
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 #[tokio::test]
@@ -22,10 +19,7 @@ async fn test_write_file_basic() {
 
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
-    assert_eq!(
-        std::fs::read_to_string(&file_path).unwrap(),
-        "hello\nworld\n"
-    );
+    assert_eq!(std::fs::read_to_string(&file_path).unwrap(), "hello\nworld\n");
 }
 
 #[tokio::test]
@@ -42,10 +36,7 @@ async fn test_write_creates_parent_dirs() {
 
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
-    assert_eq!(
-        std::fs::read_to_string(&file_path).unwrap(),
-        "nested content"
-    );
+    assert_eq!(std::fs::read_to_string(&file_path).unwrap(), "nested content");
 }
 
 #[tokio::test]

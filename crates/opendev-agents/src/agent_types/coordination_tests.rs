@@ -226,10 +226,7 @@ fn test_partial_result_from_interrupted_state() {
     let partial =
         PartialResult::from_interrupted_state(&messages, Some("I was analyzing..."), 3, 2, 5);
     assert_eq!(partial.completed_tool_results.len(), 2);
-    assert_eq!(
-        partial.last_assistant_content.as_deref(),
-        Some("I was analyzing...")
-    );
+    assert_eq!(partial.last_assistant_content.as_deref(), Some("I was analyzing..."));
     assert_eq!(partial.interrupted_at_iteration, 3);
     assert_eq!(partial.completed_tool_count, 2);
     assert_eq!(partial.total_tool_count, 5);

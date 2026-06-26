@@ -10,31 +10,11 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 // ── Colors ─────────────────────────────────────────────────────────────────
 
-const ACCENT: Color = Color::Rgb {
-    r: 130,
-    g: 160,
-    b: 255,
-};
-const DIM_COLOR: Color = Color::Rgb {
-    r: 100,
-    g: 110,
-    b: 120,
-};
-const SUCCESS_COLOR: Color = Color::Rgb {
-    r: 106,
-    g: 209,
-    b: 143,
-};
-const ERROR_COLOR: Color = Color::Rgb {
-    r: 255,
-    g: 92,
-    b: 87,
-};
-const TITLE_COLOR: Color = Color::Rgb {
-    r: 0,
-    g: 200,
-    b: 200,
-};
+const ACCENT: Color = Color::Rgb { r: 130, g: 160, b: 255 };
+const DIM_COLOR: Color = Color::Rgb { r: 100, g: 110, b: 120 };
+const SUCCESS_COLOR: Color = Color::Rgb { r: 106, g: 209, b: 143 };
+const ERROR_COLOR: Color = Color::Rgb { r: 255, g: 92, b: 87 };
+const TITLE_COLOR: Color = Color::Rgb { r: 0, g: 200, b: 200 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -300,10 +280,7 @@ pub fn rail_spinner_start(message: &str) -> SpinnerHandle {
         let _ = stdout.flush();
     });
 
-    SpinnerHandle {
-        running,
-        thread: Some(handle),
-    }
+    SpinnerHandle { running, thread: Some(handle) }
 }
 
 /// Handle returned by `rail_spinner_start` to stop the spinner.

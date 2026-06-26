@@ -128,10 +128,7 @@ fn test_resolve_file_path_tilde_redundant() {
     fs::create_dir(&project).unwrap();
 
     let result = resolve_file_path("~/nonexistent_dir_xyz/file.rs", &project);
-    assert!(
-        !result.to_string_lossy().contains('~'),
-        "tilde should be expanded: {result:?}"
-    );
+    assert!(!result.to_string_lossy().contains('~'), "tilde should be expanded: {result:?}");
 }
 
 // ---- resolve_dir_path ----
@@ -226,10 +223,7 @@ fn test_resolve_dir_path_tilde_expanded() {
     fs::create_dir(&project).unwrap();
 
     let result = resolve_dir_path("~/nonexistent_dir_xyz", &project);
-    assert!(
-        !result.to_string_lossy().contains('~'),
-        "tilde should be expanded: {result:?}"
-    );
+    assert!(!result.to_string_lossy().contains('~'), "tilde should be expanded: {result:?}");
 }
 
 // ---- hallucinated prefix tests ----

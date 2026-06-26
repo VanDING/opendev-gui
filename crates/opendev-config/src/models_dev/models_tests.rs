@@ -41,16 +41,9 @@ fn test_model_info_pricing() {
         supports_temperature: true,
         api_type: "chat".to_string(),
     };
-    assert_eq!(
-        model.format_pricing(),
-        "$1.50 in / $2.00 out per million tokens"
-    );
+    assert_eq!(model.format_pricing(), "$1.50 in / $2.00 out per million tokens");
 
-    let free = ModelInfo {
-        pricing_input: 0.0,
-        pricing_output: 0.0,
-        ..model.clone()
-    };
+    let free = ModelInfo { pricing_input: 0.0, pricing_output: 0.0, ..model.clone() };
     assert_eq!(free.format_pricing(), "N/A");
 }
 

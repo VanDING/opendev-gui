@@ -105,10 +105,7 @@ fn test_tool_timeout_config_default() {
 
 #[test]
 fn test_tool_context_with_timeout_config() {
-    let config = ToolTimeoutConfig {
-        idle_timeout_secs: 30,
-        max_timeout_secs: 300,
-    };
+    let config = ToolTimeoutConfig { idle_timeout_secs: 30, max_timeout_secs: 300 };
     let ctx = ToolContext::new(std::env::temp_dir().join("project")).with_timeout_config(config);
     assert!(ctx.timeout_config.is_some());
     let tc = ctx.timeout_config.unwrap();
@@ -222,10 +219,7 @@ fn test_default_is_destructive() {
 #[test]
 fn test_default_is_concurrent_safe_delegates_to_is_read_only() {
     let args = HashMap::new();
-    assert_eq!(
-        DefaultTestTool.is_concurrent_safe(&args),
-        DefaultTestTool.is_read_only(&args)
-    );
+    assert_eq!(DefaultTestTool.is_concurrent_safe(&args), DefaultTestTool.is_read_only(&args));
 }
 
 #[test]
@@ -250,10 +244,7 @@ fn test_default_is_enabled() {
 
 #[test]
 fn test_default_interrupt_behavior() {
-    assert_eq!(
-        DefaultTestTool.interrupt_behavior(),
-        InterruptBehavior::Cancel
-    );
+    assert_eq!(DefaultTestTool.interrupt_behavior(), InterruptBehavior::Cancel);
 }
 
 #[test]
@@ -284,27 +275,18 @@ fn test_validation_error_display_with_path() {
         path: "file_path".to_string(),
         message: "Missing required parameter: 'file_path'".to_string(),
     };
-    assert_eq!(
-        err.to_string(),
-        "file_path: Missing required parameter: 'file_path'"
-    );
+    assert_eq!(err.to_string(), "file_path: Missing required parameter: 'file_path'");
 }
 
 #[test]
 fn test_validation_error_display_root_path() {
-    let err = ValidationError {
-        path: "root".to_string(),
-        message: "Invalid object".to_string(),
-    };
+    let err = ValidationError { path: "root".to_string(), message: "Invalid object".to_string() };
     assert_eq!(err.to_string(), "Invalid object");
 }
 
 #[test]
 fn test_validation_error_display_empty_path() {
-    let err = ValidationError {
-        path: String::new(),
-        message: "Something is wrong".to_string(),
-    };
+    let err = ValidationError { path: String::new(), message: "Something is wrong".to_string() };
     assert_eq!(err.to_string(), "Something is wrong");
 }
 
@@ -314,8 +296,5 @@ fn test_validation_error_display_nested_path() {
         path: "invocations.0.tool".to_string(),
         message: "expected type 'string', got number".to_string(),
     };
-    assert_eq!(
-        err.to_string(),
-        "invocations.0.tool: expected type 'string', got number"
-    );
+    assert_eq!(err.to_string(), "invocations.0.tool: expected type 'string', got number");
 }

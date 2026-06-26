@@ -52,10 +52,7 @@ pub struct ToolCall {
 
 impl ToolCall {
     pub fn new(name: impl Into<String>, arguments: serde_json::Value) -> Self {
-        Self {
-            name: name.into(),
-            arguments,
-        }
+        Self { name: name.into(), arguments }
     }
 }
 
@@ -79,11 +76,7 @@ impl ParallelPolicy {
         tools: &[&dyn BaseTool],
     ) -> Vec<Vec<usize>> {
         if tool_calls.len() <= 1 {
-            return if tool_calls.is_empty() {
-                vec![]
-            } else {
-                vec![vec![0]]
-            };
+            return if tool_calls.is_empty() { vec![] } else { vec![vec![0]] };
         }
 
         let mut groups: Vec<Vec<usize>> = Vec::new();
@@ -97,10 +90,7 @@ impl ParallelPolicy {
                     HashMap::new()
                 };
 
-            let is_safe = tools
-                .get(i)
-                .map(|t| t.is_concurrent_safe(&args))
-                .unwrap_or(false);
+            let is_safe = tools.get(i).map(|t| t.is_concurrent_safe(&args)).unwrap_or(false);
 
             if is_safe {
                 current_concurrent.push(i);
@@ -124,11 +114,7 @@ impl ParallelPolicy {
     /// **Deprecated:** Prefer `partition_with_tools()` which uses trait methods.
     pub fn partition(tool_calls: &[ToolCall]) -> Vec<Vec<usize>> {
         if tool_calls.len() <= 1 {
-            return if tool_calls.is_empty() {
-                vec![]
-            } else {
-                vec![vec![0]]
-            };
+            return if tool_calls.is_empty() { vec![] } else { vec![vec![0]] };
         }
 
         let ro_tools = read_only_tools();

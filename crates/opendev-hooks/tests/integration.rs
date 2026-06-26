@@ -37,9 +37,7 @@ async fn pre_tool_hook_blocks_with_exit_2_and_json_reason() {
     );
     let manager = HookManager::new(config, "sess-block", "/tmp");
 
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("bash"), None).await;
 
     assert!(outcome.blocked, "exit code 2 should block");
     assert!(!outcome.allowed());
@@ -50,34 +48,21 @@ async fn pre_tool_hook_blocks_with_exit_2_and_json_reason() {
 /// Pre-tool hook with regex matcher should only block matching tools.
 #[tokio::test]
 async fn pre_tool_hook_regex_matcher_selectively_blocks() {
-    let config = make_config(
-        HookEvent::PreToolUse,
-        Some(r"^(bash|write_file)$"),
-        "exit 2",
-    );
+    let config = make_config(HookEvent::PreToolUse, Some(r"^(bash|write_file)$"), "exit 2");
     let manager = HookManager::new(config, "sess-regex", "/tmp");
 
     // bash matches -> blocked
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("bash"), None).await;
     assert!(outcome.blocked);
 
     // write_file matches -> blocked
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("write_file"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("write_file"), None).await;
     assert!(outcome.blocked);
 
     // read_file does NOT match -> allowed
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("read_file"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("read_file"), None).await;
     assert!(outcome.allowed());
-    assert!(
-        outcome.results.is_empty(),
-        "no hooks should run for non-matching tool"
-    );
+    assert!(outcome.results.is_empty(), "no hooks should run for non-matching tool");
 }
 
 // ========================================================================
@@ -95,15 +80,10 @@ async fn post_tool_hook_injects_additional_context() {
     );
     let manager = HookManager::new(config, "sess-ctx", "/tmp");
 
-    let outcome = manager
-        .run_hooks(HookEvent::PostToolUse, Some("edit_file"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PostToolUse, Some("edit_file"), None).await;
 
     assert!(outcome.allowed());
-    assert_eq!(
-        outcome.additional_context.as_deref(),
-        Some("Remember to run tests after editing")
-    );
+    assert_eq!(outcome.additional_context.as_deref(), Some("Remember to run tests after editing"));
     assert_eq!(outcome.decision.as_deref(), Some("ok"));
 }
 
@@ -117,9 +97,7 @@ async fn post_tool_hook_provides_updated_input() {
     );
     let manager = HookManager::new(config, "sess-input", "/tmp");
 
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("bash"), None).await;
 
     assert!(outcome.allowed());
     let updated = outcome.updated_input.unwrap();
@@ -139,9 +117,7 @@ async fn hook_timeout_kills_long_running_command() {
 
     let manager = HookManager::new(config, "sess-timeout", "/tmp");
 
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("bash"), None).await;
 
     // Timeout should not block (exit code from kill is not 2)
     assert!(outcome.allowed());
@@ -186,24 +162,18 @@ async fn hook_config_from_json_with_regex_matching() {
 
     // PreToolUse with bash -> matcher fires
     assert!(manager.has_hooks_for(HookEvent::PreToolUse));
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("bash"), None).await;
     assert!(outcome.allowed());
     assert_eq!(outcome.results.len(), 1);
     assert_eq!(outcome.results[0].stdout.trim(), "matched");
 
     // PreToolUse with read_file -> matcher does NOT fire
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("read_file"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("read_file"), None).await;
     assert!(outcome.results.is_empty());
 
     // PostToolUse catch-all fires for everything
     assert!(manager.has_hooks_for(HookEvent::PostToolUse));
-    let outcome = manager
-        .run_hooks(HookEvent::PostToolUse, Some("anything"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PostToolUse, Some("anything"), None).await;
     assert_eq!(outcome.results.len(), 1);
     assert_eq!(outcome.results[0].stdout.trim(), "post");
 }
@@ -230,9 +200,7 @@ async fn multiple_hooks_short_circuit_on_block() {
     );
 
     let manager = HookManager::new(config, "sess-sc", "/tmp");
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("bash"), None).await;
 
     assert!(outcome.blocked);
     assert_eq!(outcome.block_reason, "first blocks");
@@ -256,9 +224,7 @@ async fn stdin_payload_includes_all_fields() {
         "custom_field": 42
     });
 
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("bash"), Some(&event_data))
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("bash"), Some(&event_data)).await;
 
     let stdout = &outcome.results[0].stdout;
     let parsed: serde_json::Value = serde_json::from_str(stdout).unwrap();
@@ -289,11 +255,8 @@ fn all_hook_events_roundtrip() {
 /// Tool events are correctly classified.
 #[test]
 fn tool_events_classified_correctly() {
-    let tool_events = [
-        HookEvent::PreToolUse,
-        HookEvent::PostToolUse,
-        HookEvent::PostToolUseFailure,
-    ];
+    let tool_events =
+        [HookEvent::PreToolUse, HookEvent::PostToolUse, HookEvent::PostToolUseFailure];
     for event in &tool_events {
         assert!(event.is_tool_event());
         assert!(!event.is_subagent_event());
@@ -306,9 +269,7 @@ async fn hook_error_exit_code_does_not_block() {
     let config = make_config(HookEvent::PostToolUse, None, "exit 1");
     let manager = HookManager::new(config, "sess-err", "/tmp");
 
-    let outcome = manager
-        .run_hooks(HookEvent::PostToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PostToolUse, Some("bash"), None).await;
 
     assert!(outcome.allowed(), "exit 1 should NOT block");
     assert_eq!(outcome.results.len(), 1);

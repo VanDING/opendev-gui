@@ -16,10 +16,7 @@ fn test_api_url_default() {
 #[test]
 fn test_api_url_custom() {
     let adapter = MistralAdapter::with_url("https://my-proxy.com/v1/chat/completions");
-    assert_eq!(
-        adapter.api_url(),
-        "https://my-proxy.com/v1/chat/completions"
-    );
+    assert_eq!(adapter.api_url(), "https://my-proxy.com/v1/chat/completions");
 }
 
 #[test]
@@ -150,9 +147,8 @@ fn test_normalize_tool_calls_object_arguments() {
     });
     let result = adapter.convert_response(response);
 
-    let args = result["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"]
-        .as_str()
-        .unwrap();
+    let args =
+        result["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"].as_str().unwrap();
     // Should be serialized to a JSON string
     let parsed: Value = serde_json::from_str(args).unwrap();
     assert_eq!(parsed["path"], "test.txt");

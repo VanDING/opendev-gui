@@ -46,11 +46,7 @@ impl BedrockAdapter {
         let model_id = model_id.into();
         let region = std::env::var("AWS_REGION").unwrap_or_else(|_| DEFAULT_REGION.to_string());
         let api_url = Self::build_url(&region, &model_id);
-        Self {
-            region,
-            model_id,
-            api_url,
-        }
+        Self { region, model_id, api_url }
     }
 
     /// Create a new Bedrock adapter with a custom region.
@@ -58,11 +54,7 @@ impl BedrockAdapter {
         let model_id = model_id.into();
         let region = region.into();
         let api_url = Self::build_url(&region, &model_id);
-        Self {
-            region,
-            model_id,
-            api_url,
-        }
+        Self { region, model_id, api_url }
     }
 
     /// Build the Bedrock InvokeModel URL.
@@ -115,9 +107,7 @@ impl super::base::ProviderAdapter for BedrockAdapter {
 
     fn convert_request(&self, mut payload: Value) -> Value {
         // Strip internal reasoning effort field (Bedrock doesn't support it)
-        payload
-            .as_object_mut()
-            .map(|obj| obj.remove("_reasoning_effort"));
+        payload.as_object_mut().map(|obj| obj.remove("_reasoning_effort"));
 
         request::extract_system(&mut payload);
         request::convert_tools(&mut payload);

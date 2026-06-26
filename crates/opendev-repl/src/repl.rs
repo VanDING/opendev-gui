@@ -190,10 +190,7 @@ impl Repl {
     fn print_welcome(&self) {
         println!("OpenDev -- AI-powered coding assistant");
         println!("Type /help for commands, /exit to quit.");
-        println!(
-            "Mode: {} | Autonomy: {}",
-            self.state.mode, self.state.autonomy_level
-        );
+        println!("Mode: {} | Autonomy: {}", self.state.mode, self.state.autonomy_level);
         println!();
     }
 
@@ -234,12 +231,7 @@ impl Repl {
 
         let result = self
             .query_processor
-            .process(
-                query,
-                &mut self.session_manager,
-                &self.tool_registry,
-                plan_requested,
-            )
+            .process(query, &mut self.session_manager, &self.tool_registry, plan_requested)
             .await?;
 
         self.state.last_operation_summary = result.operation_summary;
@@ -259,10 +251,8 @@ impl Repl {
         info!("Cleaning up REPL resources");
 
         // Persist mode settings into session metadata before saving
-        self.session_manager
-            .set_metadata("mode", &self.state.mode.to_string());
-        self.session_manager
-            .set_metadata("autonomy_level", &self.state.autonomy_level.to_string());
+        self.session_manager.set_metadata("mode", &self.state.mode.to_string());
+        self.session_manager.set_metadata("autonomy_level", &self.state.autonomy_level.to_string());
 
         if let Err(e) = self.session_manager.save_current() {
             warn!(error = %e, "Failed to save session on exit");

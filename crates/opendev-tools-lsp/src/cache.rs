@@ -31,10 +31,8 @@ struct CacheEntry {
 
 impl CacheEntry {
     fn is_expired(&self, ttl: Duration) -> bool {
-        let now = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs();
+        let now =
+            SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap_or_default().as_secs();
         now.saturating_sub(self.created_at) >= ttl.as_secs()
     }
 
@@ -64,11 +62,7 @@ impl SymbolCache {
             warn!("Failed to create cache dir {}: {}", dir.display(), e);
         }
 
-        Self {
-            memory: HashMap::new(),
-            cache_dir,
-            ttl,
-        }
+        Self { memory: HashMap::new(), cache_dir, ttl }
     }
 
     /// Get cached symbols for a workspace + query, if not expired.
@@ -101,16 +95,10 @@ impl SymbolCache {
 
     /// Store symbols in cache.
     pub async fn put(&mut self, workspace: &Path, query: &str, symbols: Vec<UnifiedSymbolInfo>) {
-        let now = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs();
+        let now =
+            SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap_or_default().as_secs();
 
-        let entry = CacheEntry {
-            symbols,
-            created_at: now,
-            version: CACHE_VERSION,
-        };
+        let entry = CacheEntry { symbols, created_at: now, version: CACHE_VERSION };
 
         let key = (workspace.to_path_buf(), query.to_string());
         self.save_to_disk(workspace, query, &entry).await;

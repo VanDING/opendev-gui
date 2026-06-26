@@ -156,11 +156,7 @@ fn test_discover_opendev_instructions() {
     let dir = TempDir::new().unwrap();
     let dir_path = dir.path().canonicalize().unwrap();
     std::fs::create_dir(dir_path.join(".opendev")).unwrap();
-    std::fs::write(
-        dir_path.join(".opendev/instructions.md"),
-        "Custom instructions",
-    )
-    .unwrap();
+    std::fs::write(dir_path.join(".opendev/instructions.md"), "Custom instructions").unwrap();
     std::fs::create_dir(dir_path.join(".git")).unwrap();
 
     let files = discover_instruction_files(&dir_path, &[], &[]);
@@ -225,11 +221,8 @@ fn test_claude_instructions_dir_not_loaded() {
     let dir = TempDir::new().unwrap();
     let dir_path = dir.path().canonicalize().unwrap();
     std::fs::create_dir_all(dir_path.join(".claude")).unwrap();
-    std::fs::write(
-        dir_path.join(".claude/instructions.md"),
-        "Claude-specific instructions",
-    )
-    .unwrap();
+    std::fs::write(dir_path.join(".claude/instructions.md"), "Claude-specific instructions")
+        .unwrap();
     std::fs::create_dir(dir_path.join(".git")).unwrap();
 
     let files = discover_instruction_files(&dir_path, &[], &[]);
@@ -378,10 +371,7 @@ fn test_resolve_instruction_paths_mixed_local_and_url() {
     std::fs::write(dir_path.join("local.md"), "local content").unwrap();
 
     let files = resolve_instruction_paths(
-        &[
-            "local.md".to_string(),
-            "https://localhost:1/__unreachable__".to_string(),
-        ],
+        &["local.md".to_string(), "https://localhost:1/__unreachable__".to_string()],
         &dir_path,
     );
     assert_eq!(files.len(), 1);
@@ -422,14 +412,9 @@ fn test_discover_cursorrules() {
 
     let files = discover_instruction_files(&dir_path, &[], &[]);
     assert!(
-        files
-            .iter()
-            .any(|f| f.content.contains("strict TypeScript")),
+        files.iter().any(|f| f.content.contains("strict TypeScript")),
         "Should discover .cursorrules: {:?}",
-        files
-            .iter()
-            .map(|f| f.path.display().to_string())
-            .collect::<Vec<_>>()
+        files.iter().map(|f| f.path.display().to_string()).collect::<Vec<_>>()
     );
 }
 
@@ -442,17 +427,12 @@ fn test_discover_copilot_instructions() {
 
     let github_dir = dir_path.join(".github");
     std::fs::create_dir_all(&github_dir).unwrap();
-    std::fs::write(
-        github_dir.join("copilot-instructions.md"),
-        "Follow conventional commits",
-    )
-    .unwrap();
+    std::fs::write(github_dir.join("copilot-instructions.md"), "Follow conventional commits")
+        .unwrap();
 
     let files = discover_instruction_files(&dir_path, &[], &[]);
     assert!(
-        files
-            .iter()
-            .any(|f| f.content.contains("conventional commits")),
+        files.iter().any(|f| f.content.contains("conventional commits")),
         "Should discover .github/copilot-instructions.md"
     );
 }
@@ -540,20 +520,12 @@ fn test_discover_local_overrides() {
     std::fs::write(dir_path.join("AGENTS.local.md"), "my local overrides").unwrap();
 
     let files = discover_instruction_files(&dir_path, &[], &[]);
+    assert!(files.iter().any(|f| f.content.contains("shared rules")), "Should discover AGENTS.md");
     assert!(
-        files.iter().any(|f| f.content.contains("shared rules")),
-        "Should discover AGENTS.md"
-    );
-    assert!(
-        files
-            .iter()
-            .any(|f| f.content.contains("my local overrides")),
+        files.iter().any(|f| f.content.contains("my local overrides")),
         "Should discover AGENTS.local.md"
     );
-    let local = files
-        .iter()
-        .find(|f| f.content.contains("my local overrides"))
-        .unwrap();
+    let local = files.iter().find(|f| f.content.contains("my local overrides")).unwrap();
     assert_eq!(local.scope, "local");
     assert_eq!(local.source, InstructionSource::Local);
 }
@@ -569,10 +541,7 @@ fn test_discover_with_exclusion() {
 
     let files = discover_instruction_files(&dir_path, &["CLAUDE.md".to_string()], &[]);
     assert!(files.iter().any(|f| f.content.contains("included")));
-    assert!(
-        !files.iter().any(|f| f.content.contains("excluded")),
-        "CLAUDE.md should be excluded"
-    );
+    assert!(!files.iter().any(|f| f.content.contains("excluded")), "CLAUDE.md should be excluded");
 }
 
 #[test]
@@ -618,20 +587,12 @@ fn test_includes_processed_in_discovered_files() {
     std::fs::create_dir(dir_path.join(".git")).unwrap();
 
     std::fs::write(dir_path.join("shared.md"), "Shared rules").unwrap();
-    std::fs::write(
-        dir_path.join("AGENTS.md"),
-        "@./shared.md\nMain agents rules",
-    )
-    .unwrap();
+    std::fs::write(dir_path.join("AGENTS.md"), "@./shared.md\nMain agents rules").unwrap();
 
     let files = discover_instruction_files(&dir_path, &[], &[]);
     // Should have both the included file and the AGENTS.md
     assert!(files.iter().any(|f| f.content.contains("Shared rules")));
-    assert!(
-        files
-            .iter()
-            .any(|f| f.content.contains("Main agents rules"))
-    );
+    assert!(files.iter().any(|f| f.content.contains("Main agents rules")));
 }
 
 #[test]

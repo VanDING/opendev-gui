@@ -68,10 +68,7 @@ pub struct FilteredSubscriber {
 impl FilteredSubscriber {
     /// Create a filtered subscriber.
     pub fn new(bus: &EventBus, event_types: Option<Vec<String>>) -> Self {
-        Self {
-            receiver: bus.subscribe(),
-            event_types,
-        }
+        Self { receiver: bus.subscribe(), event_types }
     }
 
     /// Receive the next matching event (returns a legacy `Event`).
@@ -81,12 +78,7 @@ impl FilteredSubscriber {
                 Ok(runtime_event) => {
                     // Convert RuntimeEvent to legacy Event for compat.
                     let legacy = match &runtime_event {
-                        RuntimeEvent::Custom {
-                            event_type,
-                            source,
-                            data,
-                            timestamp_ms,
-                        } => Event {
+                        RuntimeEvent::Custom { event_type, source, data, timestamp_ms } => Event {
                             event_type: event_type.clone(),
                             source: source.clone(),
                             data: data.clone(),

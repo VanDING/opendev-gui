@@ -26,10 +26,7 @@ pub fn markdown_to_telegram_html(md: &str) -> String {
         if line.trim_start().starts_with("```") {
             let lang = line.trim_start().trim_start_matches('`').trim();
             if !lang.is_empty() {
-                out.push_str(&format!(
-                    "<pre><code class=\"language-{}\">",
-                    escape_html(lang)
-                ));
+                out.push_str(&format!("<pre><code class=\"language-{}\">", escape_html(lang)));
             } else {
                 out.push_str("<pre><code>");
             }
@@ -65,10 +62,7 @@ pub fn markdown_to_telegram_html(md: &str) -> String {
 
         // ── Headings → bold ──
         if let Some(heading) = strip_heading(line) {
-            out.push_str(&format!(
-                "<b>{}</b>\n",
-                convert_inline(&escape_html(heading))
-            ));
+            out.push_str(&format!("<b>{}</b>\n", convert_inline(&escape_html(heading))));
             i += 1;
             continue;
         }
@@ -92,9 +86,7 @@ pub fn markdown_to_telegram_html(md: &str) -> String {
 
 /// Escape HTML special characters.
 fn escape_html(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
+    s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
 }
 
 /// Strip markdown heading prefix (# to ######), return the heading text.
@@ -330,11 +322,7 @@ fn find_open_tags(html: &str) -> Vec<String> {
                     stack.remove(pos);
                 }
             } else {
-                let name = tag_content
-                    .split_whitespace()
-                    .next()
-                    .unwrap_or("")
-                    .to_lowercase();
+                let name = tag_content.split_whitespace().next().unwrap_or("").to_lowercase();
                 if !name.is_empty() && !is_self_closing(&name) {
                     stack.push(name);
                 }
@@ -386,10 +374,7 @@ mod tests {
     fn test_fenced_code_block() {
         let md = "```rust\nfn main() {}\n```";
         let html = markdown_to_telegram_html(md);
-        assert_eq!(
-            html,
-            "<pre><code class=\"language-rust\">fn main() {}</code></pre>"
-        );
+        assert_eq!(html, "<pre><code class=\"language-rust\">fn main() {}</code></pre>");
     }
 
     #[test]
@@ -422,10 +407,7 @@ mod tests {
 
     #[test]
     fn test_html_escaping() {
-        assert_eq!(
-            markdown_to_telegram_html("a < b & c > d"),
-            "a &lt; b &amp; c &gt; d"
-        );
+        assert_eq!(markdown_to_telegram_html("a < b & c > d"), "a &lt; b &amp; c &gt; d");
     }
 
     #[test]

@@ -29,10 +29,8 @@ fn test_apply_single_edit_single_line() {
         "}".to_string(),
     ];
 
-    let edit = TextEdit::new(
-        SourceRange::new(Position::new(0, 3), Position::new(0, 11)),
-        "new_name",
-    );
+    let edit =
+        TextEdit::new(SourceRange::new(Position::new(0, 3), Position::new(0, 11)), "new_name");
 
     apply_single_edit(&mut lines, &edit).unwrap();
     assert_eq!(lines[0], "fn new_name() {");
@@ -48,10 +46,8 @@ fn test_apply_single_edit_multi_line() {
         "line 4".to_string(),
     ];
 
-    let edit = TextEdit::new(
-        SourceRange::new(Position::new(1, 7), Position::new(3, 10)),
-        "REPLACED",
-    );
+    let edit =
+        TextEdit::new(SourceRange::new(Position::new(1, 7), Position::new(3, 10)), "REPLACED");
 
     apply_single_edit(&mut lines, &edit).unwrap();
     assert_eq!(lines.len(), 3);
@@ -75,14 +71,8 @@ fn test_apply_file_edits() {
     std::fs::write(&file, "fn old() {\n    old();\n}\n").unwrap();
 
     let edits = vec![
-        TextEdit::new(
-            SourceRange::new(Position::new(0, 3), Position::new(0, 6)),
-            "new",
-        ),
-        TextEdit::new(
-            SourceRange::new(Position::new(1, 4), Position::new(1, 7)),
-            "new",
-        ),
+        TextEdit::new(SourceRange::new(Position::new(0, 3), Position::new(0, 6)), "new"),
+        TextEdit::new(SourceRange::new(Position::new(1, 4), Position::new(1, 7)), "new"),
     ];
 
     let count = apply_file_edits(&file, &edits).unwrap();

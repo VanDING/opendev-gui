@@ -36,10 +36,8 @@ pub fn handle_find_references(arguments: &Value, workspace_root: &Path) -> ToolR
         _ => return ToolResult::err("Missing required argument: file_path"),
     };
 
-    let include_declaration = arguments
-        .get("include_declaration")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(true);
+    let include_declaration =
+        arguments.get("include_declaration").and_then(|v| v.as_bool()).unwrap_or(true);
 
     match find_references(symbol_name, &file_path, include_declaration, workspace_root) {
         Ok(refs) => format_reference_results(&refs, workspace_root),
@@ -75,11 +73,7 @@ pub fn format_reference_results(refs: &[SymbolReference], workspace_root: &Path)
     let total_count = refs.len();
 
     let mut output = String::new();
-    let _ = writeln!(
-        output,
-        "Found {} reference(s) across {} file(s):",
-        total_count, file_count
-    );
+    let _ = writeln!(output, "Found {} reference(s) across {} file(s):", total_count, file_count);
 
     for (file, file_refs) in &by_file {
         let rel = relative_display(file, workspace_root);
@@ -87,18 +81,10 @@ pub fn format_reference_results(refs: &[SymbolReference], workspace_root: &Path)
 
         for r in file_refs {
             let line_preview = read_line_preview(file, r.line);
-            let preview = line_preview
-                .as_deref()
-                .map(|s| truncate(s.trim(), 80))
-                .unwrap_or_default();
+            let preview =
+                line_preview.as_deref().map(|s| truncate(s.trim(), 80)).unwrap_or_default();
 
-            let _ = writeln!(
-                output,
-                "    L{}:{} {}",
-                r.line + 1,
-                r.character + 1,
-                preview
-            );
+            let _ = writeln!(output, "    L{}:{} {}", r.line + 1, r.character + 1, preview);
         }
     }
 

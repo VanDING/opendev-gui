@@ -94,12 +94,7 @@ impl App {
         }
 
         // Compute per-message hashes for the current messages
-        let new_hashes: Vec<u64> = self
-            .state
-            .messages
-            .iter()
-            .map(display_message_hash)
-            .collect();
+        let new_hashes: Vec<u64> = self.state.messages.iter().map(display_message_hash).collect();
 
         // Find the first message index where the hash differs
         let mut first_dirty = {
@@ -108,11 +103,7 @@ impl App {
                 0 // Messages were removed -- full rebuild
             } else {
                 let mut dirty_idx = old_len;
-                for (i, new_hash) in new_hashes
-                    .iter()
-                    .enumerate()
-                    .take(old_len.min(num_messages))
-                {
+                for (i, new_hash) in new_hashes.iter().enumerate().take(old_len.min(num_messages)) {
                     if self.state.per_message_hashes[i] != *new_hash {
                         dirty_idx = i;
                         break;
@@ -150,11 +141,7 @@ impl App {
                 }
                 // Fallback estimate for never-rendered messages
                 let content = strip_system_reminders(&msg.content);
-                let text_lines = if content.is_empty() {
-                    0
-                } else {
-                    content.lines().count()
-                };
+                let text_lines = if content.is_empty() { 0 } else { content.lines().count() };
                 let tool_lines = if let Some(ref tc) = msg.tool_call {
                     use crate::formatters::tool_registry::{ResultFormat, lookup_tool};
                     let is_bash = lookup_tool(&tc.name).result_format == ResultFormat::Bash;
@@ -163,11 +150,7 @@ impl App {
                     } else if is_bash {
                         // Bash preview: ≤4 lines shown inline, >4 shows 5 (2+ellipsis+2), 0 shows 1
                         let n = tc.result_lines.len();
-                        if n == 0 {
-                            1
-                        } else {
-                            n.min(4).max(if n > 4 { 5 } else { n })
-                        }
+                        if n == 0 { 1 } else { n.min(4).max(if n > 4 { 5 } else { n }) }
                     } else if !tc.result_lines.is_empty() {
                         1
                     } else {
@@ -196,10 +179,8 @@ impl App {
         // When the user scrolls, previously-culled messages may enter the viewport
         // and need to be re-rendered from their blank placeholders.
         if self.state.per_message_culled.len() == num_messages {
-            for (i, (new_vis, old_vis)) in msg_visible
-                .iter()
-                .zip(self.state.per_message_culled.iter())
-                .enumerate()
+            for (i, (new_vis, old_vis)) in
+                msg_visible.iter().zip(self.state.per_message_culled.iter()).enumerate()
             {
                 if new_vis != old_vis {
                     first_dirty = first_dirty.min(i);
@@ -237,12 +218,8 @@ impl App {
         let old_line_counts: Vec<usize> = self.state.per_message_line_counts.clone();
 
         // Truncate to the point before first_dirty
-        let lines_to_keep: usize = self
-            .state
-            .per_message_line_counts
-            .iter()
-            .take(first_dirty)
-            .sum();
+        let lines_to_keep: usize =
+            self.state.per_message_line_counts.iter().take(first_dirty).sum();
         self.state.cached_lines.truncate(lines_to_keep);
         self.state.per_message_hashes.truncate(first_dirty);
         self.state.per_message_line_counts.truncate(first_dirty);
@@ -338,11 +315,8 @@ impl App {
                     // Fallback: no wrapping (width unknown)
                     let mut leading_consumed = false;
                     for md_line in md_lines {
-                        let line_text: String = md_line
-                            .spans
-                            .iter()
-                            .map(|s| s.content.to_string())
-                            .collect();
+                        let line_text: String =
+                            md_line.spans.iter().map(|s| s.content.to_string()).collect();
                         let has_content = !line_text.trim().is_empty();
 
                         if !leading_consumed && has_content {
@@ -412,11 +386,8 @@ impl App {
                 if msg.collapsed {
                     if let Some(secs) = msg.thinking_duration_secs {
                         // Finalized collapsed: "⟡ Thought for Xs (Ctrl+I to expand)"
-                        let duration_text = if secs == 0 {
-                            "<1".to_string()
-                        } else {
-                            secs.to_string()
-                        };
+                        let duration_text =
+                            if secs == 0 { "<1".to_string() } else { secs.to_string() };
                         lines.push(Line::from(vec![
                             Span::styled(
                                 format!(
@@ -474,11 +445,8 @@ impl App {
                     } else {
                         let mut leading_consumed = false;
                         for md_line in md_lines {
-                            let line_text: String = md_line
-                                .spans
-                                .iter()
-                                .map(|s| s.content.to_string())
-                                .collect();
+                            let line_text: String =
+                                md_line.spans.iter().map(|s| s.content.to_string()).collect();
                             let has_content = !line_text.trim().is_empty();
 
                             if !leading_consumed && has_content {
@@ -617,9 +585,7 @@ impl App {
                 Span::styled(format!("{icon} "), Style::default().fg(icon_color)),
                 Span::styled(
                     verb,
-                    Style::default()
-                        .fg(style_tokens::PRIMARY)
-                        .add_modifier(Modifier::BOLD),
+                    Style::default().fg(style_tokens::PRIMARY).add_modifier(Modifier::BOLD),
                 ),
                 Span::styled(format!(" {arg}"), Style::default().fg(style_tokens::SUBTLE)),
             ]));
@@ -691,22 +657,15 @@ impl App {
                     Span::styled(format!("{n_icon} "), Style::default().fg(n_icon_color)),
                     Span::styled(
                         n_verb,
-                        Style::default()
-                            .fg(style_tokens::PRIMARY)
-                            .add_modifier(Modifier::BOLD),
+                        Style::default().fg(style_tokens::PRIMARY).add_modifier(Modifier::BOLD),
                     ),
-                    Span::styled(
-                        format!(" {n_arg}"),
-                        Style::default().fg(style_tokens::SUBTLE),
-                    ),
+                    Span::styled(format!(" {n_arg}"), Style::default().fg(style_tokens::SUBTLE)),
                 ]));
             }
         }
 
         // Blank line between messages — skip before messages that attach to previous
-        let next_attaches = next_role
-            .and_then(|r| r.style())
-            .is_some_and(|s| s.attach_to_previous);
+        let next_attaches = next_role.and_then(|r| r.style()).is_some_and(|s| s.attach_to_previous);
         if !next_attaches {
             lines.push(Line::from(""));
         }

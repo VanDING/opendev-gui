@@ -8,10 +8,7 @@ use super::{Event, EventTopic, RuntimeEvent};
 pub fn group_events_by_type(events: &[Event]) -> HashMap<String, Vec<&Event>> {
     let mut groups: HashMap<String, Vec<&Event>> = HashMap::new();
     for event in events {
-        groups
-            .entry(event.event_type.clone())
-            .or_default()
-            .push(event);
+        groups.entry(event.event_type.clone()).or_default().push(event);
     }
     groups
 }

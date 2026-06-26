@@ -22,11 +22,7 @@ impl ConfigWatcher {
     /// Create a new watcher for the given config file paths.
     pub fn new(paths: Vec<PathBuf>) -> Self {
         let last_modified = paths.iter().map(|p| Self::file_mtime(p)).collect();
-        Self {
-            watched_paths: paths,
-            last_modified,
-            config_changed: false,
-        }
+        Self { watched_paths: paths, last_modified, config_changed: false }
     }
 
     /// Check if any watched files have been modified.

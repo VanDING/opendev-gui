@@ -34,11 +34,8 @@ pub fn parse_frontmatter(content: &str) -> (Option<Frontmatter>, String) {
 
     // Find the closing `---` delimiter
     let rest = &trimmed[after_open..];
-    let close_pos = rest
-        .lines()
-        .enumerate()
-        .find(|(_, line)| line.trim() == "---")
-        .map(|(i, _)| {
+    let close_pos =
+        rest.lines().enumerate().find(|(_, line)| line.trim() == "---").map(|(i, _)| {
             // Calculate byte offset of the closing delimiter line
             rest.lines()
                 .take(i)

@@ -37,11 +37,7 @@ fn test_agent_definition_filter_tool_schemas() {
     let plan = AgentDefinition::from_role(AgentRole::Plan);
     let filtered = plan.filter_tool_schemas(&schemas);
     assert_eq!(filtered.len(), 2);
-    assert!(
-        filtered
-            .iter()
-            .all(|s| s["function"]["name"].as_str().unwrap() != "bash")
-    );
+    assert!(filtered.iter().all(|s| s["function"]["name"].as_str().unwrap() != "bash"));
 }
 
 #[test]

@@ -37,9 +37,7 @@ fn test_response_to_chat_completions_tool_use() {
     });
     let result = response_to_chat_completions(response, "claude-3");
     assert_eq!(result["choices"][0]["finish_reason"], "tool_calls");
-    let tool_calls = result["choices"][0]["message"]["tool_calls"]
-        .as_array()
-        .unwrap();
+    let tool_calls = result["choices"][0]["message"]["tool_calls"].as_array().unwrap();
     assert_eq!(tool_calls.len(), 1);
     assert_eq!(tool_calls[0]["id"], "tu_1");
     assert_eq!(tool_calls[0]["function"]["name"], "read_file");

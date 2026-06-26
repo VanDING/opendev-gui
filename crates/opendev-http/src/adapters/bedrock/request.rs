@@ -79,10 +79,8 @@ pub(super) fn convert_tool_messages(payload: &mut Value) {
 
                         for tc in tool_calls {
                             let func = tc.get("function").cloned().unwrap_or(json!({}));
-                            let args_str = func
-                                .get("arguments")
-                                .and_then(|a| a.as_str())
-                                .unwrap_or("{}");
+                            let args_str =
+                                func.get("arguments").and_then(|a| a.as_str()).unwrap_or("{}");
                             let args: Value = serde_json::from_str(args_str).unwrap_or(json!({}));
 
                             content_blocks.push(json!({

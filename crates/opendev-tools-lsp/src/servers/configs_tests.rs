@@ -5,11 +5,7 @@ use std::collections::HashSet;
 fn test_default_configs_non_empty() {
     let configs = default_server_configs();
     assert!(!configs.is_empty());
-    assert!(
-        configs.len() >= 35,
-        "Expected at least 35 server configs, got {}",
-        configs.len()
-    );
+    assert!(configs.len() >= 35, "Expected at least 35 server configs, got {}", configs.len());
 }
 
 #[test]
@@ -26,10 +22,7 @@ fn test_no_duplicate_extensions() {
 #[test]
 fn test_rust_config() {
     let configs = default_server_configs();
-    let rust = configs
-        .iter()
-        .find(|c| c.language_id == "rust")
-        .expect("Rust config missing");
+    let rust = configs.iter().find(|c| c.language_id == "rust").expect("Rust config missing");
     assert_eq!(rust.command, "rust-analyzer");
     assert!(rust.extensions.contains(&"rs".to_string()));
 }
@@ -42,11 +35,7 @@ fn test_all_configs_have_required_fields() {
         assert!(!config.language_id.is_empty(), "Empty language_id");
         // Deno has no default extensions (activated by project detection)
         if config.language_id != "deno" {
-            assert!(
-                !config.extensions.is_empty(),
-                "No extensions for {}",
-                config.language_id
-            );
+            assert!(!config.extensions.is_empty(), "No extensions for {}", config.language_id);
         }
     }
 }

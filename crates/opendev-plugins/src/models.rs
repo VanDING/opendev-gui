@@ -167,10 +167,7 @@ impl InstalledPlugins {
 
     /// Add a plugin to the registry.
     pub fn add(&mut self, plugin: PluginConfig) {
-        let key = Self::make_key(
-            plugin.marketplace.as_deref().unwrap_or("local"),
-            &plugin.name,
-        );
+        let key = Self::make_key(plugin.marketplace.as_deref().unwrap_or("local"), &plugin.name);
         self.plugins.insert(key, plugin);
     }
 

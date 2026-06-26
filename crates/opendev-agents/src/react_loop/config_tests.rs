@@ -18,22 +18,17 @@ fn test_evaluate_permission_empty_rules() {
 #[test]
 fn test_evaluate_permission_with_action_rule() {
     let mut config = ReactLoopConfig::default();
-    config.permission.insert(
-        "run_command".to_string(),
-        PermissionRule::Action(PermissionAction::Deny),
-    );
-    assert_eq!(
-        config.evaluate_permission("run_command", ""),
-        Some(PermissionAction::Deny)
-    );
+    config
+        .permission
+        .insert("run_command".to_string(), PermissionRule::Action(PermissionAction::Deny));
+    assert_eq!(config.evaluate_permission("run_command", ""), Some(PermissionAction::Deny));
 }
 
 #[test]
 fn test_evaluate_permission_no_match() {
     let mut config = ReactLoopConfig::default();
-    config.permission.insert(
-        "run_command".to_string(),
-        PermissionRule::Action(PermissionAction::Deny),
-    );
+    config
+        .permission
+        .insert("run_command".to_string(), PermissionRule::Action(PermissionAction::Deny));
     assert!(config.evaluate_permission("read_file", "").is_none());
 }

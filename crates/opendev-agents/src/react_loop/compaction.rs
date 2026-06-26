@@ -16,10 +16,7 @@ use opendev_tools_core::ToolResult;
 pub(super) fn values_to_api_messages(
     values: &[Value],
 ) -> Vec<opendev_context::compaction::ApiMessage> {
-    values
-        .iter()
-        .filter_map(|v| v.as_object().cloned())
-        .collect()
+    values.iter().filter_map(|v| v.as_object().cloned()).collect()
 }
 
 /// Apply staged context compaction based on current usage level.
@@ -142,11 +139,7 @@ pub(super) async fn do_llm_compaction(
 
     let summary = match summary_text {
         Some(text) if !text.is_empty() => {
-            info!(
-                model = compact_model,
-                summary_len = text.len(),
-                "LLM compaction succeeded"
-            );
+            info!(model = compact_model, summary_len = text.len(), "LLM compaction succeeded");
             text
         }
         _ => {
@@ -182,11 +175,7 @@ pub(super) fn record_artifact(
 
     let (operation, details) = match tool_name {
         "Read" | "read_file" => {
-            let line_count = result
-                .output
-                .as_deref()
-                .map(|o| o.lines().count())
-                .unwrap_or(0);
+            let line_count = result.output.as_deref().map(|o| o.lines().count()).unwrap_or(0);
             ("read", format!("{line_count} lines"))
         }
         "Write" | "write_file" => {

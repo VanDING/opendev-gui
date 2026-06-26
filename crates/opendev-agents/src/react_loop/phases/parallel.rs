@@ -57,11 +57,8 @@ where
     let futures: Vec<_> = tool_calls
         .iter()
         .map(|tc| {
-            let tool_call_id = tc
-                .get("id")
-                .and_then(|id| id.as_str())
-                .unwrap_or("unknown")
-                .to_string();
+            let tool_call_id =
+                tc.get("id").and_then(|id| id.as_str()).unwrap_or("unknown").to_string();
             let tool_name = tc
                 .get("function")
                 .and_then(|f| f.get("name"))
@@ -200,9 +197,7 @@ where
             );
             iter_metrics.total_duration_ms = iter_start.elapsed().as_millis() as u64;
             react_loop.push_metrics(iter_metrics.clone());
-            return Some(LoopAction::Return(Ok(AgentResult::backgrounded(
-                messages.clone(),
-            ))));
+            return Some(LoopAction::Return(Ok(AgentResult::backgrounded(messages.clone()))));
         }
         let partial = PartialResult::from_interrupted_state(
             messages,

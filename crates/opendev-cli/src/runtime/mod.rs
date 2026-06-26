@@ -170,9 +170,7 @@ impl AgentRuntime {
         // Append config-specified skill paths (resolved relative to working_dir, ~/expanded)
         for path in &config.skill_paths {
             let resolved = if let Some(rest) = path.strip_prefix("~/") {
-                dirs_next::home_dir()
-                    .map(|h| h.join(rest))
-                    .unwrap_or_else(|| PathBuf::from(path))
+                dirs_next::home_dir().map(|h| h.join(rest)).unwrap_or_else(|| PathBuf::from(path))
             } else if Path::new(path).is_absolute() {
                 PathBuf::from(path)
             } else {
@@ -210,13 +208,9 @@ impl AgentRuntime {
         // so all registry-based providers work out of the box.
         let provider_info = registry.get_provider_or_builtin(&config.model_provider);
         let registry_env = provider_info.as_ref().map(|pi| pi.api_key_env.as_str());
-        let api_key = config
-            .get_api_key_with_env(registry_env)
-            .unwrap_or_default();
-        let registry_base_url = provider_info
-            .as_ref()
-            .map(|pi| pi.api_base_url.clone())
-            .filter(|s| !s.is_empty());
+        let api_key = config.get_api_key_with_env(registry_env).unwrap_or_default();
+        let registry_base_url =
+            provider_info.as_ref().map(|pi| pi.api_base_url.clone()).filter(|s| !s.is_empty());
 
         // Auto-detect provider from API key if not explicitly set
         let provider = AdaptedClient::resolve_provider(&config.model_provider, &api_key);
@@ -312,9 +306,7 @@ impl AgentRuntime {
                 )
             }
             "azure" => {
-                let base = effective_base_url
-                    .as_deref()
-                    .unwrap_or("https://api.openai.com");
+                let base = effective_base_url.as_deref().unwrap_or("https://api.openai.com");
                 let deployment = &config.model;
                 let url = format!(
                     "{}/openai/deployments/{deployment}/chat/completions?api-version=2024-10-21",
@@ -387,22 +379,15 @@ impl AgentRuntime {
                 Some(a) => AdaptedClient::with_adapter(raw_http_client, a),
                 None => AdaptedClient::new(raw_http_client),
             };
-            if let Some(auth) = curl_auth {
-                client.with_curl_transport(auth)
-            } else {
-                client
-            }
+            if let Some(auth) = curl_auth { client.with_curl_transport(auth) } else { client }
         });
 
         // Check model capabilities via models.dev metadata
         let (supports_temperature, model_max_tokens, model_context_length) = {
             let model_info = registry.find_model_by_id(&config.model);
-            let supports_temp = model_info
-                .map(|(_, _, m)| m.supports_temperature)
-                .unwrap_or(true);
-            let max_tok = model_info
-                .and_then(|(_, _, m)| m.max_tokens)
-                .unwrap_or(config.max_tokens as u64);
+            let supports_temp = model_info.map(|(_, _, m)| m.supports_temperature).unwrap_or(true);
+            let max_tok =
+                model_info.and_then(|(_, _, m)| m.max_tokens).unwrap_or(config.max_tokens as u64);
             let ctx_len = model_info
                 .map(|(_, _, m)| m.context_length)
                 .filter(|&v| v > 0)
@@ -412,10 +397,8 @@ impl AgentRuntime {
 
         // Create debug logger early so it can be shared with subagent tool
         let debug_logger = Arc::new(if config.debug_logging {
-            let session_id = session_manager
-                .current_session()
-                .map(|s| s.id.as_str())
-                .unwrap_or("unknown");
+            let session_id =
+                session_manager.current_session().map(|s| s.id.as_str()).unwrap_or("unknown");
             SessionDebugLogger::new(session_manager.session_dir(), session_id)
         } else {
             SessionDebugLogger::noop()
@@ -431,10 +414,7 @@ impl AgentRuntime {
         // Apply inline agent config overrides from opendev.json
         if !config.agents.is_empty() {
             subagent_manager.apply_config_overrides(&config.agents);
-            info!(
-                overrides = config.agents.len(),
-                "Applied inline agent config overrides"
-            );
+            info!(overrides = config.agents.len(), "Applied inline agent config overrides");
         }
         let subagent_manager = Arc::new(subagent_manager);
         // Create subagent event channel for TUI bridging
@@ -443,12 +423,10 @@ impl AgentRuntime {
 
         // Create team manager and shared task list for agent team tools
         let app_paths = opendev_config::paths::Paths::new(Some(working_dir.to_path_buf()));
-        let team_manager = Arc::new(opendev_runtime::TeamManager::new(
-            app_paths.data_dir().join("teams"),
-        ));
-        let team_task_list = Arc::new(opendev_runtime::TeamTaskList::new(
-            app_paths.data_dir().join("tasks"),
-        ));
+        let team_manager =
+            Arc::new(opendev_runtime::TeamManager::new(app_paths.data_dir().join("teams")));
+        let team_task_list =
+            Arc::new(opendev_runtime::TeamTaskList::new(app_paths.data_dir().join("tasks")));
 
         // Register SpawnSubagentTool
         let subagent_manager_for_teammate = Arc::clone(&subagent_manager);
@@ -503,9 +481,9 @@ impl AgentRuntime {
                 Some(config.reasoning_effort.clone())
             })
             .with_debug_logger(Arc::clone(&debug_logger))
-            .with_worktree_manager(Arc::new(tokio::sync::Mutex::new(WorktreeManager::new(
-                working_dir,
-            )))),
+            .with_worktree_manager(Arc::new(tokio::sync::Mutex::new(
+                WorktreeManager::new(working_dir),
+            ))),
         ));
         tool_registry.register(Arc::new(TeamAddTaskTool::new(
             Arc::clone(&team_manager),
@@ -515,19 +493,15 @@ impl AgentRuntime {
             Arc::clone(&team_manager),
             Arc::clone(&team_task_list),
         )));
-        tool_registry.register(Arc::new(
-            opendev_tools_impl::agents::TeamClaimTaskTool::new(
-                Arc::clone(&team_manager),
-                Arc::clone(&team_task_list),
-                "leader",
-            ),
-        ));
-        tool_registry.register(Arc::new(
-            opendev_tools_impl::agents::TeamCompleteTaskTool::new(
-                Arc::clone(&team_manager),
-                Arc::clone(&team_task_list),
-            ),
-        ));
+        tool_registry.register(Arc::new(opendev_tools_impl::agents::TeamClaimTaskTool::new(
+            Arc::clone(&team_manager),
+            Arc::clone(&team_task_list),
+            "leader",
+        )));
+        tool_registry.register(Arc::new(opendev_tools_impl::agents::TeamCompleteTaskTool::new(
+            Arc::clone(&team_manager),
+            Arc::clone(&team_task_list),
+        )));
         tool_registry.register(Arc::new(opendev_tools_impl::agents::CheckMailboxTool::new(
             Arc::clone(&team_manager),
             "leader",
@@ -564,11 +538,7 @@ impl AgentRuntime {
         // Configure LLM caller
         let llm_caller = LlmCaller::new(LlmCallConfig {
             model: config.model.clone(),
-            temperature: if supports_temperature {
-                Some(config.temperature)
-            } else {
-                None
-            },
+            temperature: if supports_temperature { Some(config.temperature) } else { None },
             max_tokens: Some(model_max_tokens),
             reasoning_effort: if config.reasoning_effort == "none" {
                 None
@@ -635,11 +605,7 @@ impl AgentRuntime {
                     if !found.is_empty() {
                         lines.push(format!(
                             "- **{label}**: {}",
-                            found
-                                .iter()
-                                .map(|n| format!("`{n}`"))
-                                .collect::<Vec<_>>()
-                                .join(", ")
+                            found.iter().map(|n| format!("`{n}`")).collect::<Vec<_>>().join(", ")
                         ));
                     }
                 };
@@ -787,10 +753,7 @@ impl AgentRuntime {
                 (provider_id.to_string(), Some(model_info.clone()))
             } else {
                 // Model not in registry — allow it but warn; keep current provider
-                info!(
-                    model = new_model,
-                    "Model not found in registry, using as-is"
-                );
+                info!(model = new_model, "Model not found in registry, using as-is");
                 self.llm_caller.config.model = new_model.to_string();
                 return Ok(new_model.to_string());
             };
@@ -810,11 +773,8 @@ impl AgentRuntime {
 
         // Update model-specific config from registry
         if let Some(ref info) = new_model_info {
-            self.llm_caller.config.temperature = if info.supports_temperature {
-                Some(self.config.temperature)
-            } else {
-                None
-            };
+            self.llm_caller.config.temperature =
+                if info.supports_temperature { Some(self.config.temperature) } else { None };
             if let Some(max_tok) = info.max_tokens {
                 self.llm_caller.config.max_tokens = Some(max_tok);
             }
@@ -839,10 +799,7 @@ impl AgentRuntime {
         if new_provider_id != current_provider {
             let provider_info = registry.get_provider(&new_provider_id);
             let registry_env = provider_info.map(|pi| pi.api_key_env.as_str());
-            let api_key = self
-                .config
-                .get_api_key_with_env(registry_env)
-                .unwrap_or_default();
+            let api_key = self.config.get_api_key_with_env(registry_env).unwrap_or_default();
 
             if api_key.is_empty() {
                 let env_hint = registry_env.filter(|s| !s.is_empty()).unwrap_or("API_KEY");
@@ -852,9 +809,8 @@ impl AgentRuntime {
                 ));
             }
 
-            let base_url = provider_info
-                .map(|pi| pi.api_base_url.clone())
-                .filter(|s| !s.is_empty());
+            let base_url =
+                provider_info.map(|pi| pi.api_base_url.clone()).filter(|s| !s.is_empty());
             let new_client = Self::build_http_client(
                 &new_provider_id,
                 &api_key,
@@ -899,11 +855,7 @@ impl AgentRuntime {
                             hdrs.insert(k, v);
                         }
                     }
-                    (
-                        url,
-                        hdrs,
-                        Some(Box::new(adapter) as Box<dyn ProviderAdapter>),
-                    )
+                    (url, hdrs, Some(Box::new(adapter) as Box<dyn ProviderAdapter>))
                 }
                 "openai" => {
                     let adapter = opendev_http::adapters::openai::OpenAiAdapter::new();
@@ -915,11 +867,7 @@ impl AgentRuntime {
                         hdrs.insert(AUTHORIZATION, val);
                     }
                     hdrs.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-                    (
-                        url,
-                        hdrs,
-                        Some(Box::new(adapter) as Box<dyn ProviderAdapter>),
-                    )
+                    (url, hdrs, Some(Box::new(adapter) as Box<dyn ProviderAdapter>))
                 }
                 "gemini" | "google" => {
                     let adapter = opendev_http::adapters::gemini::GeminiAdapter::new(model);
@@ -933,11 +881,7 @@ impl AgentRuntime {
                         hdrs.insert("x-goog-api-key", val);
                     }
                     hdrs.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-                    (
-                        api_url,
-                        hdrs,
-                        Some(Box::new(adapter) as Box<dyn ProviderAdapter>),
-                    )
+                    (api_url, hdrs, Some(Box::new(adapter) as Box<dyn ProviderAdapter>))
                 }
                 "ollama" => {
                     let adapter = opendev_http::adapters::ollama::OllamaAdapter::new();
@@ -946,11 +890,7 @@ impl AgentRuntime {
                         .unwrap_or_else(|| adapter.api_url().to_string());
                     let mut hdrs = HeaderMap::new();
                     hdrs.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-                    (
-                        url,
-                        hdrs,
-                        Some(Box::new(adapter) as Box<dyn ProviderAdapter>),
-                    )
+                    (url, hdrs, Some(Box::new(adapter) as Box<dyn ProviderAdapter>))
                 }
                 "azure" => {
                     let base = api_base_url.unwrap_or("https://api.openai.com");
@@ -967,11 +907,7 @@ impl AgentRuntime {
                         opendev_http::adapters::chat_completions::ChatCompletionsAdapter::new(
                             url.clone(),
                         );
-                    (
-                        url,
-                        hdrs,
-                        Some(Box::new(adapter) as Box<dyn ProviderAdapter>),
-                    )
+                    (url, hdrs, Some(Box::new(adapter) as Box<dyn ProviderAdapter>))
                 }
                 _ => {
                     // OpenAI-compatible providers — use registry api_base_url
@@ -1001,11 +937,7 @@ impl AgentRuntime {
                         opendev_http::adapters::chat_completions::ChatCompletionsAdapter::new(
                             url.clone(),
                         );
-                    (
-                        url,
-                        hdrs,
-                        Some(Box::new(adapter) as Box<dyn ProviderAdapter>),
-                    )
+                    (url, hdrs, Some(Box::new(adapter) as Box<dyn ProviderAdapter>))
                 }
             };
 

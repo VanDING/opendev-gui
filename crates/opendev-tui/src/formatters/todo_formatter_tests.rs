@@ -3,10 +3,7 @@ use super::*;
 #[test]
 fn test_write_todos_summary() {
     let output = "Todos (0/3 done):\n  [todo] 1. Set up\n  [todo] 2. Code\n  [todo] 3. Test\n";
-    assert_eq!(
-        summarize_todo_result("write_todos", output),
-        "Created 3 todos"
-    );
+    assert_eq!(summarize_todo_result("write_todos", output), "Created 3 todos");
 }
 
 #[test]
@@ -20,10 +17,7 @@ fn test_list_todos_summary() {
 
 #[test]
 fn test_clear_todos_summary() {
-    assert_eq!(
-        summarize_todo_result("clear_todos", "Cleared."),
-        "All todos cleared"
-    );
+    assert_eq!(summarize_todo_result("clear_todos", "Cleared."), "All todos cleared");
 }
 
 #[test]

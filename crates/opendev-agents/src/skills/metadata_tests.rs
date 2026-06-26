@@ -9,6 +9,14 @@ fn make_metadata(name: &str, namespace: &str, source: SkillSource) -> SkillMetad
         source,
         model: None,
         agent: None,
+        pinned: false,
+        status: SkillStatus::Active,
+        requires_tools: None,
+        fallback_for_tools: None,
+        allowed_tools: None,
+        usage_count: 0,
+        last_used: None,
+        tags: vec![],
     }
 }
 
@@ -29,14 +37,8 @@ fn test_skill_source_display() {
 fn test_skill_source_equality() {
     assert_eq!(SkillSource::Builtin, SkillSource::Builtin);
     assert_ne!(SkillSource::Builtin, SkillSource::Project);
-    assert_eq!(
-        SkillSource::Url("a".to_string()),
-        SkillSource::Url("a".to_string())
-    );
-    assert_ne!(
-        SkillSource::Url("a".to_string()),
-        SkillSource::Url("b".to_string())
-    );
+    assert_eq!(SkillSource::Url("a".to_string()), SkillSource::Url("a".to_string()));
+    assert_ne!(SkillSource::Url("a".to_string()), SkillSource::Url("b".to_string()));
 }
 
 // --- SkillMetadata::full_name ---

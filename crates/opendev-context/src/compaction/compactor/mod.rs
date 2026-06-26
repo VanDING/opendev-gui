@@ -26,10 +26,7 @@ pub struct ContextCompactor {
 
 impl ContextCompactor {
     pub fn new(max_context_tokens: u64) -> Self {
-        info!(
-            "ContextCompactor: max_context={} tokens",
-            max_context_tokens
-        );
+        info!("ContextCompactor: max_context={} tokens", max_context_tokens);
         Self {
             max_context: max_context_tokens,
             last_token_count: 0,
@@ -70,10 +67,7 @@ impl ContextCompactor {
         if let Some(value) = metadata.get("artifact_index")
             && let Some(index) = ArtifactIndex::from_json(value)
         {
-            info!(
-                "Restored artifact index with {} entries from session",
-                index.len()
-            );
+            info!("Restored artifact index with {} entries from session", index.len());
             self.artifact_index = index;
         }
     }
@@ -111,10 +105,7 @@ impl ContextCompactor {
         }
         if pct >= STAGE_AGGRESSIVE {
             if !self.warned_90 {
-                warn!(
-                    "Context at {:.1}% — aggressive optimization active",
-                    pct * 100.0
-                );
+                warn!("Context at {:.1}% — aggressive optimization active", pct * 100.0);
                 self.warned_90 = true;
             }
             return OptimizationLevel::Aggressive;
@@ -124,10 +115,7 @@ impl ContextCompactor {
         }
         if pct >= STAGE_MASK {
             if !self.warned_80 {
-                warn!(
-                    "Context at {:.1}% — observation masking active",
-                    pct * 100.0
-                );
+                warn!("Context at {:.1}% — observation masking active", pct * 100.0);
                 self.warned_80 = true;
             }
             return OptimizationLevel::Mask;

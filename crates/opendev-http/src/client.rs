@@ -132,10 +132,7 @@ impl HttpClient {
                             self.interruptible_sleep(delay, cancel).await?;
                             continue;
                         }
-                        warn!(
-                            status,
-                            "Exhausted {} retries", self.retry_config.max_retries
-                        );
+                        warn!(status, "Exhausted {} retries", self.retry_config.max_retries);
                         self.cb_record_failure();
                         return Ok(last_result.unwrap_or_else(|| {
                             HttpResult::fail("Unexpected retry exhaustion", false)
@@ -287,17 +284,13 @@ impl HttpClient {
             }
             Err(e) if is_retryable_error(&e) => {
                 warn!(request_id = %request_id, error = %e, "LLM request retryable error");
-                Ok(
-                    HttpResult::fail(format!("[request_id={}] {}", request_id, e), true)
-                        .with_request_id(request_id),
-                )
+                Ok(HttpResult::fail(format!("[request_id={}] {}", request_id, e), true)
+                    .with_request_id(request_id))
             }
             Err(e) => {
                 warn!(request_id = %request_id, error = %e, "LLM request error");
-                Ok(
-                    HttpResult::fail(format!("[request_id={}] {}", request_id, e), false)
-                        .with_request_id(request_id),
-                )
+                Ok(HttpResult::fail(format!("[request_id={}] {}", request_id, e), false)
+                    .with_request_id(request_id))
             }
         }
     }
@@ -461,9 +454,11 @@ impl HttpClient {
                             .unwrap_or_else(|| format!("HTTP {status}"));
                         warn!(request_id = %request_id, status, error = %error_msg, "Streaming request failed");
                         self.cb_record_failure();
-                        return Err(HttpError::Other(format!(
-                            "[request_id={request_id}] {error_msg}"
-                        )));
+                        let full_msg = format!("[request_id={request_id}] {error_msg}");
+                        if status == 401 || status == 403 {
+                            return Err(HttpError::Auth(full_msg));
+                        }
+                        return Err(HttpError::Other(full_msg));
                     } else {
                         self.cb_record_success();
                         return Ok(resp);
@@ -474,10 +469,7 @@ impl HttpClient {
                     last_error = Some(HttpError::Request(e));
                     if attempt < self.retry_config.max_retries {
                         let delay = self.get_retry_delay(None, None, attempt);
-                        warn!(
-                            "Streaming request backing off for {:.1}s",
-                            delay.as_secs_f64()
-                        );
+                        warn!("Streaming request backing off for {:.1}s", delay.as_secs_f64());
                         self.interruptible_sleep(delay, cancel).await?;
                         continue;
                     }
@@ -503,8 +495,7 @@ impl HttpClient {
 impl std::fmt::Debug for HttpClient {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = f.debug_struct("HttpClient");
-        s.field("api_url", &self.api_url)
-            .field("retry_config", &self.retry_config);
+        s.field("api_url", &self.api_url).field("retry_config", &self.retry_config);
         if let Some(cb) = &self.circuit_breaker {
             s.field("circuit_breaker", cb);
         }
@@ -513,7 +504,7 @@ impl std::fmt::Debug for HttpClient {
 }
 
 /// Check if a reqwest error is transient and worth retrying.
-fn is_retryable_error(err: &reqwest::Error) -> bool {
+pub fn is_retryable_error(err: &reqwest::Error) -> bool {
     err.is_connect() || err.is_timeout() || err.is_request()
 }
 

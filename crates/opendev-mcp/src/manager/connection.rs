@@ -42,9 +42,7 @@ impl McpManager {
         // an Authorization header for HTTP/SSE transports.
         if let Some(ref oauth) = prepared.oauth {
             let token = Self::acquire_oauth_token(oauth).await?;
-            prepared
-                .headers
-                .insert("Authorization".to_string(), format!("Bearer {}", token));
+            prepared.headers.insert("Authorization".to_string(), format!("Bearer {}", token));
         }
 
         let mut transport = transport::create_transport(&prepared)?;
@@ -62,16 +60,14 @@ impl McpManager {
             })?;
 
         // Step 2: Run initialize handshake.
-        let _server_info = tokio::time::timeout(
-            connect_timeout,
-            self.initialize_handshake(transport.as_ref()),
-        )
-        .await
-        .map_err(|_| McpError::Timeout(connect_timeout_ms / 1000))?
-        .map_err(|e| McpError::Connection {
-            server: name.to_string(),
-            message: format!("Initialize handshake failed: {}", e),
-        })?;
+        let _server_info =
+            tokio::time::timeout(connect_timeout, self.initialize_handshake(transport.as_ref()))
+                .await
+                .map_err(|_| McpError::Timeout(connect_timeout_ms / 1000))?
+                .map_err(|e| McpError::Connection {
+                    server: name.to_string(),
+                    message: format!("Initialize handshake failed: {}", e),
+                })?;
 
         // Step 3: Discover tools (use cache if available and not invalidated).
         let tools = tokio::time::timeout(
@@ -85,11 +81,7 @@ impl McpManager {
             Vec::new()
         });
 
-        info!(
-            server = name,
-            tools = tools.len(),
-            "Connected to MCP server"
-        );
+        info!(server = name, tools = tools.len(), "Connected to MCP server");
 
         // Take the notification receiver and spawn a listener task
         // that handles server-initiated notifications like tools/changed.
@@ -115,11 +107,7 @@ impl McpManager {
             });
         }
 
-        let connection = ServerConnection {
-            transport,
-            tools,
-            config: prepared,
-        };
+        let connection = ServerConnection { transport, tools, config: prepared };
 
         let mut connections = self.connections.write().await;
         connections.insert(name.to_string(), connection);
@@ -257,10 +245,7 @@ impl McpManager {
         if let Some(conn) = connections.remove(name) {
             // Best-effort close; the transport may already be dead.
             if let Err(e) = conn.transport.close().await {
-                debug!(
-                    "Failed to close transport for crashed server '{}': {}",
-                    name, e
-                );
+                debug!("Failed to close transport for crashed server '{}': {}", name, e);
             }
             warn!(
                 server = name,

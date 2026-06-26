@@ -25,18 +25,11 @@ pub enum RemoteEvent {
     AgentError(String),
 
     /// A tool execution started.
-    ToolStarted {
-        tool_name: String,
-        args: HashMap<String, serde_json::Value>,
-    },
+    ToolStarted { tool_name: String, args: HashMap<String, serde_json::Value> },
     /// A tool execution finished.
     ToolFinished { tool_name: String, success: bool },
     /// A tool produced its final result.
-    ToolResult {
-        tool_name: String,
-        output: String,
-        success: bool,
-    },
+    ToolResult { tool_name: String, output: String, success: bool },
 
     /// A tool requires user approval (bash command, etc.).
     ToolApprovalNeeded {
@@ -47,30 +40,18 @@ pub enum RemoteEvent {
     },
 
     /// The agent is asking the user a question.
-    AskUser {
-        request_id: String,
-        question: String,
-        options: Vec<String>,
-    },
+    AskUser { request_id: String, question: String, options: Vec<String> },
 
     /// A subagent started.
     SubagentStarted { subagent_name: String, task: String },
     /// A subagent finished.
-    SubagentFinished {
-        subagent_name: String,
-        success: bool,
-        result_summary: String,
-    },
+    SubagentFinished { subagent_name: String, success: bool, result_summary: String },
 
     /// Context usage percentage.
     ContextUsage(f64),
 
     /// File changes detected.
-    FileChangeSummary {
-        files: usize,
-        additions: u64,
-        deletions: u64,
-    },
+    FileChangeSummary { files: usize, additions: u64, deletions: u64 },
 
     /// Session title updated.
     SessionTitleUpdated(String),
@@ -104,14 +85,14 @@ pub enum RemoteCommand {
 }
 
 /// Sender for remote events (held by the TUI/agent side).
-pub type RemoteEventSender = mpsc::UnboundedSender<RemoteEvent>;
+pub type RemoteEventSender = mpsc::Sender<RemoteEvent>;
 /// Receiver for remote events (held by the Telegram side).
-pub type RemoteEventReceiver = mpsc::UnboundedReceiver<RemoteEvent>;
+pub type RemoteEventReceiver = mpsc::Receiver<RemoteEvent>;
 
 /// Sender for remote commands (held by the Telegram side).
-pub type RemoteCommandSender = mpsc::UnboundedSender<RemoteCommand>;
+pub type RemoteCommandSender = mpsc::Sender<RemoteCommand>;
 /// Receiver for remote commands (held by the TUI/agent side).
-pub type RemoteCommandReceiver = mpsc::UnboundedReceiver<RemoteCommand>;
+pub type RemoteCommandReceiver = mpsc::Receiver<RemoteCommand>;
 
 /// Pending approval requests awaiting a Telegram callback.
 struct PendingApproval {
@@ -154,8 +135,8 @@ impl RemoteSessionBridge {
     /// - `event_tx` is used by the TUI runner to broadcast events
     /// - `command_rx` is polled by the TUI runner for incoming commands
     pub fn new() -> (Arc<Self>, RemoteEventSender, RemoteCommandReceiver) {
-        let (event_tx, event_rx) = mpsc::unbounded_channel();
-        let (command_tx, command_rx) = mpsc::unbounded_channel();
+        let (event_tx, event_rx) = mpsc::channel(256);
+        let (command_tx, command_rx) = mpsc::channel(64);
 
         let bridge = Arc::new(Self {
             event_rx: Mutex::new(event_rx),
@@ -170,9 +151,7 @@ impl RemoteSessionBridge {
 
     /// Generate a unique request ID for pending operations.
     pub fn next_id(&self) -> String {
-        let id = self
-            .next_request_id
-            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let id = self.next_request_id.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         format!("req_{id}")
     }
 

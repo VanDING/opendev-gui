@@ -14,10 +14,7 @@ pub(super) fn collect_descendant_pids(root_pid: u32) -> Vec<u32> {
     queue.push_back(root_pid);
 
     while let Some(pid) = queue.pop_front() {
-        match std::process::Command::new("pgrep")
-            .args(["-P", &pid.to_string()])
-            .output()
-        {
+        match std::process::Command::new("pgrep").args(["-P", &pid.to_string()]).output() {
             Ok(output) if output.status.success() => {
                 let stdout = String::from_utf8_lossy(&output.stdout);
                 for line in stdout.lines() {
@@ -44,9 +41,7 @@ pub(super) fn collect_descendant_pids(_root_pid: u32) -> Vec<u32> {
 pub(super) fn kill_descendant_pids(pids: &[u32]) {
     for &pid in pids {
         debug!("Killing descendant MCP process {}", pid);
-        let _ = std::process::Command::new("kill")
-            .args(["-TERM", &pid.to_string()])
-            .output();
+        let _ = std::process::Command::new("kill").args(["-TERM", &pid.to_string()]).output();
     }
 }
 

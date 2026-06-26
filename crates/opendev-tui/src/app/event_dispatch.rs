@@ -80,8 +80,7 @@ impl App {
                     self.state.pending_queue.pop_front()
                 {
                     // Display the user message NOW (deferred from queue time)
-                    self.message_controller
-                        .handle_user_submit(&mut self.state, &msg);
+                    self.message_controller.handle_user_submit(&mut self.state, &msg);
                     self.state.message_generation += 1;
                     self.state.agent_active = true;
                     let _ = self.event_tx.send(AppEvent::UserSubmit(msg));
@@ -240,17 +239,14 @@ impl App {
             }
 
             // Budget events
-            AppEvent::BudgetExhausted {
-                cost_usd,
-                budget_usd,
-            } => self.handle_budget_exhausted(cost_usd, budget_usd),
+            AppEvent::BudgetExhausted { cost_usd, budget_usd } => {
+                self.handle_budget_exhausted(cost_usd, budget_usd)
+            }
 
             // File change summary events
-            AppEvent::FileChangeSummary {
-                files,
-                additions,
-                deletions,
-            } => self.handle_file_change_summary(files, additions, deletions),
+            AppEvent::FileChangeSummary { files, additions, deletions } => {
+                self.handle_file_change_summary(files, additions, deletions)
+            }
 
             // Context usage events
             AppEvent::ContextUsage(pct) => self.handle_context_usage(pct),
@@ -275,69 +271,39 @@ impl App {
             }
 
             // Tool events
-            AppEvent::ToolStarted {
-                tool_id,
-                tool_name,
-                args,
-            } => {
+            AppEvent::ToolStarted { tool_id, tool_name, args } => {
                 self.touch_last_token();
                 self.handle_tool_started(tool_id, tool_name, args);
             }
             AppEvent::ToolOutput { tool_id, output } => self.handle_tool_output(tool_id, output),
-            AppEvent::ToolResult {
-                tool_id,
-                tool_name,
-                output,
-                success,
-                args: result_args,
-            } => {
+            AppEvent::ToolResult { tool_id, tool_name, output, success, args: result_args } => {
                 self.touch_last_token();
                 self.handle_tool_result(tool_id, tool_name, output, success, result_args);
             }
             AppEvent::ToolFinished { tool_id, success } => {
                 self.handle_tool_finished(tool_id, success)
             }
-            AppEvent::ToolApprovalRequired {
-                tool_id: _,
-                tool_name: _,
-                description,
-            } => self.handle_tool_approval_required(description),
-            AppEvent::ToolApprovalRequested {
-                command,
-                working_dir,
-                response_tx,
-            } => self.handle_tool_approval_requested(command, working_dir, response_tx),
-            AppEvent::AskUserRequested {
-                question,
-                options,
-                default,
-                response_tx,
-            } => self.handle_ask_user_requested(question, options, default, response_tx),
+            AppEvent::ToolApprovalRequired { tool_id: _, tool_name: _, description } => {
+                self.handle_tool_approval_required(description)
+            }
+            AppEvent::ToolApprovalRequested { command, working_dir, response_tx } => {
+                self.handle_tool_approval_requested(command, working_dir, response_tx)
+            }
+            AppEvent::AskUserRequested { question, options, default, response_tx } => {
+                self.handle_ask_user_requested(question, options, default, response_tx)
+            }
 
             // Subagent events
-            AppEvent::SubagentStarted {
-                subagent_id,
-                subagent_name,
-                task,
-                cancel_token,
-            } => self.handle_subagent_started(subagent_id, subagent_name, task, cancel_token),
-            AppEvent::SubagentToolCall {
-                subagent_id,
-                tool_name,
-                tool_id,
-                args,
-                ..
-            } => {
+            AppEvent::SubagentStarted { subagent_id, subagent_name, task, cancel_token } => {
+                self.handle_subagent_started(subagent_id, subagent_name, task, cancel_token)
+            }
+            AppEvent::SubagentToolCall { subagent_id, tool_name, tool_id, args, .. } => {
                 self.touch_last_token();
                 self.handle_subagent_tool_call(subagent_id, tool_name, tool_id, args);
             }
-            AppEvent::SubagentToolComplete {
-                subagent_id,
-                tool_name,
-                tool_id,
-                success,
-                ..
-            } => self.handle_subagent_tool_complete(subagent_id, tool_name, tool_id, success),
+            AppEvent::SubagentToolComplete { subagent_id, tool_name, tool_id, success, .. } => {
+                self.handle_subagent_tool_complete(subagent_id, tool_name, tool_id, success)
+            }
             AppEvent::SubagentFinished {
                 subagent_id,
                 success,
@@ -352,12 +318,9 @@ impl App {
                 tool_call_count,
                 shallow_warning,
             ),
-            AppEvent::SubagentTokenUpdate {
-                subagent_id,
-                input_tokens,
-                output_tokens,
-                ..
-            } => self.handle_subagent_token_update(subagent_id, input_tokens, output_tokens),
+            AppEvent::SubagentTokenUpdate { subagent_id, input_tokens, output_tokens, .. } => {
+                self.handle_subagent_token_update(subagent_id, input_tokens, output_tokens)
+            }
 
             // Task progress events
             AppEvent::TaskProgressStarted { description } => {
@@ -367,10 +330,9 @@ impl App {
             AppEvent::TaskProgressFinished => self.handle_task_progress_finished(),
 
             // Plan approval events
-            AppEvent::PlanApprovalRequested {
-                plan_content,
-                response_tx,
-            } => self.handle_plan_approval_requested(plan_content, response_tx),
+            AppEvent::PlanApprovalRequested { plan_content, response_tx } => {
+                self.handle_plan_approval_requested(plan_content, response_tx)
+            }
 
             AppEvent::UserSubmit(ref msg) => self.handle_user_submit(msg),
             AppEvent::Interrupt => self.handle_interrupt(),
@@ -384,10 +346,9 @@ impl App {
             }
 
             // Background agent events
-            AppEvent::AgentBackgrounded {
-                task_id,
-                query_summary: _,
-            } => self.handle_agent_backgrounded(task_id),
+            AppEvent::AgentBackgrounded { task_id, query_summary: _ } => {
+                self.handle_agent_backgrounded(task_id)
+            }
             AppEvent::BackgroundNudge { content } => self.handle_background_nudge(content),
             AppEvent::BackgroundAgentCompleted {
                 task_id,
@@ -404,37 +365,26 @@ impl App {
                 cost_usd,
                 tool_call_count,
             ),
-            AppEvent::BackgroundAgentProgress {
-                task_id,
-                tool_name,
-                tool_count,
-            } => self.handle_background_agent_progress(task_id, tool_name, tool_count),
+            AppEvent::BackgroundAgentProgress { task_id, tool_name, tool_count } => {
+                self.handle_background_agent_progress(task_id, tool_name, tool_count)
+            }
             AppEvent::BackgroundAgentActivity { task_id, line } => {
                 self.handle_background_agent_activity(task_id, line)
             }
             AppEvent::BackgroundAgentKilled { task_id } => {
                 self.handle_background_agent_killed(task_id)
             }
-            AppEvent::SetBackgroundAgentToken {
-                task_id,
-                query,
-                session_id,
-                interrupt_token,
-            } => {
+            AppEvent::SetBackgroundAgentToken { task_id, query, session_id, interrupt_token } => {
                 self.handle_set_background_agent_token(task_id, query, session_id, interrupt_token)
             }
 
             // Team events
-            AppEvent::TeamCreated {
-                team_id,
-                leader_name,
-                member_names,
-            } => self.handle_team_created(team_id, leader_name, member_names),
-            AppEvent::TeamMessageSent {
-                from,
-                to,
-                content_preview,
-            } => self.handle_team_message(from, to, content_preview),
+            AppEvent::TeamCreated { team_id, leader_name, member_names } => {
+                self.handle_team_created(team_id, leader_name, member_names)
+            }
+            AppEvent::TeamMessageSent { from, to, content_preview } => {
+                self.handle_team_message(from, to, content_preview)
+            }
             AppEvent::TeamDeleted { team_id } => self.handle_team_deleted(team_id),
 
             // Undo/Redo/Share events
@@ -466,10 +416,7 @@ impl App {
         if self.approval_controller.active()
             || self.ask_user_controller.active()
             || self.plan_approval_controller.active()
-            || self
-                .model_picker_controller
-                .as_ref()
-                .is_some_and(|p| p.active())
+            || self.model_picker_controller.as_ref().is_some_and(|p| p.active())
             || self.state.task_watcher_open
             || self.state.debug_panel_open
         {
@@ -530,16 +477,9 @@ impl App {
             // Collect the full text of this line from spans
             let full_text: String = line.spans.iter().map(|s| s.content.as_ref()).collect();
 
-            let col_start = if line_idx == start.line_index {
-                start.char_offset
-            } else {
-                0
-            };
-            let col_end = if line_idx == end.line_index {
-                end.char_offset
-            } else {
-                full_text.len()
-            };
+            let col_start = if line_idx == start.line_index { start.char_offset } else { 0 };
+            let col_end =
+                if line_idx == end.line_index { end.char_offset } else { full_text.len() };
 
             // Clamp to actual line length (char boundary safe)
             let clamped_start = col_start.min(full_text.len());
@@ -560,11 +500,7 @@ impl App {
             }
         }
 
-        if result.is_empty() {
-            None
-        } else {
-            Some(result)
-        }
+        if result.is_empty() { None } else { Some(result) }
     }
 
     /// Copy text to the system clipboard.

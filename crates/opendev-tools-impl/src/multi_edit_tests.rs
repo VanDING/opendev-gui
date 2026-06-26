@@ -2,21 +2,14 @@ use super::*;
 use tempfile::TempDir;
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 #[tokio::test]
 async fn test_multi_edit_two_replacements() {
     let tmp = TempDir::new().unwrap();
     let file_path = tmp.path().join("test.rs");
-    std::fs::write(
-        &file_path,
-        "fn main() {\n    let x = 1;\n    let y = 2;\n}\n",
-    )
-    .unwrap();
+    std::fs::write(&file_path, "fn main() {\n    let x = 1;\n    let y = 2;\n}\n").unwrap();
 
     let tool = MultiEditTool;
     let ctx = ToolContext::new(tmp.path());
@@ -41,10 +34,7 @@ async fn test_multi_edit_two_replacements() {
     assert!(!content.contains("let y = 2;"));
 
     // Check metadata
-    assert_eq!(
-        result.metadata.get("edits_applied").unwrap(),
-        &serde_json::json!(2)
-    );
+    assert_eq!(result.metadata.get("edits_applied").unwrap(), &serde_json::json!(2));
 }
 
 #[tokio::test]
@@ -249,10 +239,7 @@ async fn test_multi_edit_file_not_found() {
     let tool = MultiEditTool;
     let ctx = ToolContext::new(tmp.path());
     let args = make_args(&[
-        (
-            "file_path",
-            serde_json::json!(tmp.path().join("nonexistent.txt").to_str().unwrap()),
-        ),
+        ("file_path", serde_json::json!(tmp.path().join("nonexistent.txt").to_str().unwrap())),
         (
             "edits",
             serde_json::json!([
@@ -319,8 +306,5 @@ async fn test_multi_edit_three_edits() {
     let content = std::fs::read_to_string(&file_path).unwrap();
     assert_eq!(content, "ALPHA\nbeta\nGAMMA\nDELTA\n");
 
-    assert_eq!(
-        result.metadata.get("edits_applied").unwrap(),
-        &serde_json::json!(3)
-    );
+    assert_eq!(result.metadata.get("edits_applied").unwrap(), &serde_json::json!(3));
 }

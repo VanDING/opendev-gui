@@ -129,8 +129,7 @@ pub(super) fn parse_simple_yaml(yaml: &str) -> CustomAgentFrontmatter {
                     if value.is_empty() {
                         ctx = Context::PermissionTool(key.to_string());
                     } else if let Some(action) = parse_permission_action(value) {
-                        meta.permission
-                            .insert(key.to_string(), PermissionRule::Action(action));
+                        meta.permission.insert(key.to_string(), PermissionRule::Action(action));
                     }
                 }
                 Context::PermissionTool(tool_name) => {

@@ -25,11 +25,8 @@ impl AnthropicAdapter {
 
             if !system_parts.is_empty() {
                 // Combine into a single system string
-                let combined: String = system_parts
-                    .iter()
-                    .filter_map(|v| v.as_str())
-                    .collect::<Vec<_>>()
-                    .join("\n\n");
+                let combined: String =
+                    system_parts.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>().join("\n\n");
                 if !combined.is_empty() {
                     payload["system"] = json!(combined);
                 }
@@ -194,10 +191,8 @@ impl AnthropicAdapter {
                             // Convert each tool_call to a tool_use block
                             for tc in tool_calls {
                                 let func = tc.get("function").cloned().unwrap_or(json!({}));
-                                let args_str = func
-                                    .get("arguments")
-                                    .and_then(|a| a.as_str())
-                                    .unwrap_or("{}");
+                                let args_str =
+                                    func.get("arguments").and_then(|a| a.as_str()).unwrap_or("{}");
                                 let args: Value =
                                     serde_json::from_str(args_str).unwrap_or(json!({}));
 

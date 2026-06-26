@@ -6,24 +6,18 @@ use super::{App, AutonomyLevel, DisplayMessage, DisplayRole, OperationMode};
 
 impl App {
     pub(super) fn push_system_message(&mut self, content: String) {
-        self.state
-            .messages
-            .push(DisplayMessage::new(DisplayRole::System, content));
+        self.state.messages.push(DisplayMessage::new(DisplayRole::System, content));
         self.state.message_generation += 1;
     }
 
     /// Push a slash command echo line (e.g. `❯ /mode plan`).
     pub(super) fn push_slash_echo(&mut self, cmd: &str) {
-        self.state
-            .messages
-            .push(DisplayMessage::new(DisplayRole::SlashCommand, cmd));
+        self.state.messages.push(DisplayMessage::new(DisplayRole::SlashCommand, cmd));
     }
 
     /// Push a command result line that attaches below the echo.
     pub(super) fn push_command_result(&mut self, content: String) {
-        self.state
-            .messages
-            .push(DisplayMessage::new(DisplayRole::CommandResult, content));
+        self.state.messages.push(DisplayMessage::new(DisplayRole::CommandResult, content));
         self.state.message_generation += 1;
     }
 
@@ -306,9 +300,9 @@ impl App {
                     Some(sub) if sub.starts_with("kill ") => {
                         let id = sub.strip_prefix("kill ").unwrap().trim();
                         if self.state.bg_agent_manager.kill_task(id) {
-                            let _ = self.event_tx.send(AppEvent::BackgroundAgentKilled {
-                                task_id: id.to_string(),
-                            });
+                            let _ = self
+                                .event_tx
+                                .send(AppEvent::BackgroundAgentKilled { task_id: id.to_string() });
                         } else {
                             self.push_command_result(format!(
                                 "Background agent '{id}' not found or not running"

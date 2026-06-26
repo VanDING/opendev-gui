@@ -6,10 +6,7 @@ fn test_viewport_culling_cached_lines() {
     let mut app = App::new();
     // Add many messages
     for i in 0..100 {
-        app.state.messages.push(DisplayMessage::new(
-            DisplayRole::User,
-            format!("Message {i}"),
-        ));
+        app.state.messages.push(DisplayMessage::new(DisplayRole::User, format!("Message {i}")));
     }
     app.state.message_generation = 1;
     app.state.terminal_height = 24;
@@ -19,10 +16,7 @@ fn test_viewport_culling_cached_lines() {
     app.rebuild_cached_lines();
 
     // Should have lines for all messages (some may be placeholders)
-    assert!(
-        !app.state.cached_lines.is_empty(),
-        "cached_lines should not be empty"
-    );
+    assert!(!app.state.cached_lines.is_empty(), "cached_lines should not be empty");
 }
 
 // ---------------------------------------------------------------
@@ -33,10 +27,7 @@ fn test_viewport_culling_cached_lines() {
 
 fn test_markdown_cache_hit() {
     let mut app = App::new();
-    app.state.messages.push(DisplayMessage::new(
-        DisplayRole::Assistant,
-        "Hello **world**",
-    ));
+    app.state.messages.push(DisplayMessage::new(DisplayRole::Assistant, "Hello **world**"));
     app.state.terminal_height = 24;
     app.rebuild_cached_lines();
     assert_eq!(app.state.markdown_cache.len(), 1);
@@ -52,10 +43,7 @@ fn test_markdown_cache_hit() {
 #[test]
 fn test_markdown_cache_miss_different_content() {
     let mut app = App::new();
-    app.state.messages.push(DisplayMessage::new(
-        DisplayRole::Assistant,
-        "Hello **world**",
-    ));
+    app.state.messages.push(DisplayMessage::new(DisplayRole::Assistant, "Hello **world**"));
     app.state.terminal_height = 24;
     app.rebuild_cached_lines();
     assert_eq!(app.state.markdown_cache.len(), 1);
@@ -67,10 +55,7 @@ fn test_markdown_cache_miss_different_content() {
 #[test]
 fn test_markdown_cache_clear() {
     let mut app = App::new();
-    app.state.messages.push(DisplayMessage::new(
-        DisplayRole::Assistant,
-        "# Title\nSome text",
-    ));
+    app.state.messages.push(DisplayMessage::new(DisplayRole::Assistant, "# Title\nSome text"));
     app.state.terminal_height = 24;
     app.rebuild_cached_lines();
     assert!(!app.state.markdown_cache.is_empty());
@@ -83,9 +68,7 @@ fn test_markdown_cache_clear() {
 fn test_incremental_append_only_renders_new_message() {
     let mut app = App::new();
     app.state.terminal_height = 24;
-    app.state
-        .messages
-        .push(DisplayMessage::new(DisplayRole::User, "First message"));
+    app.state.messages.push(DisplayMessage::new(DisplayRole::User, "First message"));
     app.rebuild_cached_lines();
     let lines_after_first = app.state.cached_lines.len();
     assert!(lines_after_first > 0);
@@ -95,9 +78,7 @@ fn test_incremental_append_only_renders_new_message() {
     let first_lines_snapshot = app.state.cached_lines.clone();
 
     // Append a second message
-    app.state
-        .messages
-        .push(DisplayMessage::new(DisplayRole::User, "Second message"));
+    app.state.messages.push(DisplayMessage::new(DisplayRole::User, "Second message"));
     app.rebuild_cached_lines();
     assert_eq!(
         app.state.per_message_hashes[0], first_hash,
@@ -119,9 +100,7 @@ fn test_incremental_modify_middle_rebuilds_from_change() {
     let mut app = App::new();
     app.state.terminal_height = 24;
     for content in &["First", "Second", "Third"] {
-        app.state
-            .messages
-            .push(DisplayMessage::new(DisplayRole::User, content.to_string()));
+        app.state.messages.push(DisplayMessage::new(DisplayRole::User, content.to_string()));
     }
     app.rebuild_cached_lines();
     let original_lines = app.state.cached_lines.len();
@@ -161,11 +140,7 @@ fn test_incremental_multiple_appends_correct_cache() {
     app.state.terminal_height = 24;
     for i in 0..5u32 {
         app.state.messages.push(DisplayMessage::new(
-            if i % 2 == 0 {
-                DisplayRole::User
-            } else {
-                DisplayRole::Assistant
-            },
+            if i % 2 == 0 { DisplayRole::User } else { DisplayRole::Assistant },
             format!("Message {i}"),
         ));
         app.rebuild_cached_lines();
@@ -179,10 +154,7 @@ fn test_incremental_multiple_appends_correct_cache() {
     app.state.cached_lines.clear();
     app.rebuild_cached_lines();
     assert_eq!(app.state.cached_lines.len(), incremental_lines.len());
-    for (i, (inc, full)) in incremental_lines
-        .iter()
-        .zip(app.state.cached_lines.iter())
-        .enumerate()
+    for (i, (inc, full)) in incremental_lines.iter().zip(app.state.cached_lines.iter()).enumerate()
     {
         assert_eq!(
             format!("{:?}", inc),
@@ -196,9 +168,7 @@ fn test_incremental_multiple_appends_correct_cache() {
 fn test_incremental_no_change_is_noop() {
     let mut app = App::new();
     app.state.terminal_height = 24;
-    app.state
-        .messages
-        .push(DisplayMessage::new(DisplayRole::User, "Hello"));
+    app.state.messages.push(DisplayMessage::new(DisplayRole::User, "Hello"));
     app.rebuild_cached_lines();
     let lines_after = app.state.cached_lines.clone();
     // Second rebuild with no changes
@@ -210,12 +180,8 @@ fn test_incremental_no_change_is_noop() {
 fn test_incremental_message_removal() {
     let mut app = App::new();
     app.state.terminal_height = 24;
-    app.state
-        .messages
-        .push(DisplayMessage::new(DisplayRole::User, "First"));
-    app.state
-        .messages
-        .push(DisplayMessage::new(DisplayRole::User, "Second"));
+    app.state.messages.push(DisplayMessage::new(DisplayRole::User, "First"));
+    app.state.messages.push(DisplayMessage::new(DisplayRole::User, "Second"));
     app.rebuild_cached_lines();
     assert_eq!(app.state.per_message_hashes.len(), 2);
     app.state.messages.pop();
@@ -241,10 +207,7 @@ fn test_reasoning_message_produces_lines() {
     app.rebuild_cached_lines();
 
     // Should have produced lines
-    assert!(
-        !app.state.cached_lines.is_empty(),
-        "reasoning message should produce cached lines"
-    );
+    assert!(!app.state.cached_lines.is_empty(), "reasoning message should produce cached lines");
     assert!(
         app.state.cached_lines.len() >= 3,
         "expected at least 3 lines (3 content + blank), got {}",
@@ -253,15 +216,8 @@ fn test_reasoning_message_produces_lines() {
 
     // Check that first line has ⟡ prefix
     let first_line = &app.state.cached_lines[0];
-    let first_text: String = first_line
-        .spans
-        .iter()
-        .map(|s| s.content.to_string())
-        .collect();
-    assert!(
-        first_text.contains('⟡'),
-        "first line should have ⟡ icon, got: {first_text}"
-    );
+    let first_text: String = first_line.spans.iter().map(|s| s.content.to_string()).collect();
+    assert!(first_text.contains('⟡'), "first line should have ⟡ icon, got: {first_text}");
 
     // Check that continuation lines have │ prefix
     for (i, line) in app.state.cached_lines.iter().enumerate().skip(1) {
@@ -269,10 +225,7 @@ fn test_reasoning_message_produces_lines() {
         if text.trim().is_empty() {
             continue; // blank separator line
         }
-        assert!(
-            text.starts_with('│'),
-            "line {i} should start with │, got: {text:?}"
-        );
+        assert!(text.starts_with('│'), "line {i} should start with │, got: {text:?}");
     }
 
     // Content should be preserved
@@ -283,10 +236,7 @@ fn test_reasoning_message_produces_lines() {
         .flat_map(|l| l.spans.iter())
         .map(|s| s.content.to_string())
         .collect();
-    assert!(
-        all_text.contains("think about this"),
-        "content lost: {all_text}"
-    );
+    assert!(all_text.contains("think about this"), "content lost: {all_text}");
 }
 
 #[test]
@@ -310,17 +260,11 @@ fn test_reasoning_via_cached_lines_widget() {
         thinking_duration_secs: Some(5),
         thinking_finalized_at: None,
     });
-    app.state.messages.push(DisplayMessage::new(
-        DisplayRole::Assistant,
-        "The result is clear.",
-    ));
+    app.state.messages.push(DisplayMessage::new(DisplayRole::Assistant, "The result is clear."));
     app.state.message_generation = 1;
     app.rebuild_cached_lines();
 
-    assert!(
-        !app.state.cached_lines.is_empty(),
-        "cached lines should not be empty after rebuild"
-    );
+    assert!(!app.state.cached_lines.is_empty(), "cached lines should not be empty after rebuild");
 
     // Render with cached lines through the widget
     let cached = app.state.cached_lines.clone();
@@ -359,10 +303,9 @@ fn test_active_subagents_keep_recent_reasoning_lines_cached() {
     app.state.terminal_width = 60;
     app.state.terminal_height = 12;
     for i in 0..40 {
-        app.state.messages.push(DisplayMessage::new(
-            DisplayRole::User,
-            format!("Older message {i}"),
-        ));
+        app.state
+            .messages
+            .push(DisplayMessage::new(DisplayRole::User, format!("Older message {i}")));
     }
     app.state.messages.push(DisplayMessage {
         role: DisplayRole::Reasoning,
@@ -444,10 +387,7 @@ fn test_reasoning_to_subagent_transition_remains_visible_in_short_tui() {
         .map(|(i, task)| {
             let mut args = std::collections::HashMap::new();
             args.insert("task".into(), serde_json::Value::String(task.to_string()));
-            args.insert(
-                "description".into(),
-                serde_json::Value::String(task.to_string()),
-            );
+            args.insert("description".into(), serde_json::Value::String(task.to_string()));
             ToolExecution {
                 id: format!("t{i}"),
                 name: "spawn_subagent".into(),
@@ -524,21 +464,14 @@ fn test_event_sequence_reasoning_then_spawn_subagent_keeps_context() {
     app.state.terminal_width = 60;
     app.state.terminal_height = 8;
 
-    app.handle_event(AppEvent::ReasoningContent(
-        "Thinking through the codebase structure.".into(),
-    ));
-    app.handle_event(AppEvent::AgentChunk(
-        "I will spawn 2 agents to explore the codebase.".into(),
-    ));
+    app.handle_event(AppEvent::ReasoningContent("Thinking through the codebase structure.".into()));
+    app.handle_event(AppEvent::AgentChunk("I will spawn 2 agents to explore the codebase.".into()));
     app.handle_event(AppEvent::ToolStarted {
         tool_id: "t1".into(),
         tool_name: "spawn_subagent".into(),
         args: {
             let mut args = std::collections::HashMap::new();
-            args.insert(
-                "task".into(),
-                serde_json::Value::String("Inspect auth flow".into()),
-            );
+            args.insert("task".into(), serde_json::Value::String("Inspect auth flow".into()));
             args.insert(
                 "description".into(),
                 serde_json::Value::String("Inspect auth flow".into()),
@@ -551,14 +484,8 @@ fn test_event_sequence_reasoning_then_spawn_subagent_keeps_context() {
         tool_name: "spawn_subagent".into(),
         args: {
             let mut args = std::collections::HashMap::new();
-            args.insert(
-                "task".into(),
-                serde_json::Value::String("Trace API routes".into()),
-            );
-            args.insert(
-                "description".into(),
-                serde_json::Value::String("Trace API routes".into()),
-            );
+            args.insert("task".into(), serde_json::Value::String("Trace API routes".into()));
+            args.insert("description".into(), serde_json::Value::String("Trace API routes".into()));
             args
         },
     });
@@ -613,10 +540,7 @@ fn test_25_subagents_render_to_terminal() {
     let tools: Vec<ToolExecution> = (0..25)
         .map(|i| {
             let mut args = std::collections::HashMap::new();
-            args.insert(
-                "task".into(),
-                serde_json::Value::String(format!("Explore area {i}")),
-            );
+            args.insert("task".into(), serde_json::Value::String(format!("Explore area {i}")));
             args.insert(
                 "description".into(),
                 serde_json::Value::String(format!("Explore area {i}")),

@@ -36,22 +36,13 @@ fn test_workspace_edit_counts() {
     edit.changes.insert(
         PathBuf::from("/a.rs"),
         vec![
-            TextEdit::new(
-                SourceRange::new(Position::new(0, 0), Position::new(0, 5)),
-                "hello",
-            ),
-            TextEdit::new(
-                SourceRange::new(Position::new(1, 0), Position::new(1, 3)),
-                "world",
-            ),
+            TextEdit::new(SourceRange::new(Position::new(0, 0), Position::new(0, 5)), "hello"),
+            TextEdit::new(SourceRange::new(Position::new(1, 0), Position::new(1, 3)), "world"),
         ],
     );
     edit.changes.insert(
         PathBuf::from("/b.rs"),
-        vec![TextEdit::new(
-            SourceRange::new(Position::new(0, 0), Position::new(0, 1)),
-            "x",
-        )],
+        vec![TextEdit::new(SourceRange::new(Position::new(0, 0), Position::new(0, 1)), "x")],
     );
     assert_eq!(edit.file_count(), 2);
     assert_eq!(edit.edit_count(), 3);
@@ -73,10 +64,8 @@ fn test_uri_string_to_path_non_file() {
 
 #[test]
 fn test_text_edit_serde() {
-    let edit = TextEdit::new(
-        SourceRange::new(Position::new(1, 2), Position::new(3, 4)),
-        "replacement",
-    );
+    let edit =
+        TextEdit::new(SourceRange::new(Position::new(1, 2), Position::new(3, 4)), "replacement");
     let json = serde_json::to_string(&edit).unwrap();
     let back: TextEdit = serde_json::from_str(&json).unwrap();
     assert_eq!(back.new_text, "replacement");
@@ -90,10 +79,7 @@ fn test_unified_symbol_info_serde() {
         kind: SymbolKind::Function,
         file_path: PathBuf::from("/src/main.rs"),
         range: SourceRange::new(Position::new(10, 0), Position::new(20, 1)),
-        selection_range: Some(SourceRange::new(
-            Position::new(10, 4),
-            Position::new(10, 11),
-        )),
+        selection_range: Some(SourceRange::new(Position::new(10, 4), Position::new(10, 11))),
         container_name: Some("MyStruct".to_string()),
         detail: None,
     };

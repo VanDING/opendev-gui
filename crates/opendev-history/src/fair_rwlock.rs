@@ -52,9 +52,7 @@ pub struct FairWriteGuard {
 impl FairRwLock {
     /// Create a new fair reader-writer lock.
     pub fn new() -> Self {
-        Self {
-            semaphore: Arc::new(Semaphore::new(MAX_READERS as usize)),
-        }
+        Self { semaphore: Arc::new(Semaphore::new(MAX_READERS as usize)) }
     }
 
     /// Acquire a read lock.
@@ -63,12 +61,8 @@ impl FairRwLock {
     /// `MAX_READERS`).  A pending writer will block new readers from
     /// acquiring, preventing starvation.
     pub async fn read(&self) -> FairReadGuard {
-        let permit = self
-            .semaphore
-            .clone()
-            .acquire_owned()
-            .await
-            .expect("semaphore is never closed");
+        let permit =
+            self.semaphore.clone().acquire_owned().await.expect("semaphore is never closed");
         FairReadGuard { _permit: permit }
     }
 

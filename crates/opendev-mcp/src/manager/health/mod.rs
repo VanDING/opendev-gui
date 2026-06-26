@@ -361,10 +361,7 @@ impl McpManager {
             old.abort();
         }
         *handle_guard = Some(handle);
-        info!(
-            interval_secs = self.health_check_interval_secs,
-            "Started MCP health monitoring"
-        );
+        info!(interval_secs = self.health_check_interval_secs, "Started MCP health monitoring");
     }
 
     /// Stop background health monitoring.

@@ -16,10 +16,7 @@ fn test_api_url_default() {
 #[test]
 fn test_api_url_custom() {
     let adapter = GroqAdapter::with_url("https://my-proxy.com/v1/chat/completions");
-    assert_eq!(
-        adapter.api_url(),
-        "https://my-proxy.com/v1/chat/completions"
-    );
+    assert_eq!(adapter.api_url(), "https://my-proxy.com/v1/chat/completions");
 }
 
 #[test]
@@ -90,14 +87,8 @@ fn test_rate_limit_info_from_headers() {
     let headers = vec![
         ("x-ratelimit-limit-requests".to_string(), "30".to_string()),
         ("x-ratelimit-limit-tokens".to_string(), "30000".to_string()),
-        (
-            "x-ratelimit-remaining-requests".to_string(),
-            "29".to_string(),
-        ),
-        (
-            "x-ratelimit-remaining-tokens".to_string(),
-            "29500".to_string(),
-        ),
+        ("x-ratelimit-remaining-requests".to_string(), "29".to_string()),
+        ("x-ratelimit-remaining-tokens".to_string(), "29500".to_string()),
         ("x-ratelimit-reset-requests".to_string(), "2s".to_string()),
         ("x-ratelimit-reset-tokens".to_string(), "1s".to_string()),
     ];
@@ -113,10 +104,7 @@ fn test_rate_limit_info_from_headers() {
 
 #[test]
 fn test_rate_limit_info_partial_headers() {
-    let headers = vec![(
-        "x-ratelimit-remaining-requests".to_string(),
-        "5".to_string(),
-    )];
+    let headers = vec![("x-ratelimit-remaining-requests".to_string(), "5".to_string())];
     let info = RateLimitInfo::from_headers(&headers);
 
     assert_eq!(info.limit_requests, None);

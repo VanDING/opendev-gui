@@ -90,10 +90,8 @@ pub fn discover_instruction_files(
     }
 
     // Check managed/enterprise instructions (never excludable)
-    let managed_paths = [
-        PathBuf::from("/etc/opendev/AGENTS.md"),
-        PathBuf::from("/etc/opendev/instructions.md"),
-    ];
+    let managed_paths =
+        [PathBuf::from("/etc/opendev/AGENTS.md"), PathBuf::from("/etc/opendev/instructions.md")];
     for path in &managed_paths {
         try_add_managed_instruction(path, &mut files, &mut seen);
     }
@@ -261,14 +259,8 @@ fn discover_rules_dir(
         // Strip HTML comments and process includes
         let cleaned = strip_html_comments(&remaining_content);
         let include_dir = canonical.parent().unwrap_or(working_dir);
-        let (processed, mut included_files) = process_includes(
-            &cleaned,
-            include_dir,
-            working_dir,
-            0,
-            seen,
-            Some(&canonical),
-        );
+        let (processed, mut included_files) =
+            process_includes(&cleaned, include_dir, working_dir, 0, seen, Some(&canonical));
 
         // Add included files first (lower priority)
         files.append(&mut included_files);
@@ -322,14 +314,8 @@ fn try_add_instruction(
 
     // Process @include directives
     let include_dir = canonical.parent().unwrap_or(working_dir);
-    let (processed, mut included_files) = process_includes(
-        &cleaned,
-        include_dir,
-        working_dir,
-        0,
-        seen,
-        Some(&canonical),
-    );
+    let (processed, mut included_files) =
+        process_includes(&cleaned, include_dir, working_dir, 0, seen, Some(&canonical));
 
     // Add included files first (lower priority)
     files.append(&mut included_files);
@@ -402,10 +388,7 @@ fn compute_scope(dir: &Path, working_dir: &Path) -> String {
 fn truncate_content(content: String) -> String {
     if content.len() > MAX_INSTRUCTION_BYTES {
         let truncated = &content[..MAX_INSTRUCTION_BYTES];
-        format!(
-            "{truncated}\n\n... (truncated, file is {} KB)",
-            content.len() / 1024
-        )
+        format!("{truncated}\n\n... (truncated, file is {} KB)", content.len() / 1024)
     } else {
         content
     }
@@ -519,12 +502,7 @@ pub fn resolve_instruction_paths(patterns: &[String], working_dir: &Path) -> Vec
 /// Uses a 5-second timeout to avoid blocking startup.
 pub(super) fn fetch_remote_instruction(url: &str) -> Option<InstructionFile> {
     let output = Command::new("curl")
-        .args([
-            "-sSfL",
-            "--max-time",
-            &REMOTE_INSTRUCTION_TIMEOUT_SECS.to_string(),
-            url,
-        ])
+        .args(["-sSfL", "--max-time", &REMOTE_INSTRUCTION_TIMEOUT_SECS.to_string(), url])
         .output()
         .ok()?;
 

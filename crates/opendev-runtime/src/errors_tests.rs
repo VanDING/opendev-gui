@@ -34,11 +34,8 @@ fn test_classify_rate_limit() {
 
 #[test]
 fn test_classify_rate_limit_with_retry_after() {
-    let err = classify_api_error(
-        "Too many requests. Retry-After: 30",
-        Some(429),
-        Some("anthropic"),
-    );
+    let err =
+        classify_api_error("Too many requests. Retry-After: 30", Some(429), Some("anthropic"));
     assert_eq!(err.category, ErrorCategory::RateLimit);
     assert_eq!(err.retry_after, Some(30.0));
 }
@@ -59,11 +56,7 @@ fn test_classify_auth_by_pattern() {
 
 #[test]
 fn test_classify_gateway_html() {
-    let err = classify_api_error(
-        "<!doctype html><html>502 Bad Gateway</html>",
-        Some(502),
-        None,
-    );
+    let err = classify_api_error("<!doctype html><html>502 Bad Gateway</html>", Some(502), None);
     assert_eq!(err.category, ErrorCategory::Gateway);
     assert!(err.is_retryable);
     assert!(err.original_error.is_some());
@@ -202,10 +195,7 @@ fn test_display_includes_error_code() {
 fn test_recovery_strategy_rate_limit_with_retry_after() {
     let err = StructuredError::rate_limit("rate limited", None, Some(10.0));
     match err.recovery_strategy() {
-        RecoveryStrategy::Retry {
-            delay_ms,
-            max_attempts,
-        } => {
+        RecoveryStrategy::Retry { delay_ms, max_attempts } => {
             assert_eq!(delay_ms, 10000);
             assert_eq!(max_attempts, 3);
         }
@@ -217,10 +207,7 @@ fn test_recovery_strategy_rate_limit_with_retry_after() {
 fn test_recovery_strategy_rate_limit_default_delay() {
     let err = StructuredError::rate_limit("rate limited", None, None);
     match err.recovery_strategy() {
-        RecoveryStrategy::Retry {
-            delay_ms,
-            max_attempts,
-        } => {
+        RecoveryStrategy::Retry { delay_ms, max_attempts } => {
             assert_eq!(delay_ms, 5000);
             assert_eq!(max_attempts, 3);
         }
@@ -269,10 +256,7 @@ fn test_recovery_strategy_non_retryable_api() {
 fn test_recovery_strategy_gateway() {
     let err = StructuredError::gateway("bad gw", Some(502), None, None);
     match err.recovery_strategy() {
-        RecoveryStrategy::Retry {
-            delay_ms,
-            max_attempts,
-        } => {
+        RecoveryStrategy::Retry { delay_ms, max_attempts } => {
             assert_eq!(delay_ms, 3000);
             assert_eq!(max_attempts, 3);
         }
@@ -282,10 +266,7 @@ fn test_recovery_strategy_gateway() {
 
 #[test]
 fn test_recovery_strategy_serialization() {
-    let strategy = RecoveryStrategy::Retry {
-        delay_ms: 5000,
-        max_attempts: 3,
-    };
+    let strategy = RecoveryStrategy::Retry { delay_ms: 5000, max_attempts: 3 };
     let json = strategy.to_json();
     assert_eq!(json["type"], "retry");
     assert_eq!(json["delay_ms"], 5000);
@@ -294,9 +275,7 @@ fn test_recovery_strategy_serialization() {
 
 #[test]
 fn test_recovery_strategy_fallback_serialization() {
-    let strategy = RecoveryStrategy::FallbackModel {
-        model: "gpt-4".into(),
-    };
+    let strategy = RecoveryStrategy::FallbackModel { model: "gpt-4".into() };
     let json = strategy.to_json();
     assert_eq!(json["type"], "fallback_model");
     assert_eq!(json["model"], "gpt-4");

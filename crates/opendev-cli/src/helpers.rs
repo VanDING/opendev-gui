@@ -5,65 +5,25 @@ use opendev_mcp::config::{
     save_config as save_mcp_config_file,
 };
 
-pub fn init_tracing(verbose: bool, tui_mode: bool) {
-    use tracing_subscriber::EnvFilter;
+pub fn init_tracing(verbose: bool, _tui_mode: bool) {
+    use opendev_observability::{LogLevel, TelemetryConfig};
 
-    let filter = if verbose {
-        EnvFilter::new("debug")
-    } else if tui_mode {
-        EnvFilter::new("warn")
-    } else {
-        EnvFilter::new("info")
-    };
+    let log_level = if verbose { LogLevel::Debug } else { LogLevel::Info };
 
-    if tui_mode {
-        // Redirect logs to file so they don't corrupt the alternate screen
-        {
-            let log_dir = opendev_config::Paths::default().global_logs_dir();
-            let _ = std::fs::create_dir_all(&log_dir);
-            let log_path = log_dir.join("opendev.log");
+    let config = TelemetryConfig { enabled: true, log_level, ..Default::default() };
 
-            // Truncate if over 10 MB to prevent unbounded growth
-            const MAX_LOG_SIZE: u64 = 10 * 1024 * 1024;
-            if let Ok(meta) = std::fs::metadata(&log_path)
-                && meta.len() > MAX_LOG_SIZE
-            {
-                let mut opts = std::fs::OpenOptions::new();
-                opts.write(true).truncate(true);
-                #[cfg(unix)]
-                {
-                    use std::os::unix::fs::OpenOptionsExt;
-                    opts.mode(0o600);
-                }
-                let _ = opts.open(&log_path);
-            }
-
-            if let Ok(file) = std::fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(&log_path)
-            {
-                tracing_subscriber::fmt()
-                    .with_env_filter(filter)
-                    .with_target(false)
-                    .with_ansi(false)
-                    .with_writer(file)
-                    .init();
-                return;
-            }
-        }
-        // Fallback: suppress everything if we can't open log file
+    if let Err(e) = opendev_observability::OtelGuard::init(&config) {
+        // Fallback: basic stderr logging
         tracing_subscriber::fmt()
-            .with_env_filter(EnvFilter::new("error"))
+            .with_env_filter(tracing_subscriber::EnvFilter::new(if verbose {
+                "debug"
+            } else {
+                "error"
+            }))
             .with_target(false)
             .with_writer(std::io::stderr)
             .init();
-    } else {
-        tracing_subscriber::fmt()
-            .with_env_filter(filter)
-            .with_target(false)
-            .with_writer(std::io::stderr)
-            .init();
+        eprintln!("Warning: failed to initialize telemetry: {e}");
     }
 }
 
@@ -96,9 +56,7 @@ pub fn load_mcp_config(working_dir: &std::path::Path) -> opendev_mcp::McpConfig 
         }
     };
 
-    let project_config = project_mcp_path
-        .as_deref()
-        .and_then(|p| load_mcp_config_file(p).ok());
+    let project_config = project_mcp_path.as_deref().and_then(|p| load_mcp_config_file(p).ok());
 
     merge_configs(&global_config, project_config.as_ref())
 }

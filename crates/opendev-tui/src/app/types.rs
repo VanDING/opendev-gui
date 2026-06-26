@@ -74,27 +74,21 @@ impl DisplayRole {
         match self {
             Self::User => Some(RoleStyle {
                 icon: "> ".to_string(),
-                icon_style: Style::default()
-                    .fg(style_tokens::ACCENT)
-                    .add_modifier(Modifier::BOLD),
+                icon_style: Style::default().fg(style_tokens::ACCENT).add_modifier(Modifier::BOLD),
                 text_color: style_tokens::PRIMARY,
                 continuation: Indent::CONT,
                 attach_to_previous: false,
             }),
             Self::Interrupt => Some(RoleStyle {
                 icon: format!("  {CONTINUATION_CHAR}  "),
-                icon_style: Style::default()
-                    .fg(style_tokens::ERROR)
-                    .add_modifier(Modifier::BOLD),
+                icon_style: Style::default().fg(style_tokens::ERROR).add_modifier(Modifier::BOLD),
                 text_color: style_tokens::ERROR,
                 continuation: Indent::RESULT_CONT,
                 attach_to_previous: true,
             }),
             Self::SlashCommand => Some(RoleStyle {
                 icon: "❯ ".to_string(),
-                icon_style: Style::default()
-                    .fg(style_tokens::ACCENT)
-                    .add_modifier(Modifier::BOLD),
+                icon_style: Style::default().fg(style_tokens::ACCENT).add_modifier(Modifier::BOLD),
                 text_color: style_tokens::PRIMARY,
                 continuation: Indent::CONT,
                 attach_to_previous: false,
@@ -155,11 +149,7 @@ impl DisplayToolCall {
             || (is_bash && result_lines.len() > 4)
             || (!is_bash && result_lines.len() > 5 && !is_diff_tool(&tc.name));
 
-        let nested_calls = tc
-            .nested_tool_calls
-            .iter()
-            .map(DisplayToolCall::from_model)
-            .collect();
+        let nested_calls = tc.nested_tool_calls.iter().map(DisplayToolCall::from_model).collect();
 
         Self {
             name: tc.name.clone(),

@@ -155,11 +155,7 @@ impl PromptComposer {
             file_path: file_path.into(),
             condition,
             priority,
-            cache_policy: if cacheable {
-                CachePolicy::Static
-            } else {
-                CachePolicy::Uncached
-            },
+            cache_policy: if cacheable { CachePolicy::Static } else { CachePolicy::Uncached },
             content_provider: None,
         });
     }
@@ -226,10 +222,8 @@ impl PromptComposer {
     /// (cache → override → provider → embedded → filesystem), and joined.
     pub fn compose(&mut self, context: &PromptContext) -> String {
         let indices = self.filtered_sorted_indices(context);
-        let parts: Vec<String> = indices
-            .into_iter()
-            .filter_map(|i| self.resolve_section_at(i))
-            .collect();
+        let parts: Vec<String> =
+            indices.into_iter().filter_map(|i| self.resolve_section_at(i)).collect();
         self.section_overrides.clear();
         parts.join("\n\n")
     }
@@ -280,10 +274,7 @@ impl PromptComposer {
         variables: &HashMap<String, String>,
     ) -> (String, String) {
         let (stable, dynamic) = self.compose_two_part(context);
-        (
-            substitute_variables(&stable, variables),
-            substitute_variables(&dynamic, variables),
-        )
+        (substitute_variables(&stable, variables), substitute_variables(&dynamic, variables))
     }
 
     /// Get the number of registered sections.
@@ -385,11 +376,7 @@ impl PromptComposer {
         }
         let content = std::fs::read_to_string(&file_path).ok()?;
         let stripped = strip_frontmatter(&content);
-        if stripped.is_empty() {
-            None
-        } else {
-            Some(stripped)
-        }
+        if stripped.is_empty() { None } else { Some(stripped) }
     }
 }
 
@@ -419,10 +406,7 @@ pub fn substitute_variables(template: &str, variables: &HashMap<String, String>)
     VARIABLE_RE
         .replace_all(template, |caps: &regex::Captures| {
             let key = &caps[1];
-            variables
-                .get(key)
-                .cloned()
-                .unwrap_or_else(|| caps[0].to_string())
+            variables.get(key).cloned().unwrap_or_else(|| caps[0].to_string())
         })
         .into_owned()
 }

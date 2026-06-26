@@ -107,13 +107,16 @@ impl ReactLoop {
     where
         M: TaskMonitor + ?Sized,
     {
-        let mut state = LoopState::new(&tool_context.working_dir);
+        let mut state = LoopState::new(&tool_context.working_dir, None);
 
         // Tool schema deferral: if core tools are marked, only send core +
         // activated tool schemas to the LLM. This mirrors Claude Code's
         // ToolSearch pattern, reducing input tokens from ~13k to ~6k.
         let core_tools = tool_registry.core_tool_names();
         let use_deferral = !core_tools.is_empty();
+
+        let mut consecutive_llm_errors: usize = 0;
+        const MAX_LLM_RETRIES: usize = 10;
 
         loop {
             state.iteration += 1;
@@ -152,20 +155,14 @@ impl ReactLoop {
                     .collect();
 
                 // Read cumulative input tokens from cost tracker for session memory thresholds
-                let cumulative_tokens = cost_tracker
-                    .and_then(|ct| ct.lock().ok())
-                    .map(|ct| ct.total_input_tokens);
+                let cumulative_tokens =
+                    cost_tracker.and_then(|ct| ct.lock().ok()).map(|ct| ct.total_input_tokens);
 
                 // Read session ID from tool context shared state
-                let session_id_owned: Option<String> = tool_context
-                    .shared_state
-                    .as_ref()
-                    .and_then(|ss| ss.lock().ok())
-                    .and_then(|ss| {
-                        ss.get("session_id")
-                            .and_then(|v| v.as_str())
-                            .map(String::from)
-                    });
+                let session_id_owned: Option<String> =
+                    tool_context.shared_state.as_ref().and_then(|ss| ss.lock().ok()).and_then(
+                        |ss| ss.get("session_id").and_then(|v| v.as_str()).map(String::from),
+                    );
 
                 let turn_ctx = crate::attachments::TurnContext {
                     turn_number: state.iteration,
@@ -231,32 +228,37 @@ impl ReactLoop {
             )
             .await
             {
-                Ok(result) => result,
-                Err(super::types::LoopAction::Continue) => continue,
+                Ok(result) => {
+                    consecutive_llm_errors = 0;
+                    result
+                }
+                Err(super::types::LoopAction::Continue) => {
+                    consecutive_llm_errors += 1;
+                    if consecutive_llm_errors > MAX_LLM_RETRIES {
+                        return Err(AgentError::LlmError(format!(
+                            "LLM call failed after {MAX_LLM_RETRIES} consecutive retries"
+                        )));
+                    }
+                    continue;
+                }
                 Err(super::types::LoopAction::Return(result)) => return result,
             };
-            let super::phases::LlmCallResult {
-                body,
-                llm_latency_ms,
-                streaming_executor,
-            } = llm_result;
+            let super::phases::LlmCallResult { body, llm_latency_ms, streaming_executor } =
+                llm_result;
 
-            let super::phases::ProcessedResponse {
-                response,
-                turn,
-                mut iter_metrics,
-            } = super::phases::process_response(
-                self,
-                caller,
-                &body,
-                llm_latency_ms,
-                messages,
-                &mut state,
-                &emitter,
-                task_monitor,
-                cost_tracker,
-                compactor,
-            )?;
+            let super::phases::ProcessedResponse { response, turn, mut iter_metrics } =
+                super::phases::process_response(
+                    self,
+                    caller,
+                    &body,
+                    llm_latency_ms,
+                    messages,
+                    &mut state,
+                    &emitter,
+                    task_monitor,
+                    cost_tracker,
+                    compactor,
+                )?;
 
             match turn {
                 TurnResult::Interrupted => {
@@ -444,41 +446,23 @@ impl ReactLoop {
             Some(s) => s,
             None => return,
         };
-        const EXPLORATION_TOOLS: &[&str] = &[
-            "Glob",
-            "list_files",
-            "Read",
-            "read_file",
-            "Grep",
-            "search",
-            "grep",
-        ];
-        let has_exploration = tool_names
-            .iter()
-            .any(|name| EXPLORATION_TOOLS.contains(&name.as_str()));
+        const EXPLORATION_TOOLS: &[&str] =
+            &["Glob", "list_files", "Read", "read_file", "Grep", "search", "grep"];
+        let has_exploration =
+            tool_names.iter().any(|name| EXPLORATION_TOOLS.contains(&name.as_str()));
         if !has_exploration {
             return;
         }
         let transitioned = if let Ok(mut state) = shared.lock() {
-            let count = state
-                .get("explore_count")
-                .and_then(|v| v.as_u64())
-                .unwrap_or(0);
-            let exploration_count = tool_names
-                .iter()
-                .filter(|n| EXPLORATION_TOOLS.contains(&n.as_str()))
-                .count() as u64;
-            state.insert(
-                "explore_count".into(),
-                serde_json::json!(count + exploration_count),
-            );
+            let count = state.get("explore_count").and_then(|v| v.as_u64()).unwrap_or(0);
+            let exploration_count =
+                tool_names.iter().filter(|n| EXPLORATION_TOOLS.contains(&n.as_str())).count()
+                    as u64;
+            state.insert("explore_count".into(), serde_json::json!(count + exploration_count));
             if state.get("planning_phase").and_then(|v| v.as_str()) == Some("explore") {
                 state.insert("planning_phase".into(), serde_json::json!("plan"));
                 // Get plan_file_path for the reminder
-                state
-                    .get("plan_file_path")
-                    .and_then(|v| v.as_str())
-                    .map(|s| s.to_string())
+                state.get("plan_file_path").and_then(|v| v.as_str()).map(|s| s.to_string())
             } else {
                 None
             }
@@ -487,10 +471,8 @@ impl ReactLoop {
         };
         // Inject explore_phase_complete reminder after phase transition
         if let Some(plan_file_path) = transitioned {
-            let reminder = get_reminder(
-                "explore_phase_complete",
-                &[("plan_file_path", &plan_file_path)],
-            );
+            let reminder =
+                get_reminder("explore_phase_complete", &[("plan_file_path", &plan_file_path)]);
             if !reminder.is_empty() {
                 append_directive(messages, &reminder);
             }

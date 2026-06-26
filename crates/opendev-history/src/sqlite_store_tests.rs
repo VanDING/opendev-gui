@@ -14,7 +14,7 @@ fn test_schema_sql_is_valid_syntax() {
 
 #[test]
 fn test_create_indexes_count() {
-    assert_eq!(CREATE_INDEXES.len(), 3);
+    assert_eq!(CREATE_INDEXES.len(), 5);
     for sql in CREATE_INDEXES {
         assert!(sql.starts_with("CREATE INDEX"));
     }
@@ -29,53 +29,165 @@ fn test_sqlite_store_open() {
 }
 
 #[test]
-fn test_sqlite_store_save_returns_not_implemented() {
+fn test_sqlite_store_save_and_load_roundtrip() {
+    let tmp = tempfile::tempdir().unwrap();
+    let store = SqliteSessionStore::open(tmp.path().join("test.db")).unwrap();
+    let mut session = Session::new();
+    session.messages.push(ChatMessage {
+        role: Role::User,
+        content: "hello".to_string(),
+        timestamp: chrono::Utc::now(),
+        metadata: std::collections::HashMap::new(),
+        tool_calls: vec![],
+        tokens: None,
+        thinking_trace: None,
+        reasoning_content: None,
+        token_usage: None,
+        provenance: None,
+    });
+    session.messages.push(ChatMessage {
+        role: Role::Assistant,
+        content: "world".to_string(),
+        timestamp: chrono::Utc::now(),
+        metadata: std::collections::HashMap::new(),
+        tool_calls: vec![],
+        tokens: None,
+        thinking_trace: None,
+        reasoning_content: None,
+        token_usage: None,
+        provenance: None,
+    });
+
+    store.save_session(&session).unwrap();
+    let loaded = store.load_session(&session.id).unwrap();
+
+    assert_eq!(loaded.id, session.id);
+    assert_eq!(loaded.messages.len(), 2);
+    assert_eq!(loaded.messages[0].content, "hello");
+    assert_eq!(loaded.messages[1].content, "world");
+}
+
+#[test]
+fn test_sqlite_store_load_session_not_found() {
+    let tmp = tempfile::tempdir().unwrap();
+    let store = SqliteSessionStore::open(tmp.path().join("test.db")).unwrap();
+    let result = store.load_session("nonexistent-id");
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_sqlite_store_delete_session() {
     let tmp = tempfile::tempdir().unwrap();
     let store = SqliteSessionStore::open(tmp.path().join("test.db")).unwrap();
     let session = Session::new();
-    let result = store.save_session(&session);
-    assert!(result.is_err());
-    assert!(result.unwrap_err().contains("not yet implemented"));
+    store.save_session(&session).unwrap();
+    assert!(store.load_session(&session.id).is_ok());
+    store.delete_session(&session.id).unwrap();
+    assert!(store.load_session(&session.id).is_err());
 }
 
 #[test]
-fn test_sqlite_store_load_returns_not_implemented() {
+fn test_sqlite_store_delete_nonexistent() {
     let tmp = tempfile::tempdir().unwrap();
     let store = SqliteSessionStore::open(tmp.path().join("test.db")).unwrap();
-    let result = store.load_session("some-id");
-    assert!(result.is_err());
+    // Deleting a non-existent session should succeed (idempotent)
+    assert!(store.delete_session("ghost-id").is_ok());
 }
 
 #[test]
-fn test_sqlite_store_delete_returns_not_implemented() {
+fn test_sqlite_store_list_sessions() {
     let tmp = tempfile::tempdir().unwrap();
     let store = SqliteSessionStore::open(tmp.path().join("test.db")).unwrap();
-    let result = store.delete_session("some-id");
-    assert!(result.is_err());
+
+    // Initially empty
+    let ids = store.list_session_ids().unwrap();
+    assert!(ids.is_empty());
+
+    let s1 = Session::new();
+    let mut s2 = Session::new();
+    s2.id = "second-session".to_string();
+    store.save_session(&s1).unwrap();
+    store.save_session(&s2).unwrap();
+
+    let ids = store.list_session_ids().unwrap();
+    assert_eq!(ids.len(), 2);
+    assert!(ids.contains(&s1.id));
+    assert!(ids.contains(&s2.id));
 }
 
 #[test]
-fn test_sqlite_store_list_returns_not_implemented() {
+fn test_sqlite_store_search_messages() {
     let tmp = tempfile::tempdir().unwrap();
     let store = SqliteSessionStore::open(tmp.path().join("test.db")).unwrap();
-    let result = store.list_session_ids();
-    assert!(result.is_err());
+
+    let mut session = Session::new();
+    session.messages.push(ChatMessage {
+        role: Role::User,
+        content: "how do I write a parser in rust?".to_string(),
+        timestamp: chrono::Utc::now(),
+        metadata: std::collections::HashMap::new(),
+        tool_calls: vec![],
+        tokens: None,
+        thinking_trace: None,
+        reasoning_content: None,
+        token_usage: None,
+        provenance: None,
+    });
+    session.messages.push(ChatMessage {
+        role: Role::Assistant,
+        content: "here is a parser implementation".to_string(),
+        timestamp: chrono::Utc::now(),
+        metadata: std::collections::HashMap::new(),
+        tool_calls: vec![],
+        tokens: None,
+        thinking_trace: None,
+        reasoning_content: None,
+        token_usage: None,
+        provenance: None,
+    });
+    store.save_session(&session).unwrap();
+
+    let results = store.search_messages("parser").unwrap();
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].0, session.id);
+    assert_eq!(results[0].1.len(), 2); // both messages contain "parser"
+
+    let results = store.search_messages("python").unwrap();
+    assert!(results.is_empty());
 }
 
 #[test]
-fn test_sqlite_store_search_returns_not_implemented() {
+fn test_sqlite_store_append_message() {
     let tmp = tempfile::tempdir().unwrap();
     let store = SqliteSessionStore::open(tmp.path().join("test.db")).unwrap();
-    let result = store.search_messages("query");
-    assert!(result.is_err());
+    let session = Session::new();
+    store.save_session(&session).unwrap();
+
+    let msg = ChatMessage {
+        role: Role::User,
+        content: "appended message".to_string(),
+        timestamp: chrono::Utc::now(),
+        metadata: std::collections::HashMap::new(),
+        tool_calls: vec![],
+        tokens: None,
+        thinking_trace: None,
+        reasoning_content: None,
+        token_usage: None,
+        provenance: None,
+    };
+    store.append_message(&session.id, &msg).unwrap();
+
+    let loaded = store.load_session(&session.id).unwrap();
+    assert_eq!(loaded.messages.len(), 1);
+    assert_eq!(loaded.messages[0].content, "appended message");
 }
 
 #[test]
-fn test_sqlite_store_append_returns_not_implemented() {
+fn test_sqlite_store_append_nonexistent_session() {
     let tmp = tempfile::tempdir().unwrap();
     let store = SqliteSessionStore::open(tmp.path().join("test.db")).unwrap();
     let msg = ChatMessage {
-        role: opendev_models::Role::User,
+        role: Role::User,
         content: "hello".to_string(),
         timestamp: chrono::Utc::now(),
         metadata: std::collections::HashMap::new(),
@@ -86,7 +198,8 @@ fn test_sqlite_store_append_returns_not_implemented() {
         token_usage: None,
         provenance: None,
     };
-    let result = store.append_message("id", &msg);
+    // Appending to a nonexistent session should fail (FK constraint)
+    let result = store.append_message("nonexistent", &msg);
     assert!(result.is_err());
 }
 
@@ -103,11 +216,7 @@ fn test_schema_has_required_columns() {
         "time_archived",
         "metadata_json",
     ] {
-        assert!(
-            CREATE_SESSIONS_TABLE.contains(col),
-            "sessions schema missing column: {}",
-            col
-        );
+        assert!(CREATE_SESSIONS_TABLE.contains(col), "sessions schema missing column: {}", col);
     }
 
     for col in &[
@@ -122,10 +231,6 @@ fn test_schema_has_required_columns() {
         "thinking_trace",
         "reasoning_content",
     ] {
-        assert!(
-            CREATE_MESSAGES_TABLE.contains(col),
-            "messages schema missing column: {}",
-            col
-        );
+        assert!(CREATE_MESSAGES_TABLE.contains(col), "messages schema missing column: {}", col);
     }
 }

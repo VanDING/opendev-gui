@@ -30,10 +30,9 @@ const NOUNS: &[&str] = &[
 fn random_name() -> String {
     use std::time::SystemTime;
     // Simple deterministic-enough RNG from timestamp nanos
-    let seed = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap_or_default()
-        .subsec_nanos() as usize;
+    let seed =
+        SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap_or_default().subsec_nanos()
+            as usize;
     let adj = ADJECTIVES[seed % ADJECTIVES.len()];
     let noun = NOUNS[(seed / ADJECTIVES.len()) % NOUNS.len()];
     format!("{adj}-{noun}")
@@ -99,11 +98,7 @@ impl WorktreeManager {
             .join(".opendev")
             .join("data")
             .join("worktree");
-        Self {
-            project_dir,
-            worktree_base,
-            tracked: HashMap::new(),
-        }
+        Self { project_dir, worktree_base, tracked: HashMap::new() }
     }
 
     /// Create a new manager with a custom worktree base directory.
@@ -139,9 +134,7 @@ impl WorktreeManager {
         base_branch: &str,
     ) -> Result<WorktreeInfo, WorktreeError> {
         let name = name.map(String::from).unwrap_or_else(random_name);
-        let branch = branch
-            .map(String::from)
-            .unwrap_or_else(|| format!("worktree-{name}"));
+        let branch = branch.map(String::from).unwrap_or_else(|| format!("worktree-{name}"));
         let worktree_path = self.worktree_base.join(&name);
 
         if worktree_path.exists() {
@@ -168,10 +161,8 @@ impl WorktreeManager {
         }
 
         // Read HEAD commit in the new worktree
-        let commit = self
-            .git_output(&["rev-parse", "HEAD"], Some(&worktree_path))
-            .await
-            .unwrap_or_default();
+        let commit =
+            self.git_output(&["rev-parse", "HEAD"], Some(&worktree_path)).await.unwrap_or_default();
 
         let info = WorktreeInfo {
             path: worktree_path.to_string_lossy().to_string(),
@@ -206,11 +197,8 @@ impl WorktreeManager {
         let path_str = worktree_path.to_string_lossy().to_string();
         args.push(&path_str);
 
-        let output = Command::new("git")
-            .args(&args)
-            .current_dir(&self.project_dir)
-            .output()
-            .await?;
+        let output =
+            Command::new("git").args(&args).current_dir(&self.project_dir).output().await?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
@@ -270,12 +258,7 @@ impl WorktreeManager {
 
     async fn git_output(&self, args: &[&str], cwd: Option<&Path>) -> Option<String> {
         let cwd = cwd.unwrap_or(&self.project_dir);
-        let output = Command::new("git")
-            .args(args)
-            .current_dir(cwd)
-            .output()
-            .await
-            .ok()?;
+        let output = Command::new("git").args(args).current_dir(cwd).output().await.ok()?;
 
         if !output.status.success() {
             return None;
@@ -327,11 +310,7 @@ fn parse_porcelain_output(raw: &str) -> Vec<WorktreeInfo> {
     if has_entry {
         worktrees.push(WorktreeInfo {
             path,
-            branch: if branch.is_empty() {
-                "detached".to_string()
-            } else {
-                branch
-            },
+            branch: if branch.is_empty() { "detached".to_string() } else { branch },
             commit,
             is_main,
         });

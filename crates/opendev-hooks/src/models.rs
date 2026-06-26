@@ -66,10 +66,7 @@ impl HookEvent {
 
     /// Whether this is a tool-related event.
     pub fn is_tool_event(&self) -> bool {
-        matches!(
-            self,
-            Self::PreToolUse | Self::PostToolUse | Self::PostToolUseFailure
-        )
+        matches!(self, Self::PreToolUse | Self::PostToolUse | Self::PostToolUseFailure)
     }
 
     /// Whether this is a subagent-related event.
@@ -124,11 +121,7 @@ fn default_timeout() -> u32 {
 impl HookCommand {
     /// Create a new hook command with defaults.
     pub fn new(command: impl Into<String>) -> Self {
-        Self {
-            r#type: "command".to_string(),
-            command: command.into(),
-            timeout: 60,
-        }
+        Self { r#type: "command".to_string(), command: command.into(), timeout: 60 }
     }
 
     /// Create a new hook command with a custom timeout.
@@ -177,22 +170,14 @@ impl fmt::Debug for CompiledRegex {
 impl HookMatcher {
     /// Create a matcher that matches everything.
     pub fn catch_all(hooks: Vec<HookCommand>) -> Self {
-        Self {
-            matcher: None,
-            hooks,
-            compiled_regex: None,
-        }
+        Self { matcher: None, hooks, compiled_regex: None }
     }
 
     /// Create a matcher with a regex pattern.
     pub fn with_pattern(pattern: impl Into<String>, hooks: Vec<HookCommand>) -> Self {
         let pattern = pattern.into();
         let compiled = Regex::new(&pattern).ok().map(CompiledRegex);
-        Self {
-            matcher: Some(pattern),
-            hooks,
-            compiled_regex: compiled,
-        }
+        Self { matcher: Some(pattern), hooks, compiled_regex: compiled }
     }
 
     /// Compile (or recompile) the regex from the matcher pattern.
@@ -241,9 +226,7 @@ pub struct HookConfig {
 impl HookConfig {
     /// Create an empty hook configuration.
     pub fn empty() -> Self {
-        Self {
-            hooks: HashMap::new(),
-        }
+        Self { hooks: HashMap::new() }
     }
 
     /// Compile all regex patterns in all matchers.
@@ -259,18 +242,12 @@ impl HookConfig {
 
     /// Get matchers for a given event. Returns an empty slice if none.
     pub fn get_matchers(&self, event: HookEvent) -> &[HookMatcher] {
-        self.hooks
-            .get(event.as_str())
-            .map(|v| v.as_slice())
-            .unwrap_or(&[])
+        self.hooks.get(event.as_str()).map(|v| v.as_slice()).unwrap_or(&[])
     }
 
     /// Fast check: are there any matchers registered for this event?
     pub fn has_hooks_for(&self, event: HookEvent) -> bool {
-        self.hooks
-            .get(event.as_str())
-            .map(|v| !v.is_empty())
-            .unwrap_or(false)
+        self.hooks.get(event.as_str()).map(|v| !v.is_empty()).unwrap_or(false)
     }
 
     /// Remove any event keys that are not recognized.
@@ -283,10 +260,7 @@ impl HookConfig {
 
     /// Register hooks for an event programmatically.
     pub fn add_matcher(&mut self, event: HookEvent, matcher: HookMatcher) {
-        self.hooks
-            .entry(event.as_str().to_string())
-            .or_default()
-            .push(matcher);
+        self.hooks.entry(event.as_str().to_string()).or_default().push(matcher);
     }
 }
 

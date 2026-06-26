@@ -34,10 +34,8 @@ pub fn handle_replace_symbol_body(arguments: &Value, workspace_root: &Path) -> T
         _ => return ToolResult::err("Missing required argument: new_body"),
     };
 
-    let preserve_signature = arguments
-        .get("preserve_signature")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(true);
+    let preserve_signature =
+        arguments.get("preserve_signature").and_then(|v| v.as_bool()).unwrap_or(true);
 
     if !file_path.exists() {
         return ToolResult::err(format!("File not found: {}", file_path.display()));
@@ -84,11 +82,7 @@ fn find_and_replace_body(
     //
     // For now, demonstrate the replace_range logic with a dummy symbol.
     // The actual LSP integration returns a UnifiedSymbolInfo.
-    Err(SymbolError::SymbolNotFound(format!(
-        "'{}' in {}",
-        symbol_name,
-        file_path.display()
-    )))
+    Err(SymbolError::SymbolNotFound(format!("'{}' in {}", symbol_name, file_path.display())))
 }
 
 /// Find where the body starts, skipping the signature.

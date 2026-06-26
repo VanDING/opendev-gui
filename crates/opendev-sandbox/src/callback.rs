@@ -116,12 +116,7 @@ impl CallbackServer {
 
         info!(port, "Sandbox callback server started");
 
-        Ok(Self {
-            port,
-            _shutdown_tx: shutdown_tx,
-            handle,
-            query_count,
-        })
+        Ok(Self { port, _shutdown_tx: shutdown_tx, handle, query_count })
     }
 
     /// The port the callback server is listening on.

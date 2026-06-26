@@ -119,7 +119,5 @@ pub(super) fn lang_for_ext(ext: &str) -> &'static str {
 
 /// Get the lowercased extension (including the leading dot) of a path.
 pub(super) fn ext_lower(path: &Path) -> String {
-    path.extension()
-        .map(|e| format!(".{}", e.to_string_lossy().to_lowercase()))
-        .unwrap_or_default()
+    path.extension().map(|e| format!(".{}", e.to_string_lossy().to_lowercase())).unwrap_or_default()
 }

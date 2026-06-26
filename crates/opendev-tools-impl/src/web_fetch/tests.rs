@@ -1,10 +1,7 @@
 use super::*;
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 #[tokio::test]
@@ -80,4 +77,62 @@ fn test_timeout_constants() {
     assert_eq!(MAX_TIMEOUT_SECS, 120);
     assert_eq!(DEFAULT_TIMEOUT_SECS, 30);
     assert!(DEFAULT_TIMEOUT_SECS <= MAX_TIMEOUT_SECS);
+}
+
+// ── SSRF protection ────────────────────────────────────────────
+
+#[test]
+fn test_is_private_url_direct_ips() {
+    // Loopback
+    assert!(is_private_url("127.0.0.1"));
+    assert!(is_private_url("::1"));
+
+    // Private ranges
+    assert!(is_private_url("10.0.0.1"));
+    assert!(is_private_url("10.255.255.255"));
+    assert!(is_private_url("172.16.0.1"));
+    assert!(is_private_url("172.31.255.255"));
+    assert!(is_private_url("192.168.1.1"));
+
+    // Link-local (IPv4)
+    assert!(is_private_url("169.254.169.254"));
+
+    // Unspecified / multicast
+    assert!(is_private_url("0.0.0.0"));
+    assert!(is_private_url("224.0.0.1"));
+    assert!(is_private_url("ff02::1"));
+}
+
+#[test]
+fn test_is_private_url_public_allowed() {
+    assert!(!is_private_url("8.8.8.8"));
+    assert!(!is_private_url("1.1.1.1"));
+    assert!(!is_private_url("93.184.216.34")); // example.com
+}
+
+#[tokio::test]
+async fn test_web_fetch_ssrf_localhost_rejected() {
+    let tool = WebFetchTool;
+    let ctx = ToolContext::new("/tmp");
+    let args = make_args(&[("url", serde_json::json!("http://127.0.0.1:8080"))]);
+    let result = tool.execute(args, &ctx).await;
+    assert!(!result.success);
+    assert!(result.error.unwrap().contains("private"));
+}
+
+#[tokio::test]
+async fn test_web_fetch_ssrf_private_rejected() {
+    let tool = WebFetchTool;
+    let ctx = ToolContext::new("/tmp");
+    for url in &[
+        "http://10.0.0.1/api",
+        "http://172.16.0.1/admin",
+        "http://192.168.1.1/",
+        "http://[::1]:3000/",
+        "http://169.254.169.254/latest/meta-data",
+    ] {
+        let args = make_args(&[("url", serde_json::json!(*url))]);
+        let result = tool.execute(args, &ctx).await;
+        assert!(!result.success, "expected private URL to be rejected: {url}");
+    }
 }

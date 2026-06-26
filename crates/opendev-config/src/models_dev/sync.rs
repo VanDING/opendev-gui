@@ -14,9 +14,7 @@ pub fn is_cache_stale(providers_dir: &Path, ttl: Duration) -> bool {
         return true;
     }
     match marker.metadata().and_then(|m| m.modified()) {
-        Ok(mtime) => SystemTime::now()
-            .duration_since(mtime)
-            .map_or(true, |age| age > ttl),
+        Ok(mtime) => SystemTime::now().duration_since(mtime).map_or(true, |age| age > ttl),
         Err(_) => true,
     }
 }
@@ -26,9 +24,8 @@ pub fn sync_provider_cache(
     cache_dir: Option<&Path>,
     cache_ttl: Option<Duration>,
 ) -> Result<bool, RegistryError> {
-    let cache_dir = cache_dir
-        .map(PathBuf::from)
-        .unwrap_or_else(|| crate::Paths::default().global_cache_dir());
+    let cache_dir =
+        cache_dir.map(PathBuf::from).unwrap_or_else(|| crate::Paths::default().global_cache_dir());
     let providers_dir = cache_dir.join("providers");
     let ttl = cache_ttl.unwrap_or(DEFAULT_CACHE_TTL);
 
@@ -37,9 +34,7 @@ pub fn sync_provider_cache(
     if marker.exists()
         && let Ok(meta) = marker.metadata()
         && let Ok(mtime) = meta.modified()
-        && SystemTime::now()
-            .duration_since(mtime)
-            .is_ok_and(|age| age <= ttl)
+        && SystemTime::now().duration_since(mtime).is_ok_and(|age| age <= ttl)
     {
         return Ok(false); // Still fresh
     }
@@ -179,9 +174,8 @@ pub async fn sync_provider_cache_async(
     cache_dir: Option<&Path>,
     cache_ttl: Option<Duration>,
 ) -> Result<bool, RegistryError> {
-    let cache_dir = cache_dir
-        .map(PathBuf::from)
-        .unwrap_or_else(|| crate::Paths::default().global_cache_dir());
+    let cache_dir =
+        cache_dir.map(PathBuf::from).unwrap_or_else(|| crate::Paths::default().global_cache_dir());
     let providers_dir = cache_dir.join("providers");
     let ttl = cache_ttl.unwrap_or(DEFAULT_CACHE_TTL);
 
@@ -190,9 +184,7 @@ pub async fn sync_provider_cache_async(
     if marker.exists()
         && let Ok(meta) = marker.metadata()
         && let Ok(mtime) = meta.modified()
-        && SystemTime::now()
-            .duration_since(mtime)
-            .is_ok_and(|age| age <= ttl)
+        && SystemTime::now().duration_since(mtime).is_ok_and(|age| age <= ttl)
     {
         return Ok(false); // Still fresh
     }
@@ -271,11 +263,7 @@ fn convert_provider_to_internal(
 
     let env_vars = provider_data["env"]
         .as_array()
-        .map(|arr| {
-            arr.iter()
-                .filter_map(|v| v.as_str().map(String::from))
-                .collect::<Vec<_>>()
-        })
+        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect::<Vec<_>>())
         .unwrap_or_default();
 
     let models_block = provider_data["models"].as_object()?;
@@ -293,11 +281,7 @@ fn convert_provider_to_internal(
         let modalities = md.get("modalities").cloned().unwrap_or_default();
         let input_mods: Vec<String> = modalities["input"]
             .as_array()
-            .map(|arr| {
-                arr.iter()
-                    .filter_map(|v| v.as_str().map(String::from))
-                    .collect()
-            })
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
             .unwrap_or_default();
 
         if !input_mods.is_empty() && !input_mods.contains(&"text".to_string()) {

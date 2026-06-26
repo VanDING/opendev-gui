@@ -53,12 +53,7 @@ impl SkillLoader {
             }
         }
 
-        Self {
-            dirs,
-            skill_urls: Vec::new(),
-            cache: HashMap::new(),
-            metadata_cache: HashMap::new(),
-        }
+        Self { dirs, skill_urls: Vec::new(), cache: HashMap::new(), metadata_cache: HashMap::new() }
     }
 
     /// Add remote URLs to discover skills from.
@@ -231,10 +226,7 @@ impl SkillLoader {
         // Look up by full name first.
         let metadata = self.metadata_cache.get(name).cloned().or_else(|| {
             // Fall back: search by bare name.
-            self.metadata_cache
-                .values()
-                .find(|m| m.name == name)
-                .cloned()
+            self.metadata_cache.values().find(|m| m.name == name).cloned()
         });
 
         let metadata = match metadata {
@@ -286,12 +278,8 @@ impl SkillLoader {
             .and_then(|p| std::fs::metadata(p).ok())
             .and_then(|m| m.modified().ok());
 
-        let skill = LoadedSkill {
-            metadata: metadata.clone(),
-            content,
-            companion_files,
-            cached_mtime,
-        };
+        let skill =
+            LoadedSkill { metadata: metadata.clone(), content, companion_files, cached_mtime };
 
         self.cache.insert(name.to_string(), skill.clone());
         Some(skill)
@@ -340,13 +328,7 @@ impl SkillLoader {
 
         self.metadata_cache
             .values()
-            .map(|m| {
-                if m.namespace == "default" {
-                    m.name.clone()
-                } else {
-                    m.full_name()
-                }
-            })
+            .map(|m| if m.namespace == "default" { m.name.clone() } else { m.full_name() })
             .collect()
     }
 
@@ -354,6 +336,58 @@ impl SkillLoader {
     pub fn clear_cache(&mut self) {
         self.cache.clear();
         self.metadata_cache.clear();
+    }
+
+    /// Record usage of a skill by name.
+    pub fn record_usage(&mut self, name: &str) {
+        if let Some(meta) = self.metadata_cache.get_mut(name) {
+            crate::skills::Curator::record_usage(meta, chrono::Utc::now());
+        }
+    }
+
+    /// Set the pinned flag on a skill.
+    pub fn set_pinned(&mut self, name: &str, pinned: bool) {
+        if let Some(meta) = self.metadata_cache.get_mut(name) {
+            meta.pinned = pinned;
+        }
+    }
+
+    /// Build a formatted skills index filtered and bounded by a token budget.
+    pub fn build_skills_index_with_budget(&mut self, token_budget: usize) -> String {
+        let skills = self.discover_skills();
+        if skills.is_empty() {
+            return String::new();
+        }
+
+        let selected = crate::skills::skills_within_budget(&skills, token_budget);
+
+        let mut lines = vec![
+            "## Available Skills".to_string(),
+            String::new(),
+            "Use `Skill` to load skill content into conversation context.".to_string(),
+            String::new(),
+        ];
+
+        for skill in &selected {
+            if skill.namespace == "default" {
+                lines.push(format!("- **{}**: {}", skill.name, skill.description));
+            } else {
+                lines.push(format!(
+                    "- **{}:{}**: {}",
+                    skill.namespace, skill.name, skill.description
+                ));
+            }
+        }
+
+        lines.join("\n")
+    }
+
+    /// Run curator over all skills, transitioning stale/archived states.
+    pub fn curate(&mut self) {
+        let now = chrono::Utc::now();
+        for meta in self.metadata_cache.values_mut() {
+            crate::skills::Curator::curate(meta, now);
+        }
     }
 
     /// Expand variables in a skill's content.

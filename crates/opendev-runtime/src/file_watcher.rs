@@ -60,10 +60,7 @@ impl Default for FileWatcherConfig {
         Self {
             debounce: DEFAULT_DEBOUNCE,
             inactivity_timeout: DEFAULT_INACTIVITY_TIMEOUT,
-            ignore_patterns: DEFAULT_IGNORE_DIRS
-                .iter()
-                .map(|s| (*s).to_string())
-                .collect(),
+            ignore_patterns: DEFAULT_IGNORE_DIRS.iter().map(|s| (*s).to_string()).collect(),
         }
     }
 }
@@ -86,11 +83,7 @@ impl FileWatcher {
     /// Create a new file watcher for the given directory.
     pub fn new(root: impl Into<PathBuf>, config: FileWatcherConfig) -> Self {
         let (cancel, _) = tokio::sync::watch::channel(false);
-        Self {
-            root: root.into(),
-            config,
-            cancel,
-        }
+        Self { root: root.into(), config, cancel }
     }
 
     /// Create a watcher with default configuration.

@@ -29,12 +29,7 @@ async fn test_channel_progress_callback() {
 
     use opendev_agents::SubagentProgressCallback;
     cb.on_started("test-agent", "do a thing");
-    cb.on_tool_call(
-        "test-agent",
-        "read_file",
-        "tc-1",
-        &std::collections::HashMap::new(),
-    );
+    cb.on_tool_call("test-agent", "read_file", "tc-1", &std::collections::HashMap::new());
     cb.on_tool_complete("test-agent", "read_file", "tc-1", true);
     // on_finished is intentionally a no-op (SpawnSubagentTool sends the real Finished event)
     cb.on_finished("test-agent", true, "Done");
@@ -70,13 +65,7 @@ async fn test_bridge_to_channel_end_to_end() {
     // Verify events arrive on the channel
     let evt = rx.recv().await.unwrap();
     match evt {
-        SubagentEvent::ToolCall {
-            subagent_id: id,
-            subagent_name,
-            tool_name,
-            tool_id,
-            args: _,
-        } => {
+        SubagentEvent::ToolCall { subagent_id: id, subagent_name, tool_name, tool_id, args: _ } => {
             assert_eq!(id, "test-sa-id");
             assert_eq!(subagent_name, "Explorer");
             assert_eq!(tool_name, "read_file");
@@ -90,11 +79,7 @@ async fn test_bridge_to_channel_end_to_end() {
 
     let evt = rx.recv().await.unwrap();
     match evt {
-        SubagentEvent::TokenUpdate {
-            input_tokens,
-            output_tokens,
-            ..
-        } => {
+        SubagentEvent::TokenUpdate { input_tokens, output_tokens, .. } => {
             assert_eq!(input_tokens, 500);
             assert_eq!(output_tokens, 100);
         }

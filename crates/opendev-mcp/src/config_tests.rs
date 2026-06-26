@@ -40,33 +40,21 @@ fn test_merge_configs() {
     let mut global = McpConfig::default();
     global.mcp_servers.insert(
         "global-server".to_string(),
-        McpServerConfig {
-            command: "node".to_string(),
-            ..Default::default()
-        },
+        McpServerConfig { command: "node".to_string(), ..Default::default() },
     );
     global.mcp_servers.insert(
         "shared".to_string(),
-        McpServerConfig {
-            command: "old".to_string(),
-            ..Default::default()
-        },
+        McpServerConfig { command: "old".to_string(), ..Default::default() },
     );
 
     let mut project = McpConfig::default();
     project.mcp_servers.insert(
         "project-server".to_string(),
-        McpServerConfig {
-            command: "python".to_string(),
-            ..Default::default()
-        },
+        McpServerConfig { command: "python".to_string(), ..Default::default() },
     );
     project.mcp_servers.insert(
         "shared".to_string(),
-        McpServerConfig {
-            command: "new".to_string(),
-            ..Default::default()
-        },
+        McpServerConfig { command: "new".to_string(), ..Default::default() },
     );
 
     let merged = merge_configs(&global, Some(&project));
@@ -83,10 +71,7 @@ fn test_expand_env_vars() {
     unsafe { std::env::set_var("TEST_MCP_VAR", "hello") };
     assert_eq!(expand_env_vars("${TEST_MCP_VAR}_world"), "hello_world");
     // Unknown variables are left as-is
-    assert_eq!(
-        expand_env_vars("${UNKNOWN_VAR_12345}"),
-        "${UNKNOWN_VAR_12345}"
-    );
+    assert_eq!(expand_env_vars("${UNKNOWN_VAR_12345}"), "${UNKNOWN_VAR_12345}");
     // No variables
     assert_eq!(expand_env_vars("no vars here"), "no vars here");
     // SAFETY: test-only cleanup.
@@ -99,10 +84,7 @@ fn test_prepare_server_config() {
     unsafe { std::env::set_var("MCP_TEST_TOKEN", "secret123") };
     let config = McpServerConfig {
         command: "node".to_string(),
-        args: vec![
-            "server.js".to_string(),
-            "--token=${MCP_TEST_TOKEN}".to_string(),
-        ],
+        args: vec!["server.js".to_string(), "--token=${MCP_TEST_TOKEN}".to_string()],
         headers: HashMap::from([(
             "Authorization".to_string(),
             "Bearer ${MCP_TEST_TOKEN}".to_string(),
@@ -114,10 +96,7 @@ fn test_prepare_server_config() {
     let prepared = prepare_server_config(&config);
     assert_eq!(prepared.args[1], "--token=secret123");
     assert_eq!(prepared.headers["Authorization"], "Bearer secret123");
-    assert_eq!(
-        prepared.url.as_deref(),
-        Some("https://example.com/secret123")
-    );
+    assert_eq!(prepared.url.as_deref(), Some("https://example.com/secret123"));
     // SAFETY: test-only cleanup.
     unsafe { std::env::remove_var("MCP_TEST_TOKEN") };
 }
@@ -219,10 +198,7 @@ fn test_timeout_default() {
 
 #[test]
 fn test_timeout_custom() {
-    let config = McpServerConfig {
-        timeout: Some(60_000),
-        ..Default::default()
-    };
+    let config = McpServerConfig { timeout: Some(60_000), ..Default::default() };
     assert_eq!(config.effective_timeout_ms(), 60_000);
 }
 

@@ -1,33 +1,22 @@
 use super::*;
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 #[tokio::test]
 async fn test_task_complete_success() {
     let tool = TaskCompleteTool;
     let ctx = ToolContext::new("/tmp");
-    let args = make_args(&[(
-        "result",
-        serde_json::json!("Implemented the feature and added tests"),
-    )]);
+    let args =
+        make_args(&[("result", serde_json::json!("Implemented the feature and added tests"))]);
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
     let output = result.output.unwrap();
     assert!(output.contains("success"));
     assert!(output.contains("Implemented the feature"));
-    assert_eq!(
-        result.metadata.get("_completion"),
-        Some(&serde_json::json!(true))
-    );
-    assert_eq!(
-        result.metadata.get("status"),
-        Some(&serde_json::json!("success"))
-    );
+    assert_eq!(result.metadata.get("_completion"), Some(&serde_json::json!(true)));
+    assert_eq!(result.metadata.get("status"), Some(&serde_json::json!("success")));
 }
 
 #[tokio::test]
@@ -95,10 +84,7 @@ async fn test_task_complete_default_status() {
     let args = make_args(&[("result", serde_json::json!("All done"))]);
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
-    assert_eq!(
-        result.metadata.get("status"),
-        Some(&serde_json::json!("success"))
-    );
+    assert_eq!(result.metadata.get("status"), Some(&serde_json::json!("success")));
 }
 
 #[tokio::test]
@@ -108,8 +94,5 @@ async fn test_task_complete_trims_result() {
     let args = make_args(&[("result", serde_json::json!("  Trimmed result  "))]);
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
-    assert_eq!(
-        result.metadata.get("summary"),
-        Some(&serde_json::json!("Trimmed result"))
-    );
+    assert_eq!(result.metadata.get("summary"), Some(&serde_json::json!("Trimmed result")));
 }

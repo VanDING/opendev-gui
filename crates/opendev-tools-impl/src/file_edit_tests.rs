@@ -2,10 +2,7 @@ use super::*;
 use tempfile::TempDir;
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 #[tokio::test]
@@ -109,11 +106,7 @@ async fn test_edit_same_string() {
 async fn test_edit_fuzzy_whitespace() {
     let tmp = TempDir::new().unwrap();
     let file_path = tmp.path().join("test.rs");
-    std::fs::write(
-        &file_path,
-        "fn main() {\n    let x = 1;\n    let y = 2;\n}\n",
-    )
-    .unwrap();
+    std::fs::write(&file_path, "fn main() {\n    let x = 1;\n    let y = 2;\n}\n").unwrap();
 
     let tool = FileEditTool;
     let ctx = ToolContext::new(tmp.path());
@@ -121,18 +114,11 @@ async fn test_edit_fuzzy_whitespace() {
     let args = make_args(&[
         ("file_path", serde_json::json!(file_path.to_str().unwrap())),
         ("old_string", serde_json::json!("let x = 1;\nlet y = 2;")),
-        (
-            "new_string",
-            serde_json::json!("    let x = 10;\n    let y = 20;"),
-        ),
+        ("new_string", serde_json::json!("    let x = 10;\n    let y = 20;")),
     ]);
 
     let result = tool.execute(args, &ctx).await;
-    assert!(
-        result.success,
-        "fuzzy match should succeed: {:?}",
-        result.error
-    );
+    assert!(result.success, "fuzzy match should succeed: {:?}", result.error);
     let content = std::fs::read_to_string(&file_path).unwrap();
     assert!(content.contains("let x = 10;"));
     assert!(content.contains("let y = 20;"));
@@ -261,10 +247,7 @@ async fn test_edit_rejects_sensitive_file() {
     let err = result.error.unwrap();
     assert!(err.contains("secrets"), "Should mention secrets: {err}");
     // File should be unchanged
-    assert_eq!(
-        std::fs::read_to_string(&env_file).unwrap(),
-        "SECRET=abc123\n"
-    );
+    assert_eq!(std::fs::read_to_string(&env_file).unwrap(), "SECRET=abc123\n");
 }
 
 #[tokio::test]
@@ -282,9 +265,5 @@ async fn test_edit_allows_env_example() {
     ]);
 
     let result = tool.execute(args, &ctx).await;
-    assert!(
-        result.success,
-        ".env.example should be editable: {:?}",
-        result.error
-    );
+    assert!(result.success, ".env.example should be editable: {:?}", result.error);
 }

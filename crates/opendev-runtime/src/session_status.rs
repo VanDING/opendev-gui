@@ -39,9 +39,9 @@ impl std::fmt::Display for SessionStatus {
         match self {
             Self::Idle => write!(f, "idle"),
             Self::Busy => write!(f, "busy"),
-            Self::Retry {
-                attempt, message, ..
-            } => write!(f, "retry (attempt {attempt}: {message})"),
+            Self::Retry { attempt, message, .. } => {
+                write!(f, "retry (attempt {attempt}: {message})")
+            }
         }
     }
 }
@@ -58,18 +58,12 @@ pub struct SessionStatusTracker {
 impl SessionStatusTracker {
     /// Create a new tracker without event publishing.
     pub fn new() -> Self {
-        Self {
-            state: Mutex::new(HashMap::new()),
-            event_bus: None,
-        }
+        Self { state: Mutex::new(HashMap::new()), event_bus: None }
     }
 
     /// Create a new tracker that publishes status changes to the event bus.
     pub fn with_event_bus(event_bus: EventBus) -> Self {
-        Self {
-            state: Mutex::new(HashMap::new()),
-            event_bus: Some(event_bus),
-        }
+        Self { state: Mutex::new(HashMap::new()), event_bus: Some(event_bus) }
     }
 
     /// Get the current status of a session.
@@ -90,10 +84,7 @@ impl SessionStatusTracker {
     /// Publishes a `SessionStatusChanged` event if an event bus is configured.
     pub fn set(&self, session_id: impl Into<String>, status: SessionStatus) {
         let session_id = session_id.into();
-        let mut state = self
-            .state
-            .lock()
-            .expect("SessionStatusTracker lock poisoned");
+        let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
 
         match &status {
             SessionStatus::Idle => {
@@ -134,28 +125,18 @@ impl SessionStatusTracker {
     ) {
         self.set(
             session_id,
-            SessionStatus::Retry {
-                attempt,
-                message: message.into(),
-                next_retry_ms,
-            },
+            SessionStatus::Retry { attempt, message: message.into(), next_retry_ms },
         );
     }
 
     /// Get all tracked sessions and their statuses.
     pub fn list(&self) -> HashMap<String, SessionStatus> {
-        self.state
-            .lock()
-            .expect("SessionStatusTracker lock poisoned")
-            .clone()
+        self.state.lock().unwrap_or_else(|e| e.into_inner()).clone()
     }
 
     /// Get the number of tracked (non-idle) sessions.
     pub fn active_count(&self) -> usize {
-        self.state
-            .lock()
-            .expect("SessionStatusTracker lock poisoned")
-            .len()
+        self.state.lock().unwrap_or_else(|e| e.into_inner()).len()
     }
 
     /// Check if any session is currently retrying.
@@ -177,9 +158,7 @@ impl Default for SessionStatusTracker {
 impl std::fmt::Debug for SessionStatusTracker {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let count = self.active_count();
-        f.debug_struct("SessionStatusTracker")
-            .field("active_sessions", &count)
-            .finish()
+        f.debug_struct("SessionStatusTracker").field("active_sessions", &count).finish()
     }
 }
 

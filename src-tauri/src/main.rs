@@ -11,26 +11,21 @@ struct AppState {
 
 fn main() {
     tauri::Builder::default()
-        .manage(AppState {
-            server: Mutex::new(None),
-        })
+        .manage(AppState { server: Mutex::new(None) })
         .setup(|app| {
-            let working_dir = std::env::current_dir()
-                .unwrap_or_else(|_| std::path::PathBuf::from("."));
+            let working_dir =
+                std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
 
             match server::build_server(&working_dir) {
                 Ok(handle) => {
                     let port = handle.port;
 
                     if let Some(window) = app.get_webview_window("main") {
-                        let _ = window.eval(&format!(
-                            "window.__OPENDEV_PORT__ = {}",
-                            port
-                        ));
+                        let _ = window.eval(&format!("window.__OPENDEV_PORT__ = {}", port));
                     }
 
                     let state = app.state::<AppState>();
-                    *state.server.lock().unwrap() = Some(handle);
+                    *state.server.lock().unwrap_or_else(|e| e.into_inner()) = Some(handle);
 
                     println!("OpenDev server started on http://127.0.0.1:{}", port);
                 }
@@ -51,7 +46,7 @@ fn main() {
             if let tauri::WindowEvent::Destroyed = event {
                 let app = window.app_handle();
                 let state = app.state::<AppState>();
-                if let Some(handle) = state.server.lock().unwrap().take() {
+                if let Some(handle) = state.server.lock().unwrap_or_else(|e| e.into_inner()).take() {
                     let _ = handle.shutdown_tx.send(());
                 }
             }

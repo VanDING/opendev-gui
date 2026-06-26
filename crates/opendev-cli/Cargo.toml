@@ -19,6 +19,7 @@ opendev-repl = { workspace = true }
 opendev-tools-core = { workspace = true }
 opendev-web = { workspace = true }
 opendev-mcp = { workspace = true }
+opendev-observability = { workspace = true }
 opendev-http = { workspace = true }
 opendev-agents = { workspace = true }
 opendev-runtime = { workspace = true }

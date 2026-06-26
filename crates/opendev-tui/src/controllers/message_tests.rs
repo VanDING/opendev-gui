@@ -35,9 +35,7 @@ fn test_agent_chunk_after_reasoning_creates_new_message() {
     let controller = MessageController::new();
     let mut state = AppState::default();
     // Simulate reasoning arriving first
-    state
-        .messages
-        .push(DisplayMessage::new(DisplayRole::Reasoning, "thinking..."));
+    state.messages.push(DisplayMessage::new(DisplayRole::Reasoning, "thinking..."));
     // Then agent chunk arrives — should create a NEW assistant message
     controller.handle_agent_chunk(&mut state, "Hello");
     assert_eq!(state.messages.len(), 2);

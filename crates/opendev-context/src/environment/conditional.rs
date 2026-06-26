@@ -27,16 +27,11 @@ pub fn rule_applies(
         return false;
     }
 
-    let canon_wd = working_dir
-        .canonicalize()
-        .unwrap_or_else(|_| working_dir.to_path_buf());
+    let canon_wd = working_dir.canonicalize().unwrap_or_else(|_| working_dir.to_path_buf());
 
     for file in active_files {
         let canon_file = file.canonicalize().unwrap_or_else(|_| file.clone());
-        let relative = canon_file
-            .strip_prefix(&canon_wd)
-            .unwrap_or(&canon_file)
-            .to_string_lossy();
+        let relative = canon_file.strip_prefix(&canon_wd).unwrap_or(&canon_file).to_string_lossy();
 
         for glob_str in globs {
             if let Ok(pattern) = glob::Pattern::new(glob_str)

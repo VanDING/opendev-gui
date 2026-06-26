@@ -241,10 +241,7 @@ fn test_partition_with_tools_all_read_only() {
 fn test_partition_with_tools_all_writes() {
     let w1 = WriteTool;
     let w2 = WriteTool;
-    let calls = vec![
-        tc("Write", serde_json::json!({})),
-        tc("Write", serde_json::json!({})),
-    ];
+    let calls = vec![tc("Write", serde_json::json!({})), tc("Write", serde_json::json!({}))];
     let tools: Vec<&dyn BaseTool> = vec![&w1, &w2];
     let groups = ParallelPolicy::partition_with_tools(&calls, &tools);
     assert_eq!(groups, vec![vec![0], vec![1]]);

@@ -57,10 +57,7 @@ pub fn find_match(original: &str, old_content: &str) -> Option<MatchResult> {
 
     for &(name, finder) in passes {
         if let Some(actual) = finder(&original, &old_content) {
-            return Some(MatchResult {
-                actual,
-                pass_name: name,
-            });
+            return Some(MatchResult { actual, pass_name: name });
         }
     }
 

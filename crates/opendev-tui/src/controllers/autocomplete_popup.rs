@@ -23,11 +23,7 @@ pub struct AutocompletePopupController {
 impl AutocompletePopupController {
     /// Create a new hidden autocomplete popup.
     pub fn new() -> Self {
-        Self {
-            items: Vec::new(),
-            selected: 0,
-            visible: false,
-        }
+        Self { items: Vec::new(), selected: 0, visible: false }
     }
 
     /// Whether the popup is currently visible.

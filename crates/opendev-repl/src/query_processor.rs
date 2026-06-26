@@ -65,10 +65,7 @@ impl QueryProcessor {
 
     /// Create a new query processor with an explicit working directory.
     pub fn with_working_dir(working_dir: PathBuf) -> Self {
-        Self {
-            execution_count: 0,
-            working_dir,
-        }
+        Self { execution_count: 0, working_dir }
     }
 
     /// Process a user query.

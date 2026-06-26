@@ -19,10 +19,7 @@ fn test_scan_top_level_dirs_basic() {
     assert!(result.contains("docs/"), "got: {result}");
     assert!(result.contains("web-ui/"), "got: {result}");
     assert!(!result.contains(".git"), "should exclude .git");
-    assert!(
-        !result.contains("node_modules"),
-        "should exclude node_modules"
-    );
+    assert!(!result.contains("node_modules"), "should exclude node_modules");
     assert!(!result.contains("target"), "should exclude target");
     assert!(!result.contains("Cargo.toml"), "should exclude files");
 }

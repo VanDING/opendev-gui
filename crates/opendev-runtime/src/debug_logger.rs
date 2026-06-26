@@ -26,10 +26,8 @@ fn truncate_value(value: &Value) -> Value {
             Value::String(format!("{}... ({total} chars)", &s[..MAX_PREVIEW_LEN]))
         }
         Value::Object(map) => {
-            let truncated: serde_json::Map<String, Value> = map
-                .iter()
-                .map(|(k, v)| (k.clone(), truncate_value(v)))
-                .collect();
+            let truncated: serde_json::Map<String, Value> =
+                map.iter().map(|(k, v)| (k.clone(), truncate_value(v))).collect();
             Value::Object(truncated)
         }
         Value::Array(arr) => Value::Array(arr.iter().map(truncate_value).collect()),
@@ -171,14 +169,13 @@ impl SessionDebugLogger {
         };
 
         let _guard = inner.lock.lock().ok();
-        let _ = std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&inner.file_path)
-            .and_then(|mut f| {
-                use std::io::Write;
-                f.write_all(line.as_bytes())
-            });
+        let _ =
+            std::fs::OpenOptions::new().create(true).append(true).open(&inner.file_path).and_then(
+                |mut f| {
+                    use std::io::Write;
+                    f.write_all(line.as_bytes())
+                },
+            );
     }
 }
 

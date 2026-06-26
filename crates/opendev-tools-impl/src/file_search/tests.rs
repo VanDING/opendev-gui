@@ -10,10 +10,7 @@ use types::{AstGrepArgs, GrepArgs, OutputMode};
 fn make_args(
     pairs: &[(&str, serde_json::Value)],
 ) -> std::collections::HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 // --- Unit tests for default exclusions ---
@@ -22,31 +19,19 @@ fn make_args(
 fn test_build_rg_command_includes_ignore_file() {
     let args = GrepArgs::from_map(&make_args(&[("pattern", serde_json::json!("hello"))])).unwrap();
     let cmd = GrepTool::build_rg_command(&args, Path::new("/tmp"));
-    let cmd_args: Vec<_> = cmd
-        .as_std()
-        .get_args()
-        .map(|a| a.to_string_lossy().to_string())
-        .collect();
+    let cmd_args: Vec<_> =
+        cmd.as_std().get_args().map(|a| a.to_string_lossy().to_string()).collect();
 
     // Verify --ignore-file is present
-    assert!(
-        cmd_args.contains(&"--ignore-file".to_string()),
-        "should include --ignore-file flag"
-    );
+    assert!(cmd_args.contains(&"--ignore-file".to_string()), "should include --ignore-file flag");
 }
 
 #[test]
 fn test_default_ignore_file_contents() {
     let path = default_ignore_file().expect("should create ignore file");
     let content = fs::read_to_string(path).unwrap();
-    assert!(
-        content.contains("node_modules/"),
-        "should contain node_modules/"
-    );
-    assert!(
-        content.contains("__pycache__/"),
-        "should contain __pycache__/"
-    );
+    assert!(content.contains("node_modules/"), "should contain node_modules/");
+    assert!(content.contains("__pycache__/"), "should contain __pycache__/");
     assert!(content.contains(".git/"), "should contain .git/");
     assert!(content.contains("target/"), "should contain target/");
     assert!(content.contains("*.min.js"), "should contain *.min.js");
@@ -61,10 +46,7 @@ fn test_default_exclusion_lists_not_empty() {
         assert!(!entry.is_empty());
     }
     for pat in DEFAULT_SEARCH_EXCLUDE_GLOBS {
-        assert!(
-            pat.starts_with('*'),
-            "glob pattern should start with '*': {pat}"
-        );
+        assert!(pat.starts_with('*'), "glob pattern should start with '*': {pat}");
     }
 }
 
@@ -74,11 +56,7 @@ async fn test_grep_excludes_node_modules() {
     fs::create_dir_all(tmp.path().join("src")).unwrap();
     fs::create_dir_all(tmp.path().join("node_modules/pkg")).unwrap();
     fs::write(tmp.path().join("src/main.rs"), "fn hello() {}").unwrap();
-    fs::write(
-        tmp.path().join("node_modules/pkg/index.js"),
-        "function hello() {}",
-    )
-    .unwrap();
+    fs::write(tmp.path().join("node_modules/pkg/index.js"), "function hello() {}").unwrap();
 
     let tool = GrepTool;
     let ctx = ToolContext::new(tmp.path());
@@ -87,14 +65,8 @@ async fn test_grep_excludes_node_modules() {
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
     let output = result.output.unwrap_or_default();
-    assert!(
-        output.contains("main.rs"),
-        "should find hello in src/main.rs"
-    );
-    assert!(
-        !output.contains("node_modules"),
-        "should not search node_modules, got: {output}"
-    );
+    assert!(output.contains("main.rs"), "should find hello in src/main.rs");
+    assert!(!output.contains("node_modules"), "should not search node_modules, got: {output}");
 }
 
 // --- Unit tests for argument parsing ---
@@ -303,11 +275,7 @@ fn test_build_rg_command_all_flags() {
 #[tokio::test]
 async fn test_grep_basic_with_rg() {
     let tmp = TempDir::new().unwrap();
-    fs::write(
-        tmp.path().join("test.rs"),
-        "fn main() {\n    println!(\"hello\");\n}\n",
-    )
-    .unwrap();
+    fs::write(tmp.path().join("test.rs"), "fn main() {\n    println!(\"hello\");\n}\n").unwrap();
 
     let tool = GrepTool;
     let ctx = ToolContext::new(tmp.path());
@@ -327,10 +295,8 @@ async fn test_grep_with_glob_filter() {
 
     let tool = GrepTool;
     let ctx = ToolContext::new(tmp.path());
-    let args = make_args(&[
-        ("pattern", serde_json::json!("fn ")),
-        ("glob", serde_json::json!("*.rs")),
-    ]);
+    let args =
+        make_args(&[("pattern", serde_json::json!("fn ")), ("glob", serde_json::json!("*.rs"))]);
 
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
@@ -384,21 +350,13 @@ async fn test_grep_files_with_matches_sorted_by_mtime() {
 
     fs::write(tmp.path().join("old.rs"), "fn target() {}\n").unwrap();
     let old_time = now - Duration::from_secs(60);
-    let f = fs::File::options()
-        .write(true)
-        .open(tmp.path().join("old.rs"))
-        .unwrap();
-    f.set_times(FileTimes::new().set_modified(old_time))
-        .unwrap();
+    let f = fs::File::options().write(true).open(tmp.path().join("old.rs")).unwrap();
+    f.set_times(FileTimes::new().set_modified(old_time)).unwrap();
 
     fs::write(tmp.path().join("mid.rs"), "fn target() {}\n").unwrap();
     let mid_time = now - Duration::from_secs(30);
-    let f = fs::File::options()
-        .write(true)
-        .open(tmp.path().join("mid.rs"))
-        .unwrap();
-    f.set_times(FileTimes::new().set_modified(mid_time))
-        .unwrap();
+    let f = fs::File::options().write(true).open(tmp.path().join("mid.rs")).unwrap();
+    f.set_times(FileTimes::new().set_modified(mid_time)).unwrap();
 
     fs::write(tmp.path().join("new.rs"), "fn target() {}\n").unwrap();
 
@@ -414,21 +372,9 @@ async fn test_grep_files_with_matches_sorted_by_mtime() {
     let output = result.output.unwrap();
     let lines: Vec<&str> = output.lines().collect();
     assert_eq!(lines.len(), 3, "should have 3 files, got: {output}");
-    assert!(
-        lines[0].contains("new.rs"),
-        "first should be new.rs, got: {}",
-        lines[0]
-    );
-    assert!(
-        lines[1].contains("mid.rs"),
-        "second should be mid.rs, got: {}",
-        lines[1]
-    );
-    assert!(
-        lines[2].contains("old.rs"),
-        "third should be old.rs, got: {}",
-        lines[2]
-    );
+    assert!(lines[0].contains("new.rs"), "first should be new.rs, got: {}", lines[0]);
+    assert!(lines[1].contains("mid.rs"), "second should be mid.rs, got: {}", lines[1]);
+    assert!(lines[2].contains("old.rs"), "third should be old.rs, got: {}", lines[2]);
 }
 
 #[tokio::test]
@@ -456,10 +402,8 @@ async fn test_grep_case_insensitive() {
 
     let tool = GrepTool;
     let ctx = ToolContext::new(tmp.path());
-    let args = make_args(&[
-        ("pattern", serde_json::json!("HELLO")),
-        ("-i", serde_json::json!(true)),
-    ]);
+    let args =
+        make_args(&[("pattern", serde_json::json!("HELLO")), ("-i", serde_json::json!(true))]);
 
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
@@ -490,18 +434,12 @@ async fn test_grep_fixed_string() {
 #[tokio::test]
 async fn test_grep_with_context() {
     let tmp = TempDir::new().unwrap();
-    fs::write(
-        tmp.path().join("test.txt"),
-        "line1\nline2\nTARGET\nline4\nline5\n",
-    )
-    .unwrap();
+    fs::write(tmp.path().join("test.txt"), "line1\nline2\nTARGET\nline4\nline5\n").unwrap();
 
     let tool = GrepTool;
     let ctx = ToolContext::new(tmp.path());
-    let args = make_args(&[
-        ("pattern", serde_json::json!("TARGET")),
-        ("context", serde_json::json!(1)),
-    ]);
+    let args =
+        make_args(&[("pattern", serde_json::json!("TARGET")), ("context", serde_json::json!(1))]);
 
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
@@ -519,10 +457,7 @@ async fn test_grep_path_not_found() {
     let ctx = ToolContext::new(&dir_path);
     let args = make_args(&[
         ("pattern", serde_json::json!("x")),
-        (
-            "path",
-            serde_json::json!(dir_path.join("nonexistent").to_str().unwrap()),
-        ),
+        ("path", serde_json::json!(dir_path.join("nonexistent").to_str().unwrap())),
     ]);
 
     let result = tool.execute(args, &ctx).await;
@@ -541,10 +476,7 @@ async fn test_grep_path_not_found_shows_available_dirs() {
     let ctx = ToolContext::new(&dir_path);
     let args = make_args(&[
         ("pattern", serde_json::json!("x")),
-        (
-            "path",
-            serde_json::json!(dir_path.join("src").to_str().unwrap()),
-        ),
+        ("path", serde_json::json!(dir_path.join("src").to_str().unwrap())),
     ]);
 
     let result = tool.execute(args, &ctx).await;
@@ -571,11 +503,7 @@ async fn test_grep_invalid_regex_falls_back_to_fixed_string() {
 #[tokio::test]
 async fn test_grep_multiline() {
     let tmp = TempDir::new().unwrap();
-    fs::write(
-        tmp.path().join("test.rs"),
-        "struct Foo {\n    bar: i32,\n}\n",
-    )
-    .unwrap();
+    fs::write(tmp.path().join("test.rs"), "struct Foo {\n    bar: i32,\n}\n").unwrap();
 
     let tool = GrepTool;
     let ctx = ToolContext::new(tmp.path());
@@ -598,10 +526,8 @@ async fn test_grep_with_file_type() {
 
     let tool = GrepTool;
     let ctx = ToolContext::new(tmp.path());
-    let args = make_args(&[
-        ("pattern", serde_json::json!("hello")),
-        ("type", serde_json::json!("rust")),
-    ]);
+    let args =
+        make_args(&[("pattern", serde_json::json!("hello")), ("type", serde_json::json!("rust"))]);
 
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
@@ -638,10 +564,7 @@ async fn test_grep_pagination() {
 
 /// Helper: skip test if ast-grep (sg) is not installed.
 fn sg_installed() -> bool {
-    std::process::Command::new("sg")
-        .arg("--version")
-        .output()
-        .is_ok_and(|o| o.status.success())
+    std::process::Command::new("sg").arg("--version").output().is_ok_and(|o| o.status.success())
 }
 
 #[tokio::test]
@@ -659,20 +582,14 @@ async fn test_ast_grep_rust_struct_pattern() {
     let tool = AstGrepTool;
     let ctx = ToolContext::new(tmp.path());
     let args = make_args(&[
-        (
-            "pattern",
-            serde_json::json!("pub struct $NAME { $$$FIELDS }"),
-        ),
+        ("pattern", serde_json::json!("pub struct $NAME { $$$FIELDS }")),
         ("lang", serde_json::json!("rust")),
     ]);
 
     let result = tool.execute(args, &ctx).await;
     assert!(result.success, "should succeed: {:?}", result.output);
     let output = result.output.unwrap_or_default();
-    assert!(
-        output.contains("Config"),
-        "should find struct Config: {output}"
-    );
+    assert!(output.contains("Config"), "should find struct Config: {output}");
 }
 
 #[tokio::test]
@@ -694,20 +611,14 @@ async fn test_ast_grep_rust_impl_pattern() {
     let tool = AstGrepTool;
     let ctx = ToolContext::new(tmp.path());
     let args = make_args(&[
-        (
-            "pattern",
-            serde_json::json!("impl $TRAIT for $TYPE { $$$BODY }"),
-        ),
+        ("pattern", serde_json::json!("impl $TRAIT for $TYPE { $$$BODY }")),
         ("lang", serde_json::json!("rust")),
     ]);
 
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
     let output = result.output.unwrap_or_default();
-    assert!(
-        output.contains("Bar"),
-        "should find impl Bar for Foo: {output}"
-    );
+    assert!(output.contains("Bar"), "should find impl Bar for Foo: {output}");
 }
 
 #[tokio::test]
@@ -725,20 +636,14 @@ async fn test_ast_grep_typescript_function() {
     let tool = AstGrepTool;
     let ctx = ToolContext::new(tmp.path());
     let args = make_args(&[
-        (
-            "pattern",
-            serde_json::json!("function $NAME($$$ARGS): void { $$$BODY }"),
-        ),
+        ("pattern", serde_json::json!("function $NAME($$$ARGS): void { $$$BODY }")),
         ("lang", serde_json::json!("typescript")),
     ]);
 
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
     let output = result.output.unwrap_or_default();
-    assert!(
-        output.contains("greet"),
-        "should find greet function: {output}"
-    );
+    assert!(output.contains("greet"), "should find greet function: {output}");
 }
 
 #[tokio::test]
@@ -763,10 +668,7 @@ async fn test_ast_grep_call_pattern() {
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
     let output = result.output.unwrap_or_default();
-    assert!(
-        output.contains("console.log"),
-        "should find console.log calls: {output}"
-    );
+    assert!(output.contains("console.log"), "should find console.log calls: {output}");
 }
 
 #[tokio::test]
@@ -780,20 +682,14 @@ async fn test_ast_grep_no_matches() {
     let tool = AstGrepTool;
     let ctx = ToolContext::new(tmp.path());
     let args = make_args(&[
-        (
-            "pattern",
-            serde_json::json!("pub struct $NAME { $$$FIELDS }"),
-        ),
+        ("pattern", serde_json::json!("pub struct $NAME { $$$FIELDS }")),
         ("lang", serde_json::json!("rust")),
     ]);
 
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
     let output = result.output.unwrap_or_default();
-    assert!(
-        output.contains("No structural matches found"),
-        "should report no matches: {output}"
-    );
+    assert!(output.contains("No structural matches found"), "should report no matches: {output}");
 }
 
 #[tokio::test]
@@ -807,20 +703,14 @@ async fn test_ast_grep_invalid_pattern_error() {
     let tool = AstGrepTool;
     let ctx = ToolContext::new(tmp.path());
     let args = make_args(&[
-        (
-            "pattern",
-            serde_json::json!("$NAME($$$ARGS): void { $$$BODY }"),
-        ),
+        ("pattern", serde_json::json!("$NAME($$$ARGS): void { $$$BODY }")),
         ("lang", serde_json::json!("typescript")),
     ]);
 
     let result = tool.execute(args, &ctx).await;
     assert!(!result.success, "should fail for invalid pattern");
     let error = result.error.unwrap_or_default();
-    assert!(
-        error.contains("Hint:"),
-        "should include helpful hint: {error}"
-    );
+    assert!(error.contains("Hint:"), "should include helpful hint: {error}");
 }
 
 #[tokio::test]
@@ -840,10 +730,7 @@ async fn test_ast_grep_path_not_found() {
     let result = tool.execute(args, &ctx).await;
     assert!(!result.success);
     let error = result.error.unwrap_or_default();
-    assert!(
-        error.contains("Path not found"),
-        "should report path not found: {error}"
-    );
+    assert!(error.contains("Path not found"), "should report path not found: {error}");
 }
 
 #[tokio::test]
@@ -854,10 +741,7 @@ async fn test_ast_grep_with_head_limit() {
     let tmp = TempDir::new().unwrap();
     fs::write(
         tmp.path().join("lib.rs"),
-        concat!(
-            "pub struct A;\npub struct B;\npub struct C;\n",
-            "pub struct D;\npub struct E;\n",
-        ),
+        concat!("pub struct A;\npub struct B;\npub struct C;\n", "pub struct D;\npub struct E;\n",),
     )
     .unwrap();
 
@@ -873,15 +757,9 @@ async fn test_ast_grep_with_head_limit() {
     assert!(result.success);
     let output = result.output.unwrap_or_default();
     // Should show only 2 matches but mention total
-    let match_lines: Vec<&str> = output
-        .lines()
-        .filter(|l| l.contains("pub struct"))
-        .collect();
+    let match_lines: Vec<&str> = output.lines().filter(|l| l.contains("pub struct")).collect();
     assert_eq!(match_lines.len(), 2, "should limit to 2 matches: {output}");
-    assert!(
-        output.contains("of 5 matches shown"),
-        "should mention total: {output}"
-    );
+    assert!(output.contains("of 5 matches shown"), "should mention total: {output}");
 }
 
 #[tokio::test]
@@ -899,20 +777,14 @@ async fn test_ast_grep_go_function() {
     let tool = AstGrepTool;
     let ctx = ToolContext::new(tmp.path());
     let args = make_args(&[
-        (
-            "pattern",
-            serde_json::json!("func $NAME($$$ARGS) { $$$BODY }"),
-        ),
+        ("pattern", serde_json::json!("func $NAME($$$ARGS) { $$$BODY }")),
         ("lang", serde_json::json!("go")),
     ]);
 
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
     let output = result.output.unwrap_or_default();
-    assert!(
-        output.contains("greet"),
-        "should find greet function: {output}"
-    );
+    assert!(output.contains("greet"), "should find greet function: {output}");
 }
 
 #[tokio::test]
@@ -923,11 +795,7 @@ async fn test_ast_grep_multiple_matches() {
     let tmp = TempDir::new().unwrap();
     fs::write(
         tmp.path().join("app.js"),
-        concat!(
-            "console.log('a');\n",
-            "console.log('b');\n",
-            "console.log('c');\n",
-        ),
+        concat!("console.log('a');\n", "console.log('b');\n", "console.log('c');\n",),
     )
     .unwrap();
 
@@ -941,13 +809,6 @@ async fn test_ast_grep_multiple_matches() {
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
     let output = result.output.unwrap_or_default();
-    let match_lines: Vec<&str> = output
-        .lines()
-        .filter(|l| l.contains("console.log"))
-        .collect();
-    assert_eq!(
-        match_lines.len(),
-        3,
-        "should find all 3 console.log calls: {output}"
-    );
+    let match_lines: Vec<&str> = output.lines().filter(|l| l.contains("console.log")).collect();
+    assert_eq!(match_lines.len(), 3, "should find all 3 console.log calls: {output}");
 }

@@ -18,12 +18,7 @@ fn test_format_read() {
     let output = "fn main() {\n    println!(\"hello\");\n}";
     let result = f.format("Read", output);
 
-    let header_text: String = result
-        .header
-        .spans
-        .iter()
-        .map(|s| s.content.as_ref())
-        .collect();
+    let header_text: String = result.header.spans.iter().map(|s| s.content.as_ref()).collect();
     assert!(header_text.contains("3 lines"));
     assert_eq!(result.body.len(), 3);
 }
@@ -34,12 +29,7 @@ fn test_format_edit_diff() {
     let output = " context line\n-old line\n+new line\n context again";
     let result = f.format("Edit", output);
 
-    let header_text: String = result
-        .header
-        .spans
-        .iter()
-        .map(|s| s.content.as_ref())
-        .collect();
+    let header_text: String = result.header.spans.iter().map(|s| s.content.as_ref()).collect();
     assert!(header_text.contains("Edited"));
 
     // Check footer has +/- counts
@@ -54,12 +44,7 @@ fn test_format_write() {
     let f = FileFormatter;
     let result = f.format("Write", "+new content");
 
-    let header_text: String = result
-        .header
-        .spans
-        .iter()
-        .map(|s| s.content.as_ref())
-        .collect();
+    let header_text: String = result.header.spans.iter().map(|s| s.content.as_ref()).collect();
     assert!(header_text.contains("Written"));
 }
 

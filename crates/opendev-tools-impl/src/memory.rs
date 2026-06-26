@@ -25,12 +25,7 @@ fn resolve_memory_dir(scope: &str, working_dir: &Path) -> Option<PathBuf> {
         "global" => Some(home.join(".opendev").join("memory")),
         _ => {
             let encoded = opendev_config::paths::encode_project_path(working_dir);
-            Some(
-                home.join(".opendev")
-                    .join("projects")
-                    .join(encoded)
-                    .join("memory"),
-            )
+            Some(home.join(".opendev").join("projects").join(encoded).join("memory"))
         }
     }
 }
@@ -102,10 +97,7 @@ impl BaseTool for MemoryTool {
             None => return ToolResult::fail("action is required"),
         };
 
-        let scope = args
-            .get("scope")
-            .and_then(|v| v.as_str())
-            .unwrap_or("project");
+        let scope = args.get("scope").and_then(|v| v.as_str()).unwrap_or("project");
 
         let memory_dir = match resolve_memory_dir(scope, &ctx.working_dir) {
             Some(d) => d,
@@ -162,15 +154,9 @@ impl BaseTool for MemoryTool {
 
 /// Format a staleness note for a memory file based on its modification time.
 fn format_staleness(path: &Path) -> String {
-    let days_ago = std::fs::metadata(path)
-        .and_then(|m| m.modified())
-        .ok()
-        .and_then(|mt| {
-            std::time::SystemTime::now()
-                .duration_since(mt)
-                .ok()
-                .map(|d| d.as_secs() / 86400)
-        });
+    let days_ago = std::fs::metadata(path).and_then(|m| m.modified()).ok().and_then(|mt| {
+        std::time::SystemTime::now().duration_since(mt).ok().map(|d| d.as_secs() / 86400)
+    });
 
     match days_ago {
         Some(0) | None => String::new(),
@@ -210,11 +196,8 @@ fn memory_read(dir: &Path, file: &str) -> ToolResult {
     match std::fs::read_to_string(&path) {
         Ok(content) => {
             let staleness = format_staleness(&path);
-            let output = if staleness.is_empty() {
-                content
-            } else {
-                format!("{staleness}\n\n{content}")
-            };
+            let output =
+                if staleness.is_empty() { content } else { format!("{staleness}\n\n{content}") };
             ToolResult::ok(output)
         }
         Err(e) => ToolResult::fail(format!("Failed to read {file}: {e}")),
@@ -330,10 +313,8 @@ fn keyword_search(dir: &Path, query: &str) -> Vec<(f64, String, Vec<String>)> {
             Err(_) => continue,
         };
 
-        let filename = path
-            .file_name()
-            .map(|n| n.to_string_lossy().to_string())
-            .unwrap_or_default();
+        let filename =
+            path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
 
         let score = compute_relevance(&filename, &content, &keywords);
 
@@ -383,11 +364,7 @@ async fn semantic_search(dir: &Path, query: &str) -> Vec<(f64, String, Vec<Strin
         };
         let content = std::fs::read_to_string(&path).unwrap_or_default();
         let desc = extract_description(&content);
-        let desc_str = if desc.is_empty() {
-            "(no description)".to_string()
-        } else {
-            desc
-        };
+        let desc_str = if desc.is_empty() { "(no description)".to_string() } else { desc };
         file_info.push((name, desc_str));
     }
 
@@ -510,10 +487,8 @@ fn memory_list(dir: &Path) -> ToolResult {
     for entry in entries.flatten() {
         let path = entry.path();
         if path.is_file() {
-            let name = path
-                .file_name()
-                .map(|n| n.to_string_lossy().to_string())
-                .unwrap_or_default();
+            let name =
+                path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
             let meta = path.metadata().ok();
             let size = meta.as_ref().map(|m| m.len()).unwrap_or(0);
             let age = meta
@@ -559,10 +534,7 @@ fn update_memory_index(dir: &Path) -> std::io::Result<()> {
         if !path.is_file() {
             continue;
         }
-        let name = path
-            .file_name()
-            .map(|n| n.to_string_lossy().to_string())
-            .unwrap_or_default();
+        let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
 
         // Skip MEMORY.md itself and non-markdown files
         if name == "MEMORY.md" || !name.ends_with(".md") {
@@ -587,11 +559,8 @@ fn update_memory_index(dir: &Path) -> std::io::Result<()> {
     }
 
     // Cap at limits
-    let truncated: String = index
-        .lines()
-        .take(MemoryTool::MAX_INDEX_LINES)
-        .collect::<Vec<_>>()
-        .join("\n");
+    let truncated: String =
+        index.lines().take(MemoryTool::MAX_INDEX_LINES).collect::<Vec<_>>().join("\n");
     let final_content = if truncated.len() > MemoryTool::MAX_INDEX_BYTES {
         &truncated[..MemoryTool::MAX_INDEX_BYTES]
     } else {

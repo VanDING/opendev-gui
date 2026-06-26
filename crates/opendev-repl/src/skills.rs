@@ -98,13 +98,7 @@ pub fn parse_skill(content: &str, fallback_name: &str) -> Result<Skill, SkillErr
         sections.insert(current_section, current_body.trim().to_string());
     }
 
-    Ok(Skill {
-        name,
-        content: content.to_string(),
-        source_url: None,
-        cache_path: None,
-        sections,
-    })
+    Ok(Skill { name, content: content.to_string(), source_url: None, cache_path: None, sections })
 }
 
 /// Load a skill from an HTTPS URL.
@@ -131,9 +125,7 @@ pub fn load_skill_from_url_with_options(
         return Err(SkillError::InvalidUrl(url.to_string()));
     }
 
-    let skills_dir = cache_dir
-        .map(PathBuf::from)
-        .unwrap_or_else(default_skills_dir);
+    let skills_dir = cache_dir.map(PathBuf::from).unwrap_or_else(default_skills_dir);
     let cache_filename = url_to_cache_filename(url);
     let cache_path = skills_dir.join(&cache_filename);
 
@@ -208,9 +200,7 @@ fn fetch_url_content(url: &str) -> Result<String, SkillError> {
             )));
         }
 
-        resp.text()
-            .await
-            .map_err(|e| SkillError::NetworkError(e.to_string()))
+        resp.text().await.map_err(|e| SkillError::NetworkError(e.to_string()))
     };
 
     // Try to use existing runtime, fall back to creating one
@@ -237,11 +227,8 @@ fn fetch_url_content(url: &str) -> Result<String, SkillError> {
 /// Load a skill from a local file path.
 pub fn load_skill_from_file(path: &Path) -> Result<Skill, SkillError> {
     let content = std::fs::read_to_string(path)?;
-    let fallback_name = path
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("local-skill")
-        .to_string();
+    let fallback_name =
+        path.file_stem().and_then(|s| s.to_str()).unwrap_or("local-skill").to_string();
     let mut skill = parse_skill(&content, &fallback_name)?;
     skill.cache_path = Some(path.to_path_buf());
     Ok(skill)
@@ -249,9 +236,7 @@ pub fn load_skill_from_file(path: &Path) -> Result<Skill, SkillError> {
 
 /// List all cached skills in the skills directory.
 pub fn list_cached_skills(cache_dir: Option<&Path>) -> Vec<PathBuf> {
-    let skills_dir = cache_dir
-        .map(PathBuf::from)
-        .unwrap_or_else(default_skills_dir);
+    let skills_dir = cache_dir.map(PathBuf::from).unwrap_or_else(default_skills_dir);
 
     if !skills_dir.exists() {
         return Vec::new();

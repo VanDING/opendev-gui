@@ -100,20 +100,15 @@ impl BaseTool for WriteTodosTool {
                     .and_then(|v| v.as_str())
                     .and_then(parse_status)
                     .unwrap_or(TodoStatus::Pending);
-                let active_form = obj
-                    .get("activeForm")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("")
-                    .to_string();
+                let active_form =
+                    obj.get("activeForm").and_then(|v| v.as_str()).unwrap_or("").to_string();
                 let children: Vec<SubTodoItem> = obj
                     .get("children")
                     .and_then(|v| v.as_array())
                     .map(|arr| {
                         arr.iter()
                             .filter_map(|v| {
-                                v.as_str().map(|s| SubTodoItem {
-                                    title: strip_markdown(s),
-                                })
+                                v.as_str().map(|s| SubTodoItem { title: strip_markdown(s) })
                             })
                             .collect()
                     })
@@ -146,10 +141,7 @@ impl BaseTool for WriteTodosTool {
         let is_status_only = !has_children
             && !existing_titles.is_empty()
             && existing_titles.len() == new_titles.len()
-            && existing_titles
-                .iter()
-                .zip(new_titles.iter())
-                .all(|(a, b)| a == b);
+            && existing_titles.iter().zip(new_titles.iter()).all(|(a, b)| a == b);
 
         if is_status_only {
             // Collect (id, new_status) pairs first to avoid borrow conflict

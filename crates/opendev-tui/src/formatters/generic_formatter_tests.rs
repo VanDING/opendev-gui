@@ -13,12 +13,7 @@ fn test_format_plain_text() {
     let f = GenericFormatter;
     let result = f.format("some_tool", "hello world\nsecond line");
 
-    let header_text: String = result
-        .header
-        .spans
-        .iter()
-        .map(|s| s.content.as_ref())
-        .collect();
+    let header_text: String = result.header.spans.iter().map(|s| s.content.as_ref()).collect();
     assert!(header_text.contains("some_tool"));
     assert_eq!(result.body.len(), 2);
     assert!(result.footer.is_none());

@@ -50,11 +50,7 @@ fn test_auth_response_serialize() {
 
 #[test]
 fn test_auth_response_no_email() {
-    let resp = AuthResponse {
-        username: "bob".to_string(),
-        email: None,
-        role: "admin".to_string(),
-    };
+    let resp = AuthResponse { username: "bob".to_string(), email: None, role: "admin".to_string() };
     let json = serde_json::to_value(&resp).unwrap();
     assert_eq!(json["username"], "bob");
     assert!(json.get("email").is_none());

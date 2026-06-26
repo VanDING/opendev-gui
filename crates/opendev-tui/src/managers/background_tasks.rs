@@ -104,19 +104,12 @@ impl BackgroundTaskManager {
             warn!("Failed to create task output dir: {e}");
         }
 
-        Self {
-            tasks: HashMap::new(),
-            handles: HashMap::new(),
-            output_dir,
-            listeners: Vec::new(),
-        }
+        Self { tasks: HashMap::new(), handles: HashMap::new(), output_dir, listeners: Vec::new() }
     }
 
     /// Derive the output directory for task output files.
     fn get_output_dir(working_dir: &Path) -> PathBuf {
-        let cwd = working_dir
-            .canonicalize()
-            .unwrap_or_else(|_| working_dir.to_path_buf());
+        let cwd = working_dir.canonicalize().unwrap_or_else(|_| working_dir.to_path_buf());
         let safe_path = cwd.to_string_lossy().replace('/', "-");
         PathBuf::from(format!("/tmp/opendev/{safe_path}/tasks"))
     }
@@ -168,10 +161,7 @@ impl BackgroundTaskManager {
         };
 
         let (cancel_tx, cancel_rx) = tokio::sync::watch::channel(false);
-        let handle = Arc::new(Mutex::new(TaskHandle {
-            child: Some(child),
-            cancel: cancel_tx,
-        }));
+        let handle = Arc::new(Mutex::new(TaskHandle { child: Some(child), cancel: cancel_tx }));
 
         self.tasks.insert(task_id.clone(), status);
         self.handles.insert(task_id.clone(), handle.clone());
@@ -257,10 +247,7 @@ impl BackgroundTaskManager {
 
     /// Get the number of running tasks.
     pub fn running_count(&self) -> usize {
-        self.tasks
-            .values()
-            .filter(|t| t.state == TaskState::Running)
-            .count()
+        self.tasks.values().filter(|t| t.state == TaskState::Running).count()
     }
 
     /// Total number of tracked tasks.

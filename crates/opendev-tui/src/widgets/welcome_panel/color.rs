@@ -32,9 +32,7 @@ pub(super) fn hsl_to_rgb(hue: f64, saturation: f64, lightness: f64) -> Color {
 // ---------------------------------------------------------------------------
 
 pub(super) fn pseudo_rand(seed: &mut u64) -> f32 {
-    *seed = seed
-        .wrapping_mul(6_364_136_223_846_793_005)
-        .wrapping_add(1_442_695_040_888_963_407);
+    *seed = seed.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1_442_695_040_888_963_407);
     (*seed >> 33) as f32 / (1u64 << 31) as f32
 }
 

@@ -1,10 +1,7 @@
 use super::*;
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 #[test]
@@ -90,10 +87,7 @@ async fn test_message_bad_webhook_host() {
     let args = make_args(&[
         ("channel", serde_json::json!("slack")),
         ("message", serde_json::json!("hello")),
-        (
-            "target",
-            serde_json::json!(format!("http://127.0.0.1:{port}/webhook")),
-        ),
+        ("target", serde_json::json!(format!("http://127.0.0.1:{port}/webhook"))),
     ]);
     let result = tool.execute(args, &ctx).await;
     assert!(!result.success);

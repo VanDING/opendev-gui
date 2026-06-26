@@ -39,8 +39,7 @@ impl McpManager {
     }
 
     pub(super) fn next_request_id(&self) -> u64 {
-        self.request_id
-            .fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+        self.request_id.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
     }
 
     /// Create a lightweight handle for notification listener tasks.
@@ -59,9 +58,8 @@ impl McpManager {
 
         let global_config = load_config(&paths.global_mcp_config())?;
 
-        let project_config = get_project_config_path(&self.working_dir)
-            .map(|p| load_config(&p))
-            .transpose()?;
+        let project_config =
+            get_project_config_path(&self.working_dir).map(|p| load_config(&p)).transpose()?;
 
         let merged = merge_configs(&global_config, project_config.as_ref());
 
@@ -205,12 +203,9 @@ impl McpManager {
             .await
             .map_err(|e| McpError::Transport(format!("OAuth token response parse error: {}", e)))?;
 
-        let token = body
-            .get("access_token")
-            .and_then(|t| t.as_str())
-            .ok_or_else(|| {
-                McpError::Transport("OAuth token response missing 'access_token' field".to_string())
-            })?;
+        let token = body.get("access_token").and_then(|t| t.as_str()).ok_or_else(|| {
+            McpError::Transport("OAuth token response missing 'access_token' field".to_string())
+        })?;
 
         info!("Successfully acquired OAuth token");
         Ok(token.to_string())

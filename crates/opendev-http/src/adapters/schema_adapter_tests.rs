@@ -24,10 +24,7 @@ fn test_no_adaptation_for_openai() {
 
 #[test]
 fn test_no_adaptation_for_anthropic() {
-    let schemas = vec![make_tool_schema(
-        "test",
-        json!({"type": "object", "properties": {}}),
-    )];
+    let schemas = vec![make_tool_schema("test", json!({"type": "object", "properties": {}}))];
     let result = adapt_for_provider(&schemas, "anthropic");
     assert_eq!(result, schemas);
 }
@@ -86,18 +83,12 @@ fn test_xai_filters_web_search() {
     ];
     let result = adapt_for_provider(&schemas, "xai");
     assert_eq!(result.len(), 1);
-    assert_eq!(
-        result[0].pointer("/function/name").unwrap().as_str(),
-        Some("read_file")
-    );
+    assert_eq!(result[0].pointer("/function/name").unwrap().as_str(), Some("read_file"));
 }
 
 #[test]
 fn test_xai_no_web_search_unchanged() {
-    let schemas = vec![make_tool_schema(
-        "read_file",
-        json!({"type": "object", "properties": {}}),
-    )];
+    let schemas = vec![make_tool_schema("read_file", json!({"type": "object", "properties": {}}))];
     let result = adapt_for_provider(&schemas, "xai");
     assert_eq!(result.len(), 1);
 }
@@ -171,10 +162,7 @@ fn test_mistral_merges_all_of() {
 
 #[test]
 fn test_general_cleanup_adds_type() {
-    let schemas = vec![make_tool_schema(
-        "test",
-        json!({"properties": {"a": {"type": "string"}}}),
-    )];
+    let schemas = vec![make_tool_schema("test", json!({"properties": {"a": {"type": "string"}}}))];
     let result = adapt_for_provider(&schemas, "fireworks");
     let params = &result[0]["function"]["parameters"];
     assert_eq!(params["type"], "object");
@@ -190,10 +178,7 @@ fn test_general_cleanup_adds_properties() {
 
 #[test]
 fn test_case_insensitive_provider() {
-    let schemas = vec![make_tool_schema(
-        "web_search",
-        json!({"type": "object", "properties": {}}),
-    )];
+    let schemas = vec![make_tool_schema("web_search", json!({"type": "object", "properties": {}}))];
     let result = adapt_for_provider(&schemas, "XAI");
     assert_eq!(result.len(), 0);
 }
@@ -236,10 +221,7 @@ fn test_google_alias_for_gemini() {
 
 #[test]
 fn test_grok_alias_for_xai() {
-    let schemas = vec![make_tool_schema(
-        "web_search",
-        json!({"type": "object", "properties": {}}),
-    )];
+    let schemas = vec![make_tool_schema("web_search", json!({"type": "object", "properties": {}}))];
     let result = adapt_for_provider(&schemas, "grok");
     assert!(result.is_empty());
 }

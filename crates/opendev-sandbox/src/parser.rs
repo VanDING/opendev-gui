@@ -39,12 +39,9 @@ pub fn extract_terminal(response: &str) -> TerminalValue {
     }
 
     // Try FINAL() patterns in order: triple-quoted first (most specific).
-    for re in [
-        &*RE_FINAL_TRIPLE_DOUBLE,
-        &*RE_FINAL_TRIPLE_SINGLE,
-        &*RE_FINAL_DOUBLE,
-        &*RE_FINAL_SINGLE,
-    ] {
+    for re in
+        [&*RE_FINAL_TRIPLE_DOUBLE, &*RE_FINAL_TRIPLE_SINGLE, &*RE_FINAL_DOUBLE, &*RE_FINAL_SINGLE]
+    {
         if let Some(caps) = re.captures(response)
             && let Some(m) = caps.get(1)
         {
@@ -97,10 +94,7 @@ multiline answer.
     #[test]
     fn test_extract_final_triple_single_quotes() {
         let input = "FINAL('''multi\nline''')";
-        assert_eq!(
-            extract_terminal(input),
-            TerminalValue::Final("multi\nline".to_string()),
-        );
+        assert_eq!(extract_terminal(input), TerminalValue::Final("multi\nline".to_string()),);
     }
 
     #[test]
@@ -144,19 +138,13 @@ results = analyze(data)
 FINAL("The answer is 42")
 # This shouldn't matter
 "#;
-        assert_eq!(
-            extract_terminal(input),
-            TerminalValue::Final("The answer is 42".to_string()),
-        );
+        assert_eq!(extract_terminal(input), TerminalValue::Final("The answer is 42".to_string()),);
     }
 
     #[test]
     fn test_final_takes_precedence_over_final_var() {
         // When both present, FINAL() is checked first.
         let input = r#"FINAL("direct") and FINAL_VAR(indirect)"#;
-        assert_eq!(
-            extract_terminal(input),
-            TerminalValue::Final("direct".to_string()),
-        );
+        assert_eq!(extract_terminal(input), TerminalValue::Final("direct".to_string()),);
     }
 }

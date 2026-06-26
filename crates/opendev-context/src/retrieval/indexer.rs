@@ -32,11 +32,7 @@ impl CodebaseIndexer {
     pub fn generate_index(&self, max_tokens: usize) -> String {
         let mut sections = Vec::new();
 
-        let dir_name = self
-            .working_dir
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or("project");
+        let dir_name = self.working_dir.file_name().and_then(|n| n.to_str()).unwrap_or("project");
         sections.push(format!("# {}\n", dir_name));
         sections.push(self.generate_overview());
         sections.push(self.generate_structure());
@@ -48,11 +44,7 @@ impl CodebaseIndexer {
 
         let content = sections.join("\n\n");
         let tokens = self.token_monitor.count_tokens(&content);
-        if tokens > max_tokens {
-            self.compress_content(&content, max_tokens)
-        } else {
-            content
-        }
+        if tokens > max_tokens { self.compress_content(&content, max_tokens) } else { content }
     }
 
     /// Generate the overview section: file count, README excerpt, and project type.
@@ -87,12 +79,7 @@ impl CodebaseIndexer {
         let mut lines = vec!["## Structure\n".to_string(), "```".to_string()];
 
         let tree_output = Command::new("tree")
-            .args([
-                "-L",
-                "2",
-                "-I",
-                "node_modules|__pycache__|.git|venv|build|dist|target",
-            ])
+            .args(["-L", "2", "-I", "node_modules|__pycache__|.git|venv|build|dist|target"])
             .current_dir(&self.working_dir)
             .output();
 
@@ -119,17 +106,7 @@ impl CodebaseIndexer {
         let mut lines = vec!["## Key Files\n".to_string()];
 
         let categories: Vec<(&str, Vec<&str>)> = vec![
-            (
-                "Main",
-                vec![
-                    "main.py",
-                    "index.js",
-                    "app.py",
-                    "server.py",
-                    "main.rs",
-                    "lib.rs",
-                ],
-            ),
+            ("Main", vec!["main.py", "index.js", "app.py", "server.py", "main.rs", "lib.rs"]),
             (
                 "Config",
                 vec![
@@ -238,10 +215,7 @@ impl CodebaseIndexer {
     /// Detect the project type based on indicator files.
     pub fn detect_project_type(&self) -> Option<&str> {
         let indicators: &[(&str, &[&str])] = &[
-            (
-                "Python",
-                &["pyproject.toml", "requirements.txt", "setup.py", "Pipfile"],
-            ),
+            ("Python", &["pyproject.toml", "requirements.txt", "setup.py", "Pipfile"]),
             ("Node", &["package.json", "yarn.lock", "pnpm-lock.yaml"]),
             ("Rust", &["Cargo.toml"]),
             ("Go", &["go.mod"]),
@@ -309,11 +283,8 @@ impl CodebaseIndexer {
     }
 
     fn extract_description(content: &str, max_length: usize) -> Option<String> {
-        let paragraphs: Vec<&str> = content
-            .split("\n\n")
-            .map(|p| p.trim())
-            .filter(|p| !p.is_empty())
-            .collect();
+        let paragraphs: Vec<&str> =
+            content.split("\n\n").map(|p| p.trim()).filter(|p| !p.is_empty()).collect();
 
         let description = paragraphs.first()?;
         if description.len() > max_length {

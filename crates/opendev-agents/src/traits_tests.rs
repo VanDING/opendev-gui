@@ -105,9 +105,6 @@ fn test_agent_error_display() {
     let err = AgentError::MaxIterations(10);
     assert_eq!(err.to_string(), "Max iterations reached (10)");
 
-    let err = AgentError::ApiError {
-        status: 429,
-        message: "rate limited".into(),
-    };
+    let err = AgentError::ApiError { status: 429, message: "rate limited".into() };
     assert_eq!(err.to_string(), "API error 429: rate limited");
 }

@@ -9,9 +9,7 @@ pub struct PlanModeCollector {
 
 impl PlanModeCollector {
     pub fn new(interval: usize) -> Self {
-        Self {
-            cadence: CadenceGate::new(interval),
-        }
+        Self { cadence: CadenceGate::new(interval) }
     }
 }
 
@@ -54,11 +52,7 @@ impl ContextCollector for PlanModeCollector {
             _ => return None,
         };
 
-        Some(Attachment {
-            name: "plan_mode",
-            content,
-            class: MessageClass::Nudge,
-        })
+        Some(Attachment { name: "plan_mode", content, class: MessageClass::Nudge })
     }
 
     fn did_fire(&self, turn: usize) {

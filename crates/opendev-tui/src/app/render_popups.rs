@@ -48,9 +48,7 @@ impl App {
         // Bottom padding (1 empty line)
         lines.push(Line::from(""));
 
-        let panel_width = max_width
-            .map(|w| input_area.width.min(w))
-            .unwrap_or(input_area.width);
+        let panel_width = max_width.map(|w| input_area.width.min(w)).unwrap_or(input_area.width);
         let panel_height = (lines.len() as u16 + 2).min(input_area.y);
         let popup_area = layout::Rect {
             x: input_area.x,
@@ -65,9 +63,7 @@ impl App {
             .border_style(Style::default().fg(Self::PANEL_CYAN))
             .title(Span::styled(
                 title,
-                Style::default()
-                    .fg(Self::PANEL_CYAN)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(Self::PANEL_CYAN).add_modifier(Modifier::BOLD),
             ));
 
         let paragraph = Paragraph::new(lines).block(block);
@@ -90,17 +86,13 @@ impl App {
 
         let pointer = if is_selected { "\u{25b8}" } else { " " };
         let pointer_style = if is_selected {
-            Style::default()
-                .fg(Self::PANEL_CYAN)
-                .add_modifier(Modifier::BOLD)
+            Style::default().fg(Self::PANEL_CYAN).add_modifier(Modifier::BOLD)
         } else {
             Style::default().fg(style_tokens::DIM_GREY)
         };
         let num_style = Style::default().fg(style_tokens::DIM_GREY);
         let label_style = if is_selected {
-            Style::default()
-                .fg(style_tokens::PRIMARY)
-                .add_modifier(Modifier::BOLD)
+            Style::default().fg(style_tokens::PRIMARY).add_modifier(Modifier::BOLD)
         } else {
             Style::default().fg(style_tokens::PRIMARY)
         };
@@ -131,15 +123,9 @@ impl App {
         let popup_height = max_show as u16 + 2; // +2 for borders
 
         // Determine title and width based on completion kind
-        let is_file_mode = items
-            .first()
-            .is_some_and(|i| i.kind == CompletionKind::File);
+        let is_file_mode = items.first().is_some_and(|i| i.kind == CompletionKind::File);
         let popup_width = if is_file_mode { 60 } else { 50 };
-        let title = if is_file_mode {
-            " Files "
-        } else {
-            " Commands "
-        };
+        let title = if is_file_mode { " Files " } else { " Commands " };
 
         let popup_area = layout::Rect {
             x: input_area.x,
@@ -162,16 +148,12 @@ impl App {
 
                 let pointer = if selected { "\u{25b8}" } else { "\u{2022}" };
                 let pointer_style = if selected {
-                    Style::default()
-                        .fg(Self::PANEL_CYAN)
-                        .add_modifier(Modifier::BOLD)
+                    Style::default().fg(Self::PANEL_CYAN).add_modifier(Modifier::BOLD)
                 } else {
                     Style::default().fg(style_tokens::DIM_GREY)
                 };
                 let label_style = if selected {
-                    Style::default()
-                        .fg(Self::PANEL_CYAN)
-                        .add_modifier(Modifier::BOLD)
+                    Style::default().fg(Self::PANEL_CYAN).add_modifier(Modifier::BOLD)
                 } else {
                     Style::default().fg(style_tokens::PRIMARY)
                 };
@@ -186,11 +168,7 @@ impl App {
                     Span::styled(left, label_style),
                     Span::styled(format!(" {right}"), desc_style),
                 ]);
-                if selected {
-                    line.style(Style::default().bg(active_bg))
-                } else {
-                    line
-                }
+                if selected { line.style(Style::default().bg(active_bg)) } else { line }
             })
             .collect();
 
@@ -200,9 +178,7 @@ impl App {
             .border_style(Style::default().fg(style_tokens::BORDER))
             .title(Span::styled(
                 title,
-                Style::default()
-                    .fg(Self::PANEL_CYAN)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(Self::PANEL_CYAN).add_modifier(Modifier::BOLD),
             ));
 
         let paragraph = Paragraph::new(lines).block(block);
@@ -228,9 +204,7 @@ impl App {
             Span::styled("\u{00b7} ", Style::default().fg(style_tokens::DIM_GREY)),
             Span::styled(
                 "Ready for review",
-                Style::default()
-                    .fg(Self::PANEL_CYAN)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(Self::PANEL_CYAN).add_modifier(Modifier::BOLD),
             ),
         ])];
 
@@ -340,17 +314,12 @@ impl App {
         let mut lines: Vec<Line> = Vec::new();
 
         // Search bar
-        let search_display = if query.is_empty() {
-            "Type to search...".to_string()
-        } else {
-            query.to_string()
-        };
+        let search_display =
+            if query.is_empty() { "Type to search...".to_string() } else { query.to_string() };
         let search_style = if query.is_empty() {
             Style::default().fg(style_tokens::DIM_GREY)
         } else {
-            Style::default()
-                .fg(Self::PANEL_CYAN)
-                .add_modifier(Modifier::BOLD)
+            Style::default().fg(Self::PANEL_CYAN).add_modifier(Modifier::BOLD)
         };
         lines.push(Line::from(vec![
             Span::styled("  \u{1f50d} ", Style::default().fg(style_tokens::DIM_GREY)),
@@ -395,9 +364,7 @@ impl App {
             // Pointer
             let pointer = if selected { "\u{25b8}" } else { " " };
             let pointer_style = if selected {
-                Style::default()
-                    .fg(Self::PANEL_CYAN)
-                    .add_modifier(Modifier::BOLD)
+                Style::default().fg(Self::PANEL_CYAN).add_modifier(Modifier::BOLD)
             } else {
                 Style::default().fg(style_tokens::DIM_GREY)
             };
@@ -406,13 +373,9 @@ impl App {
             let name_style = if !model.has_api_key {
                 Style::default().fg(style_tokens::DIM_GREY)
             } else if selected {
-                Style::default()
-                    .fg(Self::PANEL_CYAN)
-                    .add_modifier(Modifier::BOLD)
+                Style::default().fg(Self::PANEL_CYAN).add_modifier(Modifier::BOLD)
             } else if is_current {
-                Style::default()
-                    .fg(Color::Rgb(0, 200, 100))
-                    .add_modifier(Modifier::BOLD)
+                Style::default().fg(Color::Rgb(0, 200, 100)).add_modifier(Modifier::BOLD)
             } else {
                 Style::default().fg(style_tokens::PRIMARY)
             };
@@ -429,18 +392,13 @@ impl App {
 
             // Current model indicator
             if is_current {
-                spans.push(Span::styled(
-                    " \u{2713}",
-                    Style::default().fg(Color::Rgb(0, 200, 100)),
-                ));
+                spans.push(Span::styled(" \u{2713}", Style::default().fg(Color::Rgb(0, 200, 100))));
             }
 
             // Recommended badge
             if model.recommended {
-                spans.push(Span::styled(
-                    " \u{2605}",
-                    Style::default().fg(Color::Rgb(255, 200, 50)),
-                ));
+                spans
+                    .push(Span::styled(" \u{2605}", Style::default().fg(Color::Rgb(255, 200, 50))));
             }
 
             // Context length
@@ -499,9 +457,7 @@ impl App {
             .border_style(Style::default().fg(Self::PANEL_CYAN))
             .title(Span::styled(
                 " Models ",
-                Style::default()
-                    .fg(Self::PANEL_CYAN)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(Self::PANEL_CYAN).add_modifier(Modifier::BOLD),
             ));
 
         let paragraph = Paragraph::new(lines).block(block);
@@ -520,38 +476,21 @@ impl App {
         lines.push(Line::from(""));
 
         let label_style = Style::default().fg(style_tokens::DIM_GREY);
-        let value_style = Style::default()
-            .fg(Self::PANEL_CYAN)
-            .add_modifier(Modifier::BOLD);
+        let value_style = Style::default().fg(Self::PANEL_CYAN).add_modifier(Modifier::BOLD);
 
         let stats = [
             ("Model", self.state.model.clone()),
-            (
-                "Tokens",
-                format!("{} / {}", self.state.tokens_used, self.state.tokens_limit),
-            ),
+            ("Tokens", format!("{} / {}", self.state.tokens_used, self.state.tokens_limit)),
             ("Context", format!("{:.1}%", self.state.context_usage_pct)),
             ("Cost", format!("${:.4}", self.state.session_cost)),
             ("Messages", format!("{}", self.state.messages.len())),
             ("Active tools", format!("{}", self.state.active_tools.len())),
-            (
-                "Subagents",
-                format!("{}", self.state.active_subagents.len()),
-            ),
-            (
-                "Background tasks",
-                format!("{}", self.state.background_task_count),
-            ),
+            ("Subagents", format!("{}", self.state.active_subagents.len())),
+            ("Background tasks", format!("{}", self.state.background_task_count)),
             ("Mode", format!("{}", self.state.mode)),
             ("Autonomy", format!("{}", self.state.autonomy)),
             ("Reasoning", format!("{}", self.state.reasoning_level)),
-            (
-                "Terminal",
-                format!(
-                    "{}x{}",
-                    self.state.terminal_width, self.state.terminal_height
-                ),
-            ),
+            ("Terminal", format!("{}x{}", self.state.terminal_width, self.state.terminal_height)),
             ("Undo depth", format!("{}", self.state.undo_depth)),
         ];
 
@@ -579,9 +518,7 @@ impl App {
             .border_style(Style::default().fg(Self::PANEL_CYAN))
             .title(Span::styled(
                 " Debug ",
-                Style::default()
-                    .fg(Self::PANEL_CYAN)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(Self::PANEL_CYAN).add_modifier(Modifier::BOLD),
             ));
 
         let paragraph = Paragraph::new(lines).block(block);
@@ -606,9 +543,7 @@ impl App {
                 Span::styled("\u{00b7} ", Style::default().fg(style_tokens::DIM_GREY)),
                 Span::styled(
                     command.to_string(),
-                    Style::default()
-                        .fg(Self::PANEL_CYAN)
-                        .add_modifier(Modifier::BOLD),
+                    Style::default().fg(Self::PANEL_CYAN).add_modifier(Modifier::BOLD),
                 ),
             ]),
             Line::from(Span::styled(

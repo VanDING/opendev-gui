@@ -22,11 +22,7 @@ fn create_test_repo() -> TempDir {
     let dir = TempDir::new().unwrap();
     let repo = sanitize_path(dir.path().canonicalize().unwrap());
 
-    Command::new("git")
-        .args(["init"])
-        .current_dir(&repo)
-        .output()
-        .unwrap();
+    Command::new("git").args(["init"]).current_dir(&repo).output().unwrap();
 
     Command::new("git")
         .args(["config", "user.email", "test@test.com"])
@@ -34,11 +30,7 @@ fn create_test_repo() -> TempDir {
         .output()
         .unwrap();
 
-    Command::new("git")
-        .args(["config", "user.name", "Test"])
-        .current_dir(&repo)
-        .output()
-        .unwrap();
+    Command::new("git").args(["config", "user.name", "Test"]).current_dir(&repo).output().unwrap();
 
     Command::new("git")
         .args(["config", "commit.gpgsign", "false"])
@@ -48,16 +40,8 @@ fn create_test_repo() -> TempDir {
 
     // Create initial commit
     std::fs::write(repo.join("README.md"), "# Test\n").unwrap();
-    Command::new("git")
-        .args(["add", "."])
-        .current_dir(&repo)
-        .output()
-        .unwrap();
-    Command::new("git")
-        .args(["commit", "-m", "initial"])
-        .current_dir(&repo)
-        .output()
-        .unwrap();
+    Command::new("git").args(["add", "."]).current_dir(&repo).output().unwrap();
+    Command::new("git").args(["commit", "-m", "initial"]).current_dir(&repo).output().unwrap();
 
     dir
 }

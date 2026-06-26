@@ -50,12 +50,7 @@ impl EventBus {
     /// Create a new event bus with a specific capacity.
     pub fn with_capacity(capacity: usize) -> Self {
         let (sender, _) = broadcast::channel(capacity);
-        Self {
-            inner: Arc::new(EventBusInner {
-                sender,
-                _capacity: capacity,
-            }),
-        }
+        Self { inner: Arc::new(EventBusInner { sender, _capacity: capacity }) }
     }
 
     /// Publish a typed event to all subscribers.
@@ -100,9 +95,7 @@ impl Default for EventBus {
 
 impl std::fmt::Debug for EventBus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("EventBus")
-            .field("subscribers", &self.subscriber_count())
-            .finish()
+        f.debug_struct("EventBus").field("subscribers", &self.subscriber_count()).finish()
     }
 }
 

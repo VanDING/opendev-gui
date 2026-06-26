@@ -28,15 +28,9 @@ use io::{
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/api/mcp/servers", get(list_servers).post(create_server))
-        .route(
-            "/api/mcp/servers/{name}",
-            get(get_server).put(update_server).delete(delete_server),
-        )
+        .route("/api/mcp/servers/{name}", get(get_server).put(update_server).delete(delete_server))
         .route("/api/mcp/servers/{name}/connect", post(connect_server))
-        .route(
-            "/api/mcp/servers/{name}/disconnect",
-            post(disconnect_server),
-        )
+        .route("/api/mcp/servers/{name}/disconnect", post(disconnect_server))
 }
 
 /// List all configured MCP servers.
@@ -99,10 +93,7 @@ async fn create_server(
 ) -> Result<Json<serde_json::Value>, WebError> {
     let servers = load_all_servers(state.working_dir());
     if servers.contains_key(&payload.name) {
-        return Err(WebError::BadRequest(format!(
-            "Server '{}' already exists",
-            payload.name
-        )));
+        return Err(WebError::BadRequest(format!("Server '{}' already exists", payload.name)));
     }
 
     let config = McpServerConfig {

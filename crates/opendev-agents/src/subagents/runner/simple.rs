@@ -53,10 +53,7 @@ impl ExplorationSummary {
             for tc in tool_calls {
                 let function = tc.get("function").cloned().unwrap_or_default();
                 let name = function.get("name").and_then(|n| n.as_str()).unwrap_or("");
-                let args_str = function
-                    .get("arguments")
-                    .and_then(|a| a.as_str())
-                    .unwrap_or("{}");
+                let args_str = function.get("arguments").and_then(|a| a.as_str()).unwrap_or("{}");
                 let args: HashMap<String, Value> =
                     serde_json::from_str(args_str).unwrap_or_default();
 
@@ -91,12 +88,7 @@ impl ExplorationSummary {
             }
         }
 
-        Self {
-            files_read,
-            searches,
-            dirs_listed,
-            commands_run,
-        }
+        Self { files_read, searches, dirs_listed, commands_run }
     }
 
     /// Total number of distinct tool calls tracked.
@@ -147,10 +139,7 @@ impl ExplorationSummary {
                     .join(", "),
             ));
             if self.searches.len() > MAX_ENTRIES {
-                footer.push_str(&format!(
-                    " [and {} more]",
-                    self.searches.len() - MAX_ENTRIES
-                ));
+                footer.push_str(&format!(" [and {} more]", self.searches.len() - MAX_ENTRIES));
             }
         }
         if !self.dirs_listed.is_empty() {
@@ -172,10 +161,7 @@ impl ExplorationSummary {
                     .join(", "),
             ));
             if self.commands_run.len() > MAX_ENTRIES {
-                footer.push_str(&format!(
-                    " [and {} more]",
-                    self.commands_run.len() - MAX_ENTRIES
-                ));
+                footer.push_str(&format!(" [and {} more]", self.commands_run.len() - MAX_ENTRIES));
             }
         }
 
@@ -201,11 +187,7 @@ impl ExplorationSummary {
             obs.push_str(&format!(
                 "- Searches ({}): {}\n",
                 self.searches.len(),
-                self.searches
-                    .iter()
-                    .map(|s| format!("`{s}`"))
-                    .collect::<Vec<_>>()
-                    .join(", ")
+                self.searches.iter().map(|s| format!("`{s}`")).collect::<Vec<_>>().join(", ")
             ));
         }
         if !self.dirs_listed.is_empty() {
@@ -219,11 +201,7 @@ impl ExplorationSummary {
             obs.push_str(&format!(
                 "- Commands run ({}): {}\n",
                 self.commands_run.len(),
-                self.commands_run
-                    .iter()
-                    .map(|c| format!("`{c}`"))
-                    .collect::<Vec<_>>()
-                    .join(", ")
+                self.commands_run.iter().map(|c| format!("`{c}`")).collect::<Vec<_>>().join(", ")
             ));
         }
 
@@ -253,10 +231,7 @@ pub struct SimpleReactRunner {
 impl SimpleReactRunner {
     /// Create a new simple runner with the given iteration limit and wall-clock cap.
     pub fn new(max_iterations: usize, max_duration: std::time::Duration) -> Self {
-        Self {
-            max_iterations,
-            max_duration,
-        }
+        Self { max_iterations, max_duration }
     }
 
     /// Parse tool calls from an LLM response body.
@@ -294,34 +269,19 @@ impl SimpleReactRunner {
     /// Extract token usage from an LLM response body.
     fn parse_token_usage(body: &Value) -> (u64, u64) {
         let usage = body.get("usage");
-        let input = usage
-            .and_then(|u| u.get("prompt_tokens"))
-            .and_then(|t| t.as_u64())
-            .unwrap_or(0);
-        let output = usage
-            .and_then(|u| u.get("completion_tokens"))
-            .and_then(|t| t.as_u64())
-            .unwrap_or(0);
+        let input =
+            usage.and_then(|u| u.get("prompt_tokens")).and_then(|t| t.as_u64()).unwrap_or(0);
+        let output =
+            usage.and_then(|u| u.get("completion_tokens")).and_then(|t| t.as_u64()).unwrap_or(0);
         (input, output)
     }
 
     /// Extract tool name and parsed args from a tool call JSON object.
     fn extract_tool_info(tc: &Value) -> (String, String, HashMap<String, Value>) {
-        let id = tc
-            .get("id")
-            .and_then(|v| v.as_str())
-            .unwrap_or("")
-            .to_string();
+        let id = tc.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
         let function = tc.get("function").cloned().unwrap_or_default();
-        let name = function
-            .get("name")
-            .and_then(|n| n.as_str())
-            .unwrap_or("")
-            .to_string();
-        let args_str = function
-            .get("arguments")
-            .and_then(|a| a.as_str())
-            .unwrap_or("{}");
+        let name = function.get("name").and_then(|n| n.as_str()).unwrap_or("").to_string();
+        let args_str = function.get("arguments").and_then(|a| a.as_str()).unwrap_or("{}");
         let args: HashMap<String, Value> = serde_json::from_str(args_str).unwrap_or_default();
         (id, name, args)
     }
@@ -349,11 +309,7 @@ impl SimpleReactRunner {
         }
 
         let noop_cb = opendev_http::streaming::FnStreamCallback(|_| {});
-        match ctx
-            .http_client
-            .post_json_streaming(&payload, ctx.cancel, &noop_cb)
-            .await
-        {
+        match ctx.http_client.post_json_streaming(&payload, ctx.cancel, &noop_cb).await {
             Ok(http_result) if http_result.success => {
                 if let Some(body) = http_result.body {
                     if let Some(msg) = Self::parse_assistant_message(&body) {
@@ -444,10 +400,7 @@ impl SubagentRunner for SimpleReactRunner {
                 break;
             }
 
-            debug!(
-                iteration,
-                total_tool_calls, "SimpleReactRunner: calling LLM"
-            );
+            debug!(iteration, total_tool_calls, "SimpleReactRunner: calling LLM");
 
             // Build payload and call LLM (streaming to get per-chunk idle timeout)
             let payload = ctx.caller.build_action_payload(messages, ctx.tool_schemas);
@@ -479,11 +432,8 @@ impl SubagentRunner for SimpleReactRunner {
 
             if !http_result.success {
                 let status = http_result.status.unwrap_or(0);
-                let body_text = http_result
-                    .body
-                    .as_ref()
-                    .map(|b| b.to_string())
-                    .unwrap_or_default();
+                let body_text =
+                    http_result.body.as_ref().map(|b| b.to_string()).unwrap_or_default();
                 warn!(status, "SimpleReactRunner: LLM call failed");
 
                 if let Some(logger) = ctx.debug_logger {
@@ -643,8 +593,7 @@ impl SubagentRunner for SimpleReactRunner {
                     let futures: Vec<_> = parallel_infos
                         .iter()
                         .map(|(_, name, args)| {
-                            ctx.tool_registry
-                                .execute(name, args.clone(), ctx.tool_context)
+                            ctx.tool_registry.execute(name, args.clone(), ctx.tool_context)
                         })
                         .collect();
 
@@ -678,11 +627,7 @@ impl SubagentRunner for SimpleReactRunner {
 
                     // Tool approval gate for run_command (mirrors ReactLoop behavior)
                     let auto_approved = if matches!(name.as_str(), "Bash" | "run_command") {
-                        let cmd = args
-                            .get("command")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("")
-                            .trim();
+                        let cmd = args.get("command").and_then(|v| v.as_str()).unwrap_or("").trim();
                         auto_approved_patterns.iter().any(|pattern| {
                             let cmd_lower = cmd.to_lowercase();
                             let pat_lower = pattern.to_lowercase();
@@ -695,11 +640,8 @@ impl SubagentRunner for SimpleReactRunner {
                     let needs_approval =
                         matches!(name.as_str(), "Bash" | "run_command") && !auto_approved;
                     if needs_approval && let Some(approval_tx) = ctx.tool_approval_tx {
-                        let command = args
-                            .get("command")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("")
-                            .to_string();
+                        let command =
+                            args.get("command").and_then(|v| v.as_str()).unwrap_or("").to_string();
                         let (resp_tx, resp_rx) = tokio::sync::oneshot::channel();
                         let req = opendev_runtime::ToolApprovalRequest {
                             tool_name: name.clone(),
@@ -767,10 +709,7 @@ impl SubagentRunner for SimpleReactRunner {
                         }
                     }
 
-                    let result = ctx
-                        .tool_registry
-                        .execute(&name, args, ctx.tool_context)
-                        .await;
+                    let result = ctx.tool_registry.execute(&name, args, ctx.tool_context).await;
 
                     // Emit tool finished
                     if let Some(cb) = ctx.event_callback {
@@ -824,30 +763,27 @@ impl SubagentRunner for SimpleReactRunner {
         }
 
         let noop_cb = opendev_http::streaming::FnStreamCallback(|_| {});
-        let wind_down_content = match ctx
-            .http_client
-            .post_json_streaming(&payload, ctx.cancel, &noop_cb)
-            .await
-        {
-            Ok(http_result) if http_result.success => {
-                if let Some(body) = http_result.body {
-                    if let Some(msg) = Self::parse_assistant_message(&body) {
-                        messages.push(msg);
+        let wind_down_content =
+            match ctx.http_client.post_json_streaming(&payload, ctx.cancel, &noop_cb).await {
+                Ok(http_result) if http_result.success => {
+                    if let Some(body) = http_result.body {
+                        if let Some(msg) = Self::parse_assistant_message(&body) {
+                            messages.push(msg);
+                        }
+                        let (input_tokens, output_tokens) = Self::parse_token_usage(&body);
+                        if let Some(cb) = ctx.event_callback {
+                            cb.on_token_usage(input_tokens, output_tokens);
+                        }
+                        Self::parse_content(&body).unwrap_or(fallback)
+                    } else {
+                        fallback
                     }
-                    let (input_tokens, output_tokens) = Self::parse_token_usage(&body);
-                    if let Some(cb) = ctx.event_callback {
-                        cb.on_token_usage(input_tokens, output_tokens);
-                    }
-                    Self::parse_content(&body).unwrap_or(fallback)
-                } else {
+                }
+                _ => {
+                    warn!("SimpleReactRunner: wind-down LLM call failed, using last content");
                     fallback
                 }
-            }
-            _ => {
-                warn!("SimpleReactRunner: wind-down LLM call failed, using last content");
-                fallback
-            }
-        };
+            };
 
         let metadata = exploration.as_metadata_footer();
         let mut result_content = format!(

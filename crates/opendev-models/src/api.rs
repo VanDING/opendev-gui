@@ -60,12 +60,7 @@ pub fn tool_call_to_response(tc: &ToolCall) -> ToolCallResponse {
     let nested = if tc.nested_tool_calls.is_empty() {
         None
     } else {
-        Some(
-            tc.nested_tool_calls
-                .iter()
-                .map(tool_call_to_response)
-                .collect(),
-        )
+        Some(tc.nested_tool_calls.iter().map(tool_call_to_response).collect())
     };
 
     let result = tc.result.as_ref().map(|r| {

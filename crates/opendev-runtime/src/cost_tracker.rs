@@ -5,6 +5,9 @@
 //!
 //! Ported from `opendev/core/runtime/cost_tracker.py`.
 
+use std::sync::{Arc, Mutex as StdMutex};
+
+use opendev_history::cost::CostTracker as HistoryCostTracker;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::debug;
@@ -26,14 +29,8 @@ impl TokenUsage {
     /// Parse from a serde_json::Value (the `usage` field in API responses).
     pub fn from_json(value: &serde_json::Value) -> Self {
         Self {
-            prompt_tokens: value
-                .get("prompt_tokens")
-                .and_then(|v| v.as_u64())
-                .unwrap_or(0),
-            completion_tokens: value
-                .get("completion_tokens")
-                .and_then(|v| v.as_u64())
-                .unwrap_or(0),
+            prompt_tokens: value.get("prompt_tokens").and_then(|v| v.as_u64()).unwrap_or(0),
+            completion_tokens: value.get("completion_tokens").and_then(|v| v.as_u64()).unwrap_or(0),
             cache_read_input_tokens: value
                 .get("cache_read_input_tokens")
                 .and_then(|v| v.as_u64())
@@ -67,6 +64,12 @@ pub struct CostTracker {
     /// the budget is exhausted.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub budget_usd: Option<f64>,
+    /// Optional session identifier for cost record association.
+    #[serde(skip)]
+    pub session_id: String,
+    /// Optional history cost tracker for SQLite persistence.
+    #[serde(skip)]
+    pub history_tracker: Option<std::sync::Arc<StdMutex<HistoryCostTracker>>>,
 }
 
 /// Anthropic charges higher rates for prompts over 200K tokens.
@@ -84,6 +87,8 @@ impl CostTracker {
             total_cost_usd: 0.0,
             call_count: 0,
             budget_usd: None,
+            session_id: String::new(),
+            history_tracker: None,
         }
     }
 
@@ -108,8 +113,7 @@ impl CostTracker {
 
     /// Return the remaining budget in USD, or `None` if no budget is set.
     pub fn remaining_budget(&self) -> Option<f64> {
-        self.budget_usd
-            .map(|budget| (budget - self.total_cost_usd).max(0.0))
+        self.budget_usd.map(|budget| (budget - self.total_cost_usd).max(0.0))
     }
 
     /// Record token usage from a single LLM call.
@@ -140,6 +144,20 @@ impl CostTracker {
             cost_total = format!("${:.6}", self.total_cost_usd),
             "cost_tracker: recorded usage"
         );
+
+        // Forward to history CostTracker for SQLite persistence
+        if let Some(ref h) = self.history_tracker {
+            if let Ok(ht) = h.lock() {
+                let h_usage = opendev_history::cost::TokenUsage {
+                    prompt_tokens: usage.prompt_tokens,
+                    completion_tokens: usage.completion_tokens,
+                    cache_read_tokens: usage.cache_read_input_tokens,
+                    cache_write_tokens: usage.cache_creation_input_tokens,
+                    thinking_tokens: None,
+                };
+                let _ = ht.record("openai", "unknown", &h_usage, &Default::default());
+            }
+        }
 
         incremental_cost
     }
@@ -181,18 +199,9 @@ impl CostTracker {
     /// Export cost data for session metadata persistence.
     pub fn to_metadata(&self) -> HashMap<String, serde_json::Value> {
         let mut map = HashMap::new();
-        map.insert(
-            "total_cost_usd".into(),
-            serde_json::json!(round_f64(self.total_cost_usd, 6)),
-        );
-        map.insert(
-            "total_input_tokens".into(),
-            serde_json::json!(self.total_input_tokens),
-        );
-        map.insert(
-            "total_output_tokens".into(),
-            serde_json::json!(self.total_output_tokens),
-        );
+        map.insert("total_cost_usd".into(), serde_json::json!(round_f64(self.total_cost_usd, 6)));
+        map.insert("total_input_tokens".into(), serde_json::json!(self.total_input_tokens));
+        map.insert("total_output_tokens".into(), serde_json::json!(self.total_output_tokens));
         map.insert("api_call_count".into(), serde_json::json!(self.call_count));
         if let Some(budget) = self.budget_usd {
             map.insert("budget_usd".into(), serde_json::json!(round_f64(budget, 6)));
@@ -207,22 +216,13 @@ impl CostTracker {
             None => return,
         };
 
-        self.total_cost_usd = cost_data
-            .get("total_cost_usd")
-            .and_then(|v| v.as_f64())
-            .unwrap_or(0.0);
-        self.total_input_tokens = cost_data
-            .get("total_input_tokens")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(0);
-        self.total_output_tokens = cost_data
-            .get("total_output_tokens")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(0);
-        self.call_count = cost_data
-            .get("api_call_count")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(0);
+        self.total_cost_usd =
+            cost_data.get("total_cost_usd").and_then(|v| v.as_f64()).unwrap_or(0.0);
+        self.total_input_tokens =
+            cost_data.get("total_input_tokens").and_then(|v| v.as_u64()).unwrap_or(0);
+        self.total_output_tokens =
+            cost_data.get("total_output_tokens").and_then(|v| v.as_u64()).unwrap_or(0);
+        self.call_count = cost_data.get("api_call_count").and_then(|v| v.as_u64()).unwrap_or(0);
         self.budget_usd = cost_data.get("budget_usd").and_then(|v| v.as_f64());
 
         debug!(

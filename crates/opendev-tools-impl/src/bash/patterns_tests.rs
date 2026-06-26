@@ -158,10 +158,7 @@ fn test_filtered_env_excludes_sensitive() {
     // SAFETY: single-threaded test context
     unsafe { std::env::set_var("TEST_OPENDEV_API_KEY", "secret123") };
     let env = filtered_env();
-    assert!(
-        !env.contains_key("TEST_OPENDEV_API_KEY"),
-        "Filtered env should not contain API keys"
-    );
+    assert!(!env.contains_key("TEST_OPENDEV_API_KEY"), "Filtered env should not contain API keys");
     // PATH should be preserved.
     assert!(env.contains_key("PATH"), "PATH should be in filtered env");
     unsafe { std::env::remove_var("TEST_OPENDEV_API_KEY") };

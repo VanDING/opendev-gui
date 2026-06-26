@@ -17,10 +17,7 @@ fn test_task_watcher_close_esc() {
     app.state.task_watcher_open = true;
     let key = crossterm::event::KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE);
     app.handle_key(key);
-    assert!(
-        !app.state.task_watcher_open,
-        "Esc should close task watcher"
-    );
+    assert!(!app.state.task_watcher_open, "Esc should close task watcher");
     assert!(app.state.force_clear, "Esc should set force_clear");
 }
 
@@ -30,10 +27,7 @@ fn test_task_watcher_close_ctrl_b() {
     app.state.task_watcher_open = true;
     let key = crossterm::event::KeyEvent::new(KeyCode::Char('b'), KeyModifiers::CONTROL);
     app.handle_key(key);
-    assert!(
-        !app.state.task_watcher_open,
-        "Ctrl+B should close task watcher"
-    );
+    assert!(!app.state.task_watcher_open, "Ctrl+B should close task watcher");
     assert!(app.state.force_clear, "Ctrl+B should set force_clear");
 }
 
@@ -43,10 +37,7 @@ fn test_task_watcher_close_ctrl_p() {
     app.state.task_watcher_open = true;
     let key = crossterm::event::KeyEvent::new(KeyCode::Char('p'), KeyModifiers::CONTROL);
     app.handle_key(key);
-    assert!(
-        !app.state.task_watcher_open,
-        "Ctrl+P should close task watcher"
-    );
+    assert!(!app.state.task_watcher_open, "Ctrl+P should close task watcher");
     assert!(app.state.force_clear, "Ctrl+P should set force_clear");
 }
 
@@ -56,10 +47,7 @@ fn test_task_watcher_close_alt_b() {
     app.state.task_watcher_open = true;
     let key = crossterm::event::KeyEvent::new(KeyCode::Char('b'), KeyModifiers::ALT);
     app.handle_key(key);
-    assert!(
-        !app.state.task_watcher_open,
-        "Alt+B should close task watcher"
-    );
+    assert!(!app.state.task_watcher_open, "Alt+B should close task watcher");
     assert!(app.state.force_clear, "Alt+B should set force_clear");
 }
 
@@ -197,18 +185,10 @@ fn test_models_command_opens_picker_with_autocomplete() {
 
     // Should either open picker or show "No models" message
     let has_picker = app.model_picker_controller.is_some();
-    let has_no_models_msg = app
-        .state
-        .messages
-        .iter()
-        .any(|m| m.content.contains("No models"));
+    let has_no_models_msg = app.state.messages.iter().any(|m| m.content.contains("No models"));
     assert!(
         has_picker || has_no_models_msg,
         "Expected model picker or 'No models' message, got messages: {:?}",
-        app.state
-            .messages
-            .iter()
-            .map(|m| &m.content)
-            .collect::<Vec<_>>()
+        app.state.messages.iter().map(|m| &m.content).collect::<Vec<_>>()
     );
 }

@@ -154,17 +154,10 @@ impl App {
 
         // Update unified background task count (both managers + backgrounded subagents)
         let bg_agent_running = self.state.bg_agent_manager.running_count();
-        let bg_process_running = if let Ok(mgr) = self.task_manager.try_lock() {
-            mgr.running_count()
-        } else {
-            0
-        };
-        let bg_subagent_running = self
-            .state
-            .active_subagents
-            .iter()
-            .filter(|s| s.backgrounded && !s.finished)
-            .count();
+        let bg_process_running =
+            if let Ok(mgr) = self.task_manager.try_lock() { mgr.running_count() } else { 0 };
+        let bg_subagent_running =
+            self.state.active_subagents.iter().filter(|s| s.backgrounded && !s.finished).count();
         // Subtract parent bg_agent_manager tasks that are "covered" by backgrounded subagents
         // to avoid double-counting (the subagents are already counted individually).
         let covered_bg_count: usize = {
@@ -178,10 +171,7 @@ impl App {
             covered_ids
                 .iter()
                 .filter(|id| {
-                    self.state
-                        .bg_agent_manager
-                        .get_task(id)
-                        .is_some_and(|t| t.is_running())
+                    self.state.bg_agent_manager.get_task(id).is_some_and(|t| t.is_running())
                 })
                 .count()
         };
@@ -255,11 +245,7 @@ impl App {
         }
 
         // Expire Ctrl+C pending after 2 seconds
-        if self
-            .state
-            .ctrl_c_pending
-            .is_some_and(|t| t.elapsed() >= Duration::from_secs(2))
-        {
+        if self.state.ctrl_c_pending.is_some_and(|t| t.elapsed() >= Duration::from_secs(2)) {
             self.state.ctrl_c_pending = None;
         }
 

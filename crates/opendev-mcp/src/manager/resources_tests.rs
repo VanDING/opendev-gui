@@ -19,9 +19,7 @@ async fn test_get_prompt_with_arguments_disconnected() {
     let manager = McpManager::new(None);
     let mut args = HashMap::new();
     args.insert("key".to_string(), "value".to_string());
-    let result = manager
-        .get_prompt("nonexistent", "test-prompt", Some(args))
-        .await;
+    let result = manager.get_prompt("nonexistent", "test-prompt", Some(args)).await;
     assert!(matches!(result, Err(McpError::ServerNotFound(_))));
 }
 
@@ -35,8 +33,6 @@ async fn test_list_resources_no_connections() {
 #[tokio::test]
 async fn test_read_resource_disconnected_server() {
     let manager = McpManager::new(None);
-    let result = manager
-        .read_resource("nonexistent", "file:///test.txt")
-        .await;
+    let result = manager.read_resource("nonexistent", "file:///test.txt").await;
     assert!(matches!(result, Err(McpError::ServerNotFound(_))));
 }

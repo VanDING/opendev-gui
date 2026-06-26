@@ -97,21 +97,13 @@ impl BaseTool for WebSearchTool {
         let allowed_domains: Vec<String> = args
             .get("allowed_domains")
             .and_then(|v| v.as_array())
-            .map(|arr| {
-                arr.iter()
-                    .filter_map(|v| v.as_str().map(|s| s.to_lowercase()))
-                    .collect()
-            })
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_lowercase())).collect())
             .unwrap_or_default();
 
         let blocked_domains: Vec<String> = args
             .get("blocked_domains")
             .and_then(|v| v.as_array())
-            .map(|arr| {
-                arr.iter()
-                    .filter_map(|v| v.as_str().map(|s| s.to_lowercase()))
-                    .collect()
-            })
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_lowercase())).collect())
             .unwrap_or_default();
 
         // Build DuckDuckGo HTML search URL
@@ -166,9 +158,7 @@ impl BaseTool for WebSearchTool {
 
         // Format output
         let mut output_parts = Vec::new();
-        output_parts.push(format!(
-            "Search results for \"{query}\" ({result_count} results):\n"
-        ));
+        output_parts.push(format!("Search results for \"{query}\" ({result_count} results):\n"));
 
         for (i, result) in results.iter().enumerate() {
             output_parts.push(format!(
@@ -189,10 +179,7 @@ impl BaseTool for WebSearchTool {
         let mut metadata = HashMap::new();
         metadata.insert("query".into(), serde_json::json!(query));
         metadata.insert("result_count".into(), serde_json::json!(result_count));
-        metadata.insert(
-            "results".into(),
-            serde_json::to_value(&results).unwrap_or_default(),
-        );
+        metadata.insert("results".into(), serde_json::to_value(&results).unwrap_or_default());
 
         ToolResult::ok_with_metadata(output, metadata)
     }

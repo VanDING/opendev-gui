@@ -3,10 +3,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 #[tokio::test]
@@ -99,11 +96,7 @@ async fn test_list_files_excludes_node_modules() {
     fs::create_dir_all(tmp.path().join("src")).unwrap();
     fs::create_dir_all(tmp.path().join("node_modules/foo")).unwrap();
     fs::write(tmp.path().join("src/main.rs"), "fn main() {}").unwrap();
-    fs::write(
-        tmp.path().join("node_modules/foo/index.js"),
-        "module.exports = {}",
-    )
-    .unwrap();
+    fs::write(tmp.path().join("node_modules/foo/index.js"), "module.exports = {}").unwrap();
 
     let tool = FileListTool;
     let ctx = ToolContext::new(tmp.path());
@@ -113,10 +106,7 @@ async fn test_list_files_excludes_node_modules() {
     assert!(result.success);
     let output = result.output.unwrap();
     assert!(output.contains("main.rs"));
-    assert!(
-        !output.contains("index.js"),
-        "node_modules should be excluded"
-    );
+    assert!(!output.contains("index.js"), "node_modules should be excluded");
 }
 
 #[tokio::test]
@@ -138,10 +128,7 @@ async fn test_list_files_excludes_build_dirs() {
     let output = result.output.unwrap();
     assert!(output.contains("lib.rs"));
     assert!(!output.contains("output"), "target/ should be excluded");
-    assert!(
-        !output.contains("mod.pyc"),
-        "__pycache__/ should be excluded"
-    );
+    assert!(!output.contains("mod.pyc"), "__pycache__/ should be excluded");
 }
 
 #[tokio::test]
@@ -159,14 +146,8 @@ async fn test_list_files_excludes_minified_files() {
     assert!(result.success);
     let output = result.output.unwrap();
     assert!(output.contains("app.js"));
-    assert!(
-        !output.contains("app.min.js"),
-        "*.min.js should be excluded"
-    );
-    assert!(
-        !output.contains("style.min.css"),
-        "*.min.css should be excluded"
-    );
+    assert!(!output.contains("app.min.js"), "*.min.js should be excluded");
+    assert!(!output.contains("style.min.css"), "*.min.css should be excluded");
 }
 
 #[test]
@@ -229,10 +210,7 @@ async fn test_list_files_missing_dir_shows_available() {
     let ctx = ToolContext::new(&tmp_path);
     let args = make_args(&[
         ("pattern", serde_json::json!("**/*.rs")),
-        (
-            "path",
-            serde_json::json!(tmp_path.join("src").to_str().unwrap()),
-        ),
+        ("path", serde_json::json!(tmp_path.join("src").to_str().unwrap())),
     ]);
 
     let result = tool.execute(args, &ctx).await;
@@ -257,12 +235,6 @@ async fn test_list_files_nonexistent_pattern_dir_shows_hint() {
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
     let output = result.output.unwrap();
-    assert!(
-        output.contains("does not exist"),
-        "should note src/ doesn't exist, got: {output}"
-    );
-    assert!(
-        output.contains("crates/"),
-        "should suggest crates/, got: {output}"
-    );
+    assert!(output.contains("does not exist"), "should note src/ doesn't exist, got: {output}");
+    assert!(output.contains("crates/"), "should suggest crates/, got: {output}");
 }

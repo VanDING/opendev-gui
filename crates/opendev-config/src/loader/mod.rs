@@ -14,15 +14,9 @@ use tracing::{debug, warn};
 #[derive(Debug, Error)]
 pub enum ConfigError {
     #[error("failed to read config file {path}: {source}")]
-    ReadError {
-        path: String,
-        source: std::io::Error,
-    },
+    ReadError { path: String, source: std::io::Error },
     #[error("failed to parse config file {path}: {source}")]
-    ParseError {
-        path: String,
-        source: serde_json::Error,
-    },
+    ParseError { path: String, source: serde_json::Error },
     #[error("config validation failed: {0}")]
     ValidationError(String),
 }
@@ -79,20 +73,15 @@ impl ConfigLoader {
     }
 
     fn load_file(path: &Path) -> Result<serde_json::Value, ConfigError> {
-        let content = std::fs::read_to_string(path).map_err(|e| ConfigError::ReadError {
-            path: path.display().to_string(),
-            source: e,
-        })?;
+        let content = std::fs::read_to_string(path)
+            .map_err(|e| ConfigError::ReadError { path: path.display().to_string(), source: e })?;
 
         // Apply template substitutions before parsing
         let config_dir = path.parent().unwrap_or(Path::new("."));
         let content = Self::substitute_templates(&content, config_dir);
 
-        let value: serde_json::Value =
-            serde_json::from_str(&content).map_err(|e| ConfigError::ParseError {
-                path: path.display().to_string(),
-                source: e,
-            })?;
+        let value: serde_json::Value = serde_json::from_str(&content)
+            .map_err(|e| ConfigError::ParseError { path: path.display().to_string(), source: e })?;
 
         // Apply config migrations if the version is outdated
         let (migrated, changed) = crate::migration::migrate_config(value);
@@ -189,10 +178,8 @@ impl ConfigLoader {
             })?;
         }
 
-        let json = serde_json::to_string_pretty(config).map_err(|e| ConfigError::ParseError {
-            path: path.display().to_string(),
-            source: e,
-        })?;
+        let json = serde_json::to_string_pretty(config)
+            .map_err(|e| ConfigError::ParseError { path: path.display().to_string(), source: e })?;
 
         // Atomic write: write to .tmp then rename
         let tmp_path = path.with_extension("json.tmp");
@@ -208,10 +195,7 @@ impl ConfigLoader {
                 source: e,
             })?;
             std::io::Write::write_all(&mut file, json.as_bytes()).map_err(|e| {
-                ConfigError::ReadError {
-                    path: tmp_path.display().to_string(),
-                    source: e,
-                }
+                ConfigError::ReadError { path: tmp_path.display().to_string(), source: e }
             })?;
         }
         #[cfg(not(unix))]
@@ -233,10 +217,8 @@ impl ConfigLoader {
             })?;
         }
 
-        std::fs::rename(&tmp_path, path).map_err(|e| ConfigError::ReadError {
-            path: path.display().to_string(),
-            source: e,
-        })?;
+        std::fs::rename(&tmp_path, path)
+            .map_err(|e| ConfigError::ReadError { path: path.display().to_string(), source: e })?;
 
         debug!("Saved config to {:?}", path);
         Ok(())

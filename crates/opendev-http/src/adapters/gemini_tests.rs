@@ -37,10 +37,7 @@ fn test_convert_request_basic() {
     let result = adapter.convert_request(payload);
 
     // System instruction extracted
-    assert_eq!(
-        result["systemInstruction"]["parts"][0]["text"],
-        "You are helpful."
-    );
+    assert_eq!(result["systemInstruction"]["parts"][0]["text"], "You are helpful.");
 
     // Contents should have only the user message
     let contents = result["contents"].as_array().unwrap();
@@ -123,10 +120,7 @@ fn test_convert_request_with_tool_calls() {
     // Tool result as functionResponse
     assert_eq!(contents[2]["role"], "user");
     assert!(contents[2]["parts"][0].get("functionResponse").is_some());
-    assert_eq!(
-        contents[2]["parts"][0]["functionResponse"]["name"],
-        "read_file"
-    );
+    assert_eq!(contents[2]["parts"][0]["functionResponse"]["name"], "read_file");
 }
 
 #[test]
@@ -148,10 +142,7 @@ fn test_convert_response_text() {
     let result = adapter.convert_response(response);
 
     assert_eq!(result["object"], "chat.completion");
-    assert_eq!(
-        result["choices"][0]["message"]["content"],
-        "Hello! How can I help?"
-    );
+    assert_eq!(result["choices"][0]["message"]["content"], "Hello! How can I help?");
     assert_eq!(result["choices"][0]["finish_reason"], "stop");
     assert_eq!(result["usage"]["prompt_tokens"], 10);
     assert_eq!(result["usage"]["completion_tokens"], 8);
@@ -182,9 +173,7 @@ fn test_convert_response_function_call() {
     let result = adapter.convert_response(response);
 
     assert_eq!(result["choices"][0]["finish_reason"], "tool_calls");
-    let tool_calls = result["choices"][0]["message"]["tool_calls"]
-        .as_array()
-        .unwrap();
+    let tool_calls = result["choices"][0]["message"]["tool_calls"].as_array().unwrap();
     assert_eq!(tool_calls.len(), 1);
     assert_eq!(tool_calls[0]["function"]["name"], "read_file");
 }
@@ -234,8 +223,5 @@ fn test_custom_base_url() {
     let adapter = GeminiAdapter::new("gemini-pro").with_base_url("https://my-proxy.com/v1");
     assert_eq!(adapter.api_url(), "https://my-proxy.com/v1");
     let url = gemini_api_url(adapter.api_url(), "gemini-pro");
-    assert_eq!(
-        url,
-        "https://my-proxy.com/v1/models/gemini-pro:generateContent"
-    );
+    assert_eq!(url, "https://my-proxy.com/v1/models/gemini-pro:generateContent");
 }

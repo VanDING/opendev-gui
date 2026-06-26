@@ -83,11 +83,7 @@ impl CustomTool {
     /// Resolve the command path (relative to base_dir if not absolute).
     fn resolve_command(&self) -> PathBuf {
         let cmd = Path::new(&self.manifest.command);
-        if cmd.is_absolute() {
-            cmd.to_path_buf()
-        } else {
-            self.base_dir.join(cmd)
-        }
+        if cmd.is_absolute() { cmd.to_path_buf() } else { self.base_dir.join(cmd) }
     }
 }
 
@@ -193,10 +189,8 @@ impl BaseTool for CustomTool {
 ///
 /// Returns a list of `(manifest, base_dir)` tuples for each valid tool found.
 pub fn discover_custom_tools(working_dir: &Path) -> Vec<CustomTool> {
-    let search_dirs = [
-        working_dir.join(".opendev").join("tools"),
-        working_dir.join(".opencode").join("tool"),
-    ];
+    let search_dirs =
+        [working_dir.join(".opendev").join("tools"), working_dir.join(".opencode").join("tool")];
 
     let mut tools = Vec::new();
     let mut seen_names = std::collections::HashSet::new();

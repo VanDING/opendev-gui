@@ -9,13 +9,7 @@ fn make_state() -> AppState {
     let config = AppConfig::default();
     let user_store = UserStore::new(tmp_path.clone()).unwrap();
     let model_registry = ModelRegistry::new();
-    AppState::new(
-        session_manager,
-        config,
-        "/tmp/test".to_string(),
-        user_store,
-        model_registry,
-    )
+    AppState::new(session_manager, config, "/tmp/test".to_string(), user_store, model_registry)
 }
 
 #[tokio::test]
@@ -122,12 +116,8 @@ async fn test_clear_session_approvals() {
         session_id: Some("s2".to_string()),
     };
 
-    let rx_s1 = state
-        .add_pending_approval("a1".to_string(), approval_s1)
-        .await;
-    let _rx_s2 = state
-        .add_pending_approval("a2".to_string(), approval_s2)
-        .await;
+    let rx_s1 = state.add_pending_approval("a1".to_string(), approval_s1).await;
+    let _rx_s2 = state.add_pending_approval("a2".to_string(), approval_s2).await;
 
     // Clear only s1's approvals.
     state.clear_session_approvals("s1").await;
@@ -153,26 +143,19 @@ async fn test_ask_user_oneshot_lifecycle() {
     let pending = state.get_pending_ask_user("q1").await;
     assert!(pending.is_some());
 
-    let resolved = state
-        .resolve_ask_user("q1", Some(serde_json::json!({"name": "Alice"})), false)
-        .await;
+    let resolved =
+        state.resolve_ask_user("q1", Some(serde_json::json!({"name": "Alice"})), false).await;
     assert!(resolved.is_some());
 
     let result = rx.await.unwrap();
     assert!(!result.cancelled);
-    assert_eq!(
-        result.answers.unwrap(),
-        serde_json::json!({"name": "Alice"})
-    );
+    assert_eq!(result.answers.unwrap(), serde_json::json!({"name": "Alice"}));
 }
 
 #[tokio::test]
 async fn test_interrupt_cancels_ask_users() {
     let state = make_state();
-    let ask = PendingAskUser {
-        prompt: "question".to_string(),
-        session_id: None,
-    };
+    let ask = PendingAskUser { prompt: "question".to_string(), session_id: None };
 
     let rx = state.add_pending_ask_user("q1".to_string(), ask).await;
 
@@ -190,18 +173,15 @@ async fn test_plan_approval_oneshot_lifecycle() {
         session_id: Some("s1".to_string()),
     };
 
-    let rx = state
-        .add_pending_plan_approval("p1".to_string(), plan)
-        .await;
+    let rx = state.add_pending_plan_approval("p1".to_string(), plan).await;
 
     // Verify pending.
     let pending = state.get_pending_plan_approval("p1").await;
     assert!(pending.is_some());
 
     // Resolve it.
-    let resolved = state
-        .resolve_plan_approval("p1", "approve".to_string(), "looks good".to_string())
-        .await;
+    let resolved =
+        state.resolve_plan_approval("p1", "approve".to_string(), "looks good".to_string()).await;
     assert!(resolved.is_some());
 
     // Receiver should get the result.
@@ -210,25 +190,15 @@ async fn test_plan_approval_oneshot_lifecycle() {
     assert_eq!(result.feedback, "looks good");
 
     // Second resolve returns None.
-    assert!(
-        state
-            .resolve_plan_approval("p1", "reject".to_string(), String::new())
-            .await
-            .is_none()
-    );
+    assert!(state.resolve_plan_approval("p1", "reject".to_string(), String::new()).await.is_none());
 }
 
 #[tokio::test]
 async fn test_interrupt_rejects_plan_approvals() {
     let state = make_state();
-    let plan = PendingPlanApproval {
-        data: serde_json::json!({"plan": "test"}),
-        session_id: None,
-    };
+    let plan = PendingPlanApproval { data: serde_json::json!({"plan": "test"}), session_id: None };
 
-    let rx = state
-        .add_pending_plan_approval("p1".to_string(), plan)
-        .await;
+    let rx = state.add_pending_plan_approval("p1".to_string(), plan).await;
 
     state.request_interrupt().await;
 
@@ -240,21 +210,13 @@ async fn test_interrupt_rejects_plan_approvals() {
 async fn test_clear_session_plan_approvals() {
     let state = make_state();
 
-    let plan_s1 = PendingPlanApproval {
-        data: serde_json::json!({}),
-        session_id: Some("s1".to_string()),
-    };
-    let plan_s2 = PendingPlanApproval {
-        data: serde_json::json!({}),
-        session_id: Some("s2".to_string()),
-    };
+    let plan_s1 =
+        PendingPlanApproval { data: serde_json::json!({}), session_id: Some("s1".to_string()) };
+    let plan_s2 =
+        PendingPlanApproval { data: serde_json::json!({}), session_id: Some("s2".to_string()) };
 
-    let rx_s1 = state
-        .add_pending_plan_approval("p1".to_string(), plan_s1)
-        .await;
-    let _rx_s2 = state
-        .add_pending_plan_approval("p2".to_string(), plan_s2)
-        .await;
+    let rx_s1 = state.add_pending_plan_approval("p1".to_string(), plan_s1).await;
+    let _rx_s2 = state.add_pending_plan_approval("p2".to_string(), plan_s2).await;
 
     state.clear_session_plan_approvals("s1").await;
 
@@ -308,20 +270,12 @@ async fn test_injection_queue() {
     assert_eq!(rx.recv().await.unwrap(), "world");
 
     // try_inject_message works too.
-    state
-        .try_inject_message("s1", "via state".to_string())
-        .await
-        .unwrap();
+    state.try_inject_message("s1", "via state".to_string()).await.unwrap();
     assert_eq!(rx.recv().await.unwrap(), "via state");
 
     // Clear and verify injection fails.
     state.clear_injection_queue("s1").await;
-    assert!(
-        state
-            .try_inject_message("s1", "fail".to_string())
-            .await
-            .is_err()
-    );
+    assert!(state.try_inject_message("s1", "fail".to_string()).await.is_err());
 }
 
 #[tokio::test]
@@ -405,10 +359,7 @@ async fn test_ring_buffer_stores_broadcasts() {
     let state = make_state();
 
     for i in 0..5 {
-        state.broadcast(WsBroadcast::new(
-            format!("evt_{i}"),
-            serde_json::Value::Null,
-        ));
+        state.broadcast(WsBroadcast::new(format!("evt_{i}"), serde_json::Value::Null));
     }
 
     let buf = state.inner.recent_broadcasts.lock().await;
@@ -422,10 +373,7 @@ async fn test_ring_buffer_capacity_limit() {
     let state = make_state();
 
     for i in 0..(RING_BUFFER_CAPACITY + 50) {
-        state.broadcast(WsBroadcast::new(
-            format!("evt_{i}"),
-            serde_json::Value::Null,
-        ));
+        state.broadcast(WsBroadcast::new(format!("evt_{i}"), serde_json::Value::Null));
     }
 
     let buf = state.inner.recent_broadcasts.lock().await;
@@ -455,10 +403,7 @@ async fn test_catch_up_since_too_old() {
 
     // Broadcast enough to fill the buffer, then some more to evict.
     for i in 0..(RING_BUFFER_CAPACITY + 100) {
-        state.broadcast(WsBroadcast::new(
-            format!("evt_{i}"),
-            serde_json::Value::Null,
-        ));
+        state.broadcast(WsBroadcast::new(format!("evt_{i}"), serde_json::Value::Null));
     }
 
     // The oldest seq in buffer is 101 (seqs 1..=100 were evicted).

@@ -33,12 +33,7 @@ pub enum EntryKind {
 
     /// Result from a tool execution.
     #[serde(rename = "tr")]
-    ToolResult {
-        call_id: String,
-        name: String,
-        output: String,
-        ok: bool,
-    },
+    ToolResult { call_id: String, name: String, output: String, ok: bool },
 
     /// Token usage snapshot.
     #[serde(rename = "tok")]

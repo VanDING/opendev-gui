@@ -17,10 +17,7 @@ pub struct TodoManager {
 impl TodoManager {
     /// Create a new, empty todo manager.
     pub fn new() -> Self {
-        Self {
-            todos: BTreeMap::new(),
-            next_id: 1,
-        }
+        Self { todos: BTreeMap::new(), next_id: 1 }
     }
 
     /// Create a todo manager pre-populated from plan step strings.
@@ -167,42 +164,27 @@ impl TodoManager {
 
     /// Number of completed todos.
     pub fn completed_count(&self) -> usize {
-        self.todos
-            .values()
-            .filter(|t| t.status == TodoStatus::Completed)
-            .count()
+        self.todos.values().filter(|t| t.status == TodoStatus::Completed).count()
     }
 
     /// Number of in-progress todos.
     pub fn in_progress_count(&self) -> usize {
-        self.todos
-            .values()
-            .filter(|t| t.status == TodoStatus::InProgress)
-            .count()
+        self.todos.values().filter(|t| t.status == TodoStatus::InProgress).count()
     }
 
     /// Number of pending todos.
     pub fn pending_count(&self) -> usize {
-        self.todos
-            .values()
-            .filter(|t| t.status == TodoStatus::Pending)
-            .count()
+        self.todos.values().filter(|t| t.status == TodoStatus::Pending).count()
     }
 
     /// Get the next pending todo (lowest ID).
     pub fn next_pending(&self) -> Option<&TodoItem> {
-        self.todos
-            .values()
-            .find(|t| t.status == TodoStatus::Pending)
+        self.todos.values().find(|t| t.status == TodoStatus::Pending)
     }
 
     /// Whether all todos are completed.
     pub fn all_completed(&self) -> bool {
-        !self.todos.is_empty()
-            && self
-                .todos
-                .values()
-                .all(|t| t.status == TodoStatus::Completed)
+        !self.todos.is_empty() && self.todos.values().all(|t| t.status == TodoStatus::Completed)
     }
 
     /// Format a status display string suitable for inclusion in prompts.
@@ -226,10 +208,7 @@ impl TodoManager {
         let mut out = format!("Todos ({done}/{total} done):\n");
 
         for item in self.todos.values() {
-            out.push_str(&format!(
-                "  [{}] {}. {}\n",
-                item.status, item.id, item.title
-            ));
+            out.push_str(&format!("  [{}] {}. {}\n", item.status, item.id, item.title));
             for child in &item.children {
                 out.push_str(&format!("      - {}\n", child.title));
             }
@@ -302,13 +281,7 @@ impl TodoManager {
         self.todos
             .values()
             .find(|t| t.status == TodoStatus::InProgress)
-            .and_then(|t| {
-                if t.active_form.is_empty() {
-                    None
-                } else {
-                    Some(t.active_form.clone())
-                }
-            })
+            .and_then(|t| if t.active_form.is_empty() { None } else { Some(t.active_form.clone()) })
     }
 
     /// Reset all "doing" (in-progress) todos back to "pending".
@@ -332,9 +305,7 @@ impl TodoManager {
 
     /// Whether there are any non-completed todos.
     pub fn has_incomplete_todos(&self) -> bool {
-        self.todos
-            .values()
-            .any(|t| t.status != TodoStatus::Completed)
+        self.todos.values().any(|t| t.status != TodoStatus::Completed)
     }
 
     /// Whether any todo has been started (moved beyond Pending).
@@ -361,10 +332,7 @@ impl TodoManager {
         });
 
         for item in items {
-            out.push_str(&format!(
-                "  [{}] {}. {}\n",
-                item.status, item.id, item.title
-            ));
+            out.push_str(&format!("  [{}] {}. {}\n", item.status, item.id, item.title));
             for child in &item.children {
                 out.push_str(&format!("      - {}\n", child.title));
             }

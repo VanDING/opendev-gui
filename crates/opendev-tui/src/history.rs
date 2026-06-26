@@ -43,23 +43,13 @@ impl CommandHistory {
     pub fn new() -> Self {
         let file_path = Self::default_path();
         let entries = Self::load_from_file(&file_path);
-        Self {
-            entries,
-            nav_index: None,
-            saved_input: String::new(),
-            file_path,
-        }
+        Self { entries, nav_index: None, saved_input: String::new(), file_path }
     }
 
     /// Create a command history backed by a specific file path (for testing).
     pub fn with_path(file_path: PathBuf) -> Self {
         let entries = Self::load_from_file(&file_path);
-        Self {
-            entries,
-            nav_index: None,
-            saved_input: String::new(),
-            file_path,
-        }
+        Self { entries, nav_index: None, saved_input: String::new(), file_path }
     }
 
     /// Record a command in the history.
@@ -81,14 +71,8 @@ impl CommandHistory {
             entry.count += 1;
             entry.last_used = now;
         } else {
-            self.entries.insert(
-                0,
-                HistoryEntry {
-                    text: text.to_string(),
-                    count: 1,
-                    last_used: now,
-                },
-            );
+            self.entries
+                .insert(0, HistoryEntry { text: text.to_string(), count: 1, last_used: now });
         }
 
         // Sort by last_used descending (most recent first)
@@ -202,9 +186,7 @@ impl CommandHistory {
             Ok(json) => {
                 // Security fix: Avoid TOCTOU and default permissions when writing sensitive TUI history.
                 // Write to a randomized temporary file with exclusive creation and restricted permissions, then rename atomically.
-                let tmp = self
-                    .file_path
-                    .with_extension(format!("tmp.{}", uuid::Uuid::new_v4()));
+                let tmp = self.file_path.with_extension(format!("tmp.{}", uuid::Uuid::new_v4()));
 
                 #[cfg(unix)]
                 {

@@ -45,9 +45,7 @@ fn test_load_prompt_not_found() {
 fn test_load_prompt_with_fallback() {
     let dir = tempfile::TempDir::new().unwrap();
     let loader = PromptLoader::new(dir.path());
-    let result = loader
-        .load_prompt_with_fallback("missing", Some("fallback text"))
-        .unwrap();
+    let result = loader.load_prompt_with_fallback("missing", Some("fallback text")).unwrap();
     assert_eq!(result, "fallback text");
 }
 

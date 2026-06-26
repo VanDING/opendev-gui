@@ -204,15 +204,7 @@ pub(crate) static DEFAULT_ENTRY: ToolDisplayEntry = ToolDisplayEntry {
     category: ToolCategory::Other,
     verb: "Call",
     label: "",
-    primary_arg_keys: &[
-        "command",
-        "file_path",
-        "path",
-        "url",
-        "query",
-        "pattern",
-        "name",
-    ],
+    primary_arg_keys: &["command", "file_path", "path", "url", "query", "pattern", "name"],
     result_format: ResultFormat::Generic,
 };
 
@@ -222,15 +214,7 @@ static MCP_ENTRY: ToolDisplayEntry = ToolDisplayEntry {
     category: ToolCategory::Mcp,
     verb: "MCP",
     label: "tool",
-    primary_arg_keys: &[
-        "command",
-        "file_path",
-        "path",
-        "url",
-        "query",
-        "pattern",
-        "name",
-    ],
+    primary_arg_keys: &["command", "file_path", "path", "url", "query", "pattern", "name"],
     result_format: ResultFormat::Generic,
 };
 

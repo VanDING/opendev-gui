@@ -21,11 +21,7 @@ fn test_context_reason_display() {
 #[test]
 fn test_context_piece_tokens() {
     let reason = ContextReason::new("test", "test").with_tokens(100);
-    let piece = ContextPiece::new(
-        "hello world".to_string(),
-        reason,
-        ContextCategory::UserQuery,
-    );
+    let piece = ContextPiece::new("hello world".to_string(), reason, ContextCategory::UserQuery);
     assert_eq!(piece.tokens_estimate(), 100);
 
     // Without explicit tokens, estimate from content
@@ -79,9 +75,7 @@ fn test_context_piece_ordering() {
 
 #[test]
 fn test_context_reason_serialization() {
-    let reason = ContextReason::new("test_source", "test reason")
-        .with_tokens(42)
-        .with_score(0.9);
+    let reason = ContextReason::new("test_source", "test reason").with_tokens(42).with_score(0.9);
     let json = serde_json::to_string(&reason).unwrap();
     let deserialized: ContextReason = serde_json::from_str(&json).unwrap();
     assert_eq!(deserialized.source, "test_source");

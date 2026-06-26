@@ -74,9 +74,7 @@ impl WorktreeManager {
                     )));
                 }
             } else {
-                return Err(std::io::Error::other(format!(
-                    "Failed to create worktree: {stderr}"
-                )));
+                return Err(std::io::Error::other(format!("Failed to create worktree: {stderr}")));
             }
         }
 
@@ -180,9 +178,7 @@ impl WorktreeManager {
 
 impl std::fmt::Debug for WorktreeManager {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("WorktreeManager")
-            .field("base_dir", &self.base_dir)
-            .finish()
+        f.debug_struct("WorktreeManager").field("base_dir", &self.base_dir).finish()
     }
 }
 

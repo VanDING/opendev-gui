@@ -15,13 +15,7 @@ fn make_state() -> AppState {
     let config = AppConfig::default();
     let user_store = UserStore::new(tmp_path).unwrap();
     let model_registry = ModelRegistry::new();
-    AppState::new(
-        session_manager,
-        config,
-        "/tmp/test".to_string(),
-        user_store,
-        model_registry,
-    )
+    AppState::new(session_manager, config, "/tmp/test".to_string(), user_store, model_registry)
 }
 
 #[tokio::test]
@@ -76,9 +70,7 @@ async fn test_send_query_session_not_found_returns_404() {
                 .method("POST")
                 .uri("/api/chat/query")
                 .header("content-type", "application/json")
-                .body(Body::from(
-                    r#"{"message":"hello","session_id":"nonexistent"}"#,
-                ))
+                .body(Body::from(r#"{"message":"hello","session_id":"nonexistent"}"#))
                 .unwrap(),
         )
         .await
@@ -124,9 +116,7 @@ async fn test_send_query_running_session_inject() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["status"], "accepted");
 
@@ -194,9 +184,7 @@ async fn test_clear_chat() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["status"], "success");
 

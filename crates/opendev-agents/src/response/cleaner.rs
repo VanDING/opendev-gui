@@ -10,40 +10,19 @@ static CLEANUP_PATTERNS: LazyLock<Vec<(Regex, &'static str)>> = LazyLock::new(||
     vec![
         // Match chat template tokens like <|im_end|>, <|im_user|>, etc.
         // All patterns below are known-good compile-time regex literals.
-        (
-            Regex::new(r"<\|[^|]+\|>").expect("valid regex: chat template tokens"),
-            "",
-        ),
-        (
-            Regex::new(r"</?tool_call>").expect("valid regex: tool_call tags"),
-            "",
-        ),
-        (
-            Regex::new(r"</?tool_response>").expect("valid regex: tool_response tags"),
-            "",
-        ),
-        (
-            Regex::new(r"<function=[^>]+>").expect("valid regex: function tags"),
-            "",
-        ),
-        (
-            Regex::new(r"</?parameter[^>]*>").expect("valid regex: parameter tags"),
-            "",
-        ),
+        (Regex::new(r"<\|[^|]+\|>").expect("valid regex: chat template tokens"), ""),
+        (Regex::new(r"</?tool_call>").expect("valid regex: tool_call tags"), ""),
+        (Regex::new(r"</?tool_response>").expect("valid regex: tool_response tags"), ""),
+        (Regex::new(r"<function=[^>]+>").expect("valid regex: function tags"), ""),
+        (Regex::new(r"</?parameter[^>]*>").expect("valid regex: parameter tags"), ""),
         // Strip echoed system/internal markers (defense-in-depth)
-        (
-            Regex::new(r"(?m)^\[SYSTEM\].*$\n?").expect("valid regex: system markers"),
-            "",
-        ),
+        (Regex::new(r"(?m)^\[SYSTEM\].*$\n?").expect("valid regex: system markers"), ""),
         (
             Regex::new(r"(?s)<system-reminder>.*?</system-reminder>\n?")
                 .expect("valid regex: system-reminder tags"),
             "",
         ),
-        (
-            Regex::new(r"(?m)^\[INTERNAL\].*$\n?").expect("valid regex: internal markers"),
-            "",
-        ),
+        (Regex::new(r"(?m)^\[INTERNAL\].*$\n?").expect("valid regex: internal markers"), ""),
     ]
 });
 
@@ -72,11 +51,7 @@ impl ResponseCleaner {
         }
 
         let trimmed = cleaned.trim().to_string();
-        if trimmed.is_empty() {
-            None
-        } else {
-            Some(trimmed)
-        }
+        if trimmed.is_empty() { None } else { Some(trimmed) }
     }
 }
 

@@ -53,9 +53,7 @@ async fn send_request(
     let response = app.oneshot(request).await.unwrap();
     let status = response.status();
 
-    let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
+    let bytes = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: serde_json::Value = serde_json::from_slice(&bytes).unwrap_or(serde_json::json!(null));
 
     (status, json)
@@ -84,13 +82,8 @@ async fn health_check_returns_ok() {
 #[tokio::test]
 async fn create_session() {
     let (_tmp, state) = make_test_state();
-    let (status, json) = send_request(
-        state,
-        Method::POST,
-        "/api/sessions",
-        Some(serde_json::json!({})),
-    )
-    .await;
+    let (status, json) =
+        send_request(state, Method::POST, "/api/sessions", Some(serde_json::json!({}))).await;
 
     assert_eq!(status, StatusCode::OK);
     assert_eq!(json["status"], "created");
@@ -158,13 +151,8 @@ async fn get_session_by_id() {
         session_id = session.id;
     }
 
-    let (status, json) = send_request(
-        state,
-        Method::GET,
-        &format!("/api/sessions/{session_id}"),
-        None,
-    )
-    .await;
+    let (status, json) =
+        send_request(state, Method::GET, &format!("/api/sessions/{session_id}"), None).await;
 
     assert_eq!(status, StatusCode::OK);
     assert_eq!(json["id"], session_id);
@@ -193,13 +181,8 @@ async fn resume_session() {
         mgr.save_session(&session).unwrap();
     }
 
-    let (status, json) = send_request(
-        state,
-        Method::POST,
-        "/api/sessions/test-resume/resume",
-        None,
-    )
-    .await;
+    let (status, json) =
+        send_request(state, Method::POST, "/api/sessions/test-resume/resume", None).await;
 
     assert_eq!(status, StatusCode::OK);
     assert_eq!(json["status"], "resumed");
@@ -210,13 +193,8 @@ async fn resume_session() {
 #[tokio::test]
 async fn resume_nonexistent_session_returns_404() {
     let (_tmp, state) = make_test_state();
-    let (status, _) = send_request(
-        state,
-        Method::POST,
-        "/api/sessions/nonexistent/resume",
-        None,
-    )
-    .await;
+    let (status, _) =
+        send_request(state, Method::POST, "/api/sessions/nonexistent/resume", None).await;
     assert_eq!(status, StatusCode::NOT_FOUND);
 }
 

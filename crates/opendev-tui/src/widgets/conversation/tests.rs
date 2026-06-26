@@ -53,11 +53,8 @@ fn test_system_reminder_filtered() {
     let widget = ConversationWidget::new(&msgs, 0);
     let lines = widget.build_lines();
     // Should not contain "secret"
-    let text: String = lines
-        .iter()
-        .flat_map(|l| l.spans.iter())
-        .map(|s| s.content.to_string())
-        .collect();
+    let text: String =
+        lines.iter().flat_map(|l| l.spans.iter()).map(|s| s.content.to_string()).collect();
     assert!(!text.contains("secret"));
     assert!(text.contains("Hello"));
     assert!(text.contains("world"));
@@ -85,11 +82,8 @@ fn test_collapsed_tool_result() {
     }];
     let widget = ConversationWidget::new(&msgs, 0);
     let lines = widget.build_lines();
-    let text: String = lines
-        .iter()
-        .flat_map(|l| l.spans.iter())
-        .map(|s| s.content.to_string())
-        .collect();
+    let text: String =
+        lines.iter().flat_map(|l| l.spans.iter()).map(|s| s.content.to_string()).collect();
     // read_file shows "Read 2 lines" without parentheses or "Ctrl+O" hint
     assert!(text.contains("Read 2 lines"));
     assert!(!text.contains("Ctrl+O"));
@@ -115,11 +109,8 @@ fn test_spinner_active_tools() {
     }];
     let widget = ConversationWidget::new(&msgs, 0).active_tools(&tools);
     let render_lines = widget.build_render_lines();
-    let text: String = render_lines
-        .iter()
-        .flat_map(|l| l.spans.iter())
-        .map(|s| s.content.to_string())
-        .collect();
+    let text: String =
+        render_lines.iter().flat_map(|l| l.spans.iter()).map(|s| s.content.to_string()).collect();
     // Should show display name like "Bash ls -la" not raw "run_command"
     assert!(text.contains("Bash"));
     assert!(text.contains("ls -la"));
@@ -138,11 +129,8 @@ fn test_spinner_thinking() {
     };
     let widget = ConversationWidget::new(&msgs, 0).task_progress(Some(&progress));
     let spinner = widget.build_spinner_lines();
-    let text: String = spinner
-        .iter()
-        .flat_map(|l| l.spans.iter())
-        .map(|s| s.content.to_string())
-        .collect();
+    let text: String =
+        spinner.iter().flat_map(|l| l.spans.iter()).map(|s| s.content.to_string()).collect();
     assert!(text.contains("Thinking..."));
     assert!(text.contains("(Esc to interrupt)"));
 }
@@ -169,15 +157,11 @@ fn test_spinner_tools_take_priority_over_thinking() {
         interrupted: false,
         started_at: std::time::Instant::now(),
     };
-    let widget = ConversationWidget::new(&msgs, 0)
-        .active_tools(&tools)
-        .task_progress(Some(&progress));
+    let widget =
+        ConversationWidget::new(&msgs, 0).active_tools(&tools).task_progress(Some(&progress));
     let spinner = widget.build_spinner_lines();
-    let text: String = spinner
-        .iter()
-        .flat_map(|l| l.spans.iter())
-        .map(|s| s.content.to_string())
-        .collect();
+    let text: String =
+        spinner.iter().flat_map(|l| l.spans.iter()).map(|s| s.content.to_string()).collect();
     // Active tools shown with display name, not thinking
     assert!(text.contains("Read"));
     assert!(!text.contains("Thinking..."));
@@ -225,11 +209,8 @@ fn test_nested_tool_calls() {
     }];
     let widget = ConversationWidget::new(&msgs, 0);
     let lines = widget.build_lines();
-    let text: String = lines
-        .iter()
-        .flat_map(|l| l.spans.iter())
-        .map(|s| s.content.to_string())
-        .collect();
+    let text: String =
+        lines.iter().flat_map(|l| l.spans.iter()).map(|s| s.content.to_string()).collect();
     // spawn_subagent renders as AgentName(task), nested calls show formatted verb
     assert!(text.contains("Agent"));
     assert!(text.contains("Read"));
@@ -250,11 +231,7 @@ fn test_render_reserves_bottom_row_gap() {
     // The last row (y=9) must be entirely blank — reserved gap
     for x in 0..40 {
         let cell = &buf[(x, 9)];
-        assert_eq!(
-            cell.symbol(),
-            " ",
-            "Bottom gap row should be blank at column {x}"
-        );
+        assert_eq!(cell.symbol(), " ", "Bottom gap row should be blank at column {x}");
     }
 }
 
@@ -295,10 +272,7 @@ fn test_snapshot_empty_conversation() {
     let rows = buffer_text(&buf, Rect::new(0, 0, 80, 24));
     // Empty conversation renders nothing — all rows should be blank
     for row in &rows {
-        assert!(
-            row.trim().is_empty(),
-            "Expected blank row for empty conversation, got: {row:?}"
-        );
+        assert!(row.trim().is_empty(), "Expected blank row for empty conversation, got: {row:?}");
     }
 }
 
@@ -371,22 +345,10 @@ fn test_snapshot_multi_message_with_tool_call() {
 
     // Verify key content appears in the rendered output
     assert!(all_text.contains("List files"), "Missing user message");
-    assert!(
-        all_text.contains("list the files"),
-        "Missing assistant content"
-    );
-    assert!(
-        all_text.contains("main.rs"),
-        "Missing tool result line 'main.rs'"
-    );
-    assert!(
-        all_text.contains("lib.rs"),
-        "Missing tool result line 'lib.rs'"
-    );
-    assert!(
-        all_text.contains("Here are the files"),
-        "Missing second assistant message"
-    );
+    assert!(all_text.contains("list the files"), "Missing assistant content");
+    assert!(all_text.contains("main.rs"), "Missing tool result line 'main.rs'");
+    assert!(all_text.contains("lib.rs"), "Missing tool result line 'lib.rs'");
+    assert!(all_text.contains("Here are the files"), "Missing second assistant message");
 }
 
 #[test]
@@ -399,10 +361,7 @@ fn test_snapshot_thinking_block() {
 
     let msgs = vec![
         DisplayMessage::new(DisplayRole::User, "Explain closures"),
-        DisplayMessage::new(
-            DisplayRole::Assistant,
-            "Closures capture variables from their scope.",
-        ),
+        DisplayMessage::new(DisplayRole::Assistant, "Closures capture variables from their scope."),
     ];
 
     terminal
@@ -415,14 +374,8 @@ fn test_snapshot_thinking_block() {
     let buf = terminal.backend().buffer().clone();
     let all_text: String = buffer_text(&buf, Rect::new(0, 0, 80, 24)).join("\n");
 
-    assert!(
-        all_text.contains("Explain closures"),
-        "Missing user message"
-    );
-    assert!(
-        all_text.contains("capture variables"),
-        "Missing assistant response"
-    );
+    assert!(all_text.contains("Explain closures"), "Missing user message");
+    assert!(all_text.contains("capture variables"), "Missing assistant response");
 }
 
 #[test]
@@ -434,11 +387,7 @@ fn test_snapshot_scroll_indicator() {
     let msgs: Vec<DisplayMessage> = (0..50)
         .map(|i| {
             DisplayMessage::new(
-                if i % 2 == 0 {
-                    DisplayRole::User
-                } else {
-                    DisplayRole::Assistant
-                },
+                if i % 2 == 0 { DisplayRole::User } else { DisplayRole::Assistant },
                 format!("Message number {i} with enough text to occupy a line"),
             )
         })
@@ -460,9 +409,7 @@ fn test_snapshot_scroll_indicator() {
     // When scrolled, the rightmost column should contain scrollbar characters
     // (▲ at top, █ for thumb, ║ for track, ▼ at bottom)
     let last_col = 79u16;
-    let right_col: String = (0..10u16)
-        .map(|y| buf[(last_col, y)].symbol().to_string())
-        .collect();
+    let right_col: String = (0..10u16).map(|y| buf[(last_col, y)].symbol().to_string()).collect();
     let scrollbar_chars = ['▲', '█', '░', '▼', '║'];
     assert!(
         right_col.chars().any(|c| scrollbar_chars.contains(&c)),
@@ -500,11 +447,8 @@ fn test_diff_rendering_with_line_numbers() {
     }];
     let widget = ConversationWidget::new(&msgs, 0);
     let lines = widget.build_lines();
-    let text: String = lines
-        .iter()
-        .flat_map(|l| l.spans.iter())
-        .map(|s| s.content.to_string())
-        .collect();
+    let text: String =
+        lines.iter().flat_map(|l| l.spans.iter()).map(|s| s.content.to_string()).collect();
 
     // Should contain right-aligned line numbers
     assert!(text.contains("  10 "), "Should contain line number 10");
@@ -553,17 +497,11 @@ fn test_edit_tool_never_collapsed() {
     }];
     let widget = ConversationWidget::new(&msgs, 0);
     let lines = widget.build_lines();
-    let text: String = lines
-        .iter()
-        .flat_map(|l| l.spans.iter())
-        .map(|s| s.content.to_string())
-        .collect();
+    let text: String =
+        lines.iter().flat_map(|l| l.spans.iter()).map(|s| s.content.to_string()).collect();
 
     // Even though collapsed=true, edit_file should always show expanded
-    assert!(
-        !text.contains("collapsed"),
-        "edit_file should never show collapsed indicator"
-    );
+    assert!(!text.contains("collapsed"), "edit_file should never show collapsed indicator");
     assert!(
         text.contains("+ new line"),
         "edit_file should show diff content even when collapsed=true"
@@ -576,27 +514,17 @@ fn test_edit_tool_never_collapsed() {
 fn test_spinner_parallel_subagents_finished_before_tool() {
     use crate::widgets::nested_tool::SubagentDisplayState;
 
-    let msgs = vec![DisplayMessage::new(
-        DisplayRole::User,
-        "Explore the codebase",
-    )];
+    let msgs = vec![DisplayMessage::new(DisplayRole::User, "Explore the codebase")];
 
     // Create 3 spawn_subagent ToolExecutions (still active — not finished)
-    let tasks = [
-        "Search for authentication code",
-        "Find database models",
-        "Explore API endpoints",
-    ];
+    let tasks = ["Search for authentication code", "Find database models", "Explore API endpoints"];
     let tools: Vec<ToolExecution> = tasks
         .iter()
         .enumerate()
         .map(|(i, task)| {
             let mut args = std::collections::HashMap::new();
             args.insert("task".into(), serde_json::Value::String(task.to_string()));
-            args.insert(
-                "agent_type".into(),
-                serde_json::Value::String("explore".into()),
-            );
+            args.insert("agent_type".into(), serde_json::Value::String("explore".into()));
             ToolExecution {
                 id: format!("t{i}"),
                 name: "spawn_subagent".into(),
@@ -627,23 +555,16 @@ fn test_spinner_parallel_subagents_finished_before_tool() {
         })
         .collect();
 
-    let widget = ConversationWidget::new(&msgs, 0)
-        .active_tools(&tools)
-        .active_subagents(&subagents);
+    let widget =
+        ConversationWidget::new(&msgs, 0).active_tools(&tools).active_subagents(&subagents);
     let spinner = widget.build_spinner_lines();
-    let text: String = spinner
-        .iter()
-        .flat_map(|l| l.spans.iter())
-        .map(|s| s.content.to_string())
-        .collect();
+    let text: String =
+        spinner.iter().flat_map(|l| l.spans.iter()).map(|s| s.content.to_string()).collect();
 
     // Each subagent should be rendered individually (no grouping)
     assert!(!text.contains("3 subagents"), "Should not group subagents");
     for task in &tasks {
-        assert!(
-            text.contains(task),
-            "Expected task '{task}' in spinner output"
-        );
+        assert!(text.contains(task), "Expected task '{task}' in spinner output");
     }
     // Each finished subagent should show Done individually
     assert!(text.contains("Done"));
@@ -663,10 +584,7 @@ fn test_spinner_parallel_subagents_in_progress() {
         .map(|(i, task)| {
             let mut args = std::collections::HashMap::new();
             args.insert("task".into(), serde_json::Value::String(task.to_string()));
-            args.insert(
-                "agent_type".into(),
-                serde_json::Value::String("explore".into()),
-            );
+            args.insert("agent_type".into(), serde_json::Value::String("explore".into()));
             ToolExecution {
                 id: format!("t{i}"),
                 name: "spawn_subagent".into(),
@@ -704,26 +622,16 @@ fn test_spinner_parallel_subagents_in_progress() {
         })
         .collect();
 
-    let widget = ConversationWidget::new(&msgs, 0)
-        .active_tools(&tools)
-        .active_subagents(&subagents);
+    let widget =
+        ConversationWidget::new(&msgs, 0).active_tools(&tools).active_subagents(&subagents);
     let spinner = widget.build_spinner_lines();
-    let text: String = spinner
-        .iter()
-        .flat_map(|l| l.spans.iter())
-        .map(|s| s.content.to_string())
-        .collect();
+    let text: String =
+        spinner.iter().flat_map(|l| l.spans.iter()).map(|s| s.content.to_string()).collect();
 
     // Should NOT show "Done" — subagents are still running
-    assert!(
-        !text.contains("Done"),
-        "Should not show 'Done' for in-progress subagents"
-    );
+    assert!(!text.contains("Done"), "Should not show 'Done' for in-progress subagents");
     // Each subagent rendered individually with its active tool
-    assert!(
-        text.contains("Read"),
-        "active tool 'Read' should appear in individual spinner lines"
-    );
+    assert!(text.contains("Read"), "active tool 'Read' should appear in individual spinner lines");
     // No grouping
     assert!(!text.contains("2 subagents"), "Should not group subagents");
 }
@@ -768,12 +676,8 @@ fn test_snapshot_parallel_subagents_group_visible_in_tui() {
 
     let msgs = vec![DisplayMessage::new(DisplayRole::User, "Explore the repo")];
 
-    let tasks = [
-        "Search auth code",
-        "Find database models",
-        "Explore API routes",
-        "Trace background jobs",
-    ];
+    let tasks =
+        ["Search auth code", "Find database models", "Explore API routes", "Trace background jobs"];
 
     let tools: Vec<ToolExecution> = tasks
         .iter()
@@ -781,10 +685,7 @@ fn test_snapshot_parallel_subagents_group_visible_in_tui() {
         .map(|(i, task)| {
             let mut args = std::collections::HashMap::new();
             args.insert("task".into(), serde_json::Value::String(task.to_string()));
-            args.insert(
-                "description".into(),
-                serde_json::Value::String(task.to_string()),
-            );
+            args.insert("description".into(), serde_json::Value::String(task.to_string()));
             ToolExecution {
                 id: format!("t{i}"),
                 name: "spawn_subagent".into(),
@@ -813,9 +714,8 @@ fn test_snapshot_parallel_subagents_group_visible_in_tui() {
 
     terminal
         .draw(|frame| {
-            let widget = ConversationWidget::new(&msgs, 0)
-                .active_tools(&tools)
-                .active_subagents(&subagents);
+            let widget =
+                ConversationWidget::new(&msgs, 0).active_tools(&tools).active_subagents(&subagents);
             frame.render_widget(widget, frame.area());
         })
         .unwrap();
@@ -824,16 +724,10 @@ fn test_snapshot_parallel_subagents_group_visible_in_tui() {
     let all_text = buffer_text(&buf, Rect::new(0, 0, 60, 8)).join("\n");
 
     // Each subagent rendered individually (no grouping)
-    assert!(
-        !all_text.contains("4 subagents"),
-        "Should not group subagents: {all_text}"
-    );
+    assert!(!all_text.contains("4 subagents"), "Should not group subagents: {all_text}");
     // At least some individual agents visible in the 8-row viewport
     let visible = tasks.iter().filter(|t| all_text.contains(*t)).count();
-    assert!(
-        visible >= 1,
-        "At least one subagent should be visible: {all_text}"
-    );
+    assert!(visible >= 1, "At least one subagent should be visible: {all_text}");
 }
 
 #[test]
@@ -881,10 +775,7 @@ fn test_reasoning_message_visible() {
             .join("\n")
     );
     // Assistant content should also be visible
-    assert!(
-        all_text.contains("answer is 42"),
-        "Assistant content missing from render"
-    );
+    assert!(all_text.contains("answer is 42"), "Assistant content missing from render");
     // Check for thinking icon
     assert!(
         all_text.contains('⟡'),

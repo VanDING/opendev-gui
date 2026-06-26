@@ -12,16 +12,9 @@ fn test_write_and_read_entries() {
     let session_dir = dir.path().canonicalize().unwrap();
 
     let mut writer = SidechainWriter::new(&session_dir, "agent-1").unwrap();
+    writer.append(EntryKind::SystemPrompt { content: "You are a helpful agent.".into() }).unwrap();
     writer
-        .append(EntryKind::SystemPrompt {
-            content: "You are a helpful agent.".into(),
-        })
-        .unwrap();
-    writer
-        .append(EntryKind::AssistantMsg {
-            content: "I'll help you.".into(),
-            tool_calls: None,
-        })
+        .append(EntryKind::AssistantMsg { content: "I'll help you.".into(), tool_calls: None })
         .unwrap();
     writer
         .append(EntryKind::ToolResult {
@@ -31,9 +24,7 @@ fn test_write_and_read_entries() {
             ok: true,
         })
         .unwrap();
-    writer
-        .append(EntryKind::Tokens { inp: 100, out: 50 })
-        .unwrap();
+    writer.append(EntryKind::Tokens { inp: 100, out: 50 }).unwrap();
 
     let reader = SidechainReader::open(&session_dir, "agent-1").unwrap();
     let entries = reader.entries().unwrap();
@@ -51,10 +42,7 @@ fn test_tail_returns_last_n() {
     let mut writer = SidechainWriter::new(&session_dir, "agent-1").unwrap();
     for i in 0..10 {
         writer
-            .append(EntryKind::AssistantMsg {
-                content: format!("msg {i}"),
-                tool_calls: None,
-            })
+            .append(EntryKind::AssistantMsg { content: format!("msg {i}"), tool_calls: None })
             .unwrap();
     }
 
@@ -71,11 +59,7 @@ fn test_into_messages_reconstructs_history() {
     let session_dir = dir.path().canonicalize().unwrap();
 
     let mut writer = SidechainWriter::new(&session_dir, "agent-1").unwrap();
-    writer
-        .append(EntryKind::SystemPrompt {
-            content: "system".into(),
-        })
-        .unwrap();
+    writer.append(EntryKind::SystemPrompt { content: "system".into() }).unwrap();
     writer
         .append(EntryKind::AssistantMsg {
             content: "thinking...".into(),
@@ -95,14 +79,9 @@ fn test_into_messages_reconstructs_history() {
         })
         .unwrap();
     writer
-        .append(EntryKind::AssistantMsg {
-            content: "Here's the result.".into(),
-            tool_calls: None,
-        })
+        .append(EntryKind::AssistantMsg { content: "Here's the result.".into(), tool_calls: None })
         .unwrap();
-    writer
-        .append(EntryKind::Tokens { inp: 200, out: 100 })
-        .unwrap();
+    writer.append(EntryKind::Tokens { inp: 200, out: 100 }).unwrap();
 
     let reader = SidechainReader::open(&session_dir, "agent-1").unwrap();
     let messages = reader.into_messages().unwrap();
@@ -122,29 +101,18 @@ fn test_corrupt_line_skipped() {
 
     // Write a valid entry
     let mut writer = SidechainWriter::new(&session_dir, "agent-1").unwrap();
-    writer
-        .append(EntryKind::AssistantMsg {
-            content: "valid".into(),
-            tool_calls: None,
-        })
-        .unwrap();
+    writer.append(EntryKind::AssistantMsg { content: "valid".into(), tool_calls: None }).unwrap();
 
     // Manually inject a corrupt line
     let path = session_dir.join("agents/agent-1.jsonl");
-    let mut file = std::fs::OpenOptions::new()
-        .append(true)
-        .open(&path)
-        .unwrap();
+    let mut file = std::fs::OpenOptions::new().append(true).open(&path).unwrap();
     use std::io::Write;
     writeln!(file, "{{this is not valid json}}").unwrap();
 
     // Write another valid entry
     let mut writer2 = SidechainWriter::new(&session_dir, "agent-1").unwrap();
     writer2
-        .append(EntryKind::AssistantMsg {
-            content: "also valid".into(),
-            tool_calls: None,
-        })
+        .append(EntryKind::AssistantMsg { content: "also valid".into(), tool_calls: None })
         .unwrap();
 
     let reader = SidechainReader::open(&session_dir, "agent-1").unwrap();
@@ -207,12 +175,7 @@ fn test_into_messages_filters_orphaned_tool_calls() {
         .unwrap();
 
     // Normal assistant message
-    writer
-        .append(EntryKind::AssistantMsg {
-            content: "Hello!".into(),
-            tool_calls: None,
-        })
-        .unwrap();
+    writer.append(EntryKind::AssistantMsg { content: "Hello!".into(), tool_calls: None }).unwrap();
 
     let reader = SidechainReader::open(&session_dir, "agent-1").unwrap();
     let messages = reader.into_messages().unwrap();
@@ -231,10 +194,7 @@ fn test_write_resume_cycle() {
     let mut writer = SidechainWriter::new(&session_dir, "agent-1").unwrap();
     for i in 0..5 {
         writer
-            .append(EntryKind::AssistantMsg {
-                content: format!("msg {i}"),
-                tool_calls: None,
-            })
+            .append(EntryKind::AssistantMsg { content: format!("msg {i}"), tool_calls: None })
             .unwrap();
     }
     drop(writer);
@@ -247,10 +207,7 @@ fn test_write_resume_cycle() {
     let mut writer2 = SidechainWriter::new(&session_dir, "agent-1").unwrap();
     for i in 5..8 {
         writer2
-            .append(EntryKind::AssistantMsg {
-                content: format!("msg {i}"),
-                tool_calls: None,
-            })
+            .append(EntryKind::AssistantMsg { content: format!("msg {i}"), tool_calls: None })
             .unwrap();
     }
 

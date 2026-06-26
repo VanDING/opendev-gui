@@ -24,10 +24,7 @@ impl FileFormatter {
         let total_lines = output.lines().count();
 
         let header = Line::from(vec![
-            Span::styled(
-                "  📄 ".to_string(),
-                Style::default().fg(style_tokens::BLUE_PATH),
-            ),
+            Span::styled("  📄 ".to_string(), Style::default().fg(style_tokens::BLUE_PATH)),
             Span::styled(
                 format!("File content ({total_lines} lines)"),
                 Style::default().fg(style_tokens::BLUE_PATH),
@@ -57,30 +54,17 @@ impl FileFormatter {
             None
         };
 
-        FormattedOutput {
-            header,
-            body,
-            footer,
-        }
+        FormattedOutput { header, body, footer }
     }
 
     /// Format diff output (for Write/Edit).
     fn format_diff<'a>(tool_name: &str, output: &str) -> FormattedOutput<'a> {
-        let verb = if tool_name == "Write" || tool_name == "write_file" {
-            "Written"
-        } else {
-            "Edited"
-        };
+        let verb =
+            if tool_name == "Write" || tool_name == "write_file" { "Written" } else { "Edited" };
 
         let header = Line::from(vec![
-            Span::styled(
-                "  ✎ ".to_string(),
-                Style::default().fg(style_tokens::SUCCESS),
-            ),
-            Span::styled(
-                format!("{verb} file"),
-                Style::default().fg(style_tokens::SUCCESS),
-            ),
+            Span::styled("  ✎ ".to_string(), Style::default().fg(style_tokens::SUCCESS)),
+            Span::styled(format!("{verb} file"), Style::default().fg(style_tokens::SUCCESS)),
         ]);
 
         let mut additions = 0usize;
@@ -108,21 +92,11 @@ impl FileFormatter {
             .collect();
 
         let footer = Some(Line::from(vec![
-            Span::styled(
-                format!("  +{additions} ",),
-                Style::default().fg(style_tokens::SUCCESS),
-            ),
-            Span::styled(
-                format!("-{removals}"),
-                Style::default().fg(style_tokens::ERROR),
-            ),
+            Span::styled(format!("  +{additions} ",), Style::default().fg(style_tokens::SUCCESS)),
+            Span::styled(format!("-{removals}"), Style::default().fg(style_tokens::ERROR)),
         ]));
 
-        FormattedOutput {
-            header,
-            body,
-            footer,
-        }
+        FormattedOutput { header, body, footer }
     }
 }
 

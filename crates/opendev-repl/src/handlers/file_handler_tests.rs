@@ -20,10 +20,7 @@ fn test_read_tracking() {
     assert!(!h.was_read("/tmp/test.rs"));
 
     let mut args = HashMap::new();
-    args.insert(
-        "file_path".to_string(),
-        Value::String("/tmp/test.rs".to_string()),
-    );
+    args.insert("file_path".to_string(), Value::String("/tmp/test.rs".to_string()));
     h.pre_check("Read", &args);
 
     assert!(h.was_read("/tmp/test.rs"));
@@ -33,10 +30,7 @@ fn test_read_tracking() {
 fn test_extract_changed_files_write() {
     let h = handler();
     let mut args = HashMap::new();
-    args.insert(
-        "file_path".to_string(),
-        Value::String("/tmp/out.rs".to_string()),
-    );
+    args.insert("file_path".to_string(), Value::String("/tmp/out.rs".to_string()));
     let files = h.extract_changed_files("Write", &args);
     assert_eq!(files, vec!["/tmp/out.rs"]);
 }
@@ -45,10 +39,7 @@ fn test_extract_changed_files_write() {
 fn test_extract_changed_files_read() {
     let h = handler();
     let mut args = HashMap::new();
-    args.insert(
-        "file_path".to_string(),
-        Value::String("/tmp/in.rs".to_string()),
-    );
+    args.insert("file_path".to_string(), Value::String("/tmp/in.rs".to_string()));
     let files = h.extract_changed_files("Read", &args);
     assert!(files.is_empty());
 }
@@ -57,10 +48,7 @@ fn test_extract_changed_files_read() {
 fn test_post_process_includes_changed_files() {
     let h = handler();
     let mut args = HashMap::new();
-    args.insert(
-        "file_path".to_string(),
-        Value::String("/tmp/edited.rs".to_string()),
-    );
+    args.insert("file_path".to_string(), Value::String("/tmp/edited.rs".to_string()));
 
     let result = h.post_process("Edit", &args, Some("ok"), None, true);
     assert!(result.success);

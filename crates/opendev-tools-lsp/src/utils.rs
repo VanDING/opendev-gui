@@ -58,11 +58,7 @@ impl TextUtils {
         }
 
         // Offset at end of text
-        if offset == text.len() {
-            Some(Position::new(line, col))
-        } else {
-            None
-        }
+        if offset == text.len() { Some(Position::new(line, col)) } else { None }
     }
 
     /// Extract a substring from text using a SourceRange.
@@ -136,9 +132,7 @@ impl PathUtils {
 
     /// Get file extension from a path.
     pub fn extension(path: &Path) -> Option<String> {
-        path.extension()
-            .and_then(|ext| ext.to_str())
-            .map(|s| s.to_lowercase())
+        path.extension().and_then(|ext| ext.to_str()).map(|s| s.to_lowercase())
     }
 }
 

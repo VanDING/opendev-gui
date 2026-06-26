@@ -15,10 +15,7 @@ fn test_clean_empty() {
 #[test]
 fn test_clean_normal_text() {
     let cleaner = ResponseCleaner::new();
-    assert_eq!(
-        cleaner.clean(Some("Hello, world!")),
-        Some("Hello, world!".to_string())
-    );
+    assert_eq!(cleaner.clean(Some("Hello, world!")), Some("Hello, world!".to_string()));
 }
 
 #[test]

@@ -1,10 +1,7 @@
 use super::*;
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 #[tokio::test]
@@ -20,10 +17,7 @@ async fn test_present_plan_missing_path() {
 async fn test_present_plan_file_not_found() {
     let tool = PresentPlanTool::new();
     let ctx = ToolContext::new("/tmp");
-    let args = make_args(&[(
-        "plan_file_path",
-        serde_json::json!("/tmp/nonexistent_plan.md"),
-    )]);
+    let args = make_args(&[("plan_file_path", serde_json::json!("/tmp/nonexistent_plan.md"))]);
     let result = tool.execute(args, &ctx).await;
     assert!(!result.success);
     assert!(result.error.unwrap().contains("not found"));
@@ -97,17 +91,8 @@ async fn test_present_plan_valid_no_auto_todos() {
     let args = make_args(&[("plan_file_path", serde_json::json!(path.to_string_lossy()))]);
     let result = tool.execute(args, &ctx).await;
     assert!(result.success, "Error: {:?}", result.error);
-    assert!(
-        result
-            .output
-            .as_ref()
-            .unwrap()
-            .contains("Proceed with implementation")
-    );
-    assert_eq!(
-        result.metadata.get("plan_approved"),
-        Some(&serde_json::json!(true))
-    );
+    assert!(result.output.as_ref().unwrap().contains("Proceed with implementation"));
+    assert_eq!(result.metadata.get("plan_approved"), Some(&serde_json::json!(true)));
 
     // Verify NO todos were auto-created (LLM handles via write_todos)
     let mgr = todo_mgr.lock().unwrap();

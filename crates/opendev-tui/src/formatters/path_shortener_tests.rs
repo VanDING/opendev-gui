@@ -8,10 +8,7 @@ fn home() -> String {
 fn test_shorten_relative_to_working_dir() {
     let home = home();
     let ps = PathShortener::new(Some(&format!("{home}/project")));
-    assert_eq!(
-        ps.shorten(&format!("{home}/project/src/main.rs")),
-        "src/main.rs"
-    );
+    assert_eq!(ps.shorten(&format!("{home}/project/src/main.rs")), "src/main.rs");
 }
 
 #[test]
@@ -25,10 +22,7 @@ fn test_shorten_working_dir_itself() {
 fn test_shorten_outside_working_dir_uses_tilde() {
     let home = home();
     let ps = PathShortener::new(Some(&format!("{home}/project")));
-    assert_eq!(
-        ps.shorten(&format!("{home}/other/src/main.rs")),
-        "~/other/src/main.rs"
-    );
+    assert_eq!(ps.shorten(&format!("{home}/other/src/main.rs")), "~/other/src/main.rs");
 }
 
 #[test]
@@ -49,10 +43,7 @@ fn test_shorten_text_replaces_wd() {
     let home = home();
     let ps = PathShortener::new(Some(&format!("{home}/project")));
     let text = format!("Explore repo at {home}/project/src with focus on tests");
-    assert_eq!(
-        ps.shorten_text(&text),
-        "Explore repo at src with focus on tests"
-    );
+    assert_eq!(ps.shorten_text(&text), "Explore repo at src with focus on tests");
 }
 
 #[test]

@@ -167,10 +167,7 @@ const LOCK_TIMEOUT: Duration = Duration::from_secs(5);
 impl EventStore {
     /// Create a new event store rooted at `sessions_dir`.
     pub fn new(sessions_dir: PathBuf) -> Self {
-        Self {
-            sessions_dir,
-            post_append: None,
-        }
+        Self { sessions_dir, post_append: None }
     }
 
     /// Builder method: attach a callback invoked after each successful append.
@@ -203,9 +200,7 @@ impl EventStore {
         let mut state = session.clone();
 
         for event in &events {
-            state
-                .validate_transition(event)
-                .map_err(|e| format!("validation failed: {e}"))?;
+            state.validate_transition(event).map_err(|e| format!("validation failed: {e}"))?;
 
             // Apply the event so subsequent validations see updated state.
             crate::projector::SessionProjector::apply_session_event(&mut state, event, Utc::now())
@@ -218,8 +213,7 @@ impl EventStore {
 
     /// Returns the path to the event log file for a given aggregate.
     pub fn event_log_path(&self, aggregate_id: &str) -> PathBuf {
-        self.sessions_dir
-            .join(format!("{}.events.jsonl", aggregate_id))
+        self.sessions_dir.join(format!("{}.events.jsonl", aggregate_id))
     }
 
     /// Append events to the aggregate's event log. Returns the created envelopes.
@@ -456,9 +450,7 @@ impl ValidateTransition<SessionEvent> for Session {
                 | SessionEvent::MetadataUpdated { .. }
         );
         if requires_active && self.is_archived() {
-            return Err(TransitionError::SessionArchived {
-                action: "modify".to_string(),
-            });
+            return Err(TransitionError::SessionArchived { action: "modify".to_string() });
         }
 
         match event {

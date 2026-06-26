@@ -94,9 +94,8 @@ pub async fn run_setup_wizard() -> Result<AppConfig, SetupError> {
     let model_id = select_model(&provider_id, &provider_config, &registry)?;
 
     let normal_model_info = registry.find_model_by_id(&model_id);
-    let normal_model_name = normal_model_info
-        .map(|(_, _, m)| m.name.as_str())
-        .unwrap_or("your model");
+    let normal_model_name =
+        normal_model_info.map(|(_, _, m)| m.name.as_str()).unwrap_or("your model");
 
     // ─── Section 3: Specialized Models (optional) ───────────────────────
     rail_section("Specialized Models");
@@ -257,10 +256,7 @@ fn configure_slot(
         }
         collected_keys.insert(slot_provider_id.clone(), slot_api_key);
     } else {
-        rail_dim(&format!(
-            "  Using existing API key for {}",
-            slot_provider_config.name
-        ));
+        rail_dim(&format!("  Using existing API key for {}", slot_provider_config.name));
     }
 
     let slot_model_id = match select_model(&slot_provider_id, &slot_provider_config, registry) {
@@ -285,14 +281,9 @@ fn show_summary(
     collected_keys: &HashMap<String, String>,
 ) {
     let model_display = |pid: &str, mid: &str| -> String {
-        let provider_name = registry
-            .get_provider(pid)
-            .map(|p| p.name.as_str())
-            .unwrap_or(pid);
-        let model_name = registry
-            .find_model_by_id(mid)
-            .map(|(_, _, m)| m.name.as_str())
-            .unwrap_or(mid);
+        let provider_name = registry.get_provider(pid).map(|p| p.name.as_str()).unwrap_or(pid);
+        let model_name =
+            registry.find_model_by_id(mid).map(|(_, _, m)| m.name.as_str()).unwrap_or(mid);
         format!("{provider_name} / {model_name}")
     };
 
@@ -310,11 +301,8 @@ fn show_summary(
         model_display(compact_provider, compact_model)
     };
 
-    let rows: Vec<(&str, &str)> = vec![
-        ("Main", &normal_display),
-        ("Vision", &vlm_display),
-        ("Compact", &compact_display),
-    ];
+    let rows: Vec<(&str, &str)> =
+        vec![("Main", &normal_display), ("Vision", &vlm_display), ("Compact", &compact_display)];
 
     let mut key_lines: Vec<String> = Vec::new();
     let mut seen: Vec<String> = Vec::new();
@@ -323,11 +311,8 @@ fn show_summary(
             continue;
         }
         seen.push(pid.clone());
-        let env_var = registry
-            .get_provider(pid)
-            .map(|p| p.api_key_env.as_str())
-            .unwrap_or("")
-            .to_string();
+        let env_var =
+            registry.get_provider(pid).map(|p| p.api_key_env.as_str()).unwrap_or("").to_string();
         let env_set = std::env::var(&env_var).is_ok();
         let status = if env_set { "set" } else { "configured" };
         key_lines.push(format!("${env_var} ({status})"));
@@ -361,12 +346,8 @@ fn select_provider(registry: &ModelRegistry) -> Result<String, SetupError> {
         .filter(|(id, _, _)| priority_ids.contains(&id.as_str()))
         .cloned()
         .collect();
-    popular.sort_by_key(|(id, _, _)| {
-        priority_ids
-            .iter()
-            .position(|&p| p == id)
-            .unwrap_or(usize::MAX)
-    });
+    popular
+        .sort_by_key(|(id, _, _)| priority_ids.iter().position(|&p| p == id).unwrap_or(usize::MAX));
 
     let has_more = all_choices.len() > popular.len();
     if has_more {
@@ -406,10 +387,7 @@ fn get_api_key(provider_config: &ProviderConfig) -> Result<String, SetupError> {
         return Ok(ek.clone());
     }
 
-    let api_key = rail_prompt(
-        &format!("Enter your {} API key:", provider_config.name),
-        true,
-    )?;
+    let api_key = rail_prompt(&format!("Enter your {} API key:", provider_config.name), true)?;
 
     if api_key.is_empty() {
         if let Some(ek) = env_key {

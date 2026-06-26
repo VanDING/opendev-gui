@@ -35,11 +35,7 @@ impl FileLock {
                 .unwrap_or_else(|| "lock".to_string()),
         );
 
-        let file = OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(&lock_path)?;
+        let file = OpenOptions::new().create(true).write(true).truncate(true).open(&lock_path)?;
 
         let mut rw_lock = RwLock::new(file);
         let start = Instant::now();
@@ -49,20 +45,13 @@ impl FileLock {
             let acquired = rw_lock.try_write().is_ok();
             if acquired {
                 debug!("Acquired lock on {}", path.display());
-                return Ok(Self {
-                    _rw_lock: rw_lock,
-                    lock_path,
-                });
+                return Ok(Self { _rw_lock: rw_lock, lock_path });
             }
 
             if start.elapsed() > timeout {
                 return Err(io::Error::new(
                     io::ErrorKind::TimedOut,
-                    format!(
-                        "Could not acquire lock on {} after {:?}",
-                        path.display(),
-                        timeout,
-                    ),
+                    format!("Could not acquire lock on {} after {:?}", path.display(), timeout,),
                 ));
             }
             std::thread::sleep(Duration::from_millis(50));
@@ -82,11 +71,7 @@ impl Drop for FileLock {
         if let Err(e) = std::fs::remove_file(&self.lock_path)
             && e.kind() != io::ErrorKind::NotFound
         {
-            debug!(
-                "Could not remove lock file {}: {}",
-                self.lock_path.display(),
-                e
-            );
+            debug!("Could not remove lock file {}: {}", self.lock_path.display(), e);
         }
     }
 }

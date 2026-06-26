@@ -33,23 +33,20 @@ impl UserStore {
     /// Creates the directory and file if they do not exist.
     pub fn new(storage_dir: PathBuf) -> Result<Self, HttpError> {
         let users_file = storage_dir.join("users.json");
-        let store = Self {
-            users_file,
-            users: Arc::new(RwLock::new(HashMap::new())),
-        };
+        let store = Self { users_file, users: Arc::new(RwLock::new(HashMap::new())) };
         store.load()?;
         Ok(store)
     }
 
     /// Look up a user by username.
     pub fn get_by_username(&self, username: &str) -> Option<User> {
-        let users = self.users.read().expect("RwLock poisoned");
+        let users = self.users.read().unwrap_or_else(|e| e.into_inner());
         users.get(username).cloned()
     }
 
     /// Look up a user by UUID.
     pub fn get_by_id(&self, user_id: Uuid) -> Option<User> {
-        let users = self.users.read().expect("RwLock poisoned");
+        let users = self.users.read().unwrap_or_else(|e| e.into_inner());
         users.values().find(|u| u.id == user_id).cloned()
     }
 
@@ -62,12 +59,9 @@ impl UserStore {
         password_hash: &str,
         email: Option<&str>,
     ) -> Result<User, HttpError> {
-        let mut users = self.users.write().expect("RwLock poisoned");
+        let mut users = self.users.write().unwrap_or_else(|e| e.into_inner());
         if users.contains_key(username) {
-            return Err(HttpError::Other(format!(
-                "User already exists: {}",
-                username
-            )));
+            return Err(HttpError::Other(format!("User already exists: {}", username)));
         }
         let mut user = User::new(username.to_string(), password_hash.to_string());
         user.email = email.map(|s| s.to_string());
@@ -81,7 +75,7 @@ impl UserStore {
     ///
     /// The `updated_at` timestamp is set to now automatically.
     pub fn update_user(&self, mut user: User) -> Result<(), HttpError> {
-        let mut users = self.users.write().expect("RwLock poisoned");
+        let mut users = self.users.write().unwrap_or_else(|e| e.into_inner());
         user.updated_at = Utc::now();
         users.insert(user.username.clone(), user);
         drop(users);
@@ -92,7 +86,7 @@ impl UserStore {
     ///
     /// Returns `true` if the user existed and was removed.
     pub fn delete_user(&self, username: &str) -> Result<bool, HttpError> {
-        let mut users = self.users.write().expect("RwLock poisoned");
+        let mut users = self.users.write().unwrap_or_else(|e| e.into_inner());
         let removed = users.remove(username).is_some();
         drop(users);
         if removed {
@@ -103,13 +97,13 @@ impl UserStore {
 
     /// List all usernames in the store.
     pub fn list_usernames(&self) -> Vec<String> {
-        let users = self.users.read().expect("RwLock poisoned");
+        let users = self.users.read().unwrap_or_else(|e| e.into_inner());
         users.keys().cloned().collect()
     }
 
     /// Return the total number of users.
     pub fn count(&self) -> usize {
-        let users = self.users.read().expect("RwLock poisoned");
+        let users = self.users.read().unwrap_or_else(|e| e.into_inner());
         users.len()
     }
 
@@ -121,9 +115,7 @@ impl UserStore {
                 std::fs::create_dir_all(parent)?;
             }
             // Write to temp file, then rename (atomic)
-            let tmp_path = self
-                .users_file
-                .with_extension(format!("tmp.{}", Uuid::new_v4()));
+            let tmp_path = self.users_file.with_extension(format!("tmp.{}", Uuid::new_v4()));
 
             #[cfg(unix)]
             {
@@ -158,7 +150,7 @@ impl UserStore {
                         warn!("Failed to parse users file {:?}: {}", self.users_file, e);
                         HashMap::new()
                     });
-                let mut users = self.users.write().expect("RwLock poisoned");
+                let mut users = self.users.write().unwrap_or_else(|e| e.into_inner());
                 *users = parsed;
             }
             Err(e) => {
@@ -170,7 +162,7 @@ impl UserStore {
 
     /// Persist the in-memory user map to disk.
     fn persist(&self) -> Result<(), HttpError> {
-        let users = self.users.read().expect("RwLock poisoned");
+        let users = self.users.read().unwrap_or_else(|e| e.into_inner());
         let json = serde_json::to_string_pretty(&*users)?;
         drop(users);
 
@@ -179,9 +171,7 @@ impl UserStore {
         }
 
         // Write to temp file, then rename (atomic)
-        let tmp_path = self
-            .users_file
-            .with_extension(format!("tmp.{}", Uuid::new_v4()));
+        let tmp_path = self.users_file.with_extension(format!("tmp.{}", Uuid::new_v4()));
 
         #[cfg(unix)]
         {
@@ -193,10 +183,7 @@ impl UserStore {
         #[cfg(not(unix))]
         {
             std::io::Write::write_all(
-                &mut std::fs::OpenOptions::new()
-                    .write(true)
-                    .create_new(true)
-                    .open(&tmp_path)?,
+                &mut std::fs::OpenOptions::new().write(true).create_new(true).open(&tmp_path)?,
                 json.as_bytes(),
             )?;
         }

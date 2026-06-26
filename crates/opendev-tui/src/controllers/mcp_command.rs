@@ -44,10 +44,9 @@ impl McpCommandController {
             "remove" => self.remove_server(rest),
             "enable" => self.enable_server(rest),
             "disable" => self.disable_server(rest),
-            other => format!(
-                "Unknown MCP subcommand: '{}'. Use list/add/remove/enable/disable.",
-                other
-            ),
+            other => {
+                format!("Unknown MCP subcommand: '{}'. Use list/add/remove/enable/disable.", other)
+            }
         }
     }
 
@@ -57,18 +56,8 @@ impl McpCommandController {
         }
         let mut lines = vec!["MCP Servers:".to_string()];
         for (i, server) in self.servers.iter().enumerate() {
-            let status = if server.enabled {
-                "enabled"
-            } else {
-                "disabled"
-            };
-            lines.push(format!(
-                "  {}. {} ({}) [{}]",
-                i + 1,
-                server.name,
-                server.command,
-                status,
-            ));
+            let status = if server.enabled { "enabled" } else { "disabled" };
+            lines.push(format!("  {}. {} ({}) [{}]", i + 1, server.name, server.command, status,));
         }
         lines.join("\n")
     }

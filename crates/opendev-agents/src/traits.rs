@@ -134,10 +134,7 @@ impl LlmResponse {
         Self {
             success: true,
             content,
-            tool_calls: message
-                .get("tool_calls")
-                .and_then(|v| v.as_array())
-                .cloned(),
+            tool_calls: message.get("tool_calls").and_then(|v| v.as_array()).cloned(),
             message: Some(message),
             error: None,
             interrupted: false,
@@ -267,9 +264,7 @@ pub struct AgentDeps {
 impl AgentDeps {
     /// Create new agent dependencies.
     pub fn new() -> Self {
-        Self {
-            context: HashMap::new(),
-        }
+        Self { context: HashMap::new() }
     }
 
     /// Add a context value.

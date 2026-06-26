@@ -79,9 +79,8 @@ pub async fn start_telegram_remote(
 > {
     let token = resolve_token(config)?;
     let dm_policy = config.map(|c| c.dm_policy).unwrap_or(DmPolicy::Pairing);
-    let allowed_users: HashSet<String> = config
-        .map(|c| c.allowed_users.iter().cloned().collect())
-        .unwrap_or_default();
+    let allowed_users: HashSet<String> =
+        config.map(|c| c.allowed_users.iter().cloned().collect()).unwrap_or_default();
     let remote_claim = Arc::new(RemoteSessionClaim::claim(&token)?);
 
     let api = Arc::new(TelegramApi::new(token));
@@ -91,10 +90,7 @@ pub async fn start_telegram_remote(
     let bot_username = me.username.unwrap_or_default();
     let bot_id = me.id;
 
-    info!(
-        "Telegram remote-control bot authenticated as @{}",
-        bot_username
-    );
+    info!("Telegram remote-control bot authenticated as @{}", bot_username);
 
     // Register slash command menu
     let _ = api
@@ -109,10 +105,8 @@ pub async fn start_telegram_remote(
         ])
         .await;
 
-    let adapter = Arc::new(TelegramAdapter {
-        api: api.clone(),
-        bot_username: bot_username.clone(),
-    });
+    let adapter =
+        Arc::new(TelegramAdapter { api: api.clone(), bot_username: bot_username.clone() });
 
     // Create the remote session bridge
     let (bridge, event_tx, command_rx) = RemoteSessionBridge::new();
@@ -146,9 +140,8 @@ pub async fn start_telegram(
     let token = resolve_token(config)?;
     let group_mention_only = config.map(|c| c.group_mention_only).unwrap_or(true);
     let dm_policy = config.map(|c| c.dm_policy).unwrap_or(DmPolicy::Pairing);
-    let allowed_users: HashSet<String> = config
-        .map(|c| c.allowed_users.iter().cloned().collect())
-        .unwrap_or_default();
+    let allowed_users: HashSet<String> =
+        config.map(|c| c.allowed_users.iter().cloned().collect()).unwrap_or_default();
 
     let api = Arc::new(TelegramApi::new(token));
 
@@ -159,10 +152,8 @@ pub async fn start_telegram(
 
     info!("Telegram bot authenticated as @{}", bot_username);
 
-    let adapter = Arc::new(TelegramAdapter {
-        api: api.clone(),
-        bot_username: bot_username.clone(),
-    });
+    let adapter =
+        Arc::new(TelegramAdapter { api: api.clone(), bot_username: bot_username.clone() });
 
     // Register with router
     router.register_adapter(adapter.clone()).await;

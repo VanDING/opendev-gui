@@ -12,9 +12,7 @@ impl App {
         self.state.turn_token_count = 0;
         self.state.turn_started_at = Some(std::time::Instant::now());
         // Clear finished (non-backgrounded) subagents from previous query
-        self.state
-            .active_subagents
-            .retain(|s| !s.finished || s.backgrounded);
+        self.state.active_subagents.retain(|s| !s.finished || s.backgrounded);
         // Auto-resume next pending todo when agent restarts after interrupt
         // (reset_stuck_todos reverted InProgress→Pending; restore it now)
         if let Some(ref mgr) = self.state.todo_manager
@@ -34,16 +32,14 @@ impl App {
 
     pub(super) fn handle_agent_chunk(&mut self, text: String) {
         self.finalize_active_thinking();
-        self.message_controller
-            .handle_agent_chunk(&mut self.state, &text);
+        self.message_controller.handle_agent_chunk(&mut self.state, &text);
         self.state.dirty = true;
         self.state.message_generation += 1;
     }
 
     pub(super) fn handle_agent_message(&mut self, msg: ChatMessage) {
         self.finalize_active_thinking();
-        self.message_controller
-            .handle_agent_message(&mut self.state, msg);
+        self.message_controller.handle_agent_message(&mut self.state, msg);
         self.state.dirty = true;
         self.state.message_generation += 1;
     }
@@ -62,10 +58,7 @@ impl App {
         self.finalize_active_thinking();
         self.state.agent_active = false;
         self.state.backgrounding_pending = false;
-        self.state.messages.push(DisplayMessage::new(
-            DisplayRole::System,
-            format!("Error: {err}"),
-        ));
+        self.state.messages.push(DisplayMessage::new(DisplayRole::System, format!("Error: {err}")));
         self.state.dirty = true;
         self.state.message_generation += 1;
         // Continue processing queued items despite the error
@@ -115,12 +108,7 @@ impl App {
         // Mark any active subagents as interrupted and clear
         for subagent in &mut self.state.active_subagents {
             if !subagent.finished {
-                subagent.finish(
-                    false,
-                    "Interrupted".to_string(),
-                    subagent.tool_call_count,
-                    None,
-                );
+                subagent.finish(false, "Interrupted".to_string(), subagent.tool_call_count, None);
             }
         }
         self.state.active_subagents.clear();

@@ -38,26 +38,14 @@ pub struct ToolResult {
 
 impl ToolResult {
     pub fn ok(output: impl Into<String>) -> Self {
-        Self {
-            success: true,
-            output: output.into(),
-            extra: serde_json::Value::Null,
-        }
+        Self { success: true, output: output.into(), extra: serde_json::Value::Null }
     }
 
     pub fn ok_with(output: impl Into<String>, extra: serde_json::Value) -> Self {
-        Self {
-            success: true,
-            output: output.into(),
-            extra,
-        }
+        Self { success: true, output: output.into(), extra }
     }
 
     pub fn err(output: impl Into<String>) -> Self {
-        Self {
-            success: false,
-            output: output.into(),
-            extra: serde_json::Value::Null,
-        }
+        Self { success: false, output: output.into(), extra: serde_json::Value::Null }
     }
 }

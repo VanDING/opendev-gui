@@ -25,10 +25,7 @@ pub struct CreateTeamTool {
 
 impl CreateTeamTool {
     pub fn new(team_manager: Arc<TeamManager>) -> Self {
-        Self {
-            team_manager,
-            event_tx: None,
-        }
+        Self { team_manager, event_tx: None }
     }
 
     pub fn with_event_sender(mut self, tx: mpsc::UnboundedSender<SubagentEvent>) -> Self {
@@ -110,10 +107,7 @@ impl BaseTool for CreateTeamTool {
         let session_id = ctx.session_id.as_deref().unwrap_or("unknown");
 
         // Create the team
-        match self
-            .team_manager
-            .create_team(team_name, "leader", session_id)
-        {
+        match self.team_manager.create_team(team_name, "leader", session_id) {
             Ok(_) => {}
             Err(e) => return ToolResult::fail(format!("Failed to create team: {e}")),
         }
@@ -121,18 +115,10 @@ impl BaseTool for CreateTeamTool {
         let mut member_info = Vec::new();
 
         for member_val in members {
-            let name = member_val
-                .get("name")
-                .and_then(|v| v.as_str())
-                .unwrap_or("unnamed");
-            let agent_type = member_val
-                .get("agent_type")
-                .and_then(|v| v.as_str())
-                .unwrap_or("General");
-            let task = member_val
-                .get("task")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let name = member_val.get("name").and_then(|v| v.as_str()).unwrap_or("unnamed");
+            let agent_type =
+                member_val.get("agent_type").and_then(|v| v.as_str()).unwrap_or("General");
+            let task = member_val.get("task").and_then(|v| v.as_str()).unwrap_or("");
 
             let task_id = uuid::Uuid::new_v4().to_string()[..12].to_string();
 
@@ -195,10 +181,7 @@ pub struct SendMessageTool {
 
 impl SendMessageTool {
     pub fn new(team_manager: Arc<TeamManager>) -> Self {
-        Self {
-            team_manager,
-            event_tx: None,
-        }
+        Self { team_manager, event_tx: None }
     }
 
     pub fn with_event_sender(mut self, tx: mpsc::UnboundedSender<SubagentEvent>) -> Self {
@@ -309,10 +292,7 @@ impl BaseTool for SendMessageTool {
                 });
             }
 
-            ToolResult::ok(format!(
-                "Broadcast sent to {sent}/{} members.",
-                team.members.len()
-            ))
+            ToolResult::ok(format!("Broadcast sent to {sent}/{} members.", team.members.len()))
         } else {
             // Send to specific member
             let member = team.members.iter().find(|m| m.name == to);
@@ -320,11 +300,7 @@ impl BaseTool for SendMessageTool {
                 return ToolResult::fail(format!(
                     "Member '{to}' not found in team '{}'. Available: {}",
                     team.name,
-                    team.members
-                        .iter()
-                        .map(|m| m.name.as_str())
-                        .collect::<Vec<_>>()
-                        .join(", ")
+                    team.members.iter().map(|m| m.name.as_str()).collect::<Vec<_>>().join(", ")
                 ));
             }
 
@@ -360,10 +336,7 @@ pub struct DeleteTeamTool {
 
 impl DeleteTeamTool {
     pub fn new(team_manager: Arc<TeamManager>) -> Self {
-        Self {
-            team_manager,
-            event_tx: None,
-        }
+        Self { team_manager, event_tx: None }
     }
 
     pub fn with_event_sender(mut self, tx: mpsc::UnboundedSender<SubagentEvent>) -> Self {
@@ -455,9 +428,7 @@ impl BaseTool for DeleteTeamTool {
 
         // Notify TUI
         if let Some(ref tx) = self.event_tx {
-            let _ = tx.send(SubagentEvent::TeamDeleted {
-                team_id: team_name.to_string(),
-            });
+            let _ = tx.send(SubagentEvent::TeamDeleted { team_id: team_name.to_string() });
         }
 
         info!(team = %team_name, "Team deleted");

@@ -136,43 +136,13 @@ fn test_find_model_prefers_provider_with_api_key() {
 #[test]
 fn test_builtin_provider_known() {
     let cases = vec![
-        (
-            "anthropic",
-            "Anthropic",
-            "ANTHROPIC_API_KEY",
-            "https://api.anthropic.com",
-        ),
-        (
-            "openai",
-            "OpenAI",
-            "OPENAI_API_KEY",
-            "https://api.openai.com",
-        ),
+        ("anthropic", "Anthropic", "ANTHROPIC_API_KEY", "https://api.anthropic.com"),
+        ("openai", "OpenAI", "OPENAI_API_KEY", "https://api.openai.com"),
         ("ollama", "Ollama", "", "http://localhost:11434"),
-        (
-            "gemini",
-            "Google Gemini",
-            "GEMINI_API_KEY",
-            "https://generativelanguage.googleapis.com",
-        ),
-        (
-            "google",
-            "Google Gemini",
-            "GEMINI_API_KEY",
-            "https://generativelanguage.googleapis.com",
-        ),
-        (
-            "groq",
-            "Groq",
-            "GROQ_API_KEY",
-            "https://api.groq.com/openai",
-        ),
-        (
-            "deepseek",
-            "DeepSeek",
-            "DEEPSEEK_API_KEY",
-            "https://api.deepseek.com",
-        ),
+        ("gemini", "Google Gemini", "GEMINI_API_KEY", "https://generativelanguage.googleapis.com"),
+        ("google", "Google Gemini", "GEMINI_API_KEY", "https://generativelanguage.googleapis.com"),
+        ("groq", "Groq", "GROQ_API_KEY", "https://api.groq.com/openai"),
+        ("deepseek", "DeepSeek", "DEEPSEEK_API_KEY", "https://api.deepseek.com"),
         ("xai", "xAI", "XAI_API_KEY", "https://api.x.ai"),
         ("lmstudio", "LM Studio", "", "http://localhost:1234"),
     ];
@@ -183,10 +153,7 @@ fn test_builtin_provider_known() {
         assert_eq!(info.name, expected_name);
         assert_eq!(info.api_key_env, expected_env);
         assert_eq!(info.api_base_url, expected_url);
-        assert!(
-            info.models.is_empty(),
-            "builtin providers should have no models"
-        );
+        assert!(info.models.is_empty(), "builtin providers should have no models");
     }
 }
 
@@ -215,10 +182,7 @@ fn test_get_provider_or_builtin_prefers_registry() {
     );
 
     let info = registry.get_provider_or_builtin("anthropic").unwrap();
-    assert_eq!(
-        info.name, "Custom Anthropic",
-        "should prefer registry over builtin"
-    );
+    assert_eq!(info.name, "Custom Anthropic", "should prefer registry over builtin");
     assert_eq!(info.api_base_url, custom_url);
     assert_eq!(info.api_key_env, "CUSTOM_KEY");
 }

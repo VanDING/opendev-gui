@@ -12,9 +12,7 @@ async fn test_get_all_tool_schemas_empty() {
 #[tokio::test]
 async fn test_call_tool_graceful_degradation_on_missing_server() {
     let manager = McpManager::new(Some(PathBuf::from("/tmp")));
-    let result = manager
-        .call_tool("gone", "some_tool", serde_json::json!({}))
-        .await;
+    let result = manager.call_tool("gone", "some_tool", serde_json::json!({})).await;
     assert!(result.is_err());
 }
 
@@ -59,20 +57,8 @@ async fn test_invalidate_all_tool_caches() {
 
     {
         let mut cache = manager.tool_schema_cache.write().await;
-        cache.insert(
-            "server-a".to_string(),
-            ToolSchemaCache {
-                tools: vec![],
-                invalidated: false,
-            },
-        );
-        cache.insert(
-            "server-b".to_string(),
-            ToolSchemaCache {
-                tools: vec![],
-                invalidated: false,
-            },
-        );
+        cache.insert("server-a".to_string(), ToolSchemaCache { tools: vec![], invalidated: false });
+        cache.insert("server-b".to_string(), ToolSchemaCache { tools: vec![], invalidated: false });
     }
 
     manager.invalidate_all_tool_caches().await;

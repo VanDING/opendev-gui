@@ -22,21 +22,13 @@ pub enum StreamEvent {
     /// rather than as subsequent `FunctionCallDelta` chunks. When that
     /// happens the adapter sets `initial_args` and the accumulator seeds
     /// the tool call's args buffer with it before consuming any deltas.
-    FunctionCallStart {
-        index: usize,
-        call_id: String,
-        name: String,
-        initial_args: Option<String>,
-    },
+    FunctionCallStart { index: usize, call_id: String, name: String, initial_args: Option<String> },
     /// A chunk of function call arguments.
     FunctionCallDelta { index: usize, delta: String },
     /// Function call arguments are complete.
     FunctionCallDone { index: usize, arguments: String },
     /// Usage/metadata update (input_tokens, output_tokens, stop_reason).
-    UsageUpdate {
-        usage: Option<Value>,
-        stop_reason: Option<String>,
-    },
+    UsageUpdate { usage: Option<Value>, stop_reason: Option<String> },
     /// The complete response is available (streaming finished).
     /// Contains the full response body for final processing.
     Done(Value),

@@ -11,11 +11,7 @@ use std::sync::LazyLock;
 // ---------------------------------------------------------------------------
 
 pub(super) fn simple_find(original: &str, old_content: &str) -> Option<String> {
-    if original.contains(old_content) {
-        Some(old_content.to_string())
-    } else {
-        None
-    }
+    if original.contains(old_content) { Some(old_content.to_string()) } else { None }
 }
 
 // ---------------------------------------------------------------------------
@@ -65,10 +61,8 @@ pub(super) fn block_anchor_find(original: &str, old_content: &str) -> Option<Str
 
     let first_trimmed = old_lines[0].trim();
     let last_trimmed = old_lines[old_lines.len() - 1].trim();
-    let middle_old: Vec<&str> = old_lines[1..old_lines.len() - 1]
-        .iter()
-        .map(|l| l.trim())
-        .collect();
+    let middle_old: Vec<&str> =
+        old_lines[1..old_lines.len() - 1].iter().map(|l| l.trim()).collect();
 
     let original_lines: Vec<&str> = original.split('\n').collect();
     let mut candidates: Vec<(usize, usize, f64)> = Vec::new(); // (start, end_inclusive, similarity)
@@ -85,10 +79,8 @@ pub(super) fn block_anchor_find(original: &str, old_content: &str) -> Option<Str
             if original_lines[end_idx].trim() != last_trimmed {
                 continue;
             }
-            let middle_orig: Vec<&str> = original_lines[i + 1..end_idx]
-                .iter()
-                .map(|l| l.trim())
-                .collect();
+            let middle_orig: Vec<&str> =
+                original_lines[i + 1..end_idx].iter().map(|l| l.trim()).collect();
 
             let sim = if middle_old.is_empty() && middle_orig.is_empty() {
                 1.0
@@ -106,19 +98,13 @@ pub(super) fn block_anchor_find(original: &str, old_content: &str) -> Option<Str
     }
 
     let threshold = if candidates.len() == 1 { 0.0 } else { 0.3 };
-    let best = candidates
-        .iter()
-        .max_by(|a, b| a.2.partial_cmp(&b.2).unwrap())?;
+    let best = candidates.iter().max_by(|a, b| a.2.partial_cmp(&b.2).unwrap())?;
     if best.2 < threshold {
         return None;
     }
 
     let actual = original_lines[best.0..=best.1].join("\n");
-    if original.contains(&actual) {
-        Some(actual)
-    } else {
-        None
-    }
+    if original.contains(&actual) { Some(actual) } else { None }
 }
 
 // ---------------------------------------------------------------------------
@@ -159,11 +145,8 @@ pub(super) fn whitespace_normalized_find(original: &str, old_content: &str) -> O
 // ---------------------------------------------------------------------------
 
 pub(super) fn indentation_flexible_find(original: &str, old_content: &str) -> Option<String> {
-    let old_stripped: Vec<&str> = old_content
-        .split('\n')
-        .map(|l| l.trim())
-        .filter(|l| !l.is_empty())
-        .collect();
+    let old_stripped: Vec<&str> =
+        old_content.split('\n').map(|l| l.trim()).filter(|l| !l.is_empty()).collect();
 
     if old_stripped.is_empty() {
         return None;
@@ -223,11 +206,7 @@ pub(super) fn escape_normalized_find(original: &str, old_content: &str) -> Optio
     if unescaped == old_content {
         return None; // no escapes to normalize
     }
-    if original.contains(&unescaped) {
-        Some(unescaped)
-    } else {
-        None
-    }
+    if original.contains(&unescaped) { Some(unescaped) } else { None }
 }
 
 // ---------------------------------------------------------------------------
@@ -287,15 +266,8 @@ pub(super) fn context_aware_find(original: &str, old_content: &str) -> Option<St
 
     let original_lines: Vec<&str> = original.split('\n').collect();
 
-    let first_ctx = old_lines
-        .iter()
-        .find(|l| !l.trim().is_empty())
-        .map(|l| l.trim())?;
-    let last_ctx = old_lines
-        .iter()
-        .rev()
-        .find(|l| !l.trim().is_empty())
-        .map(|l| l.trim())?;
+    let first_ctx = old_lines.iter().find(|l| !l.trim().is_empty()).map(|l| l.trim())?;
+    let last_ctx = old_lines.iter().rev().find(|l| !l.trim().is_empty()).map(|l| l.trim())?;
 
     // Find all positions of first anchor
     let starts: Vec<usize> = original_lines
@@ -352,10 +324,8 @@ pub(super) fn multi_occurrence_find(original: &str, old_content: &str) -> Option
 
     for i in 0..=(original_lines.len() - trimmed_lines.len()) {
         let candidate_lines = &original_lines[i..i + trimmed_lines.len()];
-        let all_match = candidate_lines
-            .iter()
-            .zip(trimmed_lines.iter())
-            .all(|(a, b)| a.trim() == b.trim());
+        let all_match =
+            candidate_lines.iter().zip(trimmed_lines.iter()).all(|(a, b)| a.trim() == b.trim());
         if all_match {
             let candidate = candidate_lines.join("\n");
             if original.contains(&candidate) {

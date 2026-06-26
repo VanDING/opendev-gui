@@ -11,12 +11,7 @@ fn test_error_action_from_char() {
 
 #[test]
 fn test_error_action_roundtrip() {
-    for action in [
-        ErrorAction::Retry,
-        ErrorAction::Skip,
-        ErrorAction::Cancel,
-        ErrorAction::Edit,
-    ] {
+    for action in [ErrorAction::Retry, ErrorAction::Skip, ErrorAction::Cancel, ErrorAction::Edit] {
         assert_eq!(ErrorAction::from_char(action.as_char()), Some(action));
     }
 }

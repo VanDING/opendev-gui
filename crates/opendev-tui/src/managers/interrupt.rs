@@ -15,9 +15,7 @@ pub struct InterruptManager {
 impl InterruptManager {
     /// Create a new interrupt manager (not interrupted).
     pub fn new() -> Self {
-        Self {
-            interrupted: Arc::new(AtomicBool::new(false)),
-        }
+        Self { interrupted: Arc::new(AtomicBool::new(false)) }
     }
 
     /// Signal an interrupt.

@@ -46,11 +46,7 @@ pub struct CircuitBreakerConfig {
 
 impl Default for CircuitBreakerConfig {
     fn default() -> Self {
-        Self {
-            failure_threshold: 5,
-            reset_timeout_secs: 30,
-            probe_interval_secs: 30,
-        }
+        Self { failure_threshold: 5, reset_timeout_secs: 30, probe_interval_secs: 30 }
     }
 }
 

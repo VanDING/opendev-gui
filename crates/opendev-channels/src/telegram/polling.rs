@@ -143,10 +143,7 @@ impl TelegramPoller {
                     return;
                 }
                 DmPolicy::Allowlist => {
-                    debug!(
-                        "Telegram: ignoring message from non-allowed user {}",
-                        sender_id
-                    );
+                    debug!("Telegram: ignoring message from non-allowed user {}", sender_id);
                     return;
                 }
                 DmPolicy::Open => unreachable!(),
@@ -209,7 +206,7 @@ impl TelegramPoller {
         });
 
         // Create streaming channel
-        let (chunk_tx, chunk_rx) = tokio::sync::mpsc::unbounded_channel::<String>();
+        let (chunk_tx, chunk_rx) = tokio::sync::mpsc::channel::<String>(1024);
 
         // Spawn the draft stream editor task (OpenClaw-style progressive editing)
         let api_for_draft = Arc::clone(&self.api);
@@ -237,16 +234,10 @@ impl TelegramPoller {
             metadata,
         };
 
-        debug!(
-            "Telegram: routing message to agent (text={:?})",
-            inbound.text
-        );
+        debug!("Telegram: routing message to agent (text={:?})", inbound.text);
 
         // Execute with streaming — chunks flow to the draft stream task
-        let result = self
-            .router
-            .handle_inbound_streaming(inbound, chunk_tx)
-            .await;
+        let result = self.router.handle_inbound_streaming(inbound, chunk_tx).await;
 
         // Wait for draft stream to finish flushing
         let draft_message_id = draft_handle.await.unwrap_or(None);
@@ -401,7 +392,7 @@ impl TelegramPoller {
     async fn run_draft_stream(
         api: Arc<TelegramApi>,
         chat_id: i64,
-        mut chunk_rx: tokio::sync::mpsc::UnboundedReceiver<String>,
+        mut chunk_rx: tokio::sync::mpsc::Receiver<String>,
     ) -> Option<i64> {
         let mut accumulated = String::new();
         let mut draft_message_id: Option<i64> = None;
@@ -492,17 +483,11 @@ impl TelegramPoller {
             .from
             .as_ref()
             .map(|u| {
-                u.username
-                    .as_ref()
-                    .map(|n| format!("@{n}"))
-                    .unwrap_or_else(|| u.first_name.clone())
+                u.username.as_ref().map(|n| format!("@{n}")).unwrap_or_else(|| u.first_name.clone())
             })
             .unwrap_or_else(|| "Unknown".to_string());
 
-        warn!(
-            "Telegram: pairing request from {} (ID: {})",
-            sender_name, sender_id
-        );
+        warn!("Telegram: pairing request from {} (ID: {})", sender_name, sender_id);
 
         let challenge_text = format!(
             "🔒 Access required.\n\n\
@@ -569,11 +554,7 @@ impl TelegramPoller {
             Arc::new(tokio::sync::Mutex::new(None));
 
         loop {
-            if self
-                .remote_claim
-                .as_ref()
-                .is_some_and(|claim| !claim.is_current_owner())
-            {
+            if self.remote_claim.as_ref().is_some_and(|claim| !claim.is_current_owner()) {
                 warn!(
                     "Telegram remote: ownership transferred to another local session; stopping this poller"
                 );
@@ -849,11 +830,7 @@ impl TelegramPoller {
                     })
                     .await;
             }
-            RemoteEvent::ToolResult {
-                tool_name,
-                output,
-                success,
-            } => {
+            RemoteEvent::ToolResult { tool_name, output, success } => {
                 // Show truncated result
                 let icon = if *success { "✓" } else { "✗" };
                 let truncated: String = output.chars().take(300).collect();
@@ -868,11 +845,7 @@ impl TelegramPoller {
                     })
                     .await;
             }
-            RemoteEvent::ToolApprovalNeeded {
-                request_id,
-                command,
-                working_dir,
-            } => {
+            RemoteEvent::ToolApprovalNeeded { request_id, command, working_dir } => {
                 // Send approval request with inline keyboard
                 let text = format!(
                     "🔐 Tool approval required\n\nCommand:\n{}\n\nWorking dir: {}",
@@ -901,11 +874,7 @@ impl TelegramPoller {
                     })
                     .await;
             }
-            RemoteEvent::AskUser {
-                request_id,
-                question,
-                options,
-            } => {
+            RemoteEvent::AskUser { request_id, question, options } => {
                 if options.is_empty() {
                     // Free-form question — user replies with text
                     let text =
@@ -931,9 +900,7 @@ impl TelegramPoller {
                     // Arrange buttons in rows of 2
                     let rows: Vec<Vec<InlineKeyboardButton>> =
                         buttons.chunks(2).map(|c| c.to_vec()).collect();
-                    let keyboard = InlineKeyboardMarkup {
-                        inline_keyboard: rows,
-                    };
+                    let keyboard = InlineKeyboardMarkup { inline_keyboard: rows };
                     let _ = self
                         .api
                         .send_message_with_markup(SendMessageWithMarkupRequest {
@@ -946,10 +913,7 @@ impl TelegramPoller {
                         .await;
                 }
             }
-            RemoteEvent::SubagentStarted {
-                subagent_name,
-                task,
-            } => {
+            RemoteEvent::SubagentStarted { subagent_name, task } => {
                 let truncated_task: String = task.chars().take(200).collect();
                 let _ = self
                     .api
@@ -961,11 +925,7 @@ impl TelegramPoller {
                     })
                     .await;
             }
-            RemoteEvent::SubagentFinished {
-                subagent_name,
-                success,
-                result_summary,
-            } => {
+            RemoteEvent::SubagentFinished { subagent_name, success, result_summary } => {
                 let icon = if *success { "✅" } else { "❌" };
                 let truncated: String = result_summary.chars().take(300).collect();
                 let _ = self
@@ -981,11 +941,7 @@ impl TelegramPoller {
             RemoteEvent::ContextUsage(pct) => {
                 state.context_usage = *pct;
             }
-            RemoteEvent::FileChangeSummary {
-                files,
-                additions,
-                deletions,
-            } => {
+            RemoteEvent::FileChangeSummary { files, additions, deletions } => {
                 let _ = self
                     .api
                     .send_message(SendMessageRequest {
@@ -1146,11 +1102,7 @@ impl TelegramPoller {
                     },
                 )
                 .await;
-            let ack = if resolved {
-                "Approved ✅"
-            } else {
-                "Request expired"
-            };
+            let ack = if resolved { "Approved ✅" } else { "Request expired" };
             let _ = self.api.answer_callback_query(&cb.id, Some(ack)).await;
 
             // Edit the message to show the decision
@@ -1167,14 +1119,8 @@ impl TelegramPoller {
                     .await;
             }
         } else if let Some(request_id) = data.strip_prefix("deny:") {
-            let resolved = bridge
-                .resolve_approval(request_id, ApprovalResponse::Denied)
-                .await;
-            let ack = if resolved {
-                "Denied ❌"
-            } else {
-                "Request expired"
-            };
+            let resolved = bridge.resolve_approval(request_id, ApprovalResponse::Denied).await;
+            let ack = if resolved { "Denied ❌" } else { "Request expired" };
             let _ = self.api.answer_callback_query(&cb.id, Some(ack)).await;
 
             if let Some(ref msg) = cb.message {
@@ -1192,9 +1138,7 @@ impl TelegramPoller {
         } else if let Some(rest) = data.strip_prefix("answer:") {
             // Format: answer:<request_id>:<answer>
             if let Some((request_id, answer)) = rest.split_once(':') {
-                let resolved = bridge
-                    .resolve_question(request_id, answer.to_string())
-                    .await;
+                let resolved = bridge.resolve_question(request_id, answer.to_string()).await;
                 let ack = if resolved {
                     format!("Selected: {answer}")
                 } else {
@@ -1261,8 +1205,5 @@ fn strip_html_tags(html: &str) -> String {
         }
     }
     // Unescape HTML entities
-    result
-        .replace("&amp;", "&")
-        .replace("&lt;", "<")
-        .replace("&gt;", ">")
+    result.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
 }

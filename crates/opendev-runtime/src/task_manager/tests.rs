@@ -91,10 +91,7 @@ fn test_complete_already_completed_is_noop() {
     tm.complete_task("t1", true, "first", "");
     tm.complete_task("t1", false, "second", ""); // no-op
     assert_eq!(tm.get("t1").unwrap().state, TaskState::Completed);
-    assert_eq!(
-        tm.get("t1").unwrap().result_summary.as_deref(),
-        Some("first")
-    );
+    assert_eq!(tm.get("t1").unwrap().result_summary.as_deref(), Some("first"));
 }
 
 #[test]
@@ -433,25 +430,7 @@ async fn test_event_sender() {
         events.push(evt);
     }
     assert_eq!(events.len(), 3);
-    assert!(matches!(
-        &events[0],
-        TaskManagerEvent::StateChanged {
-            new: TaskState::Pending,
-            ..
-        }
-    ));
-    assert!(matches!(
-        &events[1],
-        TaskManagerEvent::StateChanged {
-            new: TaskState::Running,
-            ..
-        }
-    ));
-    assert!(matches!(
-        &events[2],
-        TaskManagerEvent::StateChanged {
-            new: TaskState::Completed,
-            ..
-        }
-    ));
+    assert!(matches!(&events[0], TaskManagerEvent::StateChanged { new: TaskState::Pending, .. }));
+    assert!(matches!(&events[1], TaskManagerEvent::StateChanged { new: TaskState::Running, .. }));
+    assert!(matches!(&events[2], TaskManagerEvent::StateChanged { new: TaskState::Completed, .. }));
 }

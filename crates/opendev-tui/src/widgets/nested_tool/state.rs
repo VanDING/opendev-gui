@@ -92,13 +92,7 @@ impl SubagentDisplayState {
         self.tool_call_count += 1;
         self.active_tools.insert(
             tool_id.clone(),
-            NestedToolCallState {
-                tool_name,
-                tool_id,
-                args,
-                started_at: Instant::now(),
-                tick: 0,
-            },
+            NestedToolCallState { tool_name, tool_id, args, started_at: Instant::now(), tick: 0 },
         );
     }
 
@@ -125,8 +119,7 @@ impl SubagentDisplayState {
             });
             // Cap completed tools to prevent unbounded growth in long-running subagents
             if self.completed_tools.len() > 100 {
-                self.completed_tools
-                    .drain(..self.completed_tools.len() - 100);
+                self.completed_tools.drain(..self.completed_tools.len() - 100);
             }
         }
     }
@@ -169,11 +162,7 @@ impl SubagentDisplayState {
         let mut parts = Vec::new();
 
         let tc = self.tool_call_count;
-        parts.push(if tc == 1 {
-            "1 tool use".to_string()
-        } else {
-            format!("{tc} tool uses")
-        });
+        parts.push(if tc == 1 { "1 tool use".to_string() } else { format!("{tc} tool uses") });
 
         let elapsed = self.started_at.elapsed().as_secs();
         parts.push(format_elapsed(elapsed));

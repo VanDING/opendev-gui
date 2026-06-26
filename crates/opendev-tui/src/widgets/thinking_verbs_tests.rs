@@ -2,21 +2,13 @@ use super::*;
 
 #[test]
 fn test_verb_count() {
-    assert!(
-        THINKING_VERBS.len() >= 100,
-        "Expected 100+ verbs, got {}",
-        THINKING_VERBS.len()
-    );
+    assert!(THINKING_VERBS.len() >= 100, "Expected 100+ verbs, got {}", THINKING_VERBS.len());
 }
 
 #[test]
 fn test_all_verbs_ascii() {
     for verb in THINKING_VERBS {
-        assert!(
-            verb.is_ascii(),
-            "Verb '{}' contains non-ASCII characters",
-            verb
-        );
+        assert!(verb.is_ascii(), "Verb '{}' contains non-ASCII characters", verb);
     }
 }
 
@@ -58,9 +50,5 @@ fn test_verb_step_visits_all() {
         visited.insert(idx);
         idx = next_verb_index(idx);
     }
-    assert_eq!(
-        visited.len(),
-        THINKING_VERBS.len(),
-        "Prime step should visit all verbs"
-    );
+    assert_eq!(visited.len(), THINKING_VERBS.len(), "Prime step should visit all verbs");
 }

@@ -237,10 +237,7 @@ fn test_disabled_agents_excluded_from_names() {
 
     let names = mgr.names();
     assert!(names.contains(&"active"));
-    assert!(
-        !names.contains(&"disabled-agent"),
-        "Disabled agents should be excluded from names()"
-    );
+    assert!(!names.contains(&"disabled-agent"), "Disabled agents should be excluded from names()");
 }
 
 #[test]
@@ -269,10 +266,7 @@ fn test_disabled_agents_in_all_names() {
     mgr.register(SubAgentSpec::new("disabled-agent", "Disabled", "prompt").with_disable(true));
 
     let all = mgr.all_names();
-    assert!(
-        all.contains(&"disabled-agent"),
-        "all_names() should include disabled agents"
-    );
+    assert!(all.contains(&"disabled-agent"), "all_names() should include disabled agents");
 }
 
 // ---- apply_config_overrides tests ----
@@ -326,17 +320,11 @@ fn test_config_override_disable_removes_agent() {
     let mut overrides = std::collections::HashMap::new();
     overrides.insert(
         "build".to_string(),
-        opendev_models::AgentConfigInline {
-            disable: Some(true),
-            ..Default::default()
-        },
+        opendev_models::AgentConfigInline { disable: Some(true), ..Default::default() },
     );
     mgr.apply_config_overrides(&overrides);
 
-    assert!(
-        mgr.get("build").is_none(),
-        "Disabled agent should be removed"
-    );
+    assert!(mgr.get("build").is_none(), "Disabled agent should be removed");
 }
 
 #[test]
@@ -412,10 +400,7 @@ fn test_config_override_hidden() {
     let mut overrides = std::collections::HashMap::new();
     overrides.insert(
         "build".to_string(),
-        opendev_models::AgentConfigInline {
-            hidden: Some(true),
-            ..Default::default()
-        },
+        opendev_models::AgentConfigInline { hidden: Some(true), ..Default::default() },
     );
     mgr.apply_config_overrides(&overrides);
 
@@ -455,10 +440,7 @@ fn test_config_override_permission_rules() {
     let mut overrides = std::collections::HashMap::new();
     overrides.insert(
         "build".to_string(),
-        opendev_models::AgentConfigInline {
-            permission: perms,
-            ..Default::default()
-        },
+        opendev_models::AgentConfigInline { permission: perms, ..Default::default() },
     );
     mgr.apply_config_overrides(&overrides);
 
@@ -482,10 +464,7 @@ fn test_config_override_invalid_permission_action_skipped() {
     let mut overrides = std::collections::HashMap::new();
     overrides.insert(
         "build".to_string(),
-        opendev_models::AgentConfigInline {
-            permission: perms,
-            ..Default::default()
-        },
+        opendev_models::AgentConfigInline { permission: perms, ..Default::default() },
     );
     mgr.apply_config_overrides(&overrides);
 
@@ -510,10 +489,7 @@ fn test_config_override_multiple_agents() {
     );
     overrides.insert(
         "explore".to_string(),
-        opendev_models::AgentConfigInline {
-            temperature: Some(0.2),
-            ..Default::default()
-        },
+        opendev_models::AgentConfigInline { temperature: Some(0.2), ..Default::default() },
     );
     mgr.apply_config_overrides(&overrides);
 
@@ -542,11 +518,7 @@ fn test_resolve_default_agent_not_found_falls_back() {
     );
 
     let result = mgr.resolve_default_agent(Some("nonexistent"));
-    assert_eq!(
-        result,
-        Some("build"),
-        "Should fall back to first primary-capable agent"
-    );
+    assert_eq!(result, Some("build"), "Should fall back to first primary-capable agent");
 }
 
 #[test]
@@ -563,11 +535,7 @@ fn test_resolve_default_agent_disabled_falls_back() {
     );
 
     let result = mgr.resolve_default_agent(Some("build"));
-    assert_eq!(
-        result,
-        Some("general"),
-        "Should skip disabled and fall back"
-    );
+    assert_eq!(result, Some("general"), "Should skip disabled and fall back");
 }
 
 #[test]
@@ -597,11 +565,7 @@ fn test_resolve_default_agent_subagent_only_falls_back() {
     );
 
     let result = mgr.resolve_default_agent(Some("helper"));
-    assert_eq!(
-        result,
-        Some("primary"),
-        "Should skip subagent-only and fall back"
-    );
+    assert_eq!(result, Some("primary"), "Should skip subagent-only and fall back");
 }
 
 #[test]
@@ -612,11 +576,7 @@ fn test_resolve_default_agent_none_configured() {
     );
 
     let result = mgr.resolve_default_agent(None);
-    assert_eq!(
-        result,
-        Some("build"),
-        "Should return first primary-capable agent"
-    );
+    assert_eq!(result, Some("build"), "Should return first primary-capable agent");
 }
 
 #[test]
@@ -693,10 +653,7 @@ fn test_build_agent_listing_sorted() {
 fn test_verification_agent_is_background() {
     let mgr = SubagentManager::with_builtins();
     let spec = mgr.get("Verification").unwrap();
-    assert!(
-        spec.background,
-        "Verification agent should have background=true"
-    );
+    assert!(spec.background, "Verification agent should have background=true");
     assert!(spec.has_tool_restriction());
 }
 

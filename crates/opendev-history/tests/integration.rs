@@ -44,9 +44,7 @@ fn session_full_lifecycle() {
     // Add messages to current session
     let current = mgr.current_session_mut().unwrap();
     current.messages.push(make_msg(Role::User, "Hello agent"));
-    current
-        .messages
-        .push(make_msg(Role::Assistant, "Hello human"));
+    current.messages.push(make_msg(Role::Assistant, "Hello human"));
     current.messages.push(make_msg(Role::User, "Do something"));
 
     // Save
@@ -73,19 +71,14 @@ fn session_metadata_persists() {
 
     let mut session = Session::new();
     session.id = "meta-test".to_string();
-    session
-        .metadata
-        .insert("title".to_string(), serde_json::json!("Test Session"));
+    session.metadata.insert("title".to_string(), serde_json::json!("Test Session"));
     session.working_directory = Some("/tmp/project".to_string());
     session.messages.push(make_msg(Role::User, "hi"));
 
     mgr.save_session(&session).unwrap();
 
     let loaded = mgr.load_session("meta-test").unwrap();
-    assert_eq!(
-        loaded.metadata.get("title"),
-        Some(&serde_json::json!("Test Session"))
-    );
+    assert_eq!(loaded.metadata.get("title"), Some(&serde_json::json!("Test Session")));
     assert_eq!(loaded.working_directory.as_deref(), Some("/tmp/project"));
 }
 
@@ -124,9 +117,7 @@ fn legacy_json_format_loads() {
 
     let mut session = Session::new();
     session.id = "legacy".to_string();
-    session
-        .messages
-        .push(make_msg(Role::User, "old format msg"));
+    session.messages.push(make_msg(Role::User, "old format msg"));
 
     // Write as monolithic JSON (legacy)
     let json = serde_json::to_string_pretty(&session).unwrap();
@@ -203,9 +194,8 @@ fn listing_delete_session() {
     // Index should not contain entry
     let index = SessionIndex::new(tmp.path().to_path_buf());
     let idx = index.read_index();
-    let has_entry = idx
-        .map(|i| i.entries.iter().any(|e| e.session_id == "to-delete"))
-        .unwrap_or(false);
+    let has_entry =
+        idx.map(|i| i.entries.iter().any(|e| e.session_id == "to-delete")).unwrap_or(false);
     assert!(!has_entry, "deleted session should not be in index");
 }
 
@@ -339,21 +329,13 @@ fn project_scoped_session_isolation() {
     // Create session in project A
     let session_a = mgr_a.create_session();
     let id_a = session_a.id.clone();
-    mgr_a
-        .current_session_mut()
-        .unwrap()
-        .messages
-        .push(make_msg(Role::User, "Project A message"));
+    mgr_a.current_session_mut().unwrap().messages.push(make_msg(Role::User, "Project A message"));
     mgr_a.save_current().unwrap();
 
     // Create session in project B
     let session_b = mgr_b.create_session();
     let id_b = session_b.id.clone();
-    mgr_b
-        .current_session_mut()
-        .unwrap()
-        .messages
-        .push(make_msg(Role::User, "Project B message"));
+    mgr_b.current_session_mut().unwrap().messages.push(make_msg(Role::User, "Project B message"));
     mgr_b.save_current().unwrap();
 
     // Sessions are different IDs
@@ -361,17 +343,11 @@ fn project_scoped_session_isolation() {
 
     // Project A cannot see project B's session
     let result = mgr_a.load_session(&id_b);
-    assert!(
-        result.is_err(),
-        "project A should not see project B's session"
-    );
+    assert!(result.is_err(), "project A should not see project B's session");
 
     // Project B cannot see project A's session
     let result = mgr_b.load_session(&id_a);
-    assert!(
-        result.is_err(),
-        "project B should not see project A's session"
-    );
+    assert!(result.is_err(), "project B should not see project A's session");
 
     // Each can see their own
     let loaded_a = mgr_a.load_session(&id_a).unwrap();
@@ -390,19 +366,13 @@ fn multiple_sessions_in_same_project() {
     // Create first session
     let s1 = mgr.create_session();
     let id1 = s1.id.clone();
-    mgr.current_session_mut()
-        .unwrap()
-        .messages
-        .push(make_msg(Role::User, "Session 1"));
+    mgr.current_session_mut().unwrap().messages.push(make_msg(Role::User, "Session 1"));
     mgr.save_current().unwrap();
 
     // Create second session (replaces current)
     let s2 = mgr.create_session();
     let id2 = s2.id.clone();
-    mgr.current_session_mut()
-        .unwrap()
-        .messages
-        .push(make_msg(Role::User, "Session 2"));
+    mgr.current_session_mut().unwrap().messages.push(make_msg(Role::User, "Session 2"));
     mgr.save_current().unwrap();
 
     assert_ne!(id1, id2);
@@ -430,10 +400,7 @@ fn session_working_directory_persists() {
     mgr.save_session(&session).unwrap();
 
     let loaded = mgr.load_session("wd-test").unwrap();
-    assert_eq!(
-        loaded.working_directory.as_deref(),
-        Some("/home/user/project")
-    );
+    assert_eq!(loaded.working_directory.as_deref(), Some("/home/user/project"));
 }
 
 /// Session messages preserve all fields (role, content, metadata, tool_calls).
@@ -443,8 +410,7 @@ fn session_message_fields_preserved() {
     let mgr = SessionManager::new(tmp.path().to_path_buf()).unwrap();
 
     let mut msg = make_msg(Role::User, "test message");
-    msg.metadata
-        .insert("key".to_string(), serde_json::json!("value"));
+    msg.metadata.insert("key".to_string(), serde_json::json!("value"));
 
     let mut session = Session::new();
     session.id = "fields-test".to_string();
@@ -454,10 +420,7 @@ fn session_message_fields_preserved() {
     let loaded = mgr.load_session("fields-test").unwrap();
     assert_eq!(loaded.messages[0].role, Role::User);
     assert_eq!(loaded.messages[0].content, "test message");
-    assert_eq!(
-        loaded.messages[0].metadata.get("key"),
-        Some(&serde_json::json!("value"))
-    );
+    assert_eq!(loaded.messages[0].metadata.get("key"), Some(&serde_json::json!("value")));
 }
 
 /// Snapshot track and patch detect file changes.
@@ -495,10 +458,7 @@ fn snapshot_track_and_patch() {
     std::fs::write(tmp.path().join("file.txt"), "version 2").unwrap();
 
     let changed = mgr.patch(hash1.as_ref().unwrap());
-    assert!(
-        changed.contains(&"file.txt".to_string()),
-        "patch should detect changed file"
-    );
+    assert!(changed.contains(&"file.txt".to_string()), "patch should detect changed file");
 }
 
 /// Snapshot diff ignores OpenDev internal overflow artifacts.
@@ -532,10 +492,7 @@ fn snapshot_diff_ignores_internal_tool_output() {
 
     let hash2 = mgr.track().unwrap();
     let stats = mgr.diff_numstat(&hash1, &hash2);
-    assert!(
-        stats.is_empty(),
-        "internal tool-output files should be ignored"
-    );
+    assert!(stats.is_empty(), "internal tool-output files should be ignored");
 }
 
 /// Snapshot diff still reports real workspace edits.
@@ -653,10 +610,7 @@ fn session_roundtrip_unicode() {
     let loaded = mgr.load_session("unicode-rt").unwrap();
     assert_eq!(loaded.messages.len(), unicode_texts.len());
     for (i, text) in unicode_texts.iter().enumerate() {
-        assert_eq!(
-            loaded.messages[i].content, *text,
-            "Unicode mismatch at index {i}"
-        );
+        assert_eq!(loaded.messages[i].content, *text, "Unicode mismatch at index {i}");
     }
 }
 
@@ -670,11 +624,7 @@ fn session_roundtrip_large_message_count() {
     let mut session = Session::new();
     session.id = "large-rt".to_string();
     for i in 0..msg_count {
-        let role = if i % 2 == 0 {
-            Role::User
-        } else {
-            Role::Assistant
-        };
+        let role = if i % 2 == 0 { Role::User } else { Role::Assistant };
         session.messages.push(make_msg(
             role,
             &format!(
@@ -695,11 +645,7 @@ fn session_roundtrip_large_message_count() {
 
     // Verify roles alternate correctly
     for (i, msg) in loaded.messages.iter().enumerate() {
-        let expected_role = if i % 2 == 0 {
-            Role::User
-        } else {
-            Role::Assistant
-        };
+        let expected_role = if i % 2 == 0 { Role::User } else { Role::Assistant };
         assert_eq!(msg.role, expected_role, "Role mismatch at message {i}");
     }
 }
@@ -716,9 +662,7 @@ fn session_roundtrip_with_tool_results() {
     session.id = "tool-rt".to_string();
 
     // User message
-    session
-        .messages
-        .push(make_msg(Role::User, "Read the config file"));
+    session.messages.push(make_msg(Role::User, "Read the config file"));
 
     // Assistant message with tool call
     let mut assistant_msg = make_msg(Role::Assistant, "I'll read the file.");
@@ -765,10 +709,7 @@ fn session_roundtrip_with_tool_results() {
     assert_eq!(tc.id, "tc-001");
     assert_eq!(tc.name, "read_file");
     assert!(tc.result.is_some());
-    assert_eq!(
-        tc.result_summary.as_deref(),
-        Some("Read 3 lines from config.toml")
-    );
+    assert_eq!(tc.result_summary.as_deref(), Some("Read 3 lines from config.toml"));
     assert!(tc.approved);
     assert!(tc.error.is_none());
 

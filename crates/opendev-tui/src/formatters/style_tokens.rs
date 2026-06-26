@@ -366,10 +366,7 @@ pub fn shimmer_line(
         let r = (br + (hr - br) * intensity) as u8;
         let g = (bg + (hg - bg) * intensity) as u8;
         let b = (bb + (hb - bb) * intensity) as u8;
-        spans.push(Span::styled(
-            ch.to_string(),
-            Style::default().fg(Color::Rgb(r, g, b)),
-        ));
+        spans.push(Span::styled(ch.to_string(), Style::default().fg(Color::Rgb(r, g, b))));
     }
     spans
 }

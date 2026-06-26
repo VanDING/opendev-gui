@@ -312,9 +312,7 @@ impl BaseAgent for MainAgent {
         task_monitor: Option<&dyn TaskMonitor>,
     ) -> LlmResponse {
         // Build the action payload (with tools)
-        let payload = self
-            .llm_caller
-            .build_action_payload(messages, &self.tool_schemas);
+        let payload = self.llm_caller.build_action_payload(messages, &self.tool_schemas);
 
         let http_client = match self.require_http_client() {
             Ok(c) => c,
@@ -338,9 +336,7 @@ impl BaseAgent for MainAgent {
 
         if !http_result.success {
             return LlmResponse::fail(
-                http_result
-                    .error
-                    .unwrap_or_else(|| "HTTP request failed".to_string()),
+                http_result.error.unwrap_or_else(|| "HTTP request failed".to_string()),
             );
         }
 

@@ -29,16 +29,12 @@ pub struct OpenAiAdapter {
 impl OpenAiAdapter {
     /// Create a new OpenAI adapter with the default Responses API URL.
     pub fn new() -> Self {
-        Self {
-            api_url: DEFAULT_API_URL.to_string(),
-        }
+        Self { api_url: DEFAULT_API_URL.to_string() }
     }
 
     /// Create with a custom API URL (for Azure, proxies, etc.).
     pub fn with_url(url: impl Into<String>) -> Self {
-        Self {
-            api_url: url.into(),
-        }
+        Self { api_url: url.into() }
     }
 }
 
@@ -63,11 +59,8 @@ impl super::base::ProviderAdapter for OpenAiAdapter {
             .and_then(|obj| obj.remove("_reasoning_effort"))
             .and_then(|v| v.as_str().map(String::from));
 
-        let messages = payload
-            .get("messages")
-            .and_then(|m| m.as_array())
-            .cloned()
-            .unwrap_or_default();
+        let messages =
+            payload.get("messages").and_then(|m| m.as_array()).cloned().unwrap_or_default();
 
         let (instructions, input_items) = Self::convert_messages(&messages);
 
@@ -82,9 +75,7 @@ impl super::base::ProviderAdapter for OpenAiAdapter {
         }
 
         // max_tokens / max_completion_tokens → max_output_tokens
-        let max_tok = payload
-            .get("max_completion_tokens")
-            .or_else(|| payload.get("max_tokens"));
+        let max_tok = payload.get("max_completion_tokens").or_else(|| payload.get("max_tokens"));
         if let Some(tok) = max_tok {
             responses_payload["max_output_tokens"] = tok.clone();
         }
@@ -154,54 +145,30 @@ impl super::base::ProviderAdapter for OpenAiAdapter {
                 if item.get("type").and_then(|t| t.as_str()) != Some("function_call") {
                     return None;
                 }
-                let index = data
-                    .get("output_index")
-                    .and_then(|i| i.as_u64())
-                    .unwrap_or(0) as usize;
+                let index = data.get("output_index").and_then(|i| i.as_u64()).unwrap_or(0) as usize;
                 let call_id = item
                     .get("call_id")
                     .or_else(|| item.get("id"))
                     .and_then(|i| i.as_str())
                     .unwrap_or("")
                     .to_string();
-                let name = item
-                    .get("name")
-                    .and_then(|n| n.as_str())
-                    .unwrap_or("")
-                    .to_string();
-                Some(StreamEvent::FunctionCallStart {
-                    index,
-                    call_id,
-                    name,
-                    initial_args: None,
-                })
+                let name = item.get("name").and_then(|n| n.as_str()).unwrap_or("").to_string();
+                Some(StreamEvent::FunctionCallStart { index, call_id, name, initial_args: None })
             }
             "response.function_call_arguments.delta" => {
-                let index = data
-                    .get("output_index")
-                    .and_then(|i| i.as_u64())
-                    .unwrap_or(0) as usize;
+                let index = data.get("output_index").and_then(|i| i.as_u64()).unwrap_or(0) as usize;
                 let delta = data.get("delta")?.as_str()?.to_string();
                 Some(StreamEvent::FunctionCallDelta { index, delta })
             }
             "response.function_call_arguments.done" => {
-                let index = data
-                    .get("output_index")
-                    .and_then(|i| i.as_u64())
-                    .unwrap_or(0) as usize;
-                let arguments = data
-                    .get("arguments")
-                    .and_then(|a| a.as_str())
-                    .unwrap_or("{}")
-                    .to_string();
+                let index = data.get("output_index").and_then(|i| i.as_u64()).unwrap_or(0) as usize;
+                let arguments =
+                    data.get("arguments").and_then(|a| a.as_str()).unwrap_or("{}").to_string();
                 Some(StreamEvent::FunctionCallDone { index, arguments })
             }
             // ── Stream lifecycle ──
             "response.completed" | "response.incomplete" => {
-                let response = data
-                    .get("response")
-                    .cloned()
-                    .unwrap_or_else(|| data.clone());
+                let response = data.get("response").cloned().unwrap_or_else(|| data.clone());
                 Some(StreamEvent::Done(response))
             }
             "error" => {

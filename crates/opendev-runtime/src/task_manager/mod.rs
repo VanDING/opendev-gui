@@ -17,6 +17,12 @@ pub use types::*;
 use std::collections::HashMap;
 use std::sync::RwLock;
 
+// SAFETY INVARIANT: This manager uses `std::sync::RwLock` (not `tokio::sync::RwLock`)
+// because all public methods are synchronous (`pub fn`, not `async fn`). Locks are
+// never held across `.await` points, so a blocking lock will not starve the async
+// runtime.  If any method is made async in the future, this must be changed to
+// `tokio::sync::RwLock`.
+
 use tokio::sync::mpsc;
 use tracing::warn;
 
@@ -72,14 +78,14 @@ impl TaskManager {
             old: TaskState::Pending,
             new: info.state,
         });
-        let mut tasks = self.tasks.write().expect("TaskManager lock poisoned");
+        let mut tasks = self.tasks.write().unwrap_or_else(|e| e.into_inner());
         tasks.insert(task_id.clone(), info);
         task_id
     }
 
     /// Transition Pending → Running.
     pub fn start_task(&self, task_id: &str) {
-        let mut tasks = self.tasks.write().expect("TaskManager lock poisoned");
+        let mut tasks = self.tasks.write().unwrap_or_else(|e| e.into_inner());
         if let Some(task) = tasks.get_mut(task_id) {
             if task.state != TaskState::Pending {
                 return;
@@ -98,17 +104,13 @@ impl TaskManager {
 
     /// Transition Running → Completed or Failed.
     pub fn complete_task(&self, task_id: &str, success: bool, summary: &str, full_result: &str) {
-        let mut tasks = self.tasks.write().expect("TaskManager lock poisoned");
+        let mut tasks = self.tasks.write().unwrap_or_else(|e| e.into_inner());
         if let Some(task) = tasks.get_mut(task_id) {
             if task.state.is_terminal() {
                 return; // idempotent
             }
             let old = task.state;
-            let new_state = if success {
-                TaskState::Completed
-            } else {
-                TaskState::Failed
-            };
+            let new_state = if success { TaskState::Completed } else { TaskState::Failed };
             task.state = new_state;
             task.completed_at_ms = Some(now_ms());
             task.result_summary = Some(summary.to_string());
@@ -139,7 +141,7 @@ impl TaskManager {
             token.request();
         }
 
-        let mut tasks = self.tasks.write().expect("TaskManager lock poisoned");
+        let mut tasks = self.tasks.write().unwrap_or_else(|e| e.into_inner());
         if let Some(task) = tasks.get_mut(task_id) {
             if task.state.is_terminal() {
                 return; // idempotent
@@ -161,7 +163,7 @@ impl TaskManager {
 
     /// Mark a task as backgrounded.
     pub fn background_task(&self, task_id: &str) {
-        let mut tasks = self.tasks.write().expect("TaskManager lock poisoned");
+        let mut tasks = self.tasks.write().unwrap_or_else(|e| e.into_inner());
         if let Some(task) = tasks.get_mut(task_id) {
             task.is_backgrounded = true;
         }
@@ -178,7 +180,7 @@ impl TaskManager {
         input_tokens: u64,
         output_tokens: u64,
     ) {
-        let mut tasks = self.tasks.write().expect("TaskManager lock poisoned");
+        let mut tasks = self.tasks.write().unwrap_or_else(|e| e.into_inner());
         if let Some(task) = tasks.get_mut(task_id) {
             task.tool_call_count += 1;
             task.current_tool = Some(tool_name.to_string());
@@ -205,7 +207,7 @@ impl TaskManager {
 
     /// Append a line to the rolling activity log.
     pub fn push_activity(&self, task_id: &str, line: String) {
-        let mut tasks = self.tasks.write().expect("TaskManager lock poisoned");
+        let mut tasks = self.tasks.write().unwrap_or_else(|e| e.into_inner());
         if let Some(task) = tasks.get_mut(task_id) {
             task.activity_log.push(line);
             if task.activity_log.len() > MAX_ACTIVITY_LOG {
@@ -219,20 +221,17 @@ impl TaskManager {
     /// Queue a message for delivery to a task's agent.
     pub fn queue_message(&self, task_id: &str, msg: PendingMessage) {
         let from = msg.from_agent.clone();
-        let mut tasks = self.tasks.write().expect("TaskManager lock poisoned");
+        let mut tasks = self.tasks.write().unwrap_or_else(|e| e.into_inner());
         if let Some(task) = tasks.get_mut(task_id) {
             task.pending_messages.push(msg);
             drop(tasks);
-            self.emit(TaskManagerEvent::MessageReceived {
-                task_id: task_id.to_string(),
-                from,
-            });
+            self.emit(TaskManagerEvent::MessageReceived { task_id: task_id.to_string(), from });
         }
     }
 
     /// Drain all pending messages for a task.
     pub fn drain_messages(&self, task_id: &str) -> Vec<PendingMessage> {
-        let mut tasks = self.tasks.write().expect("TaskManager lock poisoned");
+        let mut tasks = self.tasks.write().unwrap_or_else(|e| e.into_inner());
         if let Some(task) = tasks.get_mut(task_id) {
             std::mem::take(&mut task.pending_messages)
         } else {
@@ -244,23 +243,20 @@ impl TaskManager {
 
     /// Get a snapshot of a task's info.
     pub fn get(&self, task_id: &str) -> Option<TaskInfo> {
-        let tasks = self.tasks.read().expect("TaskManager lock poisoned");
+        let tasks = self.tasks.read().unwrap_or_else(|e| e.into_inner());
         tasks.get(task_id).cloned()
     }
 
     /// List all tasks (snapshot).
     pub fn list(&self) -> Vec<TaskInfo> {
-        let tasks = self.tasks.read().expect("TaskManager lock poisoned");
+        let tasks = self.tasks.read().unwrap_or_else(|e| e.into_inner());
         tasks.values().cloned().collect()
     }
 
     /// Count of tasks in Running state.
     pub fn running_count(&self) -> usize {
-        let tasks = self.tasks.read().expect("TaskManager lock poisoned");
-        tasks
-            .values()
-            .filter(|t| t.state == TaskState::Running)
-            .count()
+        let tasks = self.tasks.read().unwrap_or_else(|e| e.into_inner());
+        tasks.values().filter(|t| t.state == TaskState::Running).count()
     }
 
     /// Whether more tasks can be accepted (under the concurrency limit).
@@ -272,13 +268,13 @@ impl TaskManager {
 
     /// Associate an interrupt token with a task.
     pub fn set_interrupt_token(&self, task_id: &str, token: InterruptToken) {
-        let mut tokens = self.interrupt_tokens.write().expect("tokens lock poisoned");
+        let mut tokens = self.interrupt_tokens.write().unwrap_or_else(|e| e.into_inner());
         tokens.insert(task_id.to_string(), token);
     }
 
     /// Get the interrupt token for a task.
     pub fn get_interrupt_token(&self, task_id: &str) -> Option<InterruptToken> {
-        let tokens = self.interrupt_tokens.read().expect("tokens lock poisoned");
+        let tokens = self.interrupt_tokens.read().unwrap_or_else(|e| e.into_inner());
         tokens.get(task_id).cloned()
     }
 
@@ -287,7 +283,7 @@ impl TaskManager {
     /// Atomically check and set the notified flag.
     /// Returns `true` if the task was previously un-notified (first call wins).
     pub fn mark_notified(&self, task_id: &str) -> bool {
-        let mut tasks = self.tasks.write().expect("TaskManager lock poisoned");
+        let mut tasks = self.tasks.write().unwrap_or_else(|e| e.into_inner());
         if let Some(task) = tasks.get_mut(task_id) {
             if task.notified {
                 return false; // already notified
@@ -304,17 +300,16 @@ impl TaskManager {
     ///
     /// Conditions: terminal state + notified + past evict_after + !retain.
     pub fn try_evict(&self, task_id: &str) -> bool {
-        let mut tasks = self.tasks.write().expect("TaskManager lock poisoned");
+        let mut tasks = self.tasks.write().unwrap_or_else(|e| e.into_inner());
         let should_evict = tasks.get(task_id).is_some_and(|t| {
             t.state.is_terminal()
                 && t.notified
                 && !t.retain
-                && t.evict_after_ms
-                    .is_some_and(|deadline| now_ms() >= deadline)
+                && t.evict_after_ms.is_some_and(|deadline| now_ms() >= deadline)
         });
         if should_evict {
             tasks.remove(task_id);
-            let mut tokens = self.interrupt_tokens.write().expect("tokens lock poisoned");
+            let mut tokens = self.interrupt_tokens.write().unwrap_or_else(|e| e.into_inner());
             tokens.remove(task_id);
             true
         } else {
@@ -324,7 +319,7 @@ impl TaskManager {
 
     /// Set the retain flag (blocks eviction while UI is viewing).
     pub fn set_retain(&self, task_id: &str, retain: bool) {
-        let mut tasks = self.tasks.write().expect("TaskManager lock poisoned");
+        let mut tasks = self.tasks.write().unwrap_or_else(|e| e.into_inner());
         if let Some(task) = tasks.get_mut(task_id) {
             task.retain = retain;
             if !retain && task.state.is_terminal() && task.evict_after_ms.is_none() {
@@ -335,7 +330,7 @@ impl TaskManager {
 
     /// Schedule eviction at a specific timestamp.
     pub fn set_evict_after(&self, task_id: &str, ms: u64) {
-        let mut tasks = self.tasks.write().expect("TaskManager lock poisoned");
+        let mut tasks = self.tasks.write().unwrap_or_else(|e| e.into_inner());
         if let Some(task) = tasks.get_mut(task_id) {
             task.evict_after_ms = Some(ms);
         }

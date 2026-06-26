@@ -89,9 +89,7 @@ pub async fn start_server(
     info!("Starting web server on {}", addr);
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app)
-        .await
-        .map_err(std::io::Error::other)
+    axum::serve(listener, app).await.map_err(std::io::Error::other)
 }
 
 #[cfg(test)]

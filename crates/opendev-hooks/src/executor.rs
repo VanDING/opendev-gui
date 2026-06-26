@@ -85,11 +85,7 @@ impl HookExecutor {
         let timeout = Duration::from_secs(command.effective_timeout() as u64);
 
         // Determine shell to use
-        let (shell, flag) = if cfg!(target_os = "windows") {
-            ("cmd", "/C")
-        } else {
-            ("sh", "-c")
-        };
+        let (shell, flag) = if cfg!(target_os = "windows") { ("cmd", "/C") } else { ("sh", "-c") };
 
         let mut child = match Command::new(shell)
             .arg(flag)
@@ -152,13 +148,7 @@ impl HookExecutor {
                     String::new()
                 };
 
-                HookResult {
-                    exit_code,
-                    stdout,
-                    stderr,
-                    timed_out: false,
-                    error: None,
-                }
+                HookResult { exit_code, stdout, stderr, timed_out: false, error: None }
             }
             Ok(Err(e)) => {
                 error!(
@@ -183,10 +173,7 @@ impl HookExecutor {
                 HookResult {
                     exit_code: 1,
                     timed_out: true,
-                    error: Some(format!(
-                        "Hook timed out after {}s",
-                        command.effective_timeout()
-                    )),
+                    error: Some(format!("Hook timed out after {}s", command.effective_timeout())),
                     ..Default::default()
                 }
             }

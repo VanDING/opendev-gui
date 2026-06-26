@@ -13,10 +13,7 @@ use super::{McpManager, NotificationHandle, ToolSchemaCache, sanitize_mcp_name};
 impl NotificationHandle {
     /// Invalidate cache and re-discover tools for a server.
     pub(super) async fn handle_tools_changed(&self, server_name: &str) {
-        info!(
-            server = server_name,
-            "Received tools/changed notification, refreshing tools"
-        );
+        info!(server = server_name, "Received tools/changed notification, refreshing tools");
 
         // Invalidate the cache.
         {
@@ -33,9 +30,7 @@ impl NotificationHandle {
             return;
         };
 
-        let request_id = self
-            .request_id
-            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        let request_id = self.request_id.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let request = crate::models::JsonRpcRequest {
             jsonrpc: "2.0".to_string(),
             id: request_id,
@@ -53,10 +48,7 @@ impl NotificationHandle {
                     let mut cache = self.tool_schema_cache.write().await;
                     cache.insert(
                         server_name.to_string(),
-                        ToolSchemaCache {
-                            tools: tools.clone(),
-                            invalidated: false,
-                        },
+                        ToolSchemaCache { tools: tools.clone(), invalidated: false },
                     );
                     drop(cache);
                     drop(connections);
@@ -156,10 +148,7 @@ impl McpManager {
         let mut cache = self.tool_schema_cache.write().await;
         cache.insert(
             server_name.to_string(),
-            ToolSchemaCache {
-                tools: tools.clone(),
-                invalidated: false,
-            },
+            ToolSchemaCache { tools: tools.clone(), invalidated: false },
         );
 
         Ok(tools)
@@ -199,8 +188,7 @@ impl McpManager {
             let conn = connections
                 .get(server_name)
                 .ok_or_else(|| McpError::ServerNotFound(server_name.to_string()))?;
-            self.get_or_discover_tools(server_name, conn.transport.as_ref())
-                .await?
+            self.get_or_discover_tools(server_name, conn.transport.as_ref()).await?
         };
 
         // Update the connection's tool list.
@@ -217,10 +205,7 @@ impl McpManager {
     /// Invalidates the tool cache and refreshes tools if the server
     /// is still connected.
     pub async fn handle_tools_changed(&self, server_name: &str) {
-        info!(
-            server = server_name,
-            "Received tools/changed notification, refreshing tools"
-        );
+        info!(server = server_name, "Received tools/changed notification, refreshing tools");
         self.invalidate_tool_cache(server_name).await;
 
         // Try to refresh tools if connected.
@@ -277,9 +262,7 @@ impl McpManager {
         tool_name: &str,
         arguments: serde_json::Value,
     ) -> McpResult<McpToolResult> {
-        let result = self
-            .call_tool_inner(server_name, tool_name, arguments)
-            .await;
+        let result = self.call_tool_inner(server_name, tool_name, arguments).await;
 
         match result {
             Ok(tool_result) => Ok(tool_result),
@@ -326,10 +309,7 @@ impl McpManager {
             .ok_or_else(|| McpError::ServerNotFound(server_name.to_string()))?;
 
         let mut params = HashMap::new();
-        params.insert(
-            "name".to_string(),
-            serde_json::Value::String(tool_name.to_string()),
-        );
+        params.insert("name".to_string(), serde_json::Value::String(tool_name.to_string()));
         params.insert("arguments".to_string(), arguments);
 
         let request = JsonRpcRequest {

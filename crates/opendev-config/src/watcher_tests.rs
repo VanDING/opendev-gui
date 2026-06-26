@@ -24,11 +24,7 @@ fn test_watcher_detects_change() {
 
     // Modify the file — need a small delay for filesystem timestamp granularity
     std::thread::sleep(std::time::Duration::from_millis(50));
-    let mut f = std::fs::OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .open(&path)
-        .unwrap();
+    let mut f = std::fs::OpenOptions::new().write(true).truncate(true).open(&path).unwrap();
     f.write_all(b"{\"v\": 2}").unwrap();
     f.sync_all().unwrap();
     drop(f);

@@ -22,16 +22,12 @@ fn test_mcp_tool_roundtrip() {
 
 #[test]
 fn test_mcp_content_variants() {
-    let text = McpContent::Text {
-        text: "hello".to_string(),
-    };
+    let text = McpContent::Text { text: "hello".to_string() };
     let json = serde_json::to_string(&text).unwrap();
     assert!(json.contains("\"type\":\"text\""));
 
-    let image = McpContent::Image {
-        data: "base64data".to_string(),
-        mime_type: "image/png".to_string(),
-    };
+    let image =
+        McpContent::Image { data: "base64data".to_string(), mime_type: "image/png".to_string() };
     let json = serde_json::to_string(&image).unwrap();
     assert!(json.contains("\"type\":\"image\""));
 }
@@ -39,9 +35,7 @@ fn test_mcp_content_variants() {
 #[test]
 fn test_tool_result_with_error() {
     let result = McpToolResult {
-        content: vec![McpContent::Text {
-            text: "Something went wrong".to_string(),
-        }],
+        content: vec![McpContent::Text { text: "Something went wrong".to_string() }],
         is_error: true,
     };
 
@@ -226,9 +220,7 @@ fn test_mcp_server_info() {
 
 #[test]
 fn test_mcp_content_resource_variant() {
-    let content = McpContent::Resource {
-        uri: "file:///test".to_string(),
-    };
+    let content = McpContent::Resource { uri: "file:///test".to_string() };
 
     let json = serde_json::to_string(&content).unwrap();
     assert!(json.contains("\"type\":\"resource\""));
@@ -245,12 +237,8 @@ fn test_mcp_content_resource_variant() {
 fn test_mcp_tool_result_success() {
     let result = McpToolResult {
         content: vec![
-            McpContent::Text {
-                text: "line 1".to_string(),
-            },
-            McpContent::Text {
-                text: "line 2".to_string(),
-            },
+            McpContent::Text { text: "line 1".to_string() },
+            McpContent::Text { text: "line 2".to_string() },
         ],
         is_error: false,
     };

@@ -40,10 +40,7 @@ where
             consecutive_truncations = state.consecutive_truncations,
             "Response truncated due to output token limit, continuing"
         );
-        append_directive(
-            messages,
-            &get_reminder("truncation_continue_directive", &[]),
-        );
+        append_directive(messages, &get_reminder("truncation_continue_directive", &[]));
         react_loop.push_metrics(iter_metrics);
         return LoopAction::Continue;
     }
@@ -67,10 +64,7 @@ where
             .collect();
         let nudge = get_reminder(
             "incomplete_todos_nudge",
-            &[
-                ("count", &count.to_string()),
-                ("todo_list", &titles.join("\n")),
-            ],
+            &[("count", &count.to_string()), ("todo_list", &titles.join("\n"))],
         );
         append_nudge(messages, &nudge);
         react_loop.push_metrics(iter_metrics);
@@ -85,9 +79,7 @@ where
         let bg_completed = messages
             .iter()
             .filter(|m| {
-                m.get("name")
-                    .and_then(|n| n.as_str())
-                    .is_some_and(|n| n == "get_background_result")
+                m.get("name").and_then(|n| n.as_str()).is_some_and(|n| n == "get_background_result")
             })
             .count();
         if bg_completed < state.bg_tasks_spawned {
@@ -137,10 +129,7 @@ where
 
     // Check for background request before accepting completion
     if task_monitor.is_some_and(|m| m.is_background_requested()) {
-        info!(
-            iteration = state.iteration,
-            "Background requested at completion — yielding"
-        );
+        info!(iteration = state.iteration, "Background requested at completion — yielding");
         react_loop.push_metrics(iter_metrics);
         return LoopAction::Return(Ok(AgentResult::backgrounded(messages.clone())));
     }

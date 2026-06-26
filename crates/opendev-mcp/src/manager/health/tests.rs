@@ -68,10 +68,7 @@ async fn test_health_check_failures_degrade_then_unhealthy() {
 
     let state = manager.get_health_state("test-server").await.unwrap();
     assert_eq!(state.status, ServerHealthStatus::Degraded);
-    assert_eq!(
-        state.consecutive_failures,
-        HEALTH_CHECK_FAILURE_THRESHOLD - 1
-    );
+    assert_eq!(state.consecutive_failures, HEALTH_CHECK_FAILURE_THRESHOLD - 1);
 
     manager.record_health_check("test-server", false).await;
 

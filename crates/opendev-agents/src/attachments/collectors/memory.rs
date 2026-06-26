@@ -66,10 +66,8 @@ fn scan_memory_dir(working_dir: &Path) -> Vec<MemoryFileEntry> {
             _ => continue,
         };
 
-        let modified = entry
-            .metadata()
-            .and_then(|m| m.modified())
-            .unwrap_or(SystemTime::UNIX_EPOCH);
+        let modified =
+            entry.metadata().and_then(|m| m.modified()).unwrap_or(SystemTime::UNIX_EPOCH);
 
         // Parse frontmatter (first 30 lines max)
         let content = match std::fs::read_to_string(&path) {
@@ -79,12 +77,7 @@ fn scan_memory_dir(working_dir: &Path) -> Vec<MemoryFileEntry> {
 
         let (description, file_type) = parse_frontmatter(&content);
 
-        entries.push(MemoryFileEntry {
-            filename,
-            description,
-            file_type,
-            modified,
-        });
+        entries.push(MemoryFileEntry { filename, description, file_type, modified });
     }
 
     // Sort by modification time, newest first
@@ -167,11 +160,7 @@ fn read_memory_file(working_dir: &Path, filename: &str) -> Option<String> {
         return None;
     }
 
-    let truncated: String = content
-        .lines()
-        .take(MAX_FILE_LINES)
-        .collect::<Vec<_>>()
-        .join("\n");
+    let truncated: String = content.lines().take(MAX_FILE_LINES).collect::<Vec<_>>().join("\n");
 
     if truncated.len() > MAX_FILE_BYTES {
         Some(truncated[..MAX_FILE_BYTES].to_string())
@@ -191,17 +180,13 @@ fn read_memory_file(working_dir: &Path, filename: &str) -> Option<String> {
 /// - 7–30 days: may be outdated
 /// - Over 30 days: warning to verify
 fn staleness_annotation(modified: SystemTime) -> Option<String> {
-    let days_ago = SystemTime::now()
-        .duration_since(modified)
-        .ok()
-        .map(|d| d.as_secs() / 86400)?;
+    let days_ago = SystemTime::now().duration_since(modified).ok().map(|d| d.as_secs() / 86400)?;
 
     match days_ago {
         0 => None,
-        1..=6 => Some(format!(
-            "Updated {days_ago} day{} ago",
-            if days_ago == 1 { "" } else { "s" }
-        )),
+        1..=6 => {
+            Some(format!("Updated {days_ago} day{} ago", if days_ago == 1 { "" } else { "s" }))
+        }
         7..=30 => Some(format!(
             "Updated {days_ago} days ago \u{2014} may be outdated, verify before acting on this"
         )),
@@ -251,11 +236,8 @@ impl SemanticMemoryCollector {
         if content.trim().is_empty() {
             return None;
         }
-        let truncated: String = content
-            .lines()
-            .take(MAX_MEMORY_LINES)
-            .collect::<Vec<_>>()
-            .join("\n");
+        let truncated: String =
+            content.lines().take(MAX_MEMORY_LINES).collect::<Vec<_>>().join("\n");
         if truncated.len() > MAX_MEMORY_BYTES {
             Some(truncated[..MAX_MEMORY_BYTES].to_string())
         } else {
@@ -345,7 +327,7 @@ impl SemanticMemoryCollector {
         working_dir: &Path,
         selections: &[(String, SystemTime)],
     ) -> Option<String> {
-        let mut surfaced = self.surfaced_files.lock().unwrap();
+        let mut surfaced = self.surfaced_files.lock().unwrap_or_else(|e| e.into_inner());
         let cumulative = self.cumulative_bytes.load(Ordering::Relaxed);
         let mut remaining_budget = MAX_SESSION_BYTES.saturating_sub(cumulative);
 
@@ -404,18 +386,14 @@ impl ContextCollector for SemanticMemoryCollector {
     async fn pre_fire(&self, ctx: &TurnContext<'_>) {
         // Start memory collection early; result is stored for collect() to consume
         let result = self.collect_memories(ctx).await;
-        *self.prefetch_result.lock().unwrap() = result;
+        *self.prefetch_result.lock().unwrap_or_else(|e| e.into_inner()) = result;
     }
 
     async fn collect(&self, _ctx: &TurnContext<'_>) -> Option<Attachment> {
         // Consume the prefetched result (set by pre_fire)
-        let content = self.prefetch_result.lock().unwrap().take()?;
+        let content = self.prefetch_result.lock().unwrap_or_else(|e| e.into_inner()).take()?;
 
-        Some(Attachment {
-            name: "memory",
-            content,
-            class: MessageClass::Nudge,
-        })
+        Some(Attachment { name: "memory", content, class: MessageClass::Nudge })
     }
 
     fn did_fire(&self, turn: usize) {
@@ -426,7 +404,7 @@ impl ContextCollector for SemanticMemoryCollector {
         self.cadence.reset();
         self.last_query_hash.store(0, Ordering::Relaxed);
         // Don't reset surfaced_files or cumulative_bytes — they're session-scoped
-        *self.prefetch_result.lock().unwrap() = None;
+        *self.prefetch_result.lock().unwrap_or_else(|e| e.into_inner()) = None;
     }
 }
 

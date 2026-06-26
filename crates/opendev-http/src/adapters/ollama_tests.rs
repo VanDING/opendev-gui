@@ -16,10 +16,7 @@ fn test_api_url_default() {
 #[test]
 fn test_api_url_custom() {
     let adapter = OllamaAdapter::with_url("http://remote-host:11434/v1/chat/completions");
-    assert_eq!(
-        adapter.api_url(),
-        "http://remote-host:11434/v1/chat/completions"
-    );
+    assert_eq!(adapter.api_url(), "http://remote-host:11434/v1/chat/completions");
 }
 
 #[test]

@@ -41,10 +41,7 @@ pub(super) fn scan_top_level_dirs(root: &std::path::Path) -> String {
         Err(_) => return String::new(),
     };
     dirs.sort();
-    dirs.iter()
-        .map(|d| format!("{d}/"))
-        .collect::<Vec<_>>()
-        .join(", ")
+    dirs.iter().map(|d| format!("{d}/")).collect::<Vec<_>>().join(", ")
 }
 
 /// Scan a directory tree up to `max_depth` levels and return a tree-style
@@ -84,9 +81,7 @@ fn scan_dir(
     children.sort_by(|a, b| {
         let a_dir = a.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
         let b_dir = b.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
-        b_dir
-            .cmp(&a_dir)
-            .then_with(|| a.file_name().cmp(&b.file_name()))
+        b_dir.cmp(&a_dir).then_with(|| a.file_name().cmp(&b.file_name()))
     });
 
     let total = children.len();
@@ -109,11 +104,8 @@ fn scan_dir(
             }
             out.push(format!("{prefix}{connector}{name_str}/"));
             if depth < max_depth {
-                let child_prefix = if is_last {
-                    format!("{prefix}    ")
-                } else {
-                    format!("{prefix}│   ")
-                };
+                let child_prefix =
+                    if is_last { format!("{prefix}    ") } else { format!("{prefix}│   ") };
                 scan_dir(&entry.path(), &child_prefix, max_depth, depth + 1, out);
             }
         } else {

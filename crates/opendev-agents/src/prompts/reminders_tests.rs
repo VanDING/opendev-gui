@@ -3,10 +3,7 @@ use super::*;
 #[test]
 fn test_parse_sections_finds_templates() {
     let sections = SECTIONS.get_or_init(parse_sections);
-    assert!(
-        sections.contains_key("failed_tool_nudge"),
-        "Should find failed_tool_nudge section"
-    );
+    assert!(sections.contains_key("failed_tool_nudge"), "Should find failed_tool_nudge section");
     assert!(
         sections.contains_key("nudge_permission_error"),
         "Should find nudge_permission_error section"
@@ -79,12 +76,7 @@ fn test_append_nudge() {
     append_nudge(&mut messages, "test nudge");
     assert_eq!(messages.len(), 1);
     assert_eq!(messages[0]["role"], "user");
-    assert!(
-        messages[0]["content"]
-            .as_str()
-            .unwrap()
-            .contains("test nudge")
-    );
+    assert!(messages[0]["content"].as_str().unwrap().contains("test nudge"));
     assert_eq!(messages[0]["_msg_class"], "nudge");
 }
 
@@ -94,12 +86,7 @@ fn test_inject_system_message_directive() {
     inject_system_message(&mut messages, "error context", MessageClass::Directive);
     assert_eq!(messages.len(), 1);
     assert_eq!(messages[0]["role"], "user");
-    assert!(
-        messages[0]["content"]
-            .as_str()
-            .unwrap()
-            .contains("error context")
-    );
+    assert!(messages[0]["content"].as_str().unwrap().contains("error context"));
     assert_eq!(messages[0]["_msg_class"], "directive");
 }
 
@@ -109,12 +96,7 @@ fn test_inject_system_message_internal() {
     inject_system_message(&mut messages, "debug info", MessageClass::Internal);
     assert_eq!(messages.len(), 1);
     assert_eq!(messages[0]["role"], "user");
-    assert!(
-        messages[0]["content"]
-            .as_str()
-            .unwrap()
-            .contains("debug info")
-    );
+    assert!(messages[0]["content"].as_str().unwrap().contains("debug info"));
     assert_eq!(messages[0]["_msg_class"], "internal");
 }
 

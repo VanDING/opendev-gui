@@ -91,10 +91,7 @@ pub(super) fn register_default_tools(
 pub fn create_prompt_composer(
     working_dir: &Path,
     config: &opendev_models::AppConfig,
-) -> (
-    opendev_agents::prompts::PromptComposer,
-    opendev_agents::prompts::PromptContext,
-) {
+) -> (opendev_agents::prompts::PromptComposer, opendev_agents::prompts::PromptContext) {
     let mut composer = create_default_composer("/dev/null");
 
     // Register environment context as a Cached dynamic section.
@@ -148,10 +145,7 @@ pub fn create_prompt_composer(
     );
 
     let mut context = HashMap::new();
-    context.insert(
-        "model".to_string(),
-        serde_json::Value::String(config.model.clone()),
-    );
+    context.insert("model".to_string(), serde_json::Value::String(config.model.clone()));
     context.insert(
         "working_dir".to_string(),
         serde_json::Value::String(working_dir.display().to_string()),
@@ -162,10 +156,7 @@ pub fn create_prompt_composer(
     );
     context.insert("has_subagents".to_string(), serde_json::Value::Bool(true));
     context.insert("has_agent_teams".to_string(), serde_json::Value::Bool(true));
-    context.insert(
-        "todo_tracking_enabled".to_string(),
-        serde_json::Value::Bool(true),
-    );
+    context.insert("todo_tracking_enabled".to_string(), serde_json::Value::Bool(true));
     context.insert(
         "model_provider".to_string(),
         serde_json::Value::String(config.model_provider.clone()),

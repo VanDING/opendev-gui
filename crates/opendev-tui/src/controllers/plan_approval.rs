@@ -153,10 +153,7 @@ impl PlanApprovalController {
         }
 
         let option = &self.options[self.selected_action];
-        let decision = PlanDecision {
-            action: option.action.clone(),
-            feedback: String::new(),
-        };
+        let decision = PlanDecision { action: option.action.clone(), feedback: String::new() };
 
         self.status = match option.action.as_str() {
             "approve_auto" | "approve" => PlanStatus::Approved,

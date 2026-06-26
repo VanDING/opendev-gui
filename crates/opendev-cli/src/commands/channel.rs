@@ -23,9 +23,7 @@ pub async fn handle_channel(action: ChannelAction, working_dir: &std::path::Path
                 None => {
                     eprint!("Enter Telegram bot token (from @BotFather): ");
                     let mut input = String::new();
-                    std::io::stdin()
-                        .read_line(&mut input)
-                        .expect("failed to read input");
+                    std::io::stdin().read_line(&mut input).expect("failed to read input");
                     let trimmed = input.trim().to_string();
                     if trimmed.is_empty() {
                         eprintln!("Error: no token provided.");
@@ -120,9 +118,8 @@ pub async fn handle_channel(action: ChannelAction, working_dir: &std::path::Path
                 cmd.stdout(std::process::Stdio::null());
                 cmd.stderr(std::process::Stdio::null());
 
-                let pid_path = opendev_config::Paths::default()
-                    .global_dir()
-                    .join("telegram-serve.pid");
+                let pid_path =
+                    opendev_config::Paths::default().global_dir().join("telegram-serve.pid");
 
                 match cmd.spawn() {
                     Ok(child) => {
@@ -167,16 +164,13 @@ pub async fn handle_channel(action: ChannelAction, working_dir: &std::path::Path
             let mut config = load_app_config(working_dir);
 
             {
-                let tg = config
-                    .channels
-                    .telegram
-                    .get_or_insert_with(|| TelegramChannelConfig {
-                        bot_token: String::new(),
-                        enabled: false,
-                        group_mention_only: true,
-                        dm_policy: opendev_models::DmPolicy::Pairing,
-                        allowed_users: Vec::new(),
-                    });
+                let tg = config.channels.telegram.get_or_insert_with(|| TelegramChannelConfig {
+                    bot_token: String::new(),
+                    enabled: false,
+                    group_mention_only: true,
+                    dm_policy: opendev_models::DmPolicy::Pairing,
+                    allowed_users: Vec::new(),
+                });
 
                 if tg.allowed_users.contains(&user_id) {
                     println!("User {user_id} is already paired.");
@@ -185,12 +179,8 @@ pub async fn handle_channel(action: ChannelAction, working_dir: &std::path::Path
                 tg.allowed_users.push(user_id.clone());
             }
 
-            let bot_token = config
-                .channels
-                .telegram
-                .as_ref()
-                .map(|t| t.bot_token.clone())
-                .unwrap_or_default();
+            let bot_token =
+                config.channels.telegram.as_ref().map(|t| t.bot_token.clone()).unwrap_or_default();
 
             save_config(&config, &global_settings);
             println!("Paired {user_id}.");
@@ -233,10 +223,8 @@ async fn run_telegram_serve(working_dir: &std::path::Path) {
     let tg = require_telegram(&config);
 
     let router = std::sync::Arc::new(opendev_channels::MessageRouter::new());
-    let executor = std::sync::Arc::new(crate::runtime::ChannelAgentExecutor::new(
-        config.clone(),
-        working_dir,
-    ));
+    let executor =
+        std::sync::Arc::new(crate::runtime::ChannelAgentExecutor::new(config.clone(), working_dir));
     router.set_executor(executor).await;
 
     let telegram_config = opendev_channels::telegram::TelegramConfig {
@@ -250,9 +238,7 @@ async fn run_telegram_serve(working_dir: &std::path::Path) {
     match opendev_channels::telegram::start_telegram(Some(&telegram_config), router).await {
         Ok((_adapter, _shutdown)) => {
             println!("Telegram bot running. Ctrl+C to stop.");
-            tokio::signal::ctrl_c()
-                .await
-                .expect("failed to listen for Ctrl+C");
+            tokio::signal::ctrl_c().await.expect("failed to listen for Ctrl+C");
             println!("\nShutting down...");
         }
         Err(e) => {

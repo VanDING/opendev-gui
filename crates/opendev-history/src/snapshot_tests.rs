@@ -29,18 +29,12 @@ fn test_unquote_git_path_plain() {
 
 #[test]
 fn test_unquote_git_path_quoted() {
-    assert_eq!(
-        unquote_git_path("\"path with spaces/file.rs\""),
-        "path with spaces/file.rs"
-    );
+    assert_eq!(unquote_git_path("\"path with spaces/file.rs\""), "path with spaces/file.rs");
 }
 
 #[test]
 fn test_unquote_git_path_escaped() {
-    assert_eq!(
-        unquote_git_path("\"path\\\\with\\\\backslashes\""),
-        "path\\with\\backslashes"
-    );
+    assert_eq!(unquote_git_path("\"path\\\\with\\\\backslashes\""), "path\\with\\backslashes");
 }
 
 #[test]
@@ -70,11 +64,7 @@ fn test_snapshot_diff_numstat() {
     let tmp = tempfile::TempDir::new().unwrap();
     let project_dir = tmp.path().to_string_lossy().to_string();
 
-    Command::new("git")
-        .args(["init"])
-        .current_dir(&project_dir)
-        .output()
-        .unwrap();
+    Command::new("git").args(["init"]).current_dir(&project_dir).output().unwrap();
 
     // Create initial file
     std::fs::write(tmp.path().join("test.txt"), "line1\nline2\nline3\n").unwrap();
@@ -102,21 +92,14 @@ fn test_snapshot_diff_full() {
     let tmp = tempfile::TempDir::new().unwrap();
     let project_dir = tmp.path().to_string_lossy().to_string();
 
-    Command::new("git")
-        .args(["init"])
-        .current_dir(&project_dir)
-        .output()
-        .unwrap();
+    Command::new("git").args(["init"]).current_dir(&project_dir).output().unwrap();
 
     std::fs::write(tmp.path().join("hello.rs"), "fn main() {}\n").unwrap();
     let mut mgr = SnapshotManager::new(&project_dir);
     let hash1 = mgr.track().unwrap();
 
-    std::fs::write(
-        tmp.path().join("hello.rs"),
-        "fn main() {\n    println!(\"hello\");\n}\n",
-    )
-    .unwrap();
+    std::fs::write(tmp.path().join("hello.rs"), "fn main() {\n    println!(\"hello\");\n}\n")
+        .unwrap();
     std::fs::write(tmp.path().join("new_file.txt"), "new content\n").unwrap();
     let hash2 = mgr.track().unwrap();
 
@@ -128,10 +111,7 @@ fn test_snapshot_diff_full() {
     assert!(hello_diff.before.contains("fn main()"));
     assert!(hello_diff.after.contains("println!"));
 
-    let new_diff = diffs
-        .iter()
-        .find(|d| d.file_path == "new_file.txt")
-        .unwrap();
+    let new_diff = diffs.iter().find(|d| d.file_path == "new_file.txt").unwrap();
     assert_eq!(new_diff.status, DiffStatus::Added);
     assert!(new_diff.before.is_empty());
     assert!(new_diff.after.contains("new content"));
@@ -143,11 +123,7 @@ fn test_snapshot_diff_summary() {
     let tmp = tempfile::TempDir::new().unwrap();
     let project_dir = tmp.path().to_string_lossy().to_string();
 
-    Command::new("git")
-        .args(["init"])
-        .current_dir(&project_dir)
-        .output()
-        .unwrap();
+    Command::new("git").args(["init"]).current_dir(&project_dir).output().unwrap();
 
     std::fs::write(tmp.path().join("a.txt"), "line1\n").unwrap();
     std::fs::write(tmp.path().join("b.txt"), "line1\n").unwrap();
@@ -170,11 +146,7 @@ fn test_snapshot_track_and_patch() {
     let project_dir = tmp.path().to_string_lossy().to_string();
 
     // Initialize a git repo in the project dir
-    Command::new("git")
-        .args(["init"])
-        .current_dir(&project_dir)
-        .output()
-        .unwrap();
+    Command::new("git").args(["init"]).current_dir(&project_dir).output().unwrap();
 
     // Create a file
     std::fs::write(tmp.path().join("test.txt"), "hello").unwrap();

@@ -44,9 +44,7 @@ impl App {
     }
 
     pub(super) fn handle_background_nudge(&mut self, content: String) {
-        self.state
-            .messages
-            .push(DisplayMessage::new(DisplayRole::Assistant, content));
+        self.state.messages.push(DisplayMessage::new(DisplayRole::Assistant, content));
         self.state.dirty = true;
         self.state.message_generation += 1;
     }
@@ -61,23 +59,15 @@ impl App {
         tool_call_count: usize,
     ) {
         // Check if the task was killed before queuing results
-        let was_killed = self
-            .state
-            .bg_agent_manager
-            .get_task(&task_id)
-            .is_some_and(|t| {
-                t.state == crate::managers::background_agents::BackgroundAgentState::Killed
-            });
+        let was_killed = self.state.bg_agent_manager.get_task(&task_id).is_some_and(|t| {
+            t.state == crate::managers::background_agents::BackgroundAgentState::Killed
+        });
 
         // Use the higher tool count — bg_agent_manager tracks subagent
         // tools via update_progress, while the callback only counts
         // top-level tool calls.
-        let tracked_count = self
-            .state
-            .bg_agent_manager
-            .get_task(&task_id)
-            .map(|t| t.tool_call_count)
-            .unwrap_or(0);
+        let tracked_count =
+            self.state.bg_agent_manager.get_task(&task_id).map(|t| t.tool_call_count).unwrap_or(0);
         let total_tools = tracked_count.max(tool_call_count);
 
         self.state.bg_agent_manager.mark_completed(
@@ -99,11 +89,8 @@ impl App {
                 .map(|(sa_id, _)| sa_id.clone())
                 .collect();
             for sa_id in &killed_subagent_ids {
-                if let Some(sa) = self
-                    .state
-                    .active_subagents
-                    .iter_mut()
-                    .find(|s| s.subagent_id == *sa_id)
+                if let Some(sa) =
+                    self.state.active_subagents.iter_mut().find(|s| s.subagent_id == *sa_id)
                     && !sa.finished
                 {
                     sa.finish(false, "Killed".to_string(), sa.tool_call_count, None);
@@ -144,16 +131,14 @@ impl App {
                 .get_task(&task_id)
                 .map(|t| t.query.clone())
                 .unwrap_or_default();
-            self.state
-                .pending_queue
-                .push_back(super::PendingItem::BackgroundResult {
-                    task_id: task_id.clone(),
-                    query,
-                    result: full_result,
-                    success,
-                    tool_call_count: total_tools,
-                    cost_usd,
-                });
+            self.state.pending_queue.push_back(super::PendingItem::BackgroundResult {
+                task_id: task_id.clone(),
+                query,
+                result: full_result,
+                success,
+                tool_call_count: total_tools,
+                cost_usd,
+            });
 
             // If idle, drain immediately
             if !self.state.agent_active {
@@ -171,13 +156,9 @@ impl App {
         tool_count: usize,
     ) {
         if matches!(tool_name.as_str(), "Agent" | "spawn_subagent") {
-            self.state
-                .bg_agent_manager
-                .increment_pending_spawn(&task_id);
+            self.state.bg_agent_manager.increment_pending_spawn(&task_id);
         }
-        self.state
-            .bg_agent_manager
-            .update_progress(&task_id, tool_name, tool_count);
+        self.state.bg_agent_manager.update_progress(&task_id, tool_name, tool_count);
         self.state.dirty = true;
     }
 
@@ -198,9 +179,7 @@ impl App {
         session_id: String,
         interrupt_token: opendev_runtime::InterruptToken,
     ) {
-        self.state
-            .bg_agent_manager
-            .add_task(task_id, query, session_id, interrupt_token);
+        self.state.bg_agent_manager.add_task(task_id, query, session_id, interrupt_token);
         self.state.dirty = true;
     }
 }

@@ -25,11 +25,6 @@ fn test_convert_provider_to_internal() {
 
     let model = &result["models"]["test-model"];
     assert_eq!(model["context_length"], 8192);
-    assert!(
-        model["capabilities"]
-            .as_array()
-            .unwrap()
-            .contains(&serde_json::json!("vision"))
-    );
+    assert!(model["capabilities"].as_array().unwrap().contains(&serde_json::json!("vision")));
     assert!(model["recommended"].as_bool().unwrap());
 }

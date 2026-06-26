@@ -101,11 +101,7 @@ impl fmt::Display for ContextReason {
         } else {
             String::new()
         };
-        write!(
-            f,
-            "[{}]{}{}: {}",
-            self.source, score_str, tokens_str, self.reason
-        )
+        write!(f, "[{}]{}{}: {}", self.source, score_str, tokens_str, self.reason)
     }
 }
 
@@ -126,12 +122,7 @@ fn default_order() -> i32 {
 
 impl ContextPiece {
     pub fn new(content: String, reason: ContextReason, category: ContextCategory) -> Self {
-        Self {
-            content,
-            reason,
-            category,
-            order: 100,
-        }
+        Self { content, reason, category, order: 100 }
     }
 
     pub fn with_order(mut self, order: i32) -> Self {

@@ -31,20 +31,15 @@ impl SessionProjector {
     /// with seq <= `target_seq` are considered (tombstone filtering still
     /// applies within that range).
     pub fn replay_to(events: &[EventEnvelope], target_seq: u64) -> Result<Session, String> {
-        let truncated: Vec<EventEnvelope> = events
-            .iter()
-            .filter(|e| e.seq <= target_seq)
-            .cloned()
-            .collect();
+        let truncated: Vec<EventEnvelope> =
+            events.iter().filter(|e| e.seq <= target_seq).cloned().collect();
         let effective = crate::event_store::EventStore::effective_events(&truncated);
         Self::project_from_effective(&effective)
     }
 
     /// Internal: project from a pre-filtered list of effective event references.
     fn project_from_effective(events: &[&EventEnvelope]) -> Result<Session, String> {
-        let first = events
-            .first()
-            .ok_or_else(|| "Cannot project from empty events".to_string())?;
+        let first = events.first().ok_or_else(|| "Cannot project from empty events".to_string())?;
 
         let first_event: SessionEvent = serde_json::from_value(first.data.clone())
             .map_err(|e| format!("Failed to deserialize first event: {e}"))?;
@@ -71,9 +66,7 @@ impl SessionProjector {
         session.metadata = metadata;
 
         if let Some(t) = title {
-            session
-                .metadata
-                .insert("title".to_string(), serde_json::Value::String(t));
+            session.metadata.insert("title".to_string(), serde_json::Value::String(t));
         }
 
         for envelope in &events[1..] {
@@ -136,9 +129,7 @@ impl SessionProjector {
                 session.updated_at = Utc::now();
             }
             SessionEvent::TitleChanged { title } => {
-                session
-                    .metadata
-                    .insert("title".to_string(), serde_json::Value::String(title));
+                session.metadata.insert("title".to_string(), serde_json::Value::String(title));
                 session.updated_at = timestamp;
             }
             SessionEvent::SessionArchived { time_archived } => {
@@ -155,10 +146,7 @@ impl SessionProjector {
                 session.metadata.insert(key, value);
                 session.updated_at = timestamp;
             }
-            SessionEvent::SessionForked {
-                source_session_id,
-                fork_point,
-            } => {
+            SessionEvent::SessionForked { source_session_id, fork_point } => {
                 session.parent_id = Some(source_session_id);
                 if let Some(point) = fork_point {
                     session.messages.truncate(point);

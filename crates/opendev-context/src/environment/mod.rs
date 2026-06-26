@@ -179,16 +179,7 @@ impl EnvironmentContext {
                 additional_dirs,
             );
             let memory_content = load_project_memory(working_dir);
-            (
-                None,
-                None,
-                None,
-                None,
-                None,
-                directory_tree,
-                instruction_files,
-                memory_content,
-            )
+            (None, None, None, None, None, directory_tree, instruction_files, memory_content)
         };
 
         let platform = format!("{} {}", std::env::consts::OS, std::env::consts::ARCH);
@@ -289,10 +280,8 @@ impl EnvironmentContext {
         if !self.project_config_files.is_empty() || self.directory_tree.is_some() {
             let mut proj_lines = vec!["# Project Structure".to_string()];
             if !self.project_config_files.is_empty() {
-                proj_lines.push(format!(
-                    "- Config files: {}",
-                    self.project_config_files.join(", ")
-                ));
+                proj_lines
+                    .push(format!("- Config files: {}", self.project_config_files.join(", ")));
             }
             if let Some(ref tree) = self.directory_tree {
                 proj_lines.push("- Directory layout:".to_string());
@@ -350,11 +339,7 @@ fn load_project_memory(working_dir: &Path) -> Option<String> {
     if content.trim().is_empty() {
         return None;
     }
-    let truncated: String = content
-        .lines()
-        .take(MAX_MEMORY_LINES)
-        .collect::<Vec<_>>()
-        .join("\n");
+    let truncated: String = content.lines().take(MAX_MEMORY_LINES).collect::<Vec<_>>().join("\n");
     if truncated.len() > MAX_MEMORY_BYTES {
         Some(truncated[..MAX_MEMORY_BYTES].to_string())
     } else {

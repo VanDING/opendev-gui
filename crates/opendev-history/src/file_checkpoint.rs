@@ -90,10 +90,8 @@ pub struct FileCheckpointManager {
 impl FileCheckpointManager {
     /// Create a new checkpoint manager for a session.
     pub fn new(session_id: &str, working_dir: &Path) -> Self {
-        let base_dir = opendev_config::Paths::default()
-            .data_dir()
-            .join("file-history")
-            .join(session_id);
+        let base_dir =
+            opendev_config::Paths::default().data_dir().join("file-history").join(session_id);
 
         let mut mgr = Self {
             session_id: session_id.to_string(),
@@ -112,11 +110,8 @@ impl FileCheckpointManager {
 
     /// Start a new turn checkpoint (called at the beginning of each query).
     pub fn begin_turn(&mut self) {
-        let turn = TurnCheckpoint {
-            turn_id: self.next_turn_id,
-            files: Vec::new(),
-            timestamp: Utc::now(),
-        };
+        let turn =
+            TurnCheckpoint { turn_id: self.next_turn_id, files: Vec::new(), timestamp: Utc::now() };
         self.next_turn_id += 1;
         self.current_turn = Some(turn);
     }
@@ -230,12 +225,7 @@ impl FileCheckpointManager {
                 .unwrap_or_else(|_| snapshot.abs_path.clone());
 
             if additions > 0 || deletions > 0 || snapshot.backup_file.is_none() {
-                stats.push(FileDiffStat {
-                    file_path,
-                    additions,
-                    deletions,
-                    is_binary,
-                });
+                stats.push(FileDiffStat { file_path, additions, deletions, is_binary });
             }
         }
 
@@ -333,9 +323,7 @@ impl FileCheckpointManager {
 
     /// Remove checkpoint session directories older than the retention period.
     pub fn cleanup_old_sessions() {
-        let history_base = opendev_config::Paths::default()
-            .data_dir()
-            .join("file-history");
+        let history_base = opendev_config::Paths::default().data_dir().join("file-history");
 
         let entries = match std::fs::read_dir(&history_base) {
             Ok(e) => e,
@@ -450,9 +438,7 @@ impl FileCheckpointManager {
         };
 
         // Atomic write
-        let tmp_path = self
-            .base_dir
-            .join(format!(".manifest.{}.tmp", uuid::Uuid::new_v4()));
+        let tmp_path = self.base_dir.join(format!(".manifest.{}.tmp", uuid::Uuid::new_v4()));
 
         let write_result = {
             #[cfg(unix)]

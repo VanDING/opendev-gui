@@ -13,11 +13,7 @@ impl OpenAiAdapter {
         payload
             .get("model")
             .and_then(|m| m.as_str())
-            .map(|model| {
-                REASONING_PREFIXES
-                    .iter()
-                    .any(|prefix| model.starts_with(prefix))
-            })
+            .map(|model| REASONING_PREFIXES.iter().any(|prefix| model.starts_with(prefix)))
             .unwrap_or(false)
     }
 
@@ -30,10 +26,7 @@ impl OpenAiAdapter {
             let role = msg.get("role").and_then(|r| r.as_str()).unwrap_or("");
             match role {
                 "system" => {
-                    instructions = msg
-                        .get("content")
-                        .and_then(|c| c.as_str())
-                        .map(String::from);
+                    instructions = msg.get("content").and_then(|c| c.as_str()).map(String::from);
                 }
                 "user" => {
                     let content = msg.get("content").cloned().unwrap_or(json!(""));

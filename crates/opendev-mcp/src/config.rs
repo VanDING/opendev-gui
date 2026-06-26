@@ -136,11 +136,7 @@ pub fn load_config(config_path: &Path) -> McpResult<McpConfig> {
     }
 
     let content = std::fs::read_to_string(config_path).map_err(|e| {
-        McpError::Config(format!(
-            "Failed to read MCP config from {}: {}",
-            config_path.display(),
-            e
-        ))
+        McpError::Config(format!("Failed to read MCP config from {}: {}", config_path.display(), e))
     })?;
 
     serde_json::from_str(&content).map_err(|e| {
@@ -195,17 +191,15 @@ pub fn save_config(config: &McpConfig, config_path: &Path) -> McpResult<()> {
     #[cfg(not(unix))]
     {
         std::io::Write::write_all(
-            &mut std::fs::OpenOptions::new()
-                .write(true)
-                .create_new(true)
-                .open(&tmp_path)
-                .map_err(|e| {
+            &mut std::fs::OpenOptions::new().write(true).create_new(true).open(&tmp_path).map_err(
+                |e| {
                     McpError::Config(format!(
                         "Failed to open temp config file {}: {}",
                         tmp_path.display(),
                         e
                     ))
-                })?,
+                },
+            )?,
             content.as_bytes(),
         )
         .map_err(|e| {
@@ -239,9 +233,7 @@ pub fn merge_configs(global: &McpConfig, project: Option<&McpConfig>) -> McpConf
     let mut merged = global.mcp_servers.clone();
     merged.extend(project.mcp_servers.clone());
 
-    McpConfig {
-        mcp_servers: merged,
-    }
+    McpConfig { mcp_servers: merged }
 }
 
 /// Expand environment variables in a string.
@@ -262,17 +254,9 @@ pub fn prepare_server_config(config: &McpServerConfig) -> McpServerConfig {
     McpServerConfig {
         command: config.command.clone(),
         args: config.args.iter().map(|a| expand_env_vars(a)).collect(),
-        env: config
-            .env
-            .iter()
-            .map(|(k, v)| (k.clone(), expand_env_vars(v)))
-            .collect(),
+        env: config.env.iter().map(|(k, v)| (k.clone(), expand_env_vars(v))).collect(),
         url: config.url.as_ref().map(|u| expand_env_vars(u)),
-        headers: config
-            .headers
-            .iter()
-            .map(|(k, v)| (k.clone(), expand_env_vars(v)))
-            .collect(),
+        headers: config.headers.iter().map(|(k, v)| (k.clone(), expand_env_vars(v))).collect(),
         enabled: config.enabled,
         auto_start: config.auto_start,
         transport: config.transport.clone(),
@@ -289,11 +273,7 @@ pub fn prepare_server_config(config: &McpServerConfig) -> McpServerConfig {
 /// Get the project-level MCP config path if it exists.
 pub fn get_project_config_path(working_dir: &Path) -> Option<PathBuf> {
     let config_path = working_dir.join(".mcp.json");
-    if config_path.exists() {
-        Some(config_path)
-    } else {
-        None
-    }
+    if config_path.exists() { Some(config_path) } else { None }
 }
 
 #[cfg(test)]

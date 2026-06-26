@@ -13,10 +13,7 @@ pub struct TextPosition {
 
 impl TextPosition {
     pub fn new(line_index: usize, char_offset: usize) -> Self {
-        Self {
-            line_index,
-            char_offset,
-        }
+        Self { line_index, char_offset }
     }
 }
 
@@ -28,9 +25,7 @@ impl PartialOrd for TextPosition {
 
 impl Ord for TextPosition {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.line_index
-            .cmp(&other.line_index)
-            .then(self.char_offset.cmp(&other.char_offset))
+        self.line_index.cmp(&other.line_index).then(self.char_offset.cmp(&other.char_offset))
     }
 }
 
@@ -66,21 +61,9 @@ impl SelectionRange {
         if line_index < start.line_index || line_index > end.line_index {
             return None;
         }
-        let col_start = if line_index == start.line_index {
-            start.char_offset
-        } else {
-            0
-        };
-        let col_end = if line_index == end.line_index {
-            end.char_offset
-        } else {
-            line_width
-        };
-        if col_start >= col_end {
-            None
-        } else {
-            Some((col_start, col_end))
-        }
+        let col_start = if line_index == start.line_index { start.char_offset } else { 0 };
+        let col_end = if line_index == end.line_index { end.char_offset } else { line_width };
+        if col_start >= col_end { None } else { Some((col_start, col_end)) }
     }
 }
 
@@ -113,11 +96,7 @@ impl SelectionState {
         }
         // Allow slightly out-of-area for auto-scroll (clamp later)
         let rel_col = col.saturating_sub(area.x) as usize;
-        let rel_row = if row < area.y {
-            0
-        } else {
-            (row - area.y) as usize
-        };
+        let rel_row = if row < area.y { 0 } else { (row - area.y) as usize };
         let line_index = self.actual_scroll + rel_row;
         let char_offset = rel_col.min(area.width as usize);
         Some(TextPosition::new(line_index, char_offset))
@@ -140,10 +119,7 @@ impl SelectionState {
     pub fn start(&mut self, col: u16, row: u16) {
         if let Some(pos) = self.screen_to_text_position(col, row) {
             self.active = true;
-            self.range = Some(SelectionRange {
-                anchor: pos,
-                cursor: pos,
-            });
+            self.range = Some(SelectionRange { anchor: pos, cursor: pos });
             self.auto_scroll_direction = None;
         }
     }

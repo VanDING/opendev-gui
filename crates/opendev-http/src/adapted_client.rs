@@ -29,20 +29,12 @@ pub struct AdaptedClient {
 impl AdaptedClient {
     /// Create an adapted client without any adapter (passthrough).
     pub fn new(client: HttpClient) -> Self {
-        Self {
-            client,
-            adapter: None,
-            curl_auth_header: None,
-        }
+        Self { client, adapter: None, curl_auth_header: None }
     }
 
     /// Create an adapted client with a provider adapter.
     pub fn with_adapter(client: HttpClient, adapter: Box<dyn ProviderAdapter>) -> Self {
-        Self {
-            client,
-            adapter: Some(adapter),
-            curl_auth_header: None,
-        }
+        Self { client, adapter: Some(adapter), curl_auth_header: None }
     }
 
     /// Enable curl subprocess transport for all requests.
@@ -90,9 +82,7 @@ impl AdaptedClient {
         if !provider.is_empty() {
             return provider.to_string();
         }
-        detect_provider_from_key(api_key)
-            .unwrap_or("openai")
-            .to_string()
+        detect_provider_from_key(api_key).unwrap_or("openai").to_string()
     }
 
     /// POST JSON with optional request/response conversion.
@@ -196,10 +186,7 @@ impl AdaptedClient {
                 stderr
             };
             warn!(request_id = %request_id, error = %msg, "curl request failed");
-            return Ok(HttpResult::fail(
-                format!("[request_id={request_id}] {msg}"),
-                false,
-            ));
+            return Ok(HttpResult::fail(format!("[request_id={request_id}] {msg}"), false));
         }
 
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
@@ -229,10 +216,7 @@ impl AdaptedClient {
             Err(e) => {
                 let msg = format!("parse error: {e}");
                 warn!(request_id = %request_id, error = %msg, "curl response parse error");
-                Ok(HttpResult::fail(
-                    format!("[request_id={request_id}] {msg}"),
-                    false,
-                ))
+                Ok(HttpResult::fail(format!("[request_id={request_id}] {msg}"), false))
             }
         }
     }
@@ -243,10 +227,7 @@ impl AdaptedClient {
         if self.curl_auth_header.is_some() {
             return true;
         }
-        self.adapter
-            .as_ref()
-            .map(|a| a.supports_streaming())
-            .unwrap_or(false)
+        self.adapter.as_ref().map(|a| a.supports_streaming()).unwrap_or(false)
     }
 
     /// POST JSON with SSE streaming, calling the callback for each event.
@@ -273,9 +254,7 @@ impl AdaptedClient {
                 c["stream"] = serde_json::json!(true);
                 c
             };
-            return self
-                .post_json_streaming_curl(&converted, auth, callback, cancel)
-                .await;
+            return self.post_json_streaming_curl(&converted, auth, callback, cancel).await;
         }
 
         let adapter = match &self.adapter {
@@ -299,16 +278,17 @@ impl AdaptedClient {
         // HttpResult so the react loop can retry on the next iteration, matching
         // the non-streaming post_json behavior.
         debug!(url = %url, "Sending streaming request");
-        let response = match self
-            .client
-            .send_streaming_request(url, &converted, cancel)
-            .await
-        {
+        let response = match self.client.send_streaming_request(url, &converted, cancel).await {
             Ok(resp) => resp,
             Err(HttpError::Interrupted) => return Ok(HttpResult::interrupted()),
+            Err(HttpError::Auth(msg)) => {
+                warn!(error = %msg, "Streaming request auth error (non-retryable)");
+                return Ok(HttpResult::fail(msg, false));
+            }
             Err(e) => {
-                warn!(error = %e, "Streaming request failed after retries, soft-failing");
-                return Ok(HttpResult::fail(e.to_string(), true));
+                let retryable = is_retryable_http_error(&e);
+                warn!(error = %e, retryable, "Streaming request failed, soft-failing");
+                return Ok(HttpResult::fail(e.to_string(), retryable));
             }
         };
 
@@ -490,10 +470,7 @@ impl AdaptedClient {
                                     }
                                     done_indices.insert(*index);
                                 }
-                                StreamEvent::UsageUpdate {
-                                    usage,
-                                    stop_reason: sr,
-                                } => {
+                                StreamEvent::UsageUpdate { usage, stop_reason: sr } => {
                                     if let Some(u) = usage {
                                         usage_data = Some(u.clone());
                                     }
@@ -664,10 +641,7 @@ impl AdaptedClient {
             None => {
                 let reason = stream_end_reason.unwrap_or("unknown");
                 warn!(reason = %reason, "Stream ended with no content");
-                Ok(HttpResult::fail(
-                    format!("No response received from stream ({reason})"),
-                    true,
-                ))
+                Ok(HttpResult::fail(format!("No response received from stream ({reason})"), true))
             }
         }
     }
@@ -874,10 +848,7 @@ impl AdaptedClient {
 
         if !stream_done && message["content"].is_null() && message.get("tool_calls").is_none() {
             warn!("curl stream ended with no content");
-            return Ok(HttpResult::fail(
-                "No response received from curl stream",
-                true,
-            ));
+            return Ok(HttpResult::fail("No response received from curl stream", true));
         }
 
         let response = serde_json::json!({
@@ -900,15 +871,31 @@ impl std::fmt::Debug for AdaptedClient {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("AdaptedClient")
             .field("api_url", &self.client.api_url())
-            .field(
-                "adapter",
-                &self
-                    .adapter
-                    .as_ref()
-                    .map(|a| a.provider_name())
-                    .unwrap_or("none"),
-            )
+            .field("adapter", &self.adapter.as_ref().map(|a| a.provider_name()).unwrap_or("none"))
             .finish()
+    }
+}
+
+/// Determine whether an HTTP error is retryable.
+///
+/// Auth errors (401/403) are never retryable. Network/timeout errors and
+/// 5xx server errors are retryable. Circuit breaker errors are also
+/// retryable since the breaker will eventually transition to half-open.
+fn is_retryable_http_error(err: &crate::models::HttpError) -> bool {
+    match err {
+        crate::models::HttpError::Auth(_) => false,
+        crate::models::HttpError::Request(e) => crate::client::is_retryable_error(e),
+        crate::models::HttpError::Interrupted => false,
+        crate::models::HttpError::RetriesExhausted { .. } => true,
+        crate::models::HttpError::Io(_) => true,
+        crate::models::HttpError::Json(_) => false,
+        crate::models::HttpError::Other(msg) => {
+            if msg.contains("Circuit breaker open") {
+                true
+            } else {
+                !msg.contains("HTTP 4")
+            }
+        }
     }
 }
 

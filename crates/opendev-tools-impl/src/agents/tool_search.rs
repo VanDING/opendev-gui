@@ -69,10 +69,7 @@ impl BaseTool for ToolSearchTool {
             Some(q) => q,
             None => return ToolResult::fail("Missing required parameter: query"),
         };
-        let max_results = args
-            .get("max_results")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(5) as usize;
+        let max_results = args.get("max_results").and_then(|v| v.as_u64()).unwrap_or(5) as usize;
 
         let deferred = self.registry.get_deferred_summaries();
 
@@ -128,22 +125,14 @@ impl BaseTool for ToolSearchTool {
                 .collect();
 
             scored.sort_by_key(|b| std::cmp::Reverse(b.0));
-            scored
-                .into_iter()
-                .take(max_results)
-                .map(|(_, name, _)| name.to_string())
-                .collect()
+            scored.into_iter().take(max_results).map(|(_, name, _)| name.to_string()).collect()
         };
 
         if matched_names.is_empty() {
             return ToolResult::fail(format!(
                 "No deferred tools matched query: \"{query}\". \
                  Available deferred tools: {}",
-                deferred
-                    .iter()
-                    .map(|(n, _)| n.as_str())
-                    .collect::<Vec<_>>()
-                    .join(", ")
+                deferred.iter().map(|(n, _)| n.as_str()).collect::<Vec<_>>().join(", ")
             ));
         }
 
@@ -175,10 +164,7 @@ impl BaseTool for ToolSearchTool {
 
         // Signal which tools to activate via metadata
         let mut metadata = HashMap::new();
-        metadata.insert(
-            "activated_tools".to_string(),
-            serde_json::Value::Array(activated),
-        );
+        metadata.insert("activated_tools".to_string(), serde_json::Value::Array(activated));
 
         ToolResult::ok_with_metadata(output, metadata)
     }

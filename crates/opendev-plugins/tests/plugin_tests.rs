@@ -38,11 +38,7 @@ fn create_plugin_dir(base: &std::path::Path, name: &str, version: &str) -> PathB
         "dependencies": [],
         "skills": ["skill_a"]
     });
-    fs::write(
-        dir.join("manifest.json"),
-        serde_json::to_string_pretty(&manifest).unwrap(),
-    )
-    .unwrap();
+    fs::write(dir.join("manifest.json"), serde_json::to_string_pretty(&manifest).unwrap()).unwrap();
     dir
 }
 
@@ -104,16 +100,10 @@ fn test_plugin_manifest_serialization() {
 
 #[test]
 fn test_plugin_source_variants() {
-    let git = PluginSource::Git {
-        url: "https://github.com/test/repo".into(),
-        branch: "main".into(),
-    };
-    let local = PluginSource::Local {
-        path: PathBuf::from("/tmp/plugin"),
-    };
-    let marketplace = PluginSource::Marketplace {
-        marketplace: "default".into(),
-    };
+    let git =
+        PluginSource::Git { url: "https://github.com/test/repo".into(), branch: "main".into() };
+    let local = PluginSource::Local { path: PathBuf::from("/tmp/plugin") };
+    let marketplace = PluginSource::Marketplace { marketplace: "default".into() };
 
     // Serialize and deserialize each variant
     for source in [&git, &local, &marketplace] {
@@ -147,9 +137,7 @@ fn test_installed_plugins_registry() {
     let config = PluginConfig {
         name: "test-plugin".into(),
         version: "1.0.0".into(),
-        source: PluginSource::Marketplace {
-            marketplace: "my-market".into(),
-        },
+        source: PluginSource::Marketplace { marketplace: "my-market".into() },
         status: PluginStatus::Installed,
         scope: PluginScope::User,
         enabled: true,
@@ -170,10 +158,7 @@ fn test_installed_plugins_registry() {
 
 #[test]
 fn test_installed_plugins_make_key() {
-    assert_eq!(
-        InstalledPlugins::make_key("market", "plugin"),
-        "market:plugin"
-    );
+    assert_eq!(InstalledPlugins::make_key("market", "plugin"), "market:plugin");
 }
 
 // ── Manager tests ──────────────────────────────────────────────
@@ -213,11 +198,7 @@ fn test_discover_plugins_project_and_global() {
     fs::create_dir_all(&manager.paths.global_plugins_dir).unwrap();
     fs::create_dir_all(&manager.paths.project_plugins_dir).unwrap();
     create_plugin_dir(&manager.paths.global_plugins_dir, "global-plugin", "1.0.0");
-    create_plugin_dir(
-        &manager.paths.project_plugins_dir,
-        "project-plugin",
-        "1.0.0",
-    );
+    create_plugin_dir(&manager.paths.project_plugins_dir, "project-plugin", "1.0.0");
 
     let manifests = manager.discover_plugins().unwrap();
     assert_eq!(manifests.len(), 2);
@@ -289,9 +270,7 @@ fn test_installed_plugins_persistence() {
     plugins.add(PluginConfig {
         name: "test".into(),
         version: "1.0.0".into(),
-        source: PluginSource::Local {
-            path: PathBuf::from("/tmp"),
-        },
+        source: PluginSource::Local { path: PathBuf::from("/tmp") },
         status: PluginStatus::Installed,
         scope: PluginScope::User,
         enabled: true,
@@ -300,9 +279,7 @@ fn test_installed_plugins_persistence() {
         marketplace: Some("local".into()),
     });
 
-    manager
-        .save_installed_plugins(&plugins, PluginScope::User)
-        .unwrap();
+    manager.save_installed_plugins(&plugins, PluginScope::User).unwrap();
     let loaded = manager.load_installed_plugins(PluginScope::User).unwrap();
     assert_eq!(loaded.plugins.len(), 1);
 }
@@ -317,9 +294,7 @@ fn test_enable_disable_plugin() {
     plugins.add(PluginConfig {
         name: "toggleable".into(),
         version: "1.0.0".into(),
-        source: PluginSource::Marketplace {
-            marketplace: "market".into(),
-        },
+        source: PluginSource::Marketplace { marketplace: "market".into() },
         status: PluginStatus::Installed,
         scope: PluginScope::User,
         enabled: true,
@@ -327,23 +302,17 @@ fn test_enable_disable_plugin() {
         installed_at: chrono::Utc::now(),
         marketplace: Some("market".into()),
     });
-    manager
-        .save_installed_plugins(&plugins, PluginScope::User)
-        .unwrap();
+    manager.save_installed_plugins(&plugins, PluginScope::User).unwrap();
 
     // Disable
-    manager
-        .disable_plugin("toggleable", "market", PluginScope::User)
-        .unwrap();
+    manager.disable_plugin("toggleable", "market", PluginScope::User).unwrap();
     let loaded = manager.load_installed_plugins(PluginScope::User).unwrap();
     let p = loaded.get("market", "toggleable").unwrap();
     assert!(!p.enabled);
     assert_eq!(p.status, PluginStatus::Disabled);
 
     // Re-enable
-    manager
-        .enable_plugin("toggleable", "market", PluginScope::User)
-        .unwrap();
+    manager.enable_plugin("toggleable", "market", PluginScope::User).unwrap();
     let loaded = manager.load_installed_plugins(PluginScope::User).unwrap();
     let p = loaded.get("market", "toggleable").unwrap();
     assert!(p.enabled);
@@ -481,9 +450,7 @@ fn test_search_marketplace() {
     );
     manager.save_known_marketplaces(&marketplaces).unwrap();
 
-    let results = manager
-        .search_marketplace(marketplace_name, "lint")
-        .unwrap();
+    let results = manager.search_marketplace(marketplace_name, "lint").unwrap();
     assert_eq!(results.len(), 1);
     assert_eq!(results[0].name, "linter");
 
@@ -527,11 +494,8 @@ fn test_extract_name_from_url() {
 fn test_parse_skill_metadata() {
     let tmp = TempDir::new().unwrap();
     let skill_file = tmp.path().join("SKILL.md");
-    fs::write(
-        &skill_file,
-        "---\nname: my-skill\ndescription: Does cool things\n---\n# My Skill\n",
-    )
-    .unwrap();
+    fs::write(&skill_file, "---\nname: my-skill\ndescription: Does cool things\n---\n# My Skill\n")
+        .unwrap();
 
     let (name, desc) = PluginManager::parse_skill_metadata(&skill_file);
     assert_eq!(name, "my-skill");
@@ -577,18 +541,13 @@ fn test_copy_dir_recursive() {
     assert!(dst.join("file.txt").exists());
     assert!(dst.join("sub").join("nested.txt").exists());
     assert_eq!(fs::read_to_string(dst.join("file.txt")).unwrap(), "hello");
-    assert_eq!(
-        fs::read_to_string(dst.join("sub").join("nested.txt")).unwrap(),
-        "world"
-    );
+    assert_eq!(fs::read_to_string(dst.join("sub").join("nested.txt")).unwrap(), "world");
 }
 
 #[test]
 fn test_marketplace_catalog_serde() {
-    let catalog = MarketplaceCatalog {
-        plugins: vec!["a".into(), "b".into()],
-        auto_discovered: true,
-    };
+    let catalog =
+        MarketplaceCatalog { plugins: vec!["a".into(), "b".into()], auto_discovered: true };
     let json = serde_json::to_string(&catalog).unwrap();
     let back: MarketplaceCatalog = serde_json::from_str(&json).unwrap();
     assert_eq!(back.plugins, vec!["a", "b"]);
@@ -624,11 +583,7 @@ fn test_install_and_uninstall_plugin() {
 
     // Set up a marketplace with a plugin
     let marketplace_name = "test-market";
-    create_marketplace(
-        &manager.paths.global_marketplaces_dir,
-        marketplace_name,
-        &["my-plugin"],
-    );
+    create_marketplace(&manager.paths.global_marketplaces_dir, marketplace_name, &["my-plugin"]);
 
     let mut marketplaces = KnownMarketplaces::default();
     marketplaces.marketplaces.insert(
@@ -644,9 +599,7 @@ fn test_install_and_uninstall_plugin() {
     manager.save_known_marketplaces(&marketplaces).unwrap();
 
     // Install
-    let config = manager
-        .install_plugin("my-plugin", marketplace_name, PluginScope::User)
-        .unwrap();
+    let config = manager.install_plugin("my-plugin", marketplace_name, PluginScope::User).unwrap();
     assert_eq!(config.name, "my-plugin");
     assert!(config.enabled);
     assert!(config.path.exists());
@@ -656,9 +609,7 @@ fn test_install_and_uninstall_plugin() {
     assert_eq!(installed.len(), 1);
 
     // Uninstall
-    manager
-        .uninstall_plugin("my-plugin", marketplace_name, PluginScope::User)
-        .unwrap();
+    manager.uninstall_plugin("my-plugin", marketplace_name, PluginScope::User).unwrap();
     let installed = manager.list_installed(Some(PluginScope::User)).unwrap();
     assert!(installed.is_empty());
 }
@@ -673,9 +624,7 @@ fn test_list_installed_merges_scopes() {
     user_plugins.add(PluginConfig {
         name: "user-plug".into(),
         version: "1.0.0".into(),
-        source: PluginSource::Local {
-            path: PathBuf::from("/tmp"),
-        },
+        source: PluginSource::Local { path: PathBuf::from("/tmp") },
         status: PluginStatus::Installed,
         scope: PluginScope::User,
         enabled: true,
@@ -683,18 +632,14 @@ fn test_list_installed_merges_scopes() {
         installed_at: chrono::Utc::now(),
         marketplace: Some("local".into()),
     });
-    manager
-        .save_installed_plugins(&user_plugins, PluginScope::User)
-        .unwrap();
+    manager.save_installed_plugins(&user_plugins, PluginScope::User).unwrap();
 
     // Add a project-scope plugin
     let mut project_plugins = InstalledPlugins::default();
     project_plugins.add(PluginConfig {
         name: "project-plug".into(),
         version: "1.0.0".into(),
-        source: PluginSource::Local {
-            path: PathBuf::from("/tmp"),
-        },
+        source: PluginSource::Local { path: PathBuf::from("/tmp") },
         status: PluginStatus::Installed,
         scope: PluginScope::Project,
         enabled: true,
@@ -702,9 +647,7 @@ fn test_list_installed_merges_scopes() {
         installed_at: chrono::Utc::now(),
         marketplace: Some("local".into()),
     });
-    manager
-        .save_installed_plugins(&project_plugins, PluginScope::Project)
-        .unwrap();
+    manager.save_installed_plugins(&project_plugins, PluginScope::Project).unwrap();
 
     // List all
     let all = manager.list_installed(None).unwrap();

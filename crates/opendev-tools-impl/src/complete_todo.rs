@@ -77,10 +77,7 @@ impl BaseTool for CompleteTodoTool {
                 mgr.format_status_sorted()
             ))
         } else {
-            ToolResult::ok(format!(
-                "Todo {id} completed.\n\n{}",
-                mgr.format_status_sorted()
-            ))
+            ToolResult::ok(format!("Todo {id} completed.\n\n{}", mgr.format_status_sorted()))
         }
     }
 }

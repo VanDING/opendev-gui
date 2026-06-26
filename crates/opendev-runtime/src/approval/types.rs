@@ -108,10 +108,9 @@ impl ApprovalRule {
             return false;
         }
         match self.rule_type {
-            RuleType::Pattern | RuleType::Danger => self
-                .get_compiled_regex()
-                .map(|re| re.is_match(command))
-                .unwrap_or(false),
+            RuleType::Pattern | RuleType::Danger => {
+                self.get_compiled_regex().map(|re| re.is_match(command)).unwrap_or(false)
+            }
             RuleType::Command => command == self.pattern,
             RuleType::Prefix => {
                 command == self.pattern || command.starts_with(&format!("{} ", self.pattern))

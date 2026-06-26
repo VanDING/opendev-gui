@@ -176,20 +176,11 @@ pub static TEMPLATES: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::
 
     // subagents
     m.insert("subagents/subagent-build.md", SUBAGENTS_SUBAGENT_BUILD);
-    m.insert(
-        "subagents/subagent-code-explorer.md",
-        SUBAGENTS_SUBAGENT_CODE_EXPLORER,
-    );
+    m.insert("subagents/subagent-code-explorer.md", SUBAGENTS_SUBAGENT_CODE_EXPLORER);
     m.insert("subagents/subagent-general.md", SUBAGENTS_SUBAGENT_GENERAL);
     m.insert("subagents/subagent-planner.md", SUBAGENTS_SUBAGENT_PLANNER);
-    m.insert(
-        "subagents/subagent-project-init.md",
-        SUBAGENTS_SUBAGENT_PROJECT_INIT,
-    );
-    m.insert(
-        "subagents/subagent-verification.md",
-        SUBAGENTS_SUBAGENT_VERIFICATION,
-    );
+    m.insert("subagents/subagent-project-init.md", SUBAGENTS_SUBAGENT_PROJECT_INIT);
+    m.insert("subagents/subagent-verification.md", SUBAGENTS_SUBAGENT_VERIFICATION);
 
     // system
     m.insert("system/compaction.md", SYSTEM_COMPACTION);
@@ -197,134 +188,47 @@ pub static TEMPLATES: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::
     m.insert("system/main.md", SYSTEM_MAIN);
 
     // system/main
-    m.insert(
-        "system/main/main-action-safety.md",
-        SYSTEM_MAIN_MAIN_ACTION_SAFETY,
-    );
-    m.insert(
-        "system/main/main-auto-memory.md",
-        SYSTEM_MAIN_MAIN_AUTO_MEMORY,
-    );
-    m.insert(
-        "system/main/main-code-quality.md",
-        SYSTEM_MAIN_MAIN_CODE_QUALITY,
-    );
-    m.insert(
-        "system/main/main-code-references.md",
-        SYSTEM_MAIN_MAIN_CODE_REFERENCES,
-    );
-    m.insert(
-        "system/main/main-error-recovery.md",
-        SYSTEM_MAIN_MAIN_ERROR_RECOVERY,
-    );
-    m.insert(
-        "system/main/main-git-workflow.md",
-        SYSTEM_MAIN_MAIN_GIT_WORKFLOW,
-    );
-    m.insert(
-        "system/main/main-mode-awareness.md",
-        SYSTEM_MAIN_MAIN_MODE_AWARENESS,
-    );
-    m.insert(
-        "system/main/main-no-time-estimates.md",
-        SYSTEM_MAIN_MAIN_NO_TIME_ESTIMATES,
-    );
-    m.insert(
-        "system/main/main-output-awareness.md",
-        SYSTEM_MAIN_MAIN_OUTPUT_AWARENESS,
-    );
-    m.insert(
-        "system/main/main-output-efficiency.md",
-        SYSTEM_MAIN_MAIN_OUTPUT_EFFICIENCY,
-    );
-    m.insert(
-        "system/main/main-provider-anthropic.md",
-        SYSTEM_MAIN_MAIN_PROVIDER_ANTHROPIC,
-    );
-    m.insert(
-        "system/main/main-provider-fireworks.md",
-        SYSTEM_MAIN_MAIN_PROVIDER_FIREWORKS,
-    );
-    m.insert(
-        "system/main/main-provider-openai.md",
-        SYSTEM_MAIN_MAIN_PROVIDER_OPENAI,
-    );
-    m.insert(
-        "system/main/main-reminders-note.md",
-        SYSTEM_MAIN_MAIN_REMINDERS_NOTE,
-    );
-    m.insert(
-        "system/main/main-scratchpad.md",
-        SYSTEM_MAIN_MAIN_SCRATCHPAD,
-    );
-    m.insert(
-        "system/main/main-security-policy.md",
-        SYSTEM_MAIN_MAIN_SECURITY_POLICY,
-    );
-    m.insert(
-        "system/main/main-subagent-guide.md",
-        SYSTEM_MAIN_MAIN_SUBAGENT_GUIDE,
-    );
-    m.insert(
-        "system/main/main-agent-team-guide.md",
-        SYSTEM_MAIN_MAIN_AGENT_TEAM_GUIDE,
-    );
-    m.insert(
-        "system/main/main-task-tracking.md",
-        SYSTEM_MAIN_MAIN_TASK_TRACKING,
-    );
-    m.insert(
-        "system/main/main-tone-and-style.md",
-        SYSTEM_MAIN_MAIN_TONE_AND_STYLE,
-    );
-    m.insert(
-        "system/main/main-tool-selection.md",
-        SYSTEM_MAIN_MAIN_TOOL_SELECTION,
-    );
-    m.insert(
-        "system/main/main-verification.md",
-        SYSTEM_MAIN_MAIN_VERIFICATION,
-    );
+    m.insert("system/main/main-action-safety.md", SYSTEM_MAIN_MAIN_ACTION_SAFETY);
+    m.insert("system/main/main-auto-memory.md", SYSTEM_MAIN_MAIN_AUTO_MEMORY);
+    m.insert("system/main/main-code-quality.md", SYSTEM_MAIN_MAIN_CODE_QUALITY);
+    m.insert("system/main/main-code-references.md", SYSTEM_MAIN_MAIN_CODE_REFERENCES);
+    m.insert("system/main/main-error-recovery.md", SYSTEM_MAIN_MAIN_ERROR_RECOVERY);
+    m.insert("system/main/main-git-workflow.md", SYSTEM_MAIN_MAIN_GIT_WORKFLOW);
+    m.insert("system/main/main-mode-awareness.md", SYSTEM_MAIN_MAIN_MODE_AWARENESS);
+    m.insert("system/main/main-no-time-estimates.md", SYSTEM_MAIN_MAIN_NO_TIME_ESTIMATES);
+    m.insert("system/main/main-output-awareness.md", SYSTEM_MAIN_MAIN_OUTPUT_AWARENESS);
+    m.insert("system/main/main-output-efficiency.md", SYSTEM_MAIN_MAIN_OUTPUT_EFFICIENCY);
+    m.insert("system/main/main-provider-anthropic.md", SYSTEM_MAIN_MAIN_PROVIDER_ANTHROPIC);
+    m.insert("system/main/main-provider-fireworks.md", SYSTEM_MAIN_MAIN_PROVIDER_FIREWORKS);
+    m.insert("system/main/main-provider-openai.md", SYSTEM_MAIN_MAIN_PROVIDER_OPENAI);
+    m.insert("system/main/main-reminders-note.md", SYSTEM_MAIN_MAIN_REMINDERS_NOTE);
+    m.insert("system/main/main-scratchpad.md", SYSTEM_MAIN_MAIN_SCRATCHPAD);
+    m.insert("system/main/main-security-policy.md", SYSTEM_MAIN_MAIN_SECURITY_POLICY);
+    m.insert("system/main/main-subagent-guide.md", SYSTEM_MAIN_MAIN_SUBAGENT_GUIDE);
+    m.insert("system/main/main-agent-team-guide.md", SYSTEM_MAIN_MAIN_AGENT_TEAM_GUIDE);
+    m.insert("system/main/main-task-tracking.md", SYSTEM_MAIN_MAIN_TASK_TRACKING);
+    m.insert("system/main/main-tone-and-style.md", SYSTEM_MAIN_MAIN_TONE_AND_STYLE);
+    m.insert("system/main/main-tool-selection.md", SYSTEM_MAIN_MAIN_TOOL_SELECTION);
+    m.insert("system/main/main-verification.md", SYSTEM_MAIN_MAIN_VERIFICATION);
 
     // tools
     m.insert("tools/tool-analyze-image.md", TOOLS_TOOL_ANALYZE_IMAGE);
     m.insert("tools/tool-apply-patch.md", TOOLS_TOOL_APPLY_PATCH);
     m.insert("tools/tool-ask-user.md", TOOLS_TOOL_ASK_USER);
     m.insert("tools/tool-browser.md", TOOLS_TOOL_BROWSER);
-    m.insert(
-        "tools/tool-capture-screenshot.md",
-        TOOLS_TOOL_CAPTURE_SCREENSHOT,
-    );
-    m.insert(
-        "tools/tool-capture-web-screenshot.md",
-        TOOLS_TOOL_CAPTURE_WEB_SCREENSHOT,
-    );
+    m.insert("tools/tool-capture-screenshot.md", TOOLS_TOOL_CAPTURE_SCREENSHOT);
+    m.insert("tools/tool-capture-web-screenshot.md", TOOLS_TOOL_CAPTURE_WEB_SCREENSHOT);
     m.insert("tools/tool-clear-todos.md", TOOLS_TOOL_CLEAR_TODOS);
     m.insert("tools/tool-complete-todo.md", TOOLS_TOOL_COMPLETE_TODO);
     m.insert("tools/tool-edit-file.md", TOOLS_TOOL_EDIT_FILE);
     m.insert("tools/tool-fetch-url.md", TOOLS_TOOL_FETCH_URL);
-    m.insert(
-        "tools/tool-find-referencing-symbols.md",
-        TOOLS_TOOL_FIND_REFERENCING_SYMBOLS,
-    );
+    m.insert("tools/tool-find-referencing-symbols.md", TOOLS_TOOL_FIND_REFERENCING_SYMBOLS);
     m.insert("tools/tool-find-symbol.md", TOOLS_TOOL_FIND_SYMBOL);
-    m.insert(
-        "tools/tool-get-session-history.md",
-        TOOLS_TOOL_GET_SESSION_HISTORY,
-    );
-    m.insert(
-        "tools/tool-get-subagent-output.md",
-        TOOLS_TOOL_GET_SUBAGENT_OUTPUT,
-    );
+    m.insert("tools/tool-get-session-history.md", TOOLS_TOOL_GET_SESSION_HISTORY);
+    m.insert("tools/tool-get-subagent-output.md", TOOLS_TOOL_GET_SUBAGENT_OUTPUT);
     m.insert("tools/tool-git.md", TOOLS_TOOL_GIT);
-    m.insert(
-        "tools/tool-insert-after-symbol.md",
-        TOOLS_TOOL_INSERT_AFTER_SYMBOL,
-    );
-    m.insert(
-        "tools/tool-insert-before-symbol.md",
-        TOOLS_TOOL_INSERT_BEFORE_SYMBOL,
-    );
+    m.insert("tools/tool-insert-after-symbol.md", TOOLS_TOOL_INSERT_AFTER_SYMBOL);
+    m.insert("tools/tool-insert-before-symbol.md", TOOLS_TOOL_INSERT_BEFORE_SYMBOL);
     m.insert("tools/tool-invoke-skill.md", TOOLS_TOOL_INVOKE_SKILL);
     m.insert("tools/tool-list-agents.md", TOOLS_TOOL_LIST_AGENTS);
     m.insert("tools/tool-list-files.md", TOOLS_TOOL_LIST_FILES);
@@ -339,10 +243,7 @@ pub static TEMPLATES: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::
     m.insert("tools/tool-present-plan.md", TOOLS_TOOL_PRESENT_PLAN);
     m.insert("tools/tool-read-file.md", TOOLS_TOOL_READ_FILE);
     m.insert("tools/tool-rename-symbol.md", TOOLS_TOOL_RENAME_SYMBOL);
-    m.insert(
-        "tools/tool-replace-symbol-body.md",
-        TOOLS_TOOL_REPLACE_SYMBOL_BODY,
-    );
+    m.insert("tools/tool-replace-symbol-body.md", TOOLS_TOOL_REPLACE_SYMBOL_BODY);
     m.insert("tools/tool-run-command.md", TOOLS_TOOL_RUN_COMMAND);
     m.insert("tools/tool-schedule.md", TOOLS_TOOL_SCHEDULE);
     m.insert("tools/tool-search-tools.md", TOOLS_TOOL_SEARCH_TOOLS);
@@ -374,38 +275,22 @@ pub fn get_embedded(path: &str) -> Option<&'static str> {
 
 /// Get all embedded templates in the `system/main/` category.
 pub fn system_main_templates() -> Vec<(&'static str, &'static str)> {
-    TEMPLATES
-        .iter()
-        .filter(|(k, _)| k.starts_with("system/main/"))
-        .map(|(&k, &v)| (k, v))
-        .collect()
+    TEMPLATES.iter().filter(|(k, _)| k.starts_with("system/main/")).map(|(&k, &v)| (k, v)).collect()
 }
 
 /// Get all embedded templates in the `tools/` category.
 pub fn tool_templates() -> Vec<(&'static str, &'static str)> {
-    TEMPLATES
-        .iter()
-        .filter(|(k, _)| k.starts_with("tools/"))
-        .map(|(&k, &v)| (k, v))
-        .collect()
+    TEMPLATES.iter().filter(|(k, _)| k.starts_with("tools/")).map(|(&k, &v)| (k, v)).collect()
 }
 
 /// Get all embedded templates in the `subagents/` category.
 pub fn subagent_templates() -> Vec<(&'static str, &'static str)> {
-    TEMPLATES
-        .iter()
-        .filter(|(k, _)| k.starts_with("subagents/"))
-        .map(|(&k, &v)| (k, v))
-        .collect()
+    TEMPLATES.iter().filter(|(k, _)| k.starts_with("subagents/")).map(|(&k, &v)| (k, v)).collect()
 }
 
 /// Get all embedded templates in the `generators/` category.
 pub fn generator_templates() -> Vec<(&'static str, &'static str)> {
-    TEMPLATES
-        .iter()
-        .filter(|(k, _)| k.starts_with("generators/"))
-        .map(|(&k, &v)| (k, v))
-        .collect()
+    TEMPLATES.iter().filter(|(k, _)| k.starts_with("generators/")).map(|(&k, &v)| (k, v)).collect()
 }
 
 #[cfg(test)]

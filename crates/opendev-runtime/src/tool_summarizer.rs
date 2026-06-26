@@ -11,11 +11,7 @@
 pub fn summarize_tool_result(tool_name: &str, output: Option<&str>, error: Option<&str>) -> String {
     // Error case
     if let Some(err) = error {
-        let truncated = if err.len() > 200 {
-            &err[..err.floor_char_boundary(200)]
-        } else {
-            err
-        };
+        let truncated = if err.len() > 200 { &err[..err.floor_char_boundary(200)] } else { err };
         return format!("Error: {truncated}");
     }
 
@@ -54,11 +50,7 @@ pub fn summarize_tool_result(tool_name: &str, output: Option<&str>, error: Optio
 
         // Directory listing
         "list_files" | "list_directory" | "List" => {
-            let file_count = if result_str.is_empty() {
-                0
-            } else {
-                result_str.lines().count()
-            };
+            let file_count = if result_str.is_empty() { 0 } else { result_str.lines().count() };
             format!("Listed directory ({file_count} items)")
         }
 

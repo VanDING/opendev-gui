@@ -22,11 +22,17 @@
 //! When making commits: ...
 //! ```
 
+mod budget;
 mod builtins;
+mod curator;
 mod discovery;
 mod loader;
 mod metadata;
 mod parsing;
+mod visibility;
 
+pub use budget::skills_within_budget;
+pub use curator::Curator;
 pub use loader::SkillLoader;
-pub use metadata::{CompanionFile, LoadedSkill, SkillMetadata, SkillSource};
+pub use metadata::{CompanionFile, LoadedSkill, SkillMetadata, SkillSource, SkillStatus};
+pub use visibility::{fallback_skills, is_visible};

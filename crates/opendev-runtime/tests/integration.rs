@@ -36,13 +36,7 @@ fn make_rule(
 /// Pattern rules use regex matching.
 #[test]
 fn pattern_rule_regex_matching() {
-    let rule = make_rule(
-        "p1",
-        RuleType::Pattern,
-        r"rm\s+-rf",
-        RuleAction::AutoDeny,
-        0,
-    );
+    let rule = make_rule("p1", RuleType::Pattern, r"rm\s+-rf", RuleAction::AutoDeny, 0);
     assert!(rule.matches("rm -rf /tmp/stuff"));
     assert!(rule.matches("sudo rm -rf /"));
     assert!(!rule.matches("ls -la"));
@@ -52,13 +46,7 @@ fn pattern_rule_regex_matching() {
 /// Command rules use exact string matching.
 #[test]
 fn command_rule_exact_matching() {
-    let rule = make_rule(
-        "c1",
-        RuleType::Command,
-        "deploy",
-        RuleAction::RequireApproval,
-        0,
-    );
+    let rule = make_rule("c1", RuleType::Command, "deploy", RuleAction::RequireApproval, 0);
     assert!(rule.matches("deploy"));
     assert!(!rule.matches("deploy --force"));
     assert!(!rule.matches("Deploy"));
@@ -68,13 +56,7 @@ fn command_rule_exact_matching() {
 /// Prefix rules match exact command or command + space + args.
 #[test]
 fn prefix_rule_boundary_matching() {
-    let rule = make_rule(
-        "px1",
-        RuleType::Prefix,
-        "git push",
-        RuleAction::RequireApproval,
-        0,
-    );
+    let rule = make_rule("px1", RuleType::Prefix, "git push", RuleAction::RequireApproval, 0);
     assert!(rule.matches("git push"));
     assert!(rule.matches("git push --force origin main"));
     assert!(!rule.matches("git pull"));
@@ -85,13 +67,7 @@ fn prefix_rule_boundary_matching() {
 /// Danger rules behave like Pattern rules (regex).
 #[test]
 fn danger_rule_regex_matching() {
-    let rule = make_rule(
-        "d1",
-        RuleType::Danger,
-        r"chmod\s+777",
-        RuleAction::RequireApproval,
-        0,
-    );
+    let rule = make_rule("d1", RuleType::Danger, r"chmod\s+777", RuleAction::RequireApproval, 0);
     assert!(rule.matches("chmod 777 /etc/passwd"));
     assert!(rule.matches("sudo chmod 777 ."));
     assert!(!rule.matches("chmod 755 file"));
@@ -108,13 +84,7 @@ fn disabled_rule_never_matches() {
 /// Invalid regex in a pattern rule returns false (no panic).
 #[test]
 fn invalid_regex_returns_false() {
-    let rule = make_rule(
-        "bad",
-        RuleType::Pattern,
-        r"[unclosed",
-        RuleAction::AutoDeny,
-        0,
-    );
+    let rule = make_rule("bad", RuleType::Pattern, r"[unclosed", RuleAction::AutoDeny, 0);
     assert!(!rule.matches("anything"));
 }
 
@@ -128,22 +98,10 @@ fn evaluate_command_highest_priority_wins() {
     let mut mgr = ApprovalRulesManager::new(None);
 
     // Low priority: auto-approve anything with "rm"
-    mgr.add_rule(make_rule(
-        "low",
-        RuleType::Pattern,
-        r"rm",
-        RuleAction::AutoApprove,
-        10,
-    ));
+    mgr.add_rule(make_rule("low", RuleType::Pattern, r"rm", RuleAction::AutoApprove, 10));
 
     // High priority: deny dangerous rm
-    mgr.add_rule(make_rule(
-        "high",
-        RuleType::Pattern,
-        r"rm\s+-rf",
-        RuleAction::AutoDeny,
-        50,
-    ));
+    mgr.add_rule(make_rule("high", RuleType::Pattern, r"rm\s+-rf", RuleAction::AutoDeny, 50));
 
     // Default danger_rm rule has priority 100, but let's test our custom rules
     // "rm -rf /" matches both our rules + default. Default has priority 100.
@@ -186,10 +144,7 @@ fn default_rules_present() {
     assert_eq!(rm_rule.priority, 100);
     assert!(rm_rule.enabled);
 
-    let chmod_rule = rules
-        .iter()
-        .find(|r| r.id == "default_danger_chmod")
-        .unwrap();
+    let chmod_rule = rules.iter().find(|r| r.id == "default_danger_chmod").unwrap();
     assert!(chmod_rule.matches("chmod 777 /etc"));
 }
 
@@ -204,13 +159,7 @@ fn rule_crud_operations() {
     let initial_count = mgr.rules().len();
 
     // Add
-    mgr.add_rule(make_rule(
-        "crud-test",
-        RuleType::Command,
-        "test",
-        RuleAction::AutoApprove,
-        0,
-    ));
+    mgr.add_rule(make_rule("crud-test", RuleType::Command, "test", RuleAction::AutoApprove, 0));
     assert_eq!(mgr.rules().len(), initial_count + 1);
 
     // Update
@@ -246,23 +195,11 @@ fn persistent_rules_project_scope_roundtrip() {
     {
         let mut mgr = ApprovalRulesManager::new(Some(tmp.path()));
         mgr.add_persistent_rule(
-            make_rule(
-                "persist-1",
-                RuleType::Command,
-                "deploy",
-                RuleAction::RequireApproval,
-                25,
-            ),
+            make_rule("persist-1", RuleType::Command, "deploy", RuleAction::RequireApproval, 25),
             RuleScope::Project,
         );
         mgr.add_persistent_rule(
-            make_rule(
-                "persist-2",
-                RuleType::Prefix,
-                "docker push",
-                RuleAction::AutoDeny,
-                30,
-            ),
+            make_rule("persist-2", RuleType::Prefix, "docker push", RuleAction::AutoDeny, 30),
             RuleScope::Project,
         );
     }
@@ -298,11 +235,7 @@ fn clear_persistent_rules_keeps_defaults() {
 
     // Only defaults remain
     for rule in mgr.rules() {
-        assert!(
-            rule.id.starts_with("default_"),
-            "non-default rule survived: {}",
-            rule.id
-        );
+        assert!(rule.id.starts_with("default_"), "non-default rule survived: {}", rule.id);
     }
 }
 
@@ -310,24 +243,17 @@ fn clear_persistent_rules_keeps_defaults() {
 #[test]
 fn list_persistent_excludes_defaults() {
     let mut mgr = ApprovalRulesManager::new(None);
-    mgr.add_rule(make_rule(
-        "custom",
-        RuleType::Command,
-        "x",
-        RuleAction::AutoApprove,
-        0,
-    ));
+    mgr.add_rule(make_rule("custom", RuleType::Command, "x", RuleAction::AutoApprove, 0));
 
     let listing = mgr.list_persistent_rules();
     assert_eq!(listing.len(), 1);
     assert_eq!(listing[0]["id"], "custom");
     // No default rules in listing
-    assert!(!listing.iter().any(|r| {
-        r["id"]
-            .as_str()
-            .map(|s| s.starts_with("default_"))
-            .unwrap_or(false)
-    }));
+    assert!(
+        !listing
+            .iter()
+            .any(|r| { r["id"].as_str().map(|s| s.starts_with("default_")).unwrap_or(false) })
+    );
 }
 
 // ========================================================================
@@ -342,12 +268,7 @@ fn command_history_records() {
 
     mgr.add_history("ls -la", true, None, None);
     mgr.add_history("rm -rf /", false, None, Some("default_danger_rm".into()));
-    mgr.add_history(
-        "mv bad.sh",
-        true,
-        Some("mv safe.sh".into()),
-        Some("custom_rule".into()),
-    );
+    mgr.add_history("mv bad.sh", true, Some("mv safe.sh".into()), Some("custom_rule".into()));
 
     assert_eq!(mgr.history().len(), 3);
 
@@ -356,15 +277,9 @@ fn command_history_records() {
     assert!(mgr.history()[0].timestamp.is_some());
 
     assert!(!mgr.history()[1].approved);
-    assert_eq!(
-        mgr.history()[1].rule_matched.as_deref(),
-        Some("default_danger_rm")
-    );
+    assert_eq!(mgr.history()[1].rule_matched.as_deref(), Some("default_danger_rm"));
 
-    assert_eq!(
-        mgr.history()[2].edited_command.as_deref(),
-        Some("mv safe.sh")
-    );
+    assert_eq!(mgr.history()[2].edited_command.as_deref(), Some("mv safe.sh"));
 }
 
 // ========================================================================
@@ -378,16 +293,8 @@ fn cost_tracker_accumulates() {
 
     let mut tracker = CostTracker::new();
 
-    let usage1 = TokenUsage {
-        prompt_tokens: 100,
-        completion_tokens: 50,
-        ..Default::default()
-    };
-    let usage2 = TokenUsage {
-        prompt_tokens: 200,
-        completion_tokens: 100,
-        ..Default::default()
-    };
+    let usage1 = TokenUsage { prompt_tokens: 100, completion_tokens: 50, ..Default::default() };
+    let usage2 = TokenUsage { prompt_tokens: 200, completion_tokens: 100, ..Default::default() };
 
     tracker.record_usage(&usage1, None);
     tracker.record_usage(&usage2, None);
@@ -408,11 +315,8 @@ fn cost_tracker_with_pricing() {
         output_price_per_million: 15.0, // $15/M output tokens
     };
 
-    let usage = TokenUsage {
-        prompt_tokens: 1_000_000,
-        completion_tokens: 100_000,
-        ..Default::default()
-    };
+    let usage =
+        TokenUsage { prompt_tokens: 1_000_000, completion_tokens: 100_000, ..Default::default() };
 
     let cost = tracker.record_usage(&usage, Some(&pricing));
     assert!(cost > 0.0, "cost should be positive with pricing");

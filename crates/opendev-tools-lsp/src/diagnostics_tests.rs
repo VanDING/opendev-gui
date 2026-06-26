@@ -129,10 +129,7 @@ async fn test_debouncer_coalesces_rapid_updates() {
 #[tokio::test]
 async fn test_debouncer_default_duration() {
     let (debouncer, _rx) = DiagnosticsDebouncer::new();
-    assert_eq!(
-        debouncer.debounce_duration(),
-        Duration::from_millis(DEFAULT_DEBOUNCE_MS)
-    );
+    assert_eq!(debouncer.debounce_duration(), Duration::from_millis(DEFAULT_DEBOUNCE_MS));
 }
 
 #[tokio::test]

@@ -16,10 +16,7 @@ impl McpManager {
             let state = health_states.entry(server_name.to_string()).or_default();
 
             if state.status == ServerHealthStatus::PermanentlyFailed {
-                debug!(
-                    server = server_name,
-                    "Server permanently failed, skipping restart"
-                );
+                debug!(server = server_name, "Server permanently failed, skipping restart");
                 return false;
             }
 

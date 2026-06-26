@@ -108,20 +108,14 @@ impl BaseTool for LspQueryTool {
         };
 
         let file_path = PathBuf::from(file_path_str);
-        let file_path = if file_path.is_relative() {
-            ctx.working_dir.join(&file_path)
-        } else {
-            file_path
-        };
+        let file_path =
+            if file_path.is_relative() { ctx.working_dir.join(&file_path) } else { file_path };
 
         let workspace_root = ctx.working_dir.clone();
 
         let line = args.get("line").and_then(|v| v.as_u64()).map(|v| v as u32);
 
-        let character = args
-            .get("character")
-            .and_then(|v| v.as_u64())
-            .map(|v| v as u32);
+        let character = args.get("character").and_then(|v| v.as_u64()).map(|v| v as u32);
 
         let mut lsp = self.lsp.lock().await;
 
@@ -136,10 +130,7 @@ impl BaseTool for LspQueryTool {
                     }
                 };
 
-                match lsp
-                    .goto_definition(&file_path, line, character, &workspace_root)
-                    .await
-                {
+                match lsp.goto_definition(&file_path, line, character, &workspace_root).await {
                     Ok(locations) => {
                         if locations.is_empty() {
                             return ToolResult::ok("No definition found at the given position.");
@@ -169,10 +160,7 @@ impl BaseTool for LspQueryTool {
                     }
                 };
 
-                match lsp
-                    .find_references(&file_path, line, character, &workspace_root)
-                    .await
-                {
+                match lsp.find_references(&file_path, line, character, &workspace_root).await {
                     Ok(locations) => {
                         if locations.is_empty() {
                             return ToolResult::ok("No references found at the given position.");
@@ -204,10 +192,7 @@ impl BaseTool for LspQueryTool {
                     }
                 };
 
-                match lsp
-                    .hover(&file_path, line, character, &workspace_root)
-                    .await
-                {
+                match lsp.hover(&file_path, line, character, &workspace_root).await {
                     Ok(Some(text)) => ToolResult::ok(text),
                     Ok(None) => {
                         ToolResult::ok("No hover information available at the given position.")

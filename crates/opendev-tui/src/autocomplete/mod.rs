@@ -202,11 +202,8 @@ impl AutocompleteEngine {
     /// Move selection up.
     pub fn select_prev(&mut self) {
         if !self.items.is_empty() {
-            self.selected = if self.selected == 0 {
-                self.items.len() - 1
-            } else {
-                self.selected - 1
-            };
+            self.selected =
+                if self.selected == 0 { self.items.len() - 1 } else { self.selected - 1 };
         }
     }
 

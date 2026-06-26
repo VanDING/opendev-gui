@@ -1,0 +1,17 @@
+[package]
+name = "opendev-observability"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Observability: tracing subscriber initialization, log file appender, Perfetto trace export"
+
+[dependencies]
+opendev-config = { workspace = true }
+serde = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tracing-appender = { workspace = true }
+tracing-perfetto-writer = "0.3"
+
+[dev-dependencies]
+tempfile = { workspace = true }

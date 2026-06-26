@@ -370,10 +370,7 @@ impl AppConfig {
             .or(Some(builtin_env).filter(|s| !s.is_empty()))
             .or(Some(convention_env.as_str()).filter(|s| !s.is_empty()))
             .unwrap_or("OPENAI_API_KEY");
-        Err(format!(
-            "No API key found. Set {} environment variable",
-            hint
-        ))
+        Err(format!("No API key found. Set {} environment variable", hint))
     }
 
     /// Convenience wrapper that calls [`get_api_key_with_env`] without registry info.

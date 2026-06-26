@@ -85,20 +85,14 @@ fn test_long_title_not_truncated() {
     let lines = widget.build_lines(done, in_progress, total);
     assert_eq!(lines.len(), 1);
     // Full title should be present (no truncation)
-    let text: String = lines[0]
-        .spans
-        .iter()
-        .map(|s| s.content.to_string())
-        .collect();
+    let text: String = lines[0].spans.iter().map(|s| s.content.to_string()).collect();
     assert!(text.contains(&"A".repeat(100)));
 }
 
 #[test]
 fn test_collapsed_render() {
     let items = make_items();
-    let widget = TodoPanelWidget::new(&items)
-        .with_expanded(false)
-        .with_spinner_tick(3);
+    let widget = TodoPanelWidget::new(&items).with_expanded(false).with_spinner_tick(3);
     let mut buf = Buffer::empty(Rect::new(0, 0, 60, 3));
     widget.render(Rect::new(0, 0, 60, 3), &mut buf);
 }
@@ -142,15 +136,9 @@ fn test_collapsed_all_done_shows_checkmark() {
     let (done, _, total) = widget.counts();
     let line = widget.build_collapsed_line(done, total);
     let text: String = line.spans.iter().map(|s| s.content.to_string()).collect();
-    assert!(
-        text.contains("All tasks complete"),
-        "Expected 'All tasks complete', got: {text}"
-    );
+    assert!(text.contains("All tasks complete"), "Expected 'All tasks complete', got: {text}");
     assert!(text.contains('\u{2714}'), "Expected checkmark in: {text}");
-    assert!(
-        !text.contains("Working"),
-        "Should not show 'Working' when all done"
-    );
+    assert!(!text.contains("Working"), "Should not show 'Working' when all done");
 }
 
 #[test]
@@ -191,9 +179,8 @@ fn test_expanded_title_no_spinner_in_header() {
     let mut buf = Buffer::empty(Rect::new(0, 0, 80, 10));
     widget.render(Rect::new(0, 0, 80, 10), &mut buf);
     // Extract top row text from buffer
-    let top_row: String = (0..80)
-        .map(|x| buf.cell((x, 0)).unwrap().symbol().to_string())
-        .collect::<String>();
+    let top_row: String =
+        (0..80).map(|x| buf.cell((x, 0)).unwrap().symbol().to_string()).collect::<String>();
     // No spinner in the expanded header (spinners are per-item only)
     for frame in SPINNER_FRAMES {
         assert!(
@@ -201,10 +188,7 @@ fn test_expanded_title_no_spinner_in_header() {
             "Should not have spinner in expanded header, got: {top_row}"
         );
     }
-    assert!(
-        top_row.contains("Ctrl+T to toggle"),
-        "Expected hint in title, got: {top_row}"
-    );
+    assert!(top_row.contains("Ctrl+T to toggle"), "Expected hint in title, got: {top_row}");
 }
 
 #[test]
@@ -218,19 +202,12 @@ fn test_expanded_title_no_spinner_when_all_done() {
     let widget = TodoPanelWidget::new(&items).with_spinner_tick(2);
     let mut buf = Buffer::empty(Rect::new(0, 0, 80, 6));
     widget.render(Rect::new(0, 0, 80, 6), &mut buf);
-    let top_row: String = (0..80)
-        .map(|x| buf.cell((x, 0)).unwrap().symbol().to_string())
-        .collect::<String>();
+    let top_row: String =
+        (0..80).map(|x| buf.cell((x, 0)).unwrap().symbol().to_string()).collect::<String>();
     for frame in SPINNER_FRAMES {
-        assert!(
-            !top_row.contains(*frame),
-            "Should not have spinner when all done, got: {top_row}"
-        );
+        assert!(!top_row.contains(*frame), "Should not have spinner when all done, got: {top_row}");
     }
-    assert!(
-        top_row.contains("Ctrl+T to toggle"),
-        "Expected hint in title, got: {top_row}"
-    );
+    assert!(top_row.contains("Ctrl+T to toggle"), "Expected hint in title, got: {top_row}");
 }
 
 #[test]
@@ -261,20 +238,9 @@ fn test_spinner_frame_changes_with_tick() {
     let (d, ip, t) = widget1.counts();
     let line1 = widget1.build_lines(d, ip, t);
 
-    let text0: String = line0[0]
-        .spans
-        .iter()
-        .map(|s| s.content.to_string())
-        .collect();
-    let text1: String = line1[0]
-        .spans
-        .iter()
-        .map(|s| s.content.to_string())
-        .collect();
-    assert_ne!(
-        text0, text1,
-        "Different ticks should produce different spinner chars"
-    );
+    let text0: String = line0[0].spans.iter().map(|s| s.content.to_string()).collect();
+    let text1: String = line1[0].spans.iter().map(|s| s.content.to_string()).collect();
+    assert_ne!(text0, text1, "Different ticks should produce different spinner chars");
 }
 
 #[test]
@@ -288,20 +254,10 @@ fn test_pending_shows_circle_not_spinner() {
     let widget = TodoPanelWidget::new(&items).with_spinner_tick(0);
     let (d, ip, t) = widget.counts();
     let lines = widget.build_lines(d, ip, t);
-    let text: String = lines[0]
-        .spans
-        .iter()
-        .map(|s| s.content.to_string())
-        .collect();
-    assert!(
-        text.contains('\u{25CB}'),
-        "Pending should show ○, got: {text}"
-    );
+    let text: String = lines[0].spans.iter().map(|s| s.content.to_string()).collect();
+    assert!(text.contains('\u{25CB}'), "Pending should show ○, got: {text}");
     for frame in SPINNER_FRAMES {
-        assert!(
-            !text.contains(*frame),
-            "Pending should not show spinner {frame}, got: {text}"
-        );
+        assert!(!text.contains(*frame), "Pending should not show spinner {frame}, got: {text}");
     }
 }
 
@@ -333,11 +289,7 @@ fn test_resume_shows_spinner() {
     let lines = widget.build_lines(d, ip, t);
 
     // Item 2 (index 1) should show spinner
-    let text1: String = lines[1]
-        .spans
-        .iter()
-        .map(|s| s.content.to_string())
-        .collect();
+    let text1: String = lines[1].spans.iter().map(|s| s.content.to_string()).collect();
     let expected_spinner = SPINNER_FRAMES[3 % SPINNER_FRAMES.len()];
     assert!(
         text1.contains(expected_spinner),
@@ -372,28 +324,13 @@ fn test_mixed_states_render() {
     widget.render(Rect::new(0, 0, 80, 7), &mut buf);
 
     // Extract item rows (row 0 is title border, items start at row 1)
-    let row1: String = (0..80)
-        .map(|x| buf.cell((x, 1)).unwrap().symbol().to_string())
-        .collect();
-    let row2: String = (0..80)
-        .map(|x| buf.cell((x, 2)).unwrap().symbol().to_string())
-        .collect();
-    let row3: String = (0..80)
-        .map(|x| buf.cell((x, 3)).unwrap().symbol().to_string())
-        .collect();
+    let row1: String = (0..80).map(|x| buf.cell((x, 1)).unwrap().symbol().to_string()).collect();
+    let row2: String = (0..80).map(|x| buf.cell((x, 2)).unwrap().symbol().to_string()).collect();
+    let row3: String = (0..80).map(|x| buf.cell((x, 3)).unwrap().symbol().to_string()).collect();
 
-    assert!(
-        row1.contains('\u{2714}'),
-        "Completed should show ✔, got: {row1}"
-    );
-    assert!(
-        row2.contains(SPINNER_FRAMES[0]),
-        "InProgress should show spinner, got: {row2}"
-    );
-    assert!(
-        row3.contains('\u{25CB}'),
-        "Pending should show ○, got: {row3}"
-    );
+    assert!(row1.contains('\u{2714}'), "Completed should show ✔, got: {row1}");
+    assert!(row2.contains(SPINNER_FRAMES[0]), "InProgress should show spinner, got: {row2}");
+    assert!(row3.contains('\u{25CB}'), "Pending should show ○, got: {row3}");
 }
 
 #[test]
@@ -430,9 +367,7 @@ fn test_collapsed_after_resume_shows_active_form() {
             active_form: Some("Building project".into()),
         },
     ];
-    let widget = TodoPanelWidget::new(&items)
-        .with_expanded(false)
-        .with_spinner_tick(5);
+    let widget = TodoPanelWidget::new(&items).with_expanded(false).with_spinner_tick(5);
     let (done, _, total) = widget.counts();
     let line = widget.build_collapsed_line(done, total);
     let text: String = line.spans.iter().map(|s| s.content.to_string()).collect();
@@ -440,10 +375,7 @@ fn test_collapsed_after_resume_shows_active_form() {
         text.contains("Building project"),
         "Collapsed mode should show active_form after resume, got: {text}"
     );
-    assert!(
-        text.contains("(1/2)"),
-        "Should show progress count, got: {text}"
-    );
+    assert!(text.contains("(1/2)"), "Should show progress count, got: {text}");
 }
 
 #[test]
@@ -509,11 +441,7 @@ fn test_max_items_height_cap() {
         })
         .collect();
     let w = TodoPanelWidget::new(&items);
-    assert_eq!(
-        w.required_height(),
-        12,
-        "15 items should be capped at 12 rows"
-    );
+    assert_eq!(w.required_height(), 12, "15 items should be capped at 12 rows");
 }
 
 #[test]
@@ -523,20 +451,12 @@ fn test_single_item_all_statuses() {
         (TodoDisplayStatus::InProgress, SPINNER_FRAMES[0]),
         (TodoDisplayStatus::Completed, '\u{2714}'),
     ] {
-        let items = vec![TodoDisplayItem {
-            id: 1,
-            title: "Solo".into(),
-            status,
-            active_form: None,
-        }];
+        let items =
+            vec![TodoDisplayItem { id: 1, title: "Solo".into(), status, active_form: None }];
         let widget = TodoPanelWidget::new(&items).with_spinner_tick(0);
         let (d, ip, t) = widget.counts();
         let lines = widget.build_lines(d, ip, t);
-        let text: String = lines[0]
-            .spans
-            .iter()
-            .map(|s| s.content.to_string())
-            .collect();
+        let text: String = lines[0].spans.iter().map(|s| s.content.to_string()).collect();
         assert!(
             text.contains(expected_char),
             "Status {status:?} should show '{expected_char}', got: {text}"
@@ -561,11 +481,7 @@ fn test_status_transition_rendering() {
     let w = TodoPanelWidget::new(&items).with_spinner_tick(0);
     let (d, ip, t) = w.counts();
     let lines = w.build_lines(d, ip, t);
-    let text: String = lines[0]
-        .spans
-        .iter()
-        .map(|s| s.content.to_string())
-        .collect();
+    let text: String = lines[0].spans.iter().map(|s| s.content.to_string()).collect();
     assert!(text.contains('\u{25CB}'), "Pending phase should show ○");
 
     // InProgress phase
@@ -573,26 +489,15 @@ fn test_status_transition_rendering() {
     let w = TodoPanelWidget::new(&items).with_spinner_tick(2);
     let (d, ip, t) = w.counts();
     let lines = w.build_lines(d, ip, t);
-    let text: String = lines[0]
-        .spans
-        .iter()
-        .map(|s| s.content.to_string())
-        .collect();
-    assert!(
-        text.contains(SPINNER_FRAMES[2]),
-        "InProgress phase should show spinner"
-    );
+    let text: String = lines[0].spans.iter().map(|s| s.content.to_string()).collect();
+    assert!(text.contains(SPINNER_FRAMES[2]), "InProgress phase should show spinner");
 
     // Completed phase
     let items = make(TodoDisplayStatus::Completed);
     let w = TodoPanelWidget::new(&items).with_spinner_tick(0);
     let (d, ip, t) = w.counts();
     let lines = w.build_lines(d, ip, t);
-    let text: String = lines[0]
-        .spans
-        .iter()
-        .map(|s| s.content.to_string())
-        .collect();
+    let text: String = lines[0].spans.iter().map(|s| s.content.to_string()).collect();
     assert!(text.contains('\u{2714}'), "Completed phase should show ✔");
 }
 
@@ -645,11 +550,7 @@ fn test_interrupt_resume_display_flow() {
         TodoDisplayStatus::Pending,
         "After interrupt, item should be Pending"
     );
-    assert!(
-        display
-            .iter()
-            .all(|i| i.status != TodoDisplayStatus::InProgress)
-    );
+    assert!(display.iter().all(|i| i.status != TodoDisplayStatus::InProgress));
 
     // Simulate resume: start next pending + sync
     if let Some(next) = mgr.next_pending() {
@@ -682,16 +583,9 @@ fn test_interrupt_resume_display_flow() {
     let widget = TodoPanelWidget::new(&display).with_spinner_tick(4);
     let (d, ip, t) = widget.counts();
     let lines = widget.build_lines(d, ip, t);
-    let text: String = lines[1]
-        .spans
-        .iter()
-        .map(|s| s.content.to_string())
-        .collect();
+    let text: String = lines[1].spans.iter().map(|s| s.content.to_string()).collect();
     let expected = SPINNER_FRAMES[4 % SPINNER_FRAMES.len()];
-    assert!(
-        text.contains(expected),
-        "Resumed item should show spinner '{expected}', got: {text}"
-    );
+    assert!(text.contains(expected), "Resumed item should show spinner '{expected}', got: {text}");
 }
 
 #[test]
@@ -703,24 +597,9 @@ fn test_full_todo_lifecycle() {
 
     // Write todos
     mgr.write_todos(vec![
-        (
-            "Setup".into(),
-            opendev_runtime::TodoStatus::Pending,
-            "Setting up".into(),
-            Vec::new(),
-        ),
-        (
-            "Build".into(),
-            opendev_runtime::TodoStatus::Pending,
-            "Building".into(),
-            Vec::new(),
-        ),
-        (
-            "Test".into(),
-            opendev_runtime::TodoStatus::Pending,
-            "Testing".into(),
-            Vec::new(),
-        ),
+        ("Setup".into(), opendev_runtime::TodoStatus::Pending, "Setting up".into(), Vec::new()),
+        ("Build".into(), opendev_runtime::TodoStatus::Pending, "Building".into(), Vec::new()),
+        ("Test".into(), opendev_runtime::TodoStatus::Pending, "Testing".into(), Vec::new()),
     ]);
     assert_eq!(mgr.total(), 3);
 
@@ -778,24 +657,9 @@ fn test_cancel_and_recreate() {
 
     // Recreate with entirely new todos
     mgr.write_todos(vec![
-        (
-            "New X".into(),
-            opendev_runtime::TodoStatus::Pending,
-            String::new(),
-            Vec::new(),
-        ),
-        (
-            "New Y".into(),
-            opendev_runtime::TodoStatus::InProgress,
-            "Doing Y".into(),
-            Vec::new(),
-        ),
-        (
-            "New Z".into(),
-            opendev_runtime::TodoStatus::Pending,
-            String::new(),
-            Vec::new(),
-        ),
+        ("New X".into(), opendev_runtime::TodoStatus::Pending, String::new(), Vec::new()),
+        ("New Y".into(), opendev_runtime::TodoStatus::InProgress, "Doing Y".into(), Vec::new()),
+        ("New Z".into(), opendev_runtime::TodoStatus::Pending, String::new(), Vec::new()),
     ]);
 
     let display: Vec<TodoDisplayItem> = mgr

@@ -108,12 +108,7 @@ fn test_prepare_messages_replaces_enhanced_content() {
     // Last user message content should be the enhanced version
     let user_msg = &msgs[1];
     assert_eq!(user_msg["role"], "user");
-    assert!(
-        user_msg["content"]
-            .as_str()
-            .unwrap()
-            .contains("<file_content>")
-    );
+    assert!(user_msg["content"].as_str().unwrap().contains("<file_content>"));
 }
 
 #[test]
@@ -127,14 +122,7 @@ fn test_prepare_messages_thinking_placeholder() {
     assert!(!content.contains("{thinking_instruction}"));
 
     // thinking hidden
-    let msgs = enh.prepare_messages(
-        "q",
-        "q",
-        "Do this: {thinking_instruction}",
-        None,
-        &[],
-        false,
-    );
+    let msgs = enh.prepare_messages("q", "q", "Do this: {thinking_instruction}", None, &[], false);
     let content = msgs[0]["content"].as_str().unwrap();
     assert!(content.contains("directly"));
     assert!(!content.contains("{thinking_instruction}"));
@@ -144,10 +132,8 @@ fn test_prepare_messages_thinking_placeholder() {
 fn test_prepare_messages_multimodal_images() {
     let (_dir, enh) = tmp_enhancer();
     let session = vec![json!({"role": "user", "content": "analyze this image"})];
-    let images = vec![ImageBlock {
-        media_type: "image/png".to_string(),
-        data: "base64data".to_string(),
-    }];
+    let images =
+        vec![ImageBlock { media_type: "image/png".to_string(), data: "base64data".to_string() }];
     let msgs = enh.prepare_messages(
         "analyze this image",
         "analyze this image",

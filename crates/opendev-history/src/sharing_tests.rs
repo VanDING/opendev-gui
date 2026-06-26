@@ -22,10 +22,9 @@ fn make_msg(role: Role, content: &str) -> ChatMessage {
 #[test]
 fn test_anonymize_redacts_api_keys() {
     let mut session = Session::new();
-    session.messages.push(make_msg(
-        Role::User,
-        "My key is sk-abcdefghijklmnopqrstuvwxyz123456 please use it",
-    ));
+    session
+        .messages
+        .push(make_msg(Role::User, "My key is sk-abcdefghijklmnopqrstuvwxyz123456 please use it"));
 
     let anon = anonymize_session(&session);
     assert!(!anon.messages[0].content.contains("sk-"));
@@ -35,10 +34,7 @@ fn test_anonymize_redacts_api_keys() {
 #[test]
 fn test_anonymize_redacts_absolute_paths() {
     let mut session = Session::new();
-    session.messages.push(make_msg(
-        Role::User,
-        "The file is at /Users/john/codes/project/main.rs",
-    ));
+    session.messages.push(make_msg(Role::User, "The file is at /Users/john/codes/project/main.rs"));
 
     let anon = anonymize_session(&session);
     assert!(!anon.messages[0].content.contains("/Users/john"));
@@ -72,9 +68,7 @@ fn test_anonymize_redacts_bearer_tokens() {
 #[test]
 fn test_anonymize_preserves_regular_content() {
     let mut session = Session::new();
-    session
-        .messages
-        .push(make_msg(Role::User, "Hello, how are you?"));
+    session.messages.push(make_msg(Role::User, "Hello, how are you?"));
 
     let anon = anonymize_session(&session);
     assert_eq!(anon.messages[0].content, "Hello, how are you?");
@@ -83,13 +77,9 @@ fn test_anonymize_preserves_regular_content() {
 #[test]
 fn test_render_session_html() {
     let mut session = Session::new();
-    session
-        .metadata
-        .insert("title".into(), serde_json::json!("Test Session"));
+    session.metadata.insert("title".into(), serde_json::json!("Test Session"));
     session.messages.push(make_msg(Role::User, "Hello <world>"));
-    session
-        .messages
-        .push(make_msg(Role::Assistant, "Hi & welcome"));
+    session.messages.push(make_msg(Role::Assistant, "Hi & welcome"));
 
     let html = render_session_html(&session);
     assert!(html.contains("<title>Test Session</title>"));
@@ -146,12 +136,7 @@ fn test_redact_json_value() {
     });
     redact_json_value(&mut val, &re);
     assert!(val["key"].as_str().unwrap().contains("[REDACTED]"));
-    assert!(
-        val["nested"]["token"]
-            .as_str()
-            .unwrap()
-            .contains("[REDACTED]")
-    );
+    assert!(val["nested"]["token"].as_str().unwrap().contains("[REDACTED]"));
     assert_eq!(val["list"][0].as_str().unwrap(), "normal");
     assert!(val["list"][1].as_str().unwrap().contains("[REDACTED]"));
 }

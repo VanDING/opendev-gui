@@ -11,10 +11,7 @@ fn test_no_truncation_small_output() {
 
 #[test]
 fn test_truncation_by_lines() {
-    let text = (0..10)
-        .map(|i| format!("line {i}"))
-        .collect::<Vec<_>>()
-        .join("\n");
+    let text = (0..10).map(|i| format!("line {i}")).collect::<Vec<_>>().join("\n");
     let result = truncate_output(&text, Some(3), Some(100_000), TruncateDirection::Head);
     assert!(result.truncated);
     assert!(result.content.contains("line 0"));
@@ -31,10 +28,7 @@ fn test_truncation_by_lines() {
 #[test]
 fn test_truncation_by_bytes() {
     // Each line is ~10 bytes. 50 bytes limit should keep ~5 lines.
-    let text = (0..20)
-        .map(|i| format!("line {i:04}"))
-        .collect::<Vec<_>>()
-        .join("\n");
+    let text = (0..20).map(|i| format!("line {i:04}")).collect::<Vec<_>>().join("\n");
     let result = truncate_output(&text, Some(100), Some(50), TruncateDirection::Head);
     assert!(result.truncated);
     assert!(result.content.contains("bytes truncated"));
@@ -47,10 +41,7 @@ fn test_truncation_by_bytes() {
 
 #[test]
 fn test_truncation_tail_direction() {
-    let text = (0..10)
-        .map(|i| format!("line {i}"))
-        .collect::<Vec<_>>()
-        .join("\n");
+    let text = (0..10).map(|i| format!("line {i}")).collect::<Vec<_>>().join("\n");
     let result = truncate_output(&text, Some(3), Some(100_000), TruncateDirection::Tail);
     assert!(result.truncated);
     // Tail keeps the last 3 lines.
@@ -69,10 +60,7 @@ fn test_truncation_tail_direction() {
 
 #[test]
 fn test_overflow_file_contains_full_output() {
-    let text = (0..100)
-        .map(|i| format!("line {i}"))
-        .collect::<Vec<_>>()
-        .join("\n");
+    let text = (0..100).map(|i| format!("line {i}")).collect::<Vec<_>>().join("\n");
     let result = truncate_output(&text, Some(5), Some(100_000), TruncateDirection::Head);
     assert!(result.truncated);
     let path = result.output_path.unwrap();
@@ -83,10 +71,7 @@ fn test_overflow_file_contains_full_output() {
 
 #[test]
 fn test_output_path_in_hint() {
-    let text = (0..100)
-        .map(|i| format!("line {i}"))
-        .collect::<Vec<_>>()
-        .join("\n");
+    let text = (0..100).map(|i| format!("line {i}")).collect::<Vec<_>>().join("\n");
     let result = truncate_output(&text, Some(5), Some(100_000), TruncateDirection::Head);
     assert!(result.truncated);
     let path = result.output_path.as_ref().unwrap();

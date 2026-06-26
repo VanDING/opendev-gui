@@ -32,11 +32,7 @@ fn test_extract_refs_unquoted() {
 fn test_extract_refs_excludes_emails() {
     let (_dir, inj) = tmp_injector();
     let refs = inj.extract_refs("send to user@example.com please");
-    assert!(
-        refs.is_empty(),
-        "emails should not be extracted: {:?}",
-        refs
-    );
+    assert!(refs.is_empty(), "emails should not be extracted: {:?}", refs);
 }
 
 #[test]
@@ -61,11 +57,7 @@ fn test_is_text_file_known_extensions() {
     for ext in &[".py", ".rs", ".js", ".md", ".json", ".toml", ".yaml"] {
         let p = dir.path().join(format!("test{}", ext));
         fs::write(&p, "content").unwrap();
-        assert!(
-            FileContentInjector::is_text_file(&p),
-            "{} should be text",
-            ext
-        );
+        assert!(FileContentInjector::is_text_file(&p), "{} should be text", ext);
     }
 }
 
@@ -75,11 +67,7 @@ fn test_is_text_file_known_filenames() {
     for name in &["Dockerfile", "Makefile", "README", "LICENSE"] {
         let p = dir.path().join(name);
         fs::write(&p, "content").unwrap();
-        assert!(
-            FileContentInjector::is_text_file(&p),
-            "{} should be text",
-            name
-        );
+        assert!(FileContentInjector::is_text_file(&p), "{} should be text", name);
     }
 }
 
@@ -121,18 +109,9 @@ fn test_detect_text_file_empty() {
 
 #[test]
 fn test_get_language_known() {
-    assert_eq!(
-        FileContentInjector::get_language(Path::new("foo.py")),
-        "python"
-    );
-    assert_eq!(
-        FileContentInjector::get_language(Path::new("bar.rs")),
-        "rust"
-    );
-    assert_eq!(
-        FileContentInjector::get_language(Path::new("baz.ts")),
-        "typescript"
-    );
+    assert_eq!(FileContentInjector::get_language(Path::new("foo.py")), "python");
+    assert_eq!(FileContentInjector::get_language(Path::new("bar.rs")), "rust");
+    assert_eq!(FileContentInjector::get_language(Path::new("baz.ts")), "typescript");
 }
 
 #[test]
@@ -253,9 +232,7 @@ fn test_process_image_base64() {
     let block = block.expect("should produce an ImageBlock");
     assert_eq!(block.media_type, "image/png");
     // Verify the base64 decodes back to original bytes.
-    let decoded = base64::engine::general_purpose::STANDARD
-        .decode(&block.data)
-        .unwrap();
+    let decoded = base64::engine::general_purpose::STANDARD.decode(&block.data).unwrap();
     assert_eq!(decoded, png_bytes);
 }
 

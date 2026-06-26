@@ -34,11 +34,7 @@ pub(super) fn parse_frontmatter(content: &str) -> (HashMap<String, String>, Stri
             }
             if let Some((key, value)) = line.split_once(':') {
                 let key = key.trim().to_string();
-                let value = value
-                    .trim()
-                    .trim_matches('"')
-                    .trim_matches('\'')
-                    .to_string();
+                let value = value.trim().trim_matches('"').trim_matches('\'').to_string();
                 map.insert(key, value);
             }
         }
@@ -84,11 +80,8 @@ impl CustomCommand {
         let mut result = self.template.replace("$ARGUMENTS", arguments);
 
         // Replace positional $1, $2, etc.
-        let parts: Vec<&str> = if arguments.is_empty() {
-            Vec::new()
-        } else {
-            arguments.split_whitespace().collect()
-        };
+        let parts: Vec<&str> =
+            if arguments.is_empty() { Vec::new() } else { arguments.split_whitespace().collect() };
         for (i, part) in parts.iter().enumerate() {
             let placeholder = format!("${}", i + 1);
             result = result.replace(&placeholder, part);

@@ -71,9 +71,7 @@ fn parse_structured_patch(patch: &str) -> Result<Vec<PatchOp>, String> {
             };
             ops.push(PatchOp::AddFile { path, content });
         } else if let Some(path) = line.strip_prefix("*** Delete File: ") {
-            ops.push(PatchOp::DeleteFile {
-                path: path.trim().to_string(),
-            });
+            ops.push(PatchOp::DeleteFile { path: path.trim().to_string() });
             i += 1;
         } else if let Some(rest) = line.strip_prefix("*** Move File: ") {
             if let Some((old, new)) = rest.split_once(" -> ") {
@@ -97,10 +95,7 @@ fn parse_structured_patch(patch: &str) -> Result<Vec<PatchOp>, String> {
                 change_lines.push(l.to_string());
                 i += 1;
             }
-            ops.push(PatchOp::UpdateFile {
-                path,
-                changes: change_lines,
-            });
+            ops.push(PatchOp::UpdateFile { path, changes: change_lines });
         } else {
             // Skip unrecognized lines
             i += 1;
@@ -265,12 +260,7 @@ pub(super) fn parse_change_groups(changes: &[String]) -> Vec<ChangeGroup> {
 
     // Flush final group if there were changes
     if had_changes {
-        groups.push(ChangeGroup {
-            context_before,
-            removals,
-            additions,
-            context_after: Vec::new(),
-        });
+        groups.push(ChangeGroup { context_before, removals, additions, context_after: Vec::new() });
     }
 
     groups
@@ -287,12 +277,8 @@ pub(super) fn apply_context_changes(content: &str, changes: &[String]) -> Result
     let had_trailing_newline = content.ends_with('\n');
 
     for group in &groups {
-        let search_lines: Vec<&str> = group
-            .context_before
-            .iter()
-            .chain(group.removals.iter())
-            .map(|s| s.as_str())
-            .collect();
+        let search_lines: Vec<&str> =
+            group.context_before.iter().chain(group.removals.iter()).map(|s| s.as_str()).collect();
 
         if search_lines.is_empty() {
             // No context or removals — append additions at end
@@ -305,10 +291,7 @@ pub(super) fn apply_context_changes(content: &str, changes: &[String]) -> Result
         // Find position where search_lines match in file_lines
         let pos = find_context_match(&file_lines, &search_lines).ok_or_else(|| {
             let preview: Vec<&str> = search_lines.iter().take(3).copied().collect();
-            format!(
-                "Could not find context in file (looking for: {:?}...)",
-                preview
-            )
+            format!("Could not find context in file (looking for: {:?}...)", preview)
         })?;
 
         // Position after context_before is where removals start
@@ -318,9 +301,7 @@ pub(super) fn apply_context_changes(content: &str, changes: &[String]) -> Result
         for (j, removal) in group.removals.iter().enumerate() {
             let idx = removal_start + j;
             if idx >= file_lines.len() {
-                return Err(format!(
-                    "Removal line out of bounds at index {idx}: {removal}"
-                ));
+                return Err(format!("Removal line out of bounds at index {idx}: {removal}"));
             }
             // Verify the line matches (with flexible matching)
             if !lines_match(&file_lines[idx], removal) {
@@ -377,12 +358,8 @@ fn find_lines_exact(haystack: &[String], needle: &[&str]) -> Option<usize> {
     if needle.len() > haystack.len() {
         return None;
     }
-    (0..=(haystack.len() - needle.len())).find(|&i| {
-        needle
-            .iter()
-            .enumerate()
-            .all(|(j, n)| haystack[i + j] == *n)
-    })
+    (0..=(haystack.len() - needle.len()))
+        .find(|&i| needle.iter().enumerate().all(|(j, n)| haystack[i + j] == *n))
 }
 
 fn find_lines_trimmed(
@@ -393,12 +370,8 @@ fn find_lines_trimmed(
     if needle.len() > haystack.len() {
         return None;
     }
-    (0..=(haystack.len() - needle.len())).find(|&i| {
-        needle
-            .iter()
-            .enumerate()
-            .all(|(j, n)| trim_fn(&haystack[i + j]) == trim_fn(n))
-    })
+    (0..=(haystack.len() - needle.len()))
+        .find(|&i| needle.iter().enumerate().all(|(j, n)| trim_fn(&haystack[i + j]) == trim_fn(n)))
 }
 
 /// Check if two lines match (allowing trailing whitespace differences).

@@ -39,20 +39,14 @@ fn test_create_stdio_transport() {
 
 #[test]
 fn test_http_without_url_fails() {
-    let config = McpServerConfig {
-        transport: TransportType::Http,
-        ..Default::default()
-    };
+    let config = McpServerConfig { transport: TransportType::Http, ..Default::default() };
 
     assert!(create_transport(&config).is_err());
 }
 
 #[test]
 fn test_stdio_without_command_fails() {
-    let config = McpServerConfig {
-        transport: TransportType::Stdio,
-        ..Default::default()
-    };
+    let config = McpServerConfig { transport: TransportType::Stdio, ..Default::default() };
 
     assert!(create_transport(&config).is_err());
 }

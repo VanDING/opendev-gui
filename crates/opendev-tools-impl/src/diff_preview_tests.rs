@@ -1,10 +1,7 @@
 use super::*;
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 #[test]
@@ -29,10 +26,7 @@ fn test_compute_edit_script_removal() {
     let original = vec!["a", "b", "c"];
     let modified = vec!["a", "c"];
     let edits = compute_edit_script(&original, &modified);
-    let removes: Vec<_> = edits
-        .iter()
-        .filter(|e| matches!(e, Edit::Remove(_)))
-        .collect();
+    let removes: Vec<_> = edits.iter().filter(|e| matches!(e, Edit::Remove(_))).collect();
     assert_eq!(removes.len(), 1);
 }
 
@@ -73,14 +67,8 @@ async fn test_diff_preview_with_changes() {
     let ctx = ToolContext::new("/tmp");
     let args = make_args(&[
         ("file_path", serde_json::json!("test.rs")),
-        (
-            "original",
-            serde_json::json!("fn main() {\n    println!(\"hello\");\n}"),
-        ),
-        (
-            "modified",
-            serde_json::json!("fn main() {\n    println!(\"world\");\n}"),
-        ),
+        ("original", serde_json::json!("fn main() {\n    println!(\"hello\");\n}")),
+        ("modified", serde_json::json!("fn main() {\n    println!(\"world\");\n}")),
     ]);
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);

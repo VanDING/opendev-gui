@@ -3,23 +3,11 @@ use tempfile::TempDir;
 
 #[test]
 fn test_should_ignore_git() {
-    let patterns: Vec<String> = DEFAULT_IGNORE_DIRS
-        .iter()
-        .map(|s| (*s).to_string())
-        .collect();
+    let patterns: Vec<String> = DEFAULT_IGNORE_DIRS.iter().map(|s| (*s).to_string()).collect();
     assert!(should_ignore(Path::new("/project/.git/config"), &patterns));
-    assert!(should_ignore(
-        Path::new("/project/node_modules/pkg/index.js"),
-        &patterns
-    ));
-    assert!(should_ignore(
-        Path::new("/project/target/debug/binary"),
-        &patterns
-    ));
-    assert!(should_ignore(
-        Path::new("/project/.opendev/state.json"),
-        &patterns
-    ));
+    assert!(should_ignore(Path::new("/project/node_modules/pkg/index.js"), &patterns));
+    assert!(should_ignore(Path::new("/project/target/debug/binary"), &patterns));
+    assert!(should_ignore(Path::new("/project/.opendev/state.json"), &patterns));
     assert!(!should_ignore(Path::new("/project/src/main.rs"), &patterns));
 }
 
@@ -95,8 +83,5 @@ async fn test_file_watcher_inactivity_timeout() {
     })
     .await;
 
-    assert!(
-        result.is_ok(),
-        "Watcher should stop after inactivity timeout"
-    );
+    assert!(result.is_ok(), "Watcher should stop after inactivity timeout");
 }

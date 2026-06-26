@@ -21,18 +21,12 @@ pub struct AgentDefinition {
 impl AgentDefinition {
     /// Create a new agent definition from a role with all defaults.
     pub fn from_role(role: AgentRole) -> Self {
-        Self {
-            role,
-            system_prompt: None,
-            tools: role.default_tools(),
-        }
+        Self { role, system_prompt: None, tools: role.default_tools() }
     }
 
     /// Get the effective system prompt (custom or role default).
     pub fn effective_system_prompt(&self) -> &str {
-        self.system_prompt
-            .as_deref()
-            .unwrap_or_else(|| self.role.default_system_prompt())
+        self.system_prompt.as_deref().unwrap_or_else(|| self.role.default_system_prompt())
     }
 
     /// Set a custom system prompt.

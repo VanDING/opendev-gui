@@ -14,11 +14,7 @@ pub(crate) struct PermissionsFile {
 
 /// User-global permissions path: `~/.opendev/permissions.json`.
 pub(crate) fn user_permissions_path() -> Option<PathBuf> {
-    Some(
-        opendev_config::Paths::default()
-            .config_dir()
-            .join("permissions.json"),
-    )
+    Some(opendev_config::Paths::default().config_dir().join("permissions.json"))
 }
 
 /// Load persistent rules from both user-global and project-scoped files.
@@ -51,19 +47,11 @@ fn load_rules_from_file(rules: &mut Vec<ApprovalRule>, path: &Path) {
                 debug!("Loaded {} rules from {}", count, path.display());
             }
             Err(e) => {
-                warn!(
-                    "Failed to parse persistent rules from {}: {}",
-                    path.display(),
-                    e
-                );
+                warn!("Failed to parse persistent rules from {}: {}", path.display(), e);
             }
         },
         Err(e) => {
-            warn!(
-                "Failed to read persistent rules from {}: {}",
-                path.display(),
-                e
-            );
+            warn!("Failed to read persistent rules from {}: {}", path.display(), e);
         }
     }
 }
@@ -74,14 +62,9 @@ pub(crate) fn save_persistent_rules(
     project_dir: Option<&Path>,
     scope: RuleScope,
 ) {
-    let persistent: Vec<&ApprovalRule> = rules
-        .iter()
-        .filter(|r| !r.id.starts_with("default_"))
-        .collect();
-    let data = PermissionsFile {
-        version: 1,
-        rules: persistent.into_iter().cloned().collect(),
-    };
+    let persistent: Vec<&ApprovalRule> =
+        rules.iter().filter(|r| !r.id.starts_with("default_")).collect();
+    let data = PermissionsFile { version: 1, rules: persistent.into_iter().cloned().collect() };
 
     let path = match scope {
         RuleScope::User => user_permissions_path(),
@@ -135,11 +118,7 @@ pub(crate) fn save_persistent_rules(
                 }
                 Err(e) => {
                     let _ = std::fs::remove_file(&tmp_path);
-                    warn!(
-                        "Failed to save persistent rules to {}: {}",
-                        path.display(),
-                        e
-                    );
+                    warn!("Failed to save persistent rules to {}: {}", path.display(), e);
                 }
             }
         }

@@ -12,10 +12,8 @@ fn test_text_position_ordering() {
 
 #[test]
 fn test_selection_range_ordered() {
-    let range = SelectionRange {
-        anchor: TextPosition::new(5, 10),
-        cursor: TextPosition::new(2, 3),
-    };
+    let range =
+        SelectionRange { anchor: TextPosition::new(5, 10), cursor: TextPosition::new(2, 3) };
     let (start, end) = range.ordered();
     assert_eq!(start, TextPosition::new(2, 3));
     assert_eq!(end, TextPosition::new(5, 10));
@@ -23,10 +21,8 @@ fn test_selection_range_ordered() {
 
 #[test]
 fn test_columns_on_line() {
-    let range = SelectionRange {
-        anchor: TextPosition::new(1, 5),
-        cursor: TextPosition::new(3, 10),
-    };
+    let range =
+        SelectionRange { anchor: TextPosition::new(1, 5), cursor: TextPosition::new(3, 10) };
     // Before selection
     assert_eq!(range.columns_on_line(0, 80), None);
     // Start line

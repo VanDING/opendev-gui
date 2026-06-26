@@ -20,28 +20,16 @@ fn test_retry_config_exponential_backoff() {
     let config = RetryConfig::default();
     // Delays include ±25% jitter, so check ranges
     let d0 = config.delay_for_attempt(0).as_millis() as u64;
-    assert!(
-        d0 >= 1500 && d0 <= 2500,
-        "attempt 0: {d0}ms not in [1500, 2500]"
-    );
+    assert!(d0 >= 1500 && d0 <= 2500, "attempt 0: {d0}ms not in [1500, 2500]");
 
     let d1 = config.delay_for_attempt(1).as_millis() as u64;
-    assert!(
-        d1 >= 3000 && d1 <= 5000,
-        "attempt 1: {d1}ms not in [3000, 5000]"
-    );
+    assert!(d1 >= 3000 && d1 <= 5000, "attempt 1: {d1}ms not in [3000, 5000]");
 
     let d2 = config.delay_for_attempt(2).as_millis() as u64;
-    assert!(
-        d2 >= 6000 && d2 <= 10000,
-        "attempt 2: {d2}ms not in [6000, 10000]"
-    );
+    assert!(d2 >= 6000 && d2 <= 10000, "attempt 2: {d2}ms not in [6000, 10000]");
 
     let d3 = config.delay_for_attempt(3).as_millis() as u64;
-    assert!(
-        d3 >= 12000 && d3 <= 20000,
-        "attempt 3: {d3}ms not in [12000, 20000]"
-    );
+    assert!(d3 >= 12000 && d3 <= 20000, "attempt 3: {d3}ms not in [12000, 20000]");
 }
 
 #[test]
@@ -49,10 +37,7 @@ fn test_retry_config_exponential_backoff_capped() {
     let config = RetryConfig::default();
     // 2000 * 2^10 = 2,048,000ms > 30,000ms cap, then ±25% jitter
     let d = config.delay_for_attempt(10).as_millis() as u64;
-    assert!(
-        d >= 22500 && d <= 37500,
-        "attempt 10: {d}ms not in [22500, 37500]"
-    );
+    assert!(d >= 22500 && d <= 37500, "attempt 10: {d}ms not in [22500, 37500]");
 }
 
 #[test]
@@ -62,14 +47,8 @@ fn test_retry_config_legacy_fallback() {
         ..Default::default()
     };
     // Falls back to retry_delays array
-    assert_eq!(
-        config.delay_for_attempt(0),
-        std::time::Duration::from_secs(1)
-    );
-    assert_eq!(
-        config.delay_for_attempt(1),
-        std::time::Duration::from_secs(2)
-    );
+    assert_eq!(config.delay_for_attempt(0), std::time::Duration::from_secs(1));
+    assert_eq!(config.delay_for_attempt(1), std::time::Duration::from_secs(2));
 }
 
 #[test]
@@ -191,28 +170,19 @@ fn test_classify_body_overloaded_no_status() {
 #[test]
 fn test_extract_openai_error() {
     let body = serde_json::json!({"error": {"message": "Invalid API key", "type": "auth_error"}});
-    assert_eq!(
-        extract_error_message(&body),
-        Some("Invalid API key".to_string())
-    );
+    assert_eq!(extract_error_message(&body), Some("Invalid API key".to_string()));
 }
 
 #[test]
 fn test_extract_anthropic_error() {
     let body = serde_json::json!({"type": "error", "error": {"type": "rate_limit_error", "message": "Rate limited"}});
-    assert_eq!(
-        extract_error_message(&body),
-        Some("Rate limited".to_string())
-    );
+    assert_eq!(extract_error_message(&body), Some("Rate limited".to_string()));
 }
 
 #[test]
 fn test_extract_generic_message() {
     let body = serde_json::json!({"message": "Something went wrong"});
-    assert_eq!(
-        extract_error_message(&body),
-        Some("Something went wrong".to_string())
-    );
+    assert_eq!(extract_error_message(&body), Some("Something went wrong".to_string()));
 }
 
 #[test]

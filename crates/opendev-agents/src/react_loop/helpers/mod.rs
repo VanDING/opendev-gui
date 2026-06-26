@@ -22,17 +22,17 @@ impl ReactLoop {
 
     /// Return a snapshot of accumulated iteration metrics collected during `run()`.
     pub fn iteration_metrics(&self) -> Vec<IterationMetrics> {
-        self.iteration_metrics.lock().unwrap().clone()
+        self.iteration_metrics.lock().unwrap_or_else(|e| e.into_inner()).clone()
     }
 
     /// Clear accumulated iteration metrics.
     pub fn clear_metrics(&self) {
-        self.iteration_metrics.lock().unwrap().clear();
+        self.iteration_metrics.lock().unwrap_or_else(|e| e.into_inner()).clear();
     }
 
     /// Push a new iteration metrics entry.
     pub(super) fn push_metrics(&self, metrics: IterationMetrics) {
-        self.iteration_metrics.lock().unwrap().push(metrics);
+        self.iteration_metrics.lock().unwrap_or_else(|e| e.into_inner()).push(metrics);
     }
 
     /// Process a single LLM response and determine the next action.
@@ -51,21 +51,15 @@ impl ReactLoop {
 
         if !response.success {
             // Failed API call — if we have an error, treat as needing continuation
-            warn!(
-                error = response.error.as_deref().unwrap_or("unknown"),
-                "LLM call failed"
-            );
+            warn!(error = response.error.as_deref().unwrap_or("unknown"), "LLM call failed");
             return TurnResult::Continue;
         }
 
         // Check for tool calls
-        let tool_calls = response.tool_calls.as_ref().and_then(|tcs| {
-            if tcs.is_empty() {
-                None
-            } else {
-                Some(tcs.clone())
-            }
-        });
+        let tool_calls = response
+            .tool_calls
+            .as_ref()
+            .and_then(|tcs| if tcs.is_empty() { None } else { Some(tcs.clone()) });
 
         match tool_calls {
             Some(tcs) => TurnResult::ToolCall { tool_calls: tcs },
@@ -75,16 +69,10 @@ impl ReactLoop {
 
                 if consecutive_no_tool_calls >= self.config.max_nudge_attempts {
                     debug!("Max nudge attempts reached, accepting completion");
-                    TurnResult::Complete {
-                        content,
-                        status: None,
-                    }
+                    TurnResult::Complete { content, status: None }
                 } else {
                     // Still have nudge budget — caller decides whether to nudge
-                    TurnResult::Complete {
-                        content,
-                        status: None,
-                    }
+                    TurnResult::Complete { content, status: None }
                 }
             }
         }
@@ -120,10 +108,7 @@ impl ReactLoop {
 
         if !response.success {
             return Err(crate::traits::AgentError::LlmError(
-                response
-                    .error
-                    .clone()
-                    .unwrap_or_else(|| "Unknown error".to_string()),
+                response.error.clone().unwrap_or_else(|| "Unknown error".to_string()),
             ));
         }
 

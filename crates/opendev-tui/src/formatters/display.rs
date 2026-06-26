@@ -51,22 +51,13 @@ pub fn strip_system_reminders(text: &str) -> String {
 pub fn format_error<'a>(primary: &str, secondary: Option<&str>) -> Vec<Line<'a>> {
     let mut lines = Vec::new();
     lines.push(Line::from(vec![
-        Span::styled(
-            RESULT_PREFIX.to_string(),
-            Style::default().fg(style_tokens::ERROR),
-        ),
-        Span::styled(
-            primary.to_string(),
-            Style::default().fg(style_tokens::ERROR),
-        ),
+        Span::styled(RESULT_PREFIX.to_string(), Style::default().fg(style_tokens::ERROR)),
+        Span::styled(primary.to_string(), Style::default().fg(style_tokens::ERROR)),
     ]));
 
     if let Some(sec) = secondary {
         lines.push(Line::from(vec![
-            Span::styled(
-                RESULT_PREFIX.to_string(),
-                Style::default().fg(style_tokens::SUBTLE),
-            ),
+            Span::styled(RESULT_PREFIX.to_string(), Style::default().fg(style_tokens::SUBTLE)),
             Span::styled(sec.to_string(), Style::default().fg(style_tokens::SUBTLE)),
         ]));
     }
@@ -78,22 +69,13 @@ pub fn format_error<'a>(primary: &str, secondary: Option<&str>) -> Vec<Line<'a>>
 pub fn format_warning<'a>(primary: &str, secondary: Option<&str>) -> Vec<Line<'a>> {
     let mut lines = Vec::new();
     lines.push(Line::from(vec![
-        Span::styled(
-            RESULT_PREFIX.to_string(),
-            Style::default().fg(style_tokens::WARNING),
-        ),
-        Span::styled(
-            primary.to_string(),
-            Style::default().fg(style_tokens::WARNING),
-        ),
+        Span::styled(RESULT_PREFIX.to_string(), Style::default().fg(style_tokens::WARNING)),
+        Span::styled(primary.to_string(), Style::default().fg(style_tokens::WARNING)),
     ]));
 
     if let Some(sec) = secondary {
         lines.push(Line::from(vec![
-            Span::styled(
-                RESULT_PREFIX.to_string(),
-                Style::default().fg(style_tokens::SUBTLE),
-            ),
+            Span::styled(RESULT_PREFIX.to_string(), Style::default().fg(style_tokens::SUBTLE)),
             Span::styled(sec.to_string(), Style::default().fg(style_tokens::SUBTLE)),
         ]));
     }
@@ -105,19 +87,13 @@ pub fn format_warning<'a>(primary: &str, secondary: Option<&str>) -> Vec<Line<'a
 pub fn format_info<'a>(primary: &str, secondary: Option<&str>) -> Vec<Line<'a>> {
     let mut lines = Vec::new();
     lines.push(Line::from(vec![
-        Span::styled(
-            RESULT_PREFIX.to_string(),
-            Style::default().fg(style_tokens::GREY),
-        ),
+        Span::styled(RESULT_PREFIX.to_string(), Style::default().fg(style_tokens::GREY)),
         Span::raw(primary.to_string()),
     ]));
 
     if let Some(sec) = secondary {
         lines.push(Line::from(vec![
-            Span::styled(
-                RESULT_PREFIX.to_string(),
-                Style::default().fg(style_tokens::SUBTLE),
-            ),
+            Span::styled(RESULT_PREFIX.to_string(), Style::default().fg(style_tokens::SUBTLE)),
             Span::styled(sec.to_string(), Style::default().fg(style_tokens::SUBTLE)),
         ]));
     }
@@ -142,11 +118,8 @@ pub fn truncate_output(text: &str, head: usize, tail: usize) -> (String, bool, u
 
     let hidden = all_lines.len() - total;
     let head_part: Vec<&str> = all_lines[..head].to_vec();
-    let tail_part: Vec<&str> = if tail > 0 {
-        all_lines[all_lines.len() - tail..].to_vec()
-    } else {
-        vec![]
-    };
+    let tail_part: Vec<&str> =
+        if tail > 0 { all_lines[all_lines.len() - tail..].to_vec() } else { vec![] };
 
     let mut result = head_part.join("\n");
     result.push_str(&format!("\n... {hidden} lines hidden ...\n"));

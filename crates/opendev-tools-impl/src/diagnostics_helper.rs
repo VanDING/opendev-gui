@@ -23,9 +23,7 @@ pub async fn collect_post_edit_diagnostics(ctx: &ToolContext, file_path: &Path) 
     let provider = ctx.diagnostic_provider.as_ref()?;
 
     // Query diagnostics for the edited file — errors and warnings only (severity ≤ 2).
-    let diagnostics = provider
-        .diagnostics_for_file(file_path, 2, MAX_DIAGNOSTICS_PER_FILE)
-        .await;
+    let diagnostics = provider.diagnostics_for_file(file_path, 2, MAX_DIAGNOSTICS_PER_FILE).await;
 
     if diagnostics.is_empty() {
         return None;
@@ -70,9 +68,8 @@ pub async fn collect_multi_file_diagnostics(
     let mut files_with_diags = 0;
 
     for &file_path in file_paths.iter().take(MAX_PROJECT_DIAGNOSTIC_FILES + 1) {
-        let diagnostics = provider
-            .diagnostics_for_file(file_path, 2, MAX_DIAGNOSTICS_PER_FILE)
-            .await;
+        let diagnostics =
+            provider.diagnostics_for_file(file_path, 2, MAX_DIAGNOSTICS_PER_FILE).await;
 
         if diagnostics.is_empty() {
             continue;

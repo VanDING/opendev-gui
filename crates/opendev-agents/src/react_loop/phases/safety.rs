@@ -38,10 +38,7 @@ where
 {
     // --- Max iterations wind-down ---
     if react_loop.check_iteration_limit(state.iteration) {
-        info!(
-            iteration = state.iteration,
-            "Max iterations reached — requesting wind-down summary"
-        );
+        info!(iteration = state.iteration, "Max iterations reached — requesting wind-down summary");
 
         let summary_prompt = get_reminder("safety_limit_summary", &[]);
         append_directive(messages, &summary_prompt);
@@ -110,10 +107,7 @@ where
     if let Some(monitor) = task_monitor
         && monitor.is_background_requested()
     {
-        info!(
-            iteration = state.iteration,
-            "Background requested — yielding to foreground"
-        );
+        info!(iteration = state.iteration, "Background requested — yielding to foreground");
         return Some(Ok(AgentResult::backgrounded(messages.clone())));
     }
 
@@ -122,13 +116,9 @@ where
         let needs_llm = apply_staged_compaction(comp, messages);
         if needs_llm {
             do_llm_compaction(comp, messages, caller, http_client).await;
-            state
-                .subdir_tracker
-                .reset_after_compaction(&state.startup_paths, messages);
+            state.subdir_tracker.reset_after_compaction(&state.startup_paths, messages);
             // Signal compaction to collectors and reset their cadence
-            state
-                .compaction_flag
-                .store(true, std::sync::atomic::Ordering::Relaxed);
+            state.compaction_flag.store(true, std::sync::atomic::Ordering::Relaxed);
             state.collector_runner.reset_all();
             info!(
                 injected_remaining = state.subdir_tracker.injected_count(),

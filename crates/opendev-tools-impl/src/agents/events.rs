@@ -65,27 +65,15 @@ pub enum SubagentEvent {
         tool_call_count: usize,
     },
     /// Progress update from a background agent.
-    BackgroundProgress {
-        task_id: String,
-        tool_name: String,
-        tool_count: usize,
-    },
+    BackgroundProgress { task_id: String, tool_name: String, tool_count: usize },
     /// Activity line from a background agent.
     BackgroundActivity { task_id: String, line: String },
 
     // -- Team events --
     /// A team was created.
-    TeamCreated {
-        team_id: String,
-        leader: String,
-        members: Vec<String>,
-    },
+    TeamCreated { team_id: String, leader: String, members: Vec<String> },
     /// An inter-agent message was sent.
-    TeamMessageSent {
-        from: String,
-        to: String,
-        preview: String,
-    },
+    TeamMessageSent { from: String, to: String, preview: String },
     /// A team was deleted.
     TeamDeleted { team_id: String },
 }
@@ -108,11 +96,7 @@ impl ChannelProgressCallback {
         subagent_id: String,
         cancel_token: Option<tokio_util::sync::CancellationToken>,
     ) -> Self {
-        Self {
-            tx,
-            subagent_id,
-            cancel_token,
-        }
+        Self { tx, subagent_id, cancel_token }
     }
 }
 
@@ -186,19 +170,13 @@ pub struct BackgroundProgressCallback {
 
 impl BackgroundProgressCallback {
     pub fn new(tx: mpsc::UnboundedSender<SubagentEvent>, task_id: String) -> Self {
-        Self {
-            tx,
-            task_id,
-            tool_count: std::sync::atomic::AtomicUsize::new(0),
-        }
+        Self { tx, task_id, tool_count: std::sync::atomic::AtomicUsize::new(0) }
     }
 }
 
 impl std::fmt::Debug for BackgroundProgressCallback {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("BackgroundProgressCallback")
-            .field("task_id", &self.task_id)
-            .finish()
+        f.debug_struct("BackgroundProgressCallback").field("task_id", &self.task_id).finish()
     }
 }
 
@@ -212,10 +190,7 @@ impl opendev_agents::SubagentProgressCallback for BackgroundProgressCallback {
         _tool_id: &str,
         _args: &HashMap<String, serde_json::Value>,
     ) {
-        let count = self
-            .tool_count
-            .fetch_add(1, std::sync::atomic::Ordering::Relaxed)
-            + 1;
+        let count = self.tool_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
         let _ = self.tx.send(SubagentEvent::BackgroundProgress {
             task_id: self.task_id.clone(),
             tool_name: tool_name.to_string(),

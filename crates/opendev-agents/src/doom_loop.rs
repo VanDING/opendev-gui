@@ -66,10 +66,7 @@ pub struct DoomLoopDetector {
 impl DoomLoopDetector {
     /// Create a new detector.
     pub fn new() -> Self {
-        Self {
-            recent: VecDeque::with_capacity(MAX_RECENT),
-            nudge_count: 0,
-        }
+        Self { recent: VecDeque::with_capacity(MAX_RECENT), nudge_count: 0 }
     }
 
     /// Current nudge count (number of times a doom loop has been detected).
@@ -151,10 +148,7 @@ impl DoomLoopDetector {
 
             let segment = &tail[tail.len() - required..];
             let pattern = &segment[..cycle_len];
-            let is_cycle = segment
-                .iter()
-                .enumerate()
-                .all(|(i, fp)| *fp == pattern[i % cycle_len]);
+            let is_cycle = segment.iter().enumerate().all(|(i, fp)| *fp == pattern[i % cycle_len]);
 
             if is_cycle {
                 self.nudge_count += 1;
@@ -166,10 +160,8 @@ impl DoomLoopDetector {
                          {DOOM_LOOP_THRESHOLD} times consecutively. It may be stuck in a loop."
                     )
                 } else {
-                    let tool_names: Vec<&str> = pattern
-                        .iter()
-                        .map(|p| p.split(':').next().unwrap_or("unknown"))
-                        .collect();
+                    let tool_names: Vec<&str> =
+                        pattern.iter().map(|p| p.split(':').next().unwrap_or("unknown")).collect();
                     format!(
                         "The agent is repeating a {cycle_len}-step cycle \
                          ({}) {DOOM_LOOP_THRESHOLD} times. It may be stuck in a loop.",

@@ -28,10 +28,7 @@ pub struct ToolDisplayWidget<'a> {
 
 impl<'a> ToolDisplayWidget<'a> {
     pub fn new(tools: &'a [ToolExecution]) -> Self {
-        Self {
-            tools,
-            working_dir: None,
-        }
+        Self { tools, working_dir: None }
     }
 
     pub fn working_dir(mut self, wd: &'a str) -> Self {
@@ -47,9 +44,7 @@ impl Widget for ToolDisplayWidget<'_> {
             .border_style(Style::default().fg(style_tokens::BORDER))
             .title(Span::styled(
                 " Tools ",
-                Style::default()
-                    .fg(style_tokens::BLUE_BRIGHT)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(style_tokens::BLUE_BRIGHT).add_modifier(Modifier::BOLD),
             ));
 
         let shortener = crate::formatters::PathShortener::new(self.working_dir);

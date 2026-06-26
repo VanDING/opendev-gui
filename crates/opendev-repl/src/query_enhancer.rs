@@ -125,11 +125,8 @@ impl QueryEnhancer {
 
         // Replace {thinking_instruction} placeholder
         if system_content.contains("{thinking_instruction}") {
-            let thinking_text = if thinking_visible {
-                THINKING_ON_INSTRUCTION
-            } else {
-                THINKING_OFF_INSTRUCTION
-            };
+            let thinking_text =
+                if thinking_visible { THINKING_ON_INSTRUCTION } else { THINKING_OFF_INSTRUCTION };
             system_content = system_content.replace("{thinking_instruction}", thinking_text);
         }
 
@@ -151,11 +148,8 @@ impl QueryEnhancer {
         if !image_blocks.is_empty() {
             for msg in messages.iter_mut().rev() {
                 if msg.get("role").and_then(|r| r.as_str()) == Some("user") {
-                    let current_content = msg
-                        .get("content")
-                        .and_then(|c| c.as_str())
-                        .unwrap_or("")
-                        .to_string();
+                    let current_content =
+                        msg.get("content").and_then(|c| c.as_str()).unwrap_or("").to_string();
 
                     let mut multimodal: Vec<Value> = vec![serde_json::json!({
                         "type": "text",
@@ -193,10 +187,7 @@ impl QueryEnhancer {
             .sum();
         let estimated_tokens = total_chars / 4;
         if estimated_tokens > 100_000 {
-            warn!(
-                messages = messages.len(),
-                estimated_tokens, "Large context detected"
-            );
+            warn!(messages = messages.len(), estimated_tokens, "Large context detected");
         }
 
         messages
@@ -210,10 +201,7 @@ impl QueryEnhancer {
 
         let mut summary_parts = Vec::new();
         for msg in messages {
-            let role = msg
-                .get("role")
-                .and_then(|r| r.as_str())
-                .unwrap_or("unknown");
+            let role = msg.get("role").and_then(|r| r.as_str()).unwrap_or("unknown");
             let content = msg.get("content");
 
             let preview = match content {
@@ -229,11 +217,7 @@ impl QueryEnhancer {
                 }
                 Some(other) => {
                     let s = other.to_string();
-                    if s.len() > max_preview {
-                        format!("{}...", &s[..max_preview])
-                    } else {
-                        s
-                    }
+                    if s.len() > max_preview { format!("{}...", &s[..max_preview]) } else { s }
                 }
                 None => String::new(),
             };

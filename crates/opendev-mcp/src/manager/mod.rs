@@ -48,13 +48,7 @@ const MAX_BACKOFF_SECS: u64 = 60;
 /// the LLM or break JSON schemas.
 fn sanitize_mcp_name(name: &str) -> String {
     name.chars()
-        .map(|c| {
-            if c.is_alphanumeric() || c == '_' || c == '-' {
-                c
-            } else {
-                '_'
-            }
-        })
+        .map(|c| if c.is_alphanumeric() || c == '_' || c == '-' { c } else { '_' })
         .collect()
 }
 

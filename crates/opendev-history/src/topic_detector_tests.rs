@@ -40,10 +40,7 @@ fn test_detector_disabled_without_key() {
 
 #[test]
 fn test_simple_message_clone() {
-    let msg = SimpleMessage {
-        role: "user".to_string(),
-        content: "hello".to_string(),
-    };
+    let msg = SimpleMessage { role: "user".to_string(), content: "hello".to_string() };
     let cloned = msg.clone();
     assert_eq!(cloned.role, "user");
     assert_eq!(cloned.content, "hello");
@@ -51,24 +48,15 @@ fn test_simple_message_clone() {
 
 #[test]
 fn test_api_endpoint() {
-    assert_eq!(
-        api_endpoint("openai"),
-        "https://api.openai.com/v1/chat/completions"
-    );
-    assert_eq!(
-        api_endpoint("fireworks"),
-        "https://api.fireworks.ai/inference/v1/chat/completions"
-    );
+    assert_eq!(api_endpoint("openai"), "https://api.openai.com/v1/chat/completions");
+    assert_eq!(api_endpoint("fireworks"), "https://api.fireworks.ai/inference/v1/chat/completions");
 }
 
 #[test]
 fn test_max_title_truncation() {
     let long_title = "a".repeat(100);
-    let truncated = if long_title.len() > MAX_TITLE_LEN {
-        &long_title[..MAX_TITLE_LEN]
-    } else {
-        &long_title
-    };
+    let truncated =
+        if long_title.len() > MAX_TITLE_LEN { &long_title[..MAX_TITLE_LEN] } else { &long_title };
     assert_eq!(truncated.len(), 50);
 }
 
@@ -82,10 +70,7 @@ async fn test_set_title_on_session_manager() {
     mgr.set_title(&session_id, "New Title").unwrap();
 
     let session = mgr.current_session().unwrap();
-    assert_eq!(
-        session.metadata.get("title").and_then(|v| v.as_str()),
-        Some("New Title")
-    );
+    assert_eq!(session.metadata.get("title").and_then(|v| v.as_str()), Some("New Title"));
     assert!(session.slug.is_some());
 }
 
@@ -109,10 +94,7 @@ async fn test_set_title_on_disk_session() {
 
     // Load and verify
     let loaded = mgr.load_session("disk-title-test").unwrap();
-    assert_eq!(
-        loaded.metadata.get("title").and_then(|v| v.as_str()),
-        Some("Disk Title")
-    );
+    assert_eq!(loaded.metadata.get("title").and_then(|v| v.as_str()), Some("Disk Title"));
     assert!(loaded.slug.is_some());
 }
 
@@ -127,11 +109,7 @@ async fn test_set_title_truncates() {
     mgr.set_title(&session_id, &long_title).unwrap();
 
     let session = mgr.current_session().unwrap();
-    let title = session
-        .metadata
-        .get("title")
-        .and_then(|v| v.as_str())
-        .unwrap();
+    let title = session.metadata.get("title").and_then(|v| v.as_str()).unwrap();
     assert_eq!(title.len(), 50);
 }
 
@@ -152,10 +130,7 @@ fn test_empty_title_filtered() {
     let json = r#"{"isNewTopic": true, "title": ""}"#;
     let result: TopicResult = serde_json::from_str(json).unwrap();
     assert!(result.is_new_topic);
-    let title = result
-        .title
-        .map(|t| t.trim().to_string())
-        .filter(|t| !t.is_empty());
+    let title = result.title.map(|t| t.trim().to_string()).filter(|t| !t.is_empty());
     assert!(title.is_none());
 }
 
@@ -163,20 +138,14 @@ fn test_empty_title_filtered() {
 fn test_title_trimming() {
     let json = r#"{"isNewTopic": true, "title": "  debug login flow  "}"#;
     let result: TopicResult = serde_json::from_str(json).unwrap();
-    let title = result
-        .title
-        .map(|t| t.trim().to_string())
-        .filter(|t| !t.is_empty());
+    let title = result.title.map(|t| t.trim().to_string()).filter(|t| !t.is_empty());
     assert_eq!(title.as_deref(), Some("debug login flow"));
 }
 
 #[test]
 fn test_message_count_limiting() {
     let msgs: Vec<SimpleMessage> = (0..10)
-        .map(|i| SimpleMessage {
-            role: "user".to_string(),
-            content: format!("message {i}"),
-        })
+        .map(|i| SimpleMessage { role: "user".to_string(), content: format!("message {i}") })
         .collect();
     let recent: Vec<SimpleMessage> = if msgs.len() > MAX_RECENT_MESSAGES {
         msgs[msgs.len() - MAX_RECENT_MESSAGES..].to_vec()

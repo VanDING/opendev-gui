@@ -31,14 +31,8 @@ pub const STAGE_COMPACT: f64 = 0.99;
 pub const PRUNE_PROTECTED_TOKENS: u64 = 40_000;
 
 /// Tool types whose outputs survive compaction pruning.
-pub const PROTECTED_TOOL_TYPES: &[&str] = &[
-    "skill",
-    "invoke_skill",
-    "present_plan",
-    "read_file",
-    "web_screenshot",
-    "vlm",
-];
+pub const PROTECTED_TOOL_TYPES: &[&str] =
+    &["skill", "invoke_skill", "present_plan", "read_file", "web_screenshot", "vlm"];
 
 /// Minimum output length below which pruning is skipped (not worth it).
 pub const PRUNE_MIN_LENGTH: usize = 200;
@@ -65,44 +59,23 @@ pub(crate) mod tests {
 
     pub fn make_msg(role: &str, content: &str) -> ApiMessage {
         let mut msg = ApiMessage::new();
-        msg.insert(
-            "role".to_string(),
-            serde_json::Value::String(role.to_string()),
-        );
-        msg.insert(
-            "content".to_string(),
-            serde_json::Value::String(content.to_string()),
-        );
+        msg.insert("role".to_string(), serde_json::Value::String(role.to_string()));
+        msg.insert("content".to_string(), serde_json::Value::String(content.to_string()));
         msg
     }
 
     pub fn make_tool_msg(tool_call_id: &str, content: &str) -> ApiMessage {
         let mut msg = ApiMessage::new();
-        msg.insert(
-            "role".to_string(),
-            serde_json::Value::String("tool".to_string()),
-        );
-        msg.insert(
-            "tool_call_id".to_string(),
-            serde_json::Value::String(tool_call_id.to_string()),
-        );
-        msg.insert(
-            "content".to_string(),
-            serde_json::Value::String(content.to_string()),
-        );
+        msg.insert("role".to_string(), serde_json::Value::String("tool".to_string()));
+        msg.insert("tool_call_id".to_string(), serde_json::Value::String(tool_call_id.to_string()));
+        msg.insert("content".to_string(), serde_json::Value::String(content.to_string()));
         msg
     }
 
     pub fn make_assistant_with_tc(tool_calls: Vec<(&str, &str)>) -> ApiMessage {
         let mut msg = ApiMessage::new();
-        msg.insert(
-            "role".to_string(),
-            serde_json::Value::String("assistant".to_string()),
-        );
-        msg.insert(
-            "content".to_string(),
-            serde_json::Value::String(String::new()),
-        );
+        msg.insert("role".to_string(), serde_json::Value::String("assistant".to_string()));
+        msg.insert("content".to_string(), serde_json::Value::String(String::new()));
         let tcs: Vec<serde_json::Value> = tool_calls
             .into_iter()
             .map(|(id, name)| {

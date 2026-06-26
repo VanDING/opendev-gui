@@ -30,11 +30,7 @@ fn test_set_retry() {
     let tracker = SessionStatusTracker::new();
     tracker.set_retry("sess-1", 2, "Rate Limited", 1700000005000);
     match tracker.get("sess-1") {
-        SessionStatus::Retry {
-            attempt,
-            message,
-            next_retry_ms,
-        } => {
+        SessionStatus::Retry { attempt, message, next_retry_ms } => {
             assert_eq!(attempt, 2);
             assert_eq!(message, "Rate Limited");
             assert_eq!(next_retry_ms, 1700000005000);
@@ -84,10 +80,7 @@ fn test_multiple_sessions() {
 
     // Transition sess-1 from busy to retry
     tracker.set_retry("sess-1", 1, "Too Many Requests", 99999);
-    assert!(matches!(
-        tracker.get("sess-1"),
-        SessionStatus::Retry { attempt: 1, .. }
-    ));
+    assert!(matches!(tracker.get("sess-1"), SessionStatus::Retry { attempt: 1, .. }));
 }
 
 #[test]
@@ -95,12 +88,8 @@ fn test_status_display() {
     assert_eq!(SessionStatus::Idle.to_string(), "idle");
     assert_eq!(SessionStatus::Busy.to_string(), "busy");
     assert_eq!(
-        SessionStatus::Retry {
-            attempt: 3,
-            message: "Rate Limited".to_string(),
-            next_retry_ms: 0,
-        }
-        .to_string(),
+        SessionStatus::Retry { attempt: 3, message: "Rate Limited".to_string(), next_retry_ms: 0 }
+            .to_string(),
         "retry (attempt 3: Rate Limited)"
     );
 }
@@ -137,10 +126,7 @@ async fn test_event_bus_integration() {
     tracker.set_busy("sess-1");
     let event = rx.recv().await.unwrap();
     assert!(matches!(event, RuntimeEvent::SessionStatusChanged { .. }));
-    if let RuntimeEvent::SessionStatusChanged {
-        session_id, status, ..
-    } = event
-    {
+    if let RuntimeEvent::SessionStatusChanged { session_id, status, .. } = event {
         assert_eq!(session_id, "sess-1");
         assert_eq!(status, SessionStatus::Busy);
     }

@@ -51,10 +51,7 @@ fn make_conversation(n: usize) -> Vec<DisplayMessage> {
                 "Assistant response {i}. This is a longer message with **bold** text and `code`."
             )));
         } else {
-            msgs.push(make_assistant_with_tool(
-                &format!("Running tool for step {i}"),
-                "bash",
-            ));
+            msgs.push(make_assistant_with_tool(&format!("Running tool for step {i}"), "bash"));
         }
     }
     msgs
@@ -144,10 +141,5 @@ fn bench_markdown_render(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(
-    benches,
-    bench_conversation_render,
-    bench_build_lines,
-    bench_markdown_render
-);
+criterion_group!(benches, bench_conversation_render, bench_build_lines, bench_markdown_render);
 criterion_main!(benches);

@@ -90,11 +90,7 @@ impl AstGrepTool {
             return ToolResult::ok("No structural matches found");
         }
 
-        let max_results = if args.head_limit > 0 {
-            args.head_limit
-        } else {
-            50
-        };
+        let max_results = if args.head_limit > 0 { args.head_limit } else { 50 };
 
         let mut lines = Vec::new();
         let mut count = 0usize;
@@ -129,11 +125,7 @@ impl AstGrepTool {
                 .and_then(|l| l.as_u64())
                 .unwrap_or(0);
 
-            let text = item
-                .get("text")
-                .and_then(|v| v.as_str())
-                .unwrap_or("")
-                .trim();
+            let text = item.get("text").and_then(|v| v.as_str()).unwrap_or("").trim();
 
             // Truncate very long matches
             let display_text = if text.len() > 200 {
@@ -233,10 +225,7 @@ impl GrepTool {
             }
             _ => {
                 let stderr = String::from_utf8_lossy(&output.stderr);
-                Err(RgError::Other(format!(
-                    "rg exited with unexpected status: {}",
-                    stderr
-                )))
+                Err(RgError::Other(format!("rg exited with unexpected status: {}", stderr)))
             }
         }
     }
@@ -367,11 +356,7 @@ pub(super) fn sort_lines_by_mtime(lines: &str, search_path: &Path) -> String {
 
 fn get_mtime(file_path: &str, search_path: &Path) -> Option<SystemTime> {
     let p = Path::new(file_path);
-    let full = if p.is_absolute() {
-        p.to_path_buf()
-    } else {
-        search_path.join(p)
-    };
+    let full = if p.is_absolute() { p.to_path_buf() } else { search_path.join(p) };
     std::fs::metadata(full).and_then(|m| m.modified()).ok()
 }
 

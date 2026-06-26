@@ -7,63 +7,33 @@ fn test_position_to_offset() {
     // "line zero\nline one\nline two\nline three"
     // line 0: 0..9  (line zero)
     // line 1: 10..17 (line one)
-    assert_eq!(
-        TextUtils::position_to_offset(SAMPLE, Position::new(0, 0)),
-        Some(0)
-    );
-    assert_eq!(
-        TextUtils::position_to_offset(SAMPLE, Position::new(0, 4)),
-        Some(4)
-    );
-    assert_eq!(
-        TextUtils::position_to_offset(SAMPLE, Position::new(1, 0)),
-        Some(10)
-    );
-    assert_eq!(
-        TextUtils::position_to_offset(SAMPLE, Position::new(1, 5)),
-        Some(15)
-    );
+    assert_eq!(TextUtils::position_to_offset(SAMPLE, Position::new(0, 0)), Some(0));
+    assert_eq!(TextUtils::position_to_offset(SAMPLE, Position::new(0, 4)), Some(4));
+    assert_eq!(TextUtils::position_to_offset(SAMPLE, Position::new(1, 0)), Some(10));
+    assert_eq!(TextUtils::position_to_offset(SAMPLE, Position::new(1, 5)), Some(15));
 }
 
 #[test]
 fn test_offset_to_position() {
-    assert_eq!(
-        TextUtils::offset_to_position(SAMPLE, 0),
-        Some(Position::new(0, 0))
-    );
-    assert_eq!(
-        TextUtils::offset_to_position(SAMPLE, 4),
-        Some(Position::new(0, 4))
-    );
-    assert_eq!(
-        TextUtils::offset_to_position(SAMPLE, 10),
-        Some(Position::new(1, 0))
-    );
+    assert_eq!(TextUtils::offset_to_position(SAMPLE, 0), Some(Position::new(0, 0)));
+    assert_eq!(TextUtils::offset_to_position(SAMPLE, 4), Some(Position::new(0, 4)));
+    assert_eq!(TextUtils::offset_to_position(SAMPLE, 10), Some(Position::new(1, 0)));
 }
 
 #[test]
 fn test_offset_to_position_end_of_text() {
     let text = "abc";
-    assert_eq!(
-        TextUtils::offset_to_position(text, 3),
-        Some(Position::new(0, 3))
-    );
+    assert_eq!(TextUtils::offset_to_position(text, 3), Some(Position::new(0, 3)));
     assert_eq!(TextUtils::offset_to_position(text, 4), None);
 }
 
 #[test]
 fn test_extract_range() {
     let range = SourceRange::new(Position::new(0, 5), Position::new(0, 9));
-    assert_eq!(
-        TextUtils::extract_range(SAMPLE, &range),
-        Some("zero".to_string())
-    );
+    assert_eq!(TextUtils::extract_range(SAMPLE, &range), Some("zero".to_string()));
 
     let range = SourceRange::new(Position::new(1, 5), Position::new(1, 8));
-    assert_eq!(
-        TextUtils::extract_range(SAMPLE, &range),
-        Some("one".to_string())
-    );
+    assert_eq!(TextUtils::extract_range(SAMPLE, &range), Some("one".to_string()));
 }
 
 #[test]
@@ -111,10 +81,7 @@ fn test_normalize_path() {
 
 #[test]
 fn test_extension() {
-    assert_eq!(
-        PathUtils::extension(Path::new("foo.RS")),
-        Some("rs".to_string())
-    );
+    assert_eq!(PathUtils::extension(Path::new("foo.RS")), Some("rs".to_string()));
     assert_eq!(PathUtils::extension(Path::new("no_ext")), None);
 }
 

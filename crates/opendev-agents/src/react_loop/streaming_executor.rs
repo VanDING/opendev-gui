@@ -141,12 +141,8 @@ impl StreamingToolExecutor {
                 let result = registry.execute(&tool_name, args_map, &context).await;
                 let duration_ms = start.elapsed().as_millis() as u64;
 
-                let early_result = EarlyToolResult {
-                    call_id: tc_id.clone(),
-                    tool_name,
-                    result,
-                    duration_ms,
-                };
+                let early_result =
+                    EarlyToolResult { call_id: tc_id.clone(), tool_name, result, duration_ms };
 
                 // Store in finished results for take_result()
                 if let Ok(mut map) = finished.lock() {
@@ -187,18 +183,12 @@ impl StreamingToolExecutor {
     /// This removes the result from the internal map. Returns `None` if the
     /// tool wasn't executed early or hasn't completed yet.
     pub fn take_result(&self, call_id: &str) -> Option<EarlyToolResult> {
-        self.finished_results
-            .lock()
-            .ok()
-            .and_then(|mut map| map.remove(call_id))
+        self.finished_results.lock().ok().and_then(|mut map| map.remove(call_id))
     }
 
     /// Take pre-parsed arguments for a write tool, if available.
     pub fn take_preparsed_args(&self, call_id: &str) -> Option<PreparsedArgs> {
-        self.preparsed_write_args
-            .lock()
-            .ok()
-            .and_then(|mut map| map.remove(call_id))
+        self.preparsed_write_args.lock().ok().and_then(|mut map| map.remove(call_id))
     }
 
     /// Wait for all running early tasks to complete.
@@ -224,18 +214,12 @@ impl StreamingToolExecutor {
     /// Returns true if any early results are available.
     #[allow(dead_code)]
     pub fn has_results(&self) -> bool {
-        self.finished_results
-            .lock()
-            .ok()
-            .is_some_and(|map| !map.is_empty())
+        self.finished_results.lock().ok().is_some_and(|map| !map.is_empty())
     }
 
     /// Returns true if any tasks are still running.
     pub fn has_running_tasks(&self) -> bool {
-        self.running_tasks
-            .lock()
-            .ok()
-            .is_some_and(|tasks| !tasks.is_empty())
+        self.running_tasks.lock().ok().is_some_and(|tasks| !tasks.is_empty())
     }
 }
 
@@ -244,31 +228,19 @@ impl StreamCallback for StreamingToolExecutor {
         // We track FunctionCallStart to build up the index → (call_id, name)
         // mapping, and FunctionCallDone to trigger execution.
         match event {
-            StreamEvent::FunctionCallStart {
-                index,
-                call_id,
-                name,
-                ..
-            } => {
+            StreamEvent::FunctionCallStart { index, call_id, name, .. } => {
                 // Store metadata keyed by stream index for later lookup.
                 if let Ok(mut map) = self.call_metadata.lock() {
                     map.insert(
                         *index,
-                        ToolCallMeta {
-                            call_id: call_id.clone(),
-                            name: name.clone(),
-                        },
+                        ToolCallMeta { call_id: call_id.clone(), name: name.clone() },
                     );
                 }
             }
             StreamEvent::FunctionCallDone { index, arguments } => {
                 // Look up call_id/name by index (not FIFO order) so
                 // interleaved Done events are matched correctly.
-                let meta = self
-                    .call_metadata
-                    .lock()
-                    .ok()
-                    .and_then(|mut map| map.remove(index));
+                let meta = self.call_metadata.lock().ok().and_then(|mut map| map.remove(index));
                 if let Some(meta) = meta {
                     self.handle_function_done(meta.call_id, meta.name, arguments.clone());
                 }

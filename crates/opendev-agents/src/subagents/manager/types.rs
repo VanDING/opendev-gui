@@ -105,10 +105,7 @@ pub struct SubagentEventBridge {
 impl SubagentEventBridge {
     /// Create a new bridge for a given subagent.
     pub fn new(subagent_name: String, progress: Arc<dyn SubagentProgressCallback>) -> Self {
-        Self {
-            subagent_name,
-            progress,
-        }
+        Self { subagent_name, progress }
     }
 }
 
@@ -125,8 +122,7 @@ impl crate::traits::AgentEventCallback for SubagentEventBridge {
             tool_id = %tool_id,
             "SubagentEventBridge: forwarding tool_started → on_tool_call"
         );
-        self.progress
-            .on_tool_call(&self.subagent_name, tool_name, tool_id, args);
+        self.progress.on_tool_call(&self.subagent_name, tool_name, tool_id, args);
     }
 
     fn on_tool_finished(&self, tool_id: &str, success: bool) {
@@ -136,15 +132,13 @@ impl crate::traits::AgentEventCallback for SubagentEventBridge {
             success = %success,
             "SubagentEventBridge: forwarding tool_finished → on_tool_complete"
         );
-        self.progress
-            .on_tool_complete(&self.subagent_name, "", tool_id, success);
+        self.progress.on_tool_complete(&self.subagent_name, "", tool_id, success);
     }
 
     fn on_agent_chunk(&self, _text: &str) {}
 
     fn on_token_usage(&self, input_tokens: u64, output_tokens: u64) {
-        self.progress
-            .on_token_usage(&self.subagent_name, input_tokens, output_tokens);
+        self.progress.on_token_usage(&self.subagent_name, input_tokens, output_tokens);
     }
 }
 

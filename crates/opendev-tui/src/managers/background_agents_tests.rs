@@ -16,12 +16,7 @@ fn test_new_empty() {
 #[test]
 fn test_add_and_get() {
     let mut mgr = make_mgr();
-    mgr.add_task(
-        "abc1234".into(),
-        "fix the bug".into(),
-        "session-1".into(),
-        InterruptToken::new(),
-    );
+    mgr.add_task("abc1234".into(), "fix the bug".into(), "session-1".into(), InterruptToken::new());
     assert_eq!(mgr.len(), 1);
     let task = mgr.get_task("abc1234").unwrap();
     assert_eq!(task.query, "fix the bug");
@@ -31,12 +26,7 @@ fn test_add_and_get() {
 #[test]
 fn test_mark_completed() {
     let mut mgr = make_mgr();
-    mgr.add_task(
-        "t1".into(),
-        "query".into(),
-        "s1".into(),
-        InterruptToken::new(),
-    );
+    mgr.add_task("t1".into(), "query".into(), "s1".into(), InterruptToken::new());
     mgr.mark_completed("t1", true, "Done successfully".into(), 5, 0.01);
     let task = mgr.get_task("t1").unwrap();
     assert_eq!(task.state, BackgroundAgentState::Completed);
@@ -51,10 +41,7 @@ fn test_kill_task() {
     let token_clone = token.clone();
     mgr.add_task("t1".into(), "query".into(), "s1".into(), token);
     assert!(mgr.kill_task("t1"));
-    assert_eq!(
-        mgr.get_task("t1").unwrap().state,
-        BackgroundAgentState::Killed
-    );
+    assert_eq!(mgr.get_task("t1").unwrap().state, BackgroundAgentState::Killed);
     assert!(token_clone.is_requested());
 }
 
@@ -69,12 +56,7 @@ fn test_max_concurrent() {
     let mut mgr = make_mgr();
     mgr.max_concurrent = 2;
     for i in 0..2 {
-        mgr.add_task(
-            format!("t{i}"),
-            "q".into(),
-            "s".into(),
-            InterruptToken::new(),
-        );
+        mgr.add_task(format!("t{i}"), "q".into(), "s".into(), InterruptToken::new());
     }
     assert!(!mgr.can_accept());
     mgr.mark_completed("t0", true, "done".into(), 0, 0.0);
@@ -84,18 +66,8 @@ fn test_max_concurrent() {
 #[test]
 fn test_all_tasks_sorted() {
     let mut mgr = make_mgr();
-    mgr.add_task(
-        "t1".into(),
-        "first".into(),
-        "s".into(),
-        InterruptToken::new(),
-    );
-    mgr.add_task(
-        "t2".into(),
-        "second".into(),
-        "s".into(),
-        InterruptToken::new(),
-    );
+    mgr.add_task("t1".into(), "first".into(), "s".into(), InterruptToken::new());
+    mgr.add_task("t2".into(), "second".into(), "s".into(), InterruptToken::new());
     let tasks = mgr.all_tasks();
     assert_eq!(tasks.len(), 2);
     // Most recent first
@@ -117,16 +89,10 @@ fn test_mark_completed_preserves_killed() {
     let mut mgr = make_mgr();
     mgr.add_task("t1".into(), "q".into(), "s".into(), InterruptToken::new());
     mgr.kill_task("t1");
-    assert_eq!(
-        mgr.get_task("t1").unwrap().state,
-        BackgroundAgentState::Killed
-    );
+    assert_eq!(mgr.get_task("t1").unwrap().state, BackgroundAgentState::Killed);
     // mark_completed should NOT overwrite Killed → Failed
     mgr.mark_completed("t1", false, "interrupted".into(), 2, 0.0);
-    assert_eq!(
-        mgr.get_task("t1").unwrap().state,
-        BackgroundAgentState::Killed
-    );
+    assert_eq!(mgr.get_task("t1").unwrap().state, BackgroundAgentState::Killed);
 }
 
 #[test]

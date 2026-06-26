@@ -79,21 +79,13 @@ impl HandoffMessage {
         let findings = if self.key_findings.is_empty() {
             "None".to_string()
         } else {
-            self.key_findings
-                .iter()
-                .map(|f| format!("- {f}"))
-                .collect::<Vec<_>>()
-                .join("\n")
+            self.key_findings.iter().map(|f| format!("- {f}")).collect::<Vec<_>>().join("\n")
         };
 
         let pending = if self.pending_actions.is_empty() {
             "None".to_string()
         } else {
-            self.pending_actions
-                .iter()
-                .map(|a| format!("- {a}"))
-                .collect::<Vec<_>>()
-                .join("\n")
+            self.pending_actions.iter().map(|a| format!("- {a}")).collect::<Vec<_>>().join("\n")
         };
 
         serde_json::json!({

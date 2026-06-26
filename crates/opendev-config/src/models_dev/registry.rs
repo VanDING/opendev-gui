@@ -25,9 +25,7 @@ pub struct ModelRegistry {
 impl ModelRegistry {
     /// Create a new empty registry.
     pub fn new() -> Self {
-        Self {
-            providers: HashMap::new(),
-        }
+        Self { providers: HashMap::new() }
     }
 
     /// Load registry from cache directory.
@@ -90,11 +88,7 @@ impl ModelRegistry {
             if path.extension().and_then(|e| e.to_str()) != Some("json") {
                 continue;
             }
-            if path
-                .file_name()
-                .and_then(|n| n.to_str())
-                .is_some_and(|n| n.starts_with('.'))
-            {
+            if path.file_name().and_then(|n| n.to_str()).is_some_and(|n| n.starts_with('.')) {
                 continue;
             }
 
@@ -128,17 +122,12 @@ impl ModelRegistry {
                     ModelInfo {
                         id: model_data["id"].as_str().unwrap_or(model_key).to_string(),
                         name: model_data["name"].as_str().unwrap_or(model_key).to_string(),
-                        provider: model_data["provider"]
-                            .as_str()
-                            .unwrap_or_default()
-                            .to_string(),
+                        provider: model_data["provider"].as_str().unwrap_or_default().to_string(),
                         context_length: model_data["context_length"].as_u64().unwrap_or(0),
                         capabilities: model_data["capabilities"]
                             .as_array()
                             .map(|arr| {
-                                arr.iter()
-                                    .filter_map(|v| v.as_str().map(String::from))
-                                    .collect()
+                                arr.iter().filter_map(|v| v.as_str().map(String::from)).collect()
                             })
                             .unwrap_or_default(),
                         pricing_input: pricing["input"].as_f64().unwrap_or(0.0),
@@ -154,10 +143,7 @@ impl ModelRegistry {
                         supports_temperature: model_data["supports_temperature"]
                             .as_bool()
                             .unwrap_or(true),
-                        api_type: model_data["api_type"]
-                            .as_str()
-                            .unwrap_or("chat")
-                            .to_string(),
+                        api_type: model_data["api_type"].as_str().unwrap_or("chat").to_string(),
                     },
                 );
             }
@@ -168,10 +154,7 @@ impl ModelRegistry {
             name: data["name"].as_str().unwrap_or_default().to_string(),
             description: data["description"].as_str().unwrap_or_default().to_string(),
             api_key_env: data["api_key_env"].as_str().unwrap_or_default().to_string(),
-            api_base_url: data["api_base_url"]
-                .as_str()
-                .unwrap_or_default()
-                .to_string(),
+            api_base_url: data["api_base_url"].as_str().unwrap_or_default().to_string(),
             models,
         })
     }
@@ -179,36 +162,20 @@ impl ModelRegistry {
     /// Built-in fallback for well-known providers when registry is unavailable.
     pub fn builtin_provider(provider_id: &str) -> Option<ProviderInfo> {
         let (name, api_key_env, api_base_url) = match provider_id {
-            "anthropic" => (
-                "Anthropic",
-                "ANTHROPIC_API_KEY",
-                "https://api.anthropic.com",
-            ),
+            "anthropic" => ("Anthropic", "ANTHROPIC_API_KEY", "https://api.anthropic.com"),
             "openai" => ("OpenAI", "OPENAI_API_KEY", "https://api.openai.com"),
             "ollama" => ("Ollama", "", "http://localhost:11434"),
-            "gemini" | "google" => (
-                "Google Gemini",
-                "GEMINI_API_KEY",
-                "https://generativelanguage.googleapis.com",
-            ),
+            "gemini" | "google" => {
+                ("Google Gemini", "GEMINI_API_KEY", "https://generativelanguage.googleapis.com")
+            }
             "groq" => ("Groq", "GROQ_API_KEY", "https://api.groq.com/openai"),
-            "fireworks" => (
-                "Fireworks AI",
-                "FIREWORKS_API_KEY",
-                "https://api.fireworks.ai/inference",
-            ),
+            "fireworks" => {
+                ("Fireworks AI", "FIREWORKS_API_KEY", "https://api.fireworks.ai/inference")
+            }
             "mistral" => ("Mistral AI", "MISTRAL_API_KEY", "https://api.mistral.ai"),
             "deepseek" => ("DeepSeek", "DEEPSEEK_API_KEY", "https://api.deepseek.com"),
-            "openrouter" => (
-                "OpenRouter",
-                "OPENROUTER_API_KEY",
-                "https://openrouter.ai/api",
-            ),
-            "together" => (
-                "Together AI",
-                "TOGETHER_API_KEY",
-                "https://api.together.xyz",
-            ),
+            "openrouter" => ("OpenRouter", "OPENROUTER_API_KEY", "https://openrouter.ai/api"),
+            "together" => ("Together AI", "TOGETHER_API_KEY", "https://api.together.xyz"),
             "xai" => ("xAI", "XAI_API_KEY", "https://api.x.ai"),
             "lmstudio" => ("LM Studio", "", "http://localhost:1234"),
             _ => return None,
@@ -225,9 +192,7 @@ impl ModelRegistry {
 
     /// Get provider info from registry, falling back to built-in defaults.
     pub fn get_provider_or_builtin(&self, provider_id: &str) -> Option<ProviderInfo> {
-        self.get_provider(provider_id)
-            .cloned()
-            .or_else(|| Self::builtin_provider(provider_id))
+        self.get_provider(provider_id).cloned().or_else(|| Self::builtin_provider(provider_id))
     }
 
     /// Get provider information by ID.
@@ -244,9 +209,7 @@ impl ModelRegistry {
 
     /// Get model information by provider and model key.
     pub fn get_model(&self, provider_id: &str, model_key: &str) -> Option<&ModelInfo> {
-        self.providers
-            .get(provider_id)
-            .and_then(|p| p.models.get(model_key))
+        self.providers.get(provider_id).and_then(|p| p.models.get(model_key))
     }
 
     /// Find a model by its full ID across all providers.

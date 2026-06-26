@@ -67,12 +67,7 @@ pub struct TodoPanelWidget<'a> {
 impl<'a> TodoPanelWidget<'a> {
     /// Create a new todo panel widget (expanded by default).
     pub fn new(items: &'a [TodoDisplayItem]) -> Self {
-        Self {
-            items,
-            plan_name: None,
-            expanded: true,
-            spinner_tick: 0,
-        }
+        Self { items, plan_name: None, expanded: true, spinner_tick: 0 }
     }
 
     /// Set the plan name to display in the title.
@@ -98,10 +93,7 @@ impl<'a> TodoPanelWidget<'a> {
     pub fn required_height(&self) -> u16 {
         // Hide panel when all items are done (Python: todo_panel.py:89-97)
         if !self.items.is_empty()
-            && self
-                .items
-                .iter()
-                .all(|i| i.status == TodoDisplayStatus::Completed)
+            && self.items.iter().all(|i| i.status == TodoDisplayStatus::Completed)
         {
             return 0;
         }
@@ -141,9 +133,7 @@ impl<'a> TodoPanelWidget<'a> {
                     let spinner = SPINNER_FRAMES[self.spinner_tick % SPINNER_FRAMES.len()];
                     (
                         format!(" {spinner} "),
-                        Style::default()
-                            .fg(style_tokens::PRIMARY)
-                            .add_modifier(Modifier::BOLD),
+                        Style::default().fg(style_tokens::PRIMARY).add_modifier(Modifier::BOLD),
                     )
                 }
                 TodoDisplayStatus::Pending => (
@@ -169,9 +159,7 @@ impl<'a> TodoPanelWidget<'a> {
             return Line::from(vec![
                 Span::styled(
                     " \u{2714} ".to_string(),
-                    Style::default()
-                        .fg(style_tokens::SUCCESS)
-                        .add_modifier(Modifier::BOLD),
+                    Style::default().fg(style_tokens::SUCCESS).add_modifier(Modifier::BOLD),
                 ),
                 Span::styled(
                     "All tasks complete".to_string(),
@@ -192,28 +180,17 @@ impl<'a> TodoPanelWidget<'a> {
             .iter()
             .find(|i| i.status == TodoDisplayStatus::InProgress)
             .and_then(|i| {
-                i.active_form
-                    .as_deref()
-                    .filter(|s| !s.is_empty())
-                    .or(Some(i.title.as_str()))
+                i.active_form.as_deref().filter(|s| !s.is_empty()).or(Some(i.title.as_str()))
             })
             .unwrap_or("Working...");
 
         Line::from(vec![
             Span::styled(
                 format!(" {spinner} "),
-                Style::default()
-                    .fg(style_tokens::PRIMARY)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(style_tokens::PRIMARY).add_modifier(Modifier::BOLD),
             ),
-            Span::styled(
-                active_text.to_string(),
-                Style::default().fg(style_tokens::PRIMARY),
-            ),
-            Span::styled(
-                format!("  ({done}/{total})"),
-                Style::default().fg(style_tokens::GREY),
-            ),
+            Span::styled(active_text.to_string(), Style::default().fg(style_tokens::PRIMARY)),
+            Span::styled(format!("  ({done}/{total})"), Style::default().fg(style_tokens::GREY)),
         ])
     }
 }
@@ -236,21 +213,13 @@ impl Widget for TodoPanelWidget<'_> {
             Span::raw(" "),
             Span::styled(
                 title_text,
-                Style::default()
-                    .fg(style_tokens::GREEN_LIGHT)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(style_tokens::GREEN_LIGHT).add_modifier(Modifier::BOLD),
             ),
-            Span::styled(
-                " (Ctrl+T to toggle) ",
-                Style::default().fg(style_tokens::GREY),
-            ),
+            Span::styled(" (Ctrl+T to toggle) ", Style::default().fg(style_tokens::GREY)),
         ]);
 
-        let border_color = if done == total && total > 0 {
-            style_tokens::SUCCESS
-        } else {
-            style_tokens::GREY
-        };
+        let border_color =
+            if done == total && total > 0 { style_tokens::SUCCESS } else { style_tokens::GREY };
 
         let block = Block::default()
             .title(title)

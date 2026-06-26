@@ -67,10 +67,7 @@ impl BaseTool for FileWriteTool {
             None => return ToolResult::fail("content is required"),
         };
 
-        let create_dirs = args
-            .get("create_dirs")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(true);
+        let create_dirs = args.get("create_dirs").and_then(|v| v.as_bool()).unwrap_or(true);
 
         let path = resolve_file_path(file_path, &ctx.working_dir);
 
@@ -87,9 +84,17 @@ impl BaseTool for FileWriteTool {
         if create_dirs {
             if let Some(parent) = path.parent()
                 && !parent.exists()
-                && let Err(e) = std::fs::create_dir_all(parent)
             {
-                return ToolResult::fail(format!("Failed to create directories: {e}"));
+                let parent = parent.to_path_buf();
+                match tokio::task::spawn_blocking(move || std::fs::create_dir_all(&parent)).await {
+                    Ok(Ok(())) => {}
+                    Ok(Err(e)) => {
+                        return ToolResult::fail(format!("Failed to create directories: {e}"))
+                    }
+                    Err(join_err) => {
+                        return ToolResult::fail(format!("Task join error: {join_err}"))
+                    }
+                }
             }
         } else if let Some(parent) = path.parent()
             && !parent.exists()
@@ -104,26 +109,49 @@ impl BaseTool for FileWriteTool {
         let dir = path.parent().unwrap_or(Path::new("."));
         let tmp_path = dir.join(format!(".{}.tmp", uuid::Uuid::new_v4()));
 
-        let mut opts = std::fs::OpenOptions::new();
-        opts.write(true).create_new(true);
-        match opts.open(&tmp_path) {
-            Ok(mut file) => {
-                if let Err(e) = std::io::Write::write_all(&mut file, content.as_bytes()) {
-                    return ToolResult::fail(format!("Failed to write temp file: {e}"));
+        let content_owned = content.to_string();
+        let dest_path = path.clone();
+        let tmp_path_clone = tmp_path.clone();
+        match tokio::task::spawn_blocking(move || {
+            let mut opts = std::fs::OpenOptions::new();
+            opts.write(true).create_new(true);
+            match opts.open(&tmp_path_clone) {
+                Ok(mut file) => {
+                    if let Err(e) = std::io::Write::write_all(&mut file, content_owned.as_bytes()) {
+                        return Err(format!("Failed to write temp file: {e}"));
+                    }
                 }
+                Err(e) => return Err(format!("Failed to open temp file: {e}")),
             }
-            Err(e) => return ToolResult::fail(format!("Failed to open temp file: {e}")),
-        }
 
-        if let Err(e) = std::fs::rename(&tmp_path, &path) {
-            // Clean up temp file on rename failure
-            let _ = std::fs::remove_file(&tmp_path);
-            return ToolResult::fail(format!("Failed to rename temp file: {e}"));
+            if let Err(e) = std::fs::rename(&tmp_path_clone, &dest_path) {
+                // Clean up temp file on rename failure
+                let _ = std::fs::remove_file(&tmp_path_clone);
+                return Err(format!("Failed to rename temp file: {e}"));
+            }
+
+            Ok::<(), String>(())
+        })
+        .await
+        {
+            Ok(Ok(())) => {}
+            Ok(Err(e)) => return ToolResult::fail(e),
+            Err(join_err) => return ToolResult::fail(format!("Task join error: {join_err}")),
         }
 
         // Auto-format if a formatter is available
-        let formatted =
-            formatter::format_file(path.to_str().unwrap_or(file_path), &ctx.working_dir);
+        let formatted = {
+            let format_path = path.to_str().unwrap_or(file_path).to_string();
+            let working_dir = ctx.working_dir.clone();
+            match tokio::task::spawn_blocking(move || {
+                formatter::format_file(&format_path, &working_dir)
+            })
+            .await
+            {
+                Ok(result) => result,
+                Err(_) => false,
+            }
+        };
 
         let lines = content.lines().count();
         let bytes = content.len();

@@ -72,10 +72,7 @@ fn test_bash_short_output() {
 
 #[test]
 fn test_bash_long_output() {
-    let output = (0..20)
-        .map(|i| format!("line {i}"))
-        .collect::<Vec<_>>()
-        .join("\n");
+    let output = (0..20).map(|i| format!("line {i}")).collect::<Vec<_>>().join("\n");
     let summary = summarize_tool_result("run_command", Some(&output), None);
     assert_eq!(summary, "Command executed (20 lines of output)");
 }

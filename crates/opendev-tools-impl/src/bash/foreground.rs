@@ -32,9 +32,8 @@ impl BashTool {
         let base_idle = timeout_config
             .map(|c| Duration::from_secs(c.idle_timeout_secs))
             .unwrap_or(IDLE_TIMEOUT);
-        let base_max = timeout_config
-            .map(|c| Duration::from_secs(c.max_timeout_secs))
-            .unwrap_or(MAX_TIMEOUT);
+        let base_max =
+            timeout_config.map(|c| Duration::from_secs(c.max_timeout_secs)).unwrap_or(MAX_TIMEOUT);
 
         // Caller timeout caps both idle and absolute timeouts
         let idle_timeout = base_idle.min(Duration::from_secs(timeout_secs));
@@ -248,11 +247,7 @@ impl BashTool {
 
                 ToolResult {
                     success: false,
-                    output: if display_output.is_empty() {
-                        None
-                    } else {
-                        Some(display_output)
-                    },
+                    output: if display_output.is_empty() { None } else { Some(display_output) },
                     error: Some(timeout_msg),
                     metadata,
                     duration_ms: None,

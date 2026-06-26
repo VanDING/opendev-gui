@@ -1,10 +1,7 @@
 use super::*;
 
 fn make_tool() -> (ListTodosTool, Arc<Mutex<TodoManager>>) {
-    let mgr = Arc::new(Mutex::new(TodoManager::from_steps(&[
-        "Step A".into(),
-        "Step B".into(),
-    ])));
+    let mgr = Arc::new(Mutex::new(TodoManager::from_steps(&["Step A".into(), "Step B".into()])));
     let tool = ListTodosTool::new(Arc::clone(&mgr));
     (tool, mgr)
 }

@@ -5,9 +5,7 @@ fn test_create_and_get_user() {
     let dir = tempfile::tempdir().unwrap();
     let store = UserStore::new(dir.path().to_path_buf()).unwrap();
 
-    let user = store
-        .create_user("alice", "hashed_pw", Some("alice@example.com"))
-        .unwrap();
+    let user = store.create_user("alice", "hashed_pw", Some("alice@example.com")).unwrap();
     assert_eq!(user.username, "alice");
     assert_eq!(user.email.as_deref(), Some("alice@example.com"));
     assert_eq!(user.role, "user");

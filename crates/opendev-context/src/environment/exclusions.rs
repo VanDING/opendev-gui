@@ -26,9 +26,7 @@ pub fn is_excluded(path: &Path, working_dir: &Path, patterns: &[String]) -> bool
     let canonical_str = canonical.display().to_string();
 
     // Compute relative path from working_dir for pattern matching
-    let canon_wd = working_dir
-        .canonicalize()
-        .unwrap_or_else(|_| working_dir.to_path_buf());
+    let canon_wd = working_dir.canonicalize().unwrap_or_else(|_| working_dir.to_path_buf());
     let relative = canonical
         .strip_prefix(working_dir)
         .or_else(|_| canonical.strip_prefix(&canon_wd))

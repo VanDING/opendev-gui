@@ -37,10 +37,7 @@ pub struct TaskProgressWidget<'a> {
 
 impl<'a> TaskProgressWidget<'a> {
     pub fn new(progress: &'a TaskProgress, spinner_state: &SpinnerState) -> Self {
-        Self {
-            progress,
-            spinner_char: spinner_state.current(),
-        }
+        Self { progress, spinner_char: spinner_state.current() }
     }
 }
 
@@ -74,10 +71,7 @@ impl Widget for TaskProgressWidget<'_> {
 
         let mut info_str = info_parts.join(" \u{00b7} "); // middle dot separator
         info_str.push_str(" (Esc to interrupt)");
-        spans.push(Span::styled(
-            info_str,
-            Style::default().fg(style_tokens::SUBTLE),
-        ));
+        spans.push(Span::styled(info_str, Style::default().fg(style_tokens::SUBTLE)));
 
         let line = Line::from(spans);
         buf.set_line(area.left(), area.top(), &line, area.width);
@@ -94,11 +88,7 @@ pub fn format_final_status(progress: &TaskProgress) -> String {
         "\u{23fa}" // ⏺
     };
 
-    let status = if progress.interrupted {
-        "interrupted"
-    } else {
-        "completed"
-    };
+    let status = if progress.interrupted { "interrupted" } else { "completed" };
 
     let mut parts = vec![format!("{status} in {}s", progress.elapsed_secs)];
     if let Some(ref token_display) = progress.token_display {

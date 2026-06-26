@@ -7,10 +7,8 @@ use std::sync::Arc;
 #[test]
 fn test_function_call_start_stored() {
     let registry = Arc::new(ToolRegistry::new());
-    let context = ToolContext {
-        working_dir: std::path::PathBuf::from("/tmp"),
-        ..ToolContext::default()
-    };
+    let context =
+        ToolContext { working_dir: std::path::PathBuf::from("/tmp"), ..ToolContext::default() };
     let executor = StreamingToolExecutor::new(registry, context, None);
 
     // Send a FunctionCallStart event
@@ -32,10 +30,8 @@ fn test_function_call_start_stored() {
 #[test]
 fn test_write_tool_preparsed() {
     let registry = Arc::new(ToolRegistry::new());
-    let context = ToolContext {
-        working_dir: std::path::PathBuf::from("/tmp"),
-        ..ToolContext::default()
-    };
+    let context =
+        ToolContext { working_dir: std::path::PathBuf::from("/tmp"), ..ToolContext::default() };
     let executor = StreamingToolExecutor::new(registry, context, None);
 
     // Queue a write tool
@@ -60,10 +56,7 @@ fn test_write_tool_preparsed() {
     let args = preparsed.unwrap().args_map;
 
     // Normalize separators to be OS-agnostic on Windows vs Unix
-    let got = args
-        .get("file_path")
-        .and_then(|v| v.as_str())
-        .map(|s| s.replace('\\', "/"));
+    let got = args.get("file_path").and_then(|v| v.as_str()).map(|s| s.replace('\\', "/"));
     assert_eq!(got.as_deref(), Some("/tmp/test.rs"));
 }
 
@@ -71,10 +64,8 @@ fn test_write_tool_preparsed() {
 #[test]
 fn test_ignores_irrelevant_events() {
     let registry = Arc::new(ToolRegistry::new());
-    let context = ToolContext {
-        working_dir: std::path::PathBuf::from("/tmp"),
-        ..ToolContext::default()
-    };
+    let context =
+        ToolContext { working_dir: std::path::PathBuf::from("/tmp"), ..ToolContext::default() };
     let executor = StreamingToolExecutor::new(registry, context, None);
 
     executor.on_event(&StreamEvent::TextDelta("hello".to_string()));
@@ -89,10 +80,8 @@ fn test_ignores_irrelevant_events() {
 #[test]
 fn test_initial_state() {
     let registry = Arc::new(ToolRegistry::new());
-    let context = ToolContext {
-        working_dir: std::path::PathBuf::from("/tmp"),
-        ..ToolContext::default()
-    };
+    let context =
+        ToolContext { working_dir: std::path::PathBuf::from("/tmp"), ..ToolContext::default() };
     let executor = StreamingToolExecutor::new(registry, context, None);
 
     assert!(!executor.has_results());
@@ -103,10 +92,8 @@ fn test_initial_state() {
 #[tokio::test]
 async fn test_read_only_tool_spawns_task() {
     let registry = Arc::new(ToolRegistry::new());
-    let context = ToolContext {
-        working_dir: std::path::PathBuf::from("/tmp"),
-        ..ToolContext::default()
-    };
+    let context =
+        ToolContext { working_dir: std::path::PathBuf::from("/tmp"), ..ToolContext::default() };
     let executor = StreamingToolExecutor::new(registry, context, None);
 
     // Queue a read-only tool

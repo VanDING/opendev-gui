@@ -42,11 +42,7 @@ const LLM_KEEP_TAIL_CHARS: usize = 5_000;
 /// Truncate by keeping head + tail, removing the middle.
 pub(crate) fn truncate_output(text: &str, for_llm: bool) -> String {
     let (max, head, tail) = if for_llm {
-        (
-            MAX_LLM_METADATA_CHARS,
-            LLM_KEEP_HEAD_CHARS,
-            LLM_KEEP_TAIL_CHARS,
-        )
+        (MAX_LLM_METADATA_CHARS, LLM_KEEP_HEAD_CHARS, LLM_KEEP_TAIL_CHARS)
     } else {
         (MAX_OUTPUT_CHARS, KEEP_HEAD_CHARS, KEEP_TAIL_CHARS)
     };
@@ -141,6 +137,12 @@ pub(crate) fn command_failure_suffix(exit_code: i32, output: &str) -> String {
 }
 
 // ---------------------------------------------------------------------------
+use std::sync::LazyLock;
+
+/// Regex to detect python commands that need the `-u` flag for unbuffered output.
+static PYTHON_CMD_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^(python3?)\s+").expect("valid regex"));
+
 // Prepare command string (auto-confirm, python -u)
 // ---------------------------------------------------------------------------
 
@@ -148,11 +150,8 @@ pub(crate) fn prepare_command(command: &str) -> String {
     let mut cmd = command.to_string();
 
     // Insert -u flag for python commands if not already present
-    if let Ok(re) = Regex::new(r"^(python3?)\s+")
-        && re.is_match(&cmd)
-        && !cmd.contains(" -u ")
-    {
-        cmd = re.replace(&cmd, "${1} -u ").to_string();
+    if PYTHON_CMD_RE.is_match(&cmd) && !cmd.contains(" -u ") {
+        cmd = PYTHON_CMD_RE.replace(&cmd, "${1} -u ").to_string();
     }
 
     // Wrap interactive commands with yes |

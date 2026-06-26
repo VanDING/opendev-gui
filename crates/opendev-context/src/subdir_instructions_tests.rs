@@ -123,11 +123,7 @@ fn test_cursorrules_discovered() {
     let root = tmp.path().canonicalize().unwrap();
 
     // Create a .cursorrules file at project root
-    std::fs::write(
-        root.join(".cursorrules"),
-        "Always use TypeScript strict mode",
-    )
-    .unwrap();
+    std::fs::write(root.join(".cursorrules"), "Always use TypeScript strict mode").unwrap();
 
     let file = root.join("index.ts");
     std::fs::write(&file, "").unwrap();
@@ -249,11 +245,7 @@ fn test_copilot_instructions_discovered() {
     // Create .github/copilot-instructions.md
     let github_dir = root.join(".github");
     std::fs::create_dir_all(&github_dir).unwrap();
-    std::fs::write(
-        github_dir.join("copilot-instructions.md"),
-        "Use conventional commits",
-    )
-    .unwrap();
+    std::fs::write(github_dir.join("copilot-instructions.md"), "Use conventional commits").unwrap();
 
     let file = root.join("main.rs");
     std::fs::write(&file, "").unwrap();
@@ -293,11 +285,8 @@ fn test_opendev_rules_with_frontmatter_paths() {
 
     let rules_dir = root.join(".opendev").join("rules");
     std::fs::create_dir_all(&rules_dir).unwrap();
-    std::fs::write(
-        rules_dir.join("rust.md"),
-        "---\npaths:\n  - \"**/*.rs\"\n---\nUse snake_case",
-    )
-    .unwrap();
+    std::fs::write(rules_dir.join("rust.md"), "---\npaths:\n  - \"**/*.rs\"\n---\nUse snake_case")
+        .unwrap();
 
     let file = root.join("main.rs");
     std::fs::write(&file, "").unwrap();
@@ -308,10 +297,7 @@ fn test_opendev_rules_with_frontmatter_paths() {
     let rust_rule = results.iter().find(|r| r.content.contains("snake_case"));
     assert!(rust_rule.is_some());
     assert!(rust_rule.unwrap().path_globs.is_some());
-    assert_eq!(
-        rust_rule.unwrap().path_globs.as_ref().unwrap()[0],
-        "**/*.rs"
-    );
+    assert_eq!(rust_rule.unwrap().path_globs.as_ref().unwrap()[0], "**/*.rs");
 }
 
 #[test]
@@ -321,11 +307,7 @@ fn test_html_comments_stripped_in_subdir() {
 
     let subdir = root.join("src");
     std::fs::create_dir_all(&subdir).unwrap();
-    std::fs::write(
-        subdir.join("AGENTS.md"),
-        "Visible\n<!-- hidden -->\nAlso visible",
-    )
-    .unwrap();
+    std::fs::write(subdir.join("AGENTS.md"), "Visible\n<!-- hidden -->\nAlso visible").unwrap();
 
     let file = subdir.join("main.rs");
     std::fs::write(&file, "").unwrap();

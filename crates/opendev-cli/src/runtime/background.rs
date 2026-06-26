@@ -131,10 +131,7 @@ impl BackgroundRuntime {
 
     /// Get the total cost in USD for this background task.
     pub fn total_cost_usd(&self) -> f64 {
-        self.cost_tracker
-            .lock()
-            .map(|t| t.total_cost_usd)
-            .unwrap_or(0.0)
+        self.cost_tracker.lock().map(|t| t.total_cost_usd).unwrap_or(0.0)
     }
 }
 

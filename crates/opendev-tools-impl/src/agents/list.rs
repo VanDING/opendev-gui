@@ -86,10 +86,7 @@ impl BaseTool for AgentsTool {
         args: HashMap<String, serde_json::Value>,
         ctx: &ToolContext,
     ) -> ToolResult {
-        let action = args
-            .get("action")
-            .and_then(|v| v.as_str())
-            .unwrap_or("list");
+        let action = args.get("action").and_then(|v| v.as_str()).unwrap_or("list");
 
         match action {
             "list" => self.list_agents(ctx),
@@ -137,10 +134,7 @@ impl AgentsTool {
         let output = parts.join("\n");
 
         let mut metadata = HashMap::new();
-        metadata.insert(
-            "agents".into(),
-            serde_json::to_value(&agents).unwrap_or_default(),
-        );
+        metadata.insert("agents".into(), serde_json::to_value(&agents).unwrap_or_default());
         metadata.insert("count".into(), serde_json::json!(agents.len()));
 
         ToolResult::ok_with_metadata(output, metadata)

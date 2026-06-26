@@ -26,10 +26,7 @@ const MAX_TITLE_LEN: usize = 50;
 const CHEAP_MODELS: &[(&str, &str)] = &[
     ("openai", "gpt-4o-mini"),
     ("anthropic", "claude-3-5-haiku-20241022"),
-    (
-        "fireworks",
-        "accounts/fireworks/models/llama-v3p1-8b-instruct",
-    ),
+    ("fireworks", "accounts/fireworks/models/llama-v3p1-8b-instruct"),
 ];
 
 /// Env var names per provider.
@@ -252,26 +249,16 @@ async fn detect_and_update(
             .and_then(|v| v.as_str())
             .map(|t| t.to_string())
     };
-    let result = call_llm(
-        client,
-        provider,
-        model,
-        api_key,
-        recent_messages,
-        current_title.as_deref(),
-    )
-    .await?;
+    let result =
+        call_llm(client, provider, model, api_key, recent_messages, current_title.as_deref())
+            .await?;
 
     if result.is_new_topic
         && let Some(title) = result.title
     {
         let title = title.trim();
         if !title.is_empty() {
-            let title = if title.len() > MAX_TITLE_LEN {
-                &title[..MAX_TITLE_LEN]
-            } else {
-                title
-            };
+            let title = if title.len() > MAX_TITLE_LEN { &title[..MAX_TITLE_LEN] } else { title };
 
             let mut mgr = session_manager.lock().await;
             mgr.set_title(session_id, title)?;

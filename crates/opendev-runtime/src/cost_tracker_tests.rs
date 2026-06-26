@@ -10,11 +10,7 @@ fn test_pricing() -> PricingInfo {
 #[test]
 fn test_basic_cost_tracking() {
     let mut tracker = CostTracker::new();
-    let usage = TokenUsage {
-        prompt_tokens: 1000,
-        completion_tokens: 500,
-        ..Default::default()
-    };
+    let usage = TokenUsage { prompt_tokens: 1000, completion_tokens: 500, ..Default::default() };
     let cost = tracker.record_usage(&usage, Some(&test_pricing()));
 
     // input: 1000/1M * $3 = $0.003
@@ -29,11 +25,7 @@ fn test_basic_cost_tracking() {
 #[test]
 fn test_tiered_pricing_over_200k() {
     let mut tracker = CostTracker::new();
-    let usage = TokenUsage {
-        prompt_tokens: 250_000,
-        completion_tokens: 100,
-        ..Default::default()
-    };
+    let usage = TokenUsage { prompt_tokens: 250_000, completion_tokens: 100, ..Default::default() };
     let cost = tracker.record_usage(&usage, Some(&test_pricing()));
 
     // First 200K at base rate: 200000/1M * $3 = $0.60
@@ -64,11 +56,7 @@ fn test_cache_read_tokens() {
 #[test]
 fn test_no_pricing_tracks_tokens_only() {
     let mut tracker = CostTracker::new();
-    let usage = TokenUsage {
-        prompt_tokens: 1000,
-        completion_tokens: 500,
-        ..Default::default()
-    };
+    let usage = TokenUsage { prompt_tokens: 1000, completion_tokens: 500, ..Default::default() };
     let cost = tracker.record_usage(&usage, None);
     assert_eq!(cost, 0.0);
     assert_eq!(tracker.total_input_tokens, 1000);
@@ -80,16 +68,8 @@ fn test_no_pricing_tracks_tokens_only() {
 fn test_cumulative_tracking() {
     let mut tracker = CostTracker::new();
     let pricing = test_pricing();
-    let usage1 = TokenUsage {
-        prompt_tokens: 1000,
-        completion_tokens: 200,
-        ..Default::default()
-    };
-    let usage2 = TokenUsage {
-        prompt_tokens: 2000,
-        completion_tokens: 300,
-        ..Default::default()
-    };
+    let usage1 = TokenUsage { prompt_tokens: 1000, completion_tokens: 200, ..Default::default() };
+    let usage2 = TokenUsage { prompt_tokens: 2000, completion_tokens: 300, ..Default::default() };
     tracker.record_usage(&usage1, Some(&pricing));
     tracker.record_usage(&usage2, Some(&pricing));
 
@@ -169,18 +149,12 @@ fn test_round_f64() {
 
 /// Anthropic Claude 3.5 Sonnet pricing: $3/1M input, $15/1M output.
 fn anthropic_sonnet_pricing() -> PricingInfo {
-    PricingInfo {
-        input_price_per_million: 3.0,
-        output_price_per_million: 15.0,
-    }
+    PricingInfo { input_price_per_million: 3.0, output_price_per_million: 15.0 }
 }
 
 /// OpenAI GPT-4o pricing: $2.50/1M input, $10/1M output.
 fn openai_gpt4o_pricing() -> PricingInfo {
-    PricingInfo {
-        input_price_per_million: 2.50,
-        output_price_per_million: 10.0,
-    }
+    PricingInfo { input_price_per_million: 2.50, output_price_per_million: 10.0 }
 }
 
 #[test]
@@ -213,25 +187,16 @@ fn test_over_200k_tier_multiplier() {
     let pricing = anthropic_sonnet_pricing();
 
     // Exactly at threshold: should NOT trigger multiplier
-    let at_threshold = TokenUsage {
-        prompt_tokens: 200_000,
-        completion_tokens: 0,
-        ..Default::default()
-    };
+    let at_threshold =
+        TokenUsage { prompt_tokens: 200_000, completion_tokens: 0, ..Default::default() };
     let cost_at = tracker.record_usage(&at_threshold, Some(&pricing));
     let expected_at = 200_000.0 / 1_000_000.0 * 3.0; // $0.60
-    assert!(
-        (cost_at - expected_at).abs() < 1e-9,
-        "At 200K: got {cost_at}, expected {expected_at}"
-    );
+    assert!((cost_at - expected_at).abs() < 1e-9, "At 200K: got {cost_at}, expected {expected_at}");
 
     // 1 token over threshold: multiplier applies to that 1 token
     let mut tracker2 = CostTracker::new();
-    let over_threshold = TokenUsage {
-        prompt_tokens: 200_001,
-        completion_tokens: 0,
-        ..Default::default()
-    };
+    let over_threshold =
+        TokenUsage { prompt_tokens: 200_001, completion_tokens: 0, ..Default::default() };
     let cost_over = tracker2.record_usage(&over_threshold, Some(&pricing));
     let expected_over = 0.60 + (1.0 / 1_000_000.0 * 3.0 * 1.5);
     assert!(
@@ -327,29 +292,17 @@ fn test_cost_sum_across_multiple_calls() {
     // Verify the total is within a reasonable range for the given token volumes
     // Total input: 311,500 tokens, total output: 10,600 tokens, cache: 130,000 tokens
     // The total cost should be positive and non-trivial
-    assert!(
-        tracker.total_cost_usd > 0.5,
-        "Total cost should be > $0.50 for this volume"
-    );
-    assert!(
-        tracker.total_cost_usd < 5.0,
-        "Total cost should be < $5.00 for this volume"
-    );
+    assert!(tracker.total_cost_usd > 0.5, "Total cost should be > $0.50 for this volume");
+    assert!(tracker.total_cost_usd < 5.0, "Total cost should be < $5.00 for this volume");
 }
 
 #[test]
 fn test_zero_price_model() {
     // Some local models have $0 pricing — cost should be zero
     let mut tracker = CostTracker::new();
-    let pricing = PricingInfo {
-        input_price_per_million: 0.0,
-        output_price_per_million: 0.0,
-    };
-    let usage = TokenUsage {
-        prompt_tokens: 100_000,
-        completion_tokens: 50_000,
-        ..Default::default()
-    };
+    let pricing = PricingInfo { input_price_per_million: 0.0, output_price_per_million: 0.0 };
+    let usage =
+        TokenUsage { prompt_tokens: 100_000, completion_tokens: 50_000, ..Default::default() };
     let cost = tracker.record_usage(&usage, Some(&pricing));
     assert_eq!(cost, 0.0);
     assert_eq!(tracker.total_cost_usd, 0.0);
@@ -411,11 +364,8 @@ fn test_budget_exceeded_after_usage() {
     tracker.set_budget(0.05);
     let pricing = test_pricing();
     // Record usage that exceeds the $0.05 budget
-    let usage = TokenUsage {
-        prompt_tokens: 10_000,
-        completion_tokens: 5_000,
-        ..Default::default()
-    };
+    let usage =
+        TokenUsage { prompt_tokens: 10_000, completion_tokens: 5_000, ..Default::default() };
     tracker.record_usage(&usage, Some(&pricing));
     // input: 10_000/1M * $3 = $0.03
     // output: 5_000/1M * $15 = $0.075

@@ -98,17 +98,13 @@ impl SessionIndex {
     ///
     /// Uses exclusive lock for cross-process safety.
     pub fn write_index(&self, entries: &[IndexEntry]) -> std::io::Result<()> {
-        let data = IndexFile {
-            version: INDEX_VERSION,
-            entries: entries.to_vec(),
-        };
+        let data = IndexFile { version: INDEX_VERSION, entries: entries.to_vec() };
 
         let index_path = self.index_path();
         with_file_lock(&index_path, Duration::from_secs(10), || {
             // Write to temp file then rename (atomic on POSIX)
-            let tmp_path = self
-                .session_dir
-                .join(format!(".sessions-index-tmp.{}.json", uuid::Uuid::new_v4()));
+            let tmp_path =
+                self.session_dir.join(format!(".sessions-index-tmp.{}.json", uuid::Uuid::new_v4()));
             let content = serde_json::to_string_pretty(&data).map_err(std::io::Error::other)?;
             #[cfg(unix)]
             {
@@ -140,16 +136,8 @@ impl SessionIndex {
             modified: session.updated_at.to_rfc3339(),
             message_count: session.messages.len(),
             total_tokens: session.total_tokens(),
-            title: session
-                .metadata
-                .get("title")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            summary: session
-                .metadata
-                .get("summary")
-                .and_then(|v| v.as_str())
-                .map(String::from),
+            title: session.metadata.get("title").and_then(|v| v.as_str()).map(String::from),
+            summary: session.metadata.get("summary").and_then(|v| v.as_str()).map(String::from),
             tags: session
                 .metadata
                 .get("tags")
@@ -217,11 +205,8 @@ impl SessionIndex {
     /// Remove a single session entry from the index.
     pub fn remove_entry(&self, session_id: &str) -> std::io::Result<()> {
         if let Some(index) = self.read_index() {
-            let entries: Vec<IndexEntry> = index
-                .entries
-                .into_iter()
-                .filter(|e| e.session_id != session_id)
-                .collect();
+            let entries: Vec<IndexEntry> =
+                index.entries.into_iter().filter(|e| e.session_id != session_id).collect();
             self.write_index(&entries)?;
         }
         Ok(())

@@ -30,18 +30,15 @@ impl ChannelAdapter for TelegramAdapter {
         delivery_context: &DeliveryContext,
         message: OutboundMessage,
     ) -> ChannelResult<()> {
-        let chat_id = delivery_context
-            .get("chat_id")
-            .and_then(|v| v.as_i64())
-            .ok_or_else(|| ChannelError::DeliveryFailed {
-                channel: "telegram".into(),
-                message: "missing chat_id in delivery context".into(),
+        let chat_id =
+            delivery_context.get("chat_id").and_then(|v| v.as_i64()).ok_or_else(|| {
+                ChannelError::DeliveryFailed {
+                    channel: "telegram".into(),
+                    message: "missing chat_id in delivery context".into(),
+                }
             })?;
 
-        let reply_to = message
-            .reply_to_message_id
-            .as_ref()
-            .and_then(|id| id.parse::<i64>().ok());
+        let reply_to = message.reply_to_message_id.as_ref().and_then(|id| id.parse::<i64>().ok());
 
         // Only use parse_mode if explicitly set by the caller.
         // Do NOT default to MarkdownV2 — LLM responses contain unescaped
@@ -57,13 +54,10 @@ impl ChannelAdapter for TelegramAdapter {
                 parse_mode: parse_mode.clone(),
                 reply_to_message_id: if i == 0 { reply_to } else { None },
             };
-            self.api
-                .send_message(req)
-                .await
-                .map_err(|e| ChannelError::DeliveryFailed {
-                    channel: "telegram".into(),
-                    message: e.to_string(),
-                })?;
+            self.api.send_message(req).await.map_err(|e| ChannelError::DeliveryFailed {
+                channel: "telegram".into(),
+                message: e.to_string(),
+            })?;
         }
 
         Ok(())
@@ -94,10 +88,8 @@ pub fn split_message(text: &str, max_len: usize) -> Vec<String> {
         }
 
         let search_region = &remaining[..max_len];
-        let split_pos = search_region
-            .rfind("\n\n")
-            .or_else(|| search_region.rfind('\n'))
-            .unwrap_or(max_len);
+        let split_pos =
+            search_region.rfind("\n\n").or_else(|| search_region.rfind('\n')).unwrap_or(max_len);
 
         // Avoid zero-length splits
         let split_pos = if split_pos == 0 { max_len } else { split_pos };

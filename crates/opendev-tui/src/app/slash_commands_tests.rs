@@ -3,11 +3,7 @@ use super::super::*;
 /// Helper: assert the last two messages are a SlashCommand echo + CommandResult.
 fn assert_command_result(app: &App, cmd_contains: &str, result_contains: &str) {
     let msgs = &app.state.messages;
-    assert!(
-        msgs.len() >= 2,
-        "Expected at least 2 messages, got {}",
-        msgs.len()
-    );
+    assert!(msgs.len() >= 2, "Expected at least 2 messages, got {}", msgs.len());
     let echo = &msgs[msgs.len() - 2];
     let result = &msgs[msgs.len() - 1];
     assert_eq!(echo.role, DisplayRole::SlashCommand, "echo role mismatch");
@@ -16,11 +12,7 @@ fn assert_command_result(app: &App, cmd_contains: &str, result_contains: &str) {
         "echo '{}' missing '{cmd_contains}'",
         echo.content
     );
-    assert_eq!(
-        result.role,
-        DisplayRole::CommandResult,
-        "result role mismatch"
-    );
+    assert_eq!(result.role, DisplayRole::CommandResult, "result role mismatch");
     assert!(
         result.content.contains(result_contains),
         "result '{}' missing '{result_contains}'",
@@ -86,15 +78,8 @@ fn test_slash_models_opens_picker_or_shows_message() {
     let mut app = App::new();
     app.execute_slash_command("/models");
     let has_picker = app.model_picker_controller.is_some();
-    let has_message = app
-        .state
-        .messages
-        .last()
-        .is_some_and(|m| m.content.contains("No models"));
-    assert!(
-        has_picker || has_message,
-        "Expected model picker or 'No models' message"
-    );
+    let has_message = app.state.messages.last().is_some_and(|m| m.content.contains("No models"));
+    assert!(has_picker || has_message, "Expected model picker or 'No models' message");
 }
 
 #[test]
@@ -158,10 +143,7 @@ fn test_slash_help_lists_all_commands() {
     let mut app = App::new();
     app.execute_slash_command("/help");
     let result = &app.state.messages.last().unwrap().content;
-    assert_eq!(
-        app.state.messages.last().unwrap().role,
-        DisplayRole::CommandResult
-    );
+    assert_eq!(app.state.messages.last().unwrap().role, DisplayRole::CommandResult);
     for cmd in &[
         "mode", "autonomy", "models", "mcp", "tasks", "task", "kill", "agents", "skills",
         "plugins", "undo", "redo", "share", "sessions",

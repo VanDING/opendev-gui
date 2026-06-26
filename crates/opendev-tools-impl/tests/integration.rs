@@ -10,10 +10,7 @@ use opendev_tools_impl::{BashTool, FileEditTool, FileReadTool, FileWriteTool, Gr
 use tempfile::TempDir;
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 // ========================================================================
@@ -31,11 +28,7 @@ async fn bash_executes_command_and_captures_stdout() {
     let result = tool.execute(args, &ctx).await;
     assert!(result.success, "bash should succeed: {:?}", result.error);
     assert!(
-        result
-            .output
-            .as_ref()
-            .unwrap()
-            .contains("integration_test_marker"),
+        result.output.as_ref().unwrap().contains("integration_test_marker"),
         "stdout should contain marker"
     );
 }
@@ -75,17 +68,12 @@ async fn bash_runs_in_correct_working_directory() {
 async fn bash_timeout_kills_long_running_command() {
     let tool = BashTool::new();
     let ctx = ToolContext::new("/tmp");
-    let args = make_args(&[
-        ("command", serde_json::json!("sleep 30")),
-        ("timeout", serde_json::json!(1)),
-    ]);
+    let args =
+        make_args(&[("command", serde_json::json!("sleep 30")), ("timeout", serde_json::json!(1))]);
 
     let result = tool.execute(args, &ctx).await;
     assert!(!result.success, "timed-out command should fail");
-    assert!(
-        result.error.as_ref().unwrap().contains("timed out"),
-        "error should mention timeout"
-    );
+    assert!(result.error.as_ref().unwrap().contains("timed out"), "error should mention timeout");
 }
 
 /// Verify that BashTool reports non-zero exit codes.
@@ -97,10 +85,7 @@ async fn bash_nonzero_exit_code_is_failure() {
 
     let result = tool.execute(args, &ctx).await;
     assert!(!result.success);
-    assert_eq!(
-        result.metadata.get("exit_code"),
-        Some(&serde_json::json!(7))
-    );
+    assert_eq!(result.metadata.get("exit_code"), Some(&serde_json::json!(7)));
 }
 
 /// Verify that BashTool blocks dangerous patterns.
@@ -125,10 +110,7 @@ async fn bash_pipes_work() {
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
     let output = result.output.unwrap().trim().to_string();
-    assert!(
-        output.contains("3"),
-        "pipe should count 3 lines, got: {output}"
-    );
+    assert!(output.contains("3"), "pipe should count 3 lines, got: {output}");
 }
 
 // ========================================================================
@@ -147,10 +129,7 @@ async fn file_write_read_edit_lifecycle() {
     let ctx = ToolContext::new(tmp.path());
     let write_args = make_args(&[
         ("file_path", serde_json::json!(file_str)),
-        (
-            "content",
-            serde_json::json!("line one\nline two\nline three\n"),
-        ),
+        ("content", serde_json::json!("line one\nline two\nline three\n")),
     ]);
     let result = write_tool.execute(write_args, &ctx).await;
     assert!(result.success, "write should succeed: {:?}", result.error);
@@ -338,10 +317,8 @@ async fn search_respects_glob_filter() {
 
     let tool = GrepTool;
     let ctx = ToolContext::new(tmp.path());
-    let args = make_args(&[
-        ("pattern", serde_json::json!("fn ")),
-        ("glob", serde_json::json!("*.rs")),
-    ]);
+    let args =
+        make_args(&[("pattern", serde_json::json!("fn ")), ("glob", serde_json::json!("*.rs"))]);
 
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
@@ -376,10 +353,7 @@ async fn search_invalid_regex_becomes_fixed_string() {
     let args = make_args(&[("pattern", serde_json::json!("[unclosed"))]);
 
     let result = tool.execute(args, &ctx).await;
-    assert!(
-        result.success,
-        "invalid regex should auto-promote to fixed-string search"
-    );
+    assert!(result.success, "invalid regex should auto-promote to fixed-string search");
 }
 
 // ========================================================================
@@ -401,9 +375,7 @@ fn git_force_push_detected_as_dangerous() {
     assert!(!is_dangerous_command("git log"));
     assert!(!is_dangerous_command("git diff"));
     assert!(!is_dangerous_command("git push origin main"));
-    assert!(!is_dangerous_command(
-        "git push --force-with-lease origin main"
-    ));
+    assert!(!is_dangerous_command("git push --force-with-lease origin main"));
 }
 
 // ========================================================================
@@ -518,11 +490,7 @@ async fn file_list_shows_directory_contents() {
     let args = make_args(&[("pattern", serde_json::json!("**/*"))]);
 
     let result = tool.execute(args, &ctx).await;
-    assert!(
-        result.success,
-        "file_list should succeed: {:?}",
-        result.error
-    );
+    assert!(result.success, "file_list should succeed: {:?}", result.error);
     let output = result.output.unwrap();
     assert!(output.contains("file1.rs"));
     assert!(output.contains("file2.txt"));

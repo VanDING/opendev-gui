@@ -12,6 +12,10 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::RwLock;
 
+// SAFETY INVARIANT: This manager uses `std::sync::RwLock` because all public
+// methods are synchronous.  If any method becomes async, switch to
+// `tokio::sync::RwLock` to avoid blocking the async runtime.
+
 use serde::{Deserialize, Serialize};
 use tracing::warn;
 
@@ -72,10 +76,7 @@ impl TeamManager {
     ///
     /// `teams_dir` is typically `~/.opendev/teams/`.
     pub fn new(teams_dir: PathBuf) -> Self {
-        Self {
-            teams_dir,
-            active_teams: RwLock::new(HashMap::new()),
-        }
+        Self { teams_dir, active_teams: RwLock::new(HashMap::new()) }
     }
 
     /// Create a new team.
@@ -102,10 +103,7 @@ impl TeamManager {
         let json = serde_json::to_string_pretty(&config).map_err(std::io::Error::other)?;
         atomic_write_secure(&config_path, json.as_bytes())?;
 
-        let mut teams = self
-            .active_teams
-            .write()
-            .expect("TeamManager lock poisoned");
+        let mut teams = self.active_teams.write().unwrap_or_else(|e| e.into_inner());
         teams.insert(name.to_string(), config.clone());
 
         Ok(config)
@@ -113,10 +111,7 @@ impl TeamManager {
 
     /// Add a member to an existing team.
     pub fn add_member(&self, team_name: &str, member: TeamMember) -> std::io::Result<()> {
-        let mut teams = self
-            .active_teams
-            .write()
-            .expect("TeamManager lock poisoned");
+        let mut teams = self.active_teams.write().unwrap_or_else(|e| e.into_inner());
         if let Some(config) = teams.get_mut(team_name) {
             config.members.push(member);
             self.persist_config(config)?;
@@ -131,10 +126,7 @@ impl TeamManager {
         member_name: &str,
         status: TeamMemberStatus,
     ) {
-        let mut teams = self
-            .active_teams
-            .write()
-            .expect("TeamManager lock poisoned");
+        let mut teams = self.active_teams.write().unwrap_or_else(|e| e.into_inner());
         if let Some(config) = teams.get_mut(team_name) {
             if let Some(member) = config.members.iter_mut().find(|m| m.name == member_name) {
                 member.status = status;
@@ -149,23 +141,20 @@ impl TeamManager {
         if team_dir.exists() {
             fs::remove_dir_all(&team_dir)?;
         }
-        let mut teams = self
-            .active_teams
-            .write()
-            .expect("TeamManager lock poisoned");
+        let mut teams = self.active_teams.write().unwrap_or_else(|e| e.into_inner());
         teams.remove(name);
         Ok(())
     }
 
     /// Get a team config by name.
     pub fn get_team(&self, name: &str) -> Option<TeamConfig> {
-        let teams = self.active_teams.read().expect("TeamManager lock poisoned");
+        let teams = self.active_teams.read().unwrap_or_else(|e| e.into_inner());
         teams.get(name).cloned()
     }
 
     /// List all active teams.
     pub fn list_teams(&self) -> Vec<TeamConfig> {
-        let teams = self.active_teams.read().expect("TeamManager lock poisoned");
+        let teams = self.active_teams.read().unwrap_or_else(|e| e.into_inner());
         teams.values().cloned().collect()
     }
 

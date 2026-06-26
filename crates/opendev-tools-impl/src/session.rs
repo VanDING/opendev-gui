@@ -159,10 +159,7 @@ fn action_list(
     args: &HashMap<String, serde_json::Value>,
     current_session_id: Option<&str>,
 ) -> ToolResult {
-    let include_archived = args
-        .get("include_archived")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(false);
+    let include_archived = args.get("include_archived").and_then(|v| v.as_bool()).unwrap_or(false);
     let limit = args.get("limit").and_then(|v| v.as_u64()).unwrap_or(20) as usize;
     let offset = args.get("offset").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
 
@@ -200,13 +197,8 @@ fn action_list(
     output.push('\n');
 
     for meta in &page {
-        let title = meta
-            .title
-            .as_deref()
-            .unwrap_or("(untitled)")
-            .chars()
-            .take(38)
-            .collect::<String>();
+        let title =
+            meta.title.as_deref().unwrap_or("(untitled)").chars().take(38).collect::<String>();
         let changes = format!("{}+/{}", meta.summary_additions, meta.summary_deletions);
         output.push_str(&format!(
             "{:<14} {:<40} {:>5} {:<17} {:>10}-\n",
@@ -219,10 +211,7 @@ fn action_list(
     }
 
     if total > offset + page.len() {
-        output.push_str(&format!(
-            "\nUse offset={} to see more.",
-            offset + page.len()
-        ));
+        output.push_str(&format!("\nUse offset={} to see more.", offset + page.len()));
     }
 
     let mut metadata = HashMap::new();
@@ -257,11 +246,8 @@ fn action_read(
 
     // Default offset: show the last `limit` messages
     let default_offset = total_messages.saturating_sub(limit);
-    let offset = args
-        .get("offset")
-        .and_then(|v| v.as_u64())
-        .map(|v| v as usize)
-        .unwrap_or(default_offset);
+    let offset =
+        args.get("offset").and_then(|v| v.as_u64()).map(|v| v as usize).unwrap_or(default_offset);
 
     let page: Vec<_> = session.messages.iter().skip(offset).take(limit).collect();
 
@@ -271,11 +257,7 @@ fn action_read(
         ));
     }
 
-    let title = session
-        .metadata
-        .get("title")
-        .and_then(|v| v.as_str())
-        .unwrap_or("(untitled)");
+    let title = session.metadata.get("title").and_then(|v| v.as_str()).unwrap_or("(untitled)");
 
     let mut output = format!(
         "Session: {session_id} — \"{title}\"\n\
@@ -299,10 +281,7 @@ fn action_read(
     }
 
     if offset + page.len() < total_messages {
-        output.push_str(&format!(
-            "Use offset={} to see more messages.",
-            offset + page.len()
-        ));
+        output.push_str(&format!("Use offset={} to see more messages.", offset + page.len()));
     }
 
     // Redact secrets from the entire output
@@ -392,11 +371,7 @@ fn action_info(
         Err(e) => return ToolResult::fail(format!("Session not found or corrupted: {e}")),
     };
 
-    let title = session
-        .metadata
-        .get("title")
-        .and_then(|v| v.as_str())
-        .unwrap_or("(untitled)");
+    let title = session.metadata.get("title").and_then(|v| v.as_str()).unwrap_or("(untitled)");
     let working_dir = session.working_directory.as_deref().unwrap_or("(unknown)");
     let archived = if session.is_archived() { "yes" } else { "no" };
     let parent = session.parent_id.as_deref().unwrap_or("none");

@@ -140,18 +140,7 @@ impl Default for TaskInfo {
 /// Events published by the task manager on state transitions.
 #[derive(Debug, Clone)]
 pub enum TaskManagerEvent {
-    StateChanged {
-        task_id: String,
-        old: TaskState,
-        new: TaskState,
-    },
-    Progress {
-        task_id: String,
-        tool_name: String,
-        tool_count: usize,
-    },
-    MessageReceived {
-        task_id: String,
-        from: String,
-    },
+    StateChanged { task_id: String, old: TaskState, new: TaskState },
+    Progress { task_id: String, tool_name: String, tool_count: usize },
+    MessageReceived { task_id: String, from: String },
 }

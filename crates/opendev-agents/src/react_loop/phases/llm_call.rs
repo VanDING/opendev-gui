@@ -152,25 +152,15 @@ where
     // Handle interruption
     if http_result.interrupted {
         if task_monitor.is_some_and(|m| m.is_background_requested()) {
-            info!(
-                iteration = state.iteration,
-                "Background requested during LLM call — yielding"
-            );
-            return Err(LoopAction::Return(Ok(AgentResult::backgrounded(
-                messages.clone(),
-            ))));
+            info!(iteration = state.iteration, "Background requested during LLM call — yielding");
+            return Err(LoopAction::Return(Ok(AgentResult::backgrounded(messages.clone()))));
         }
-        return Err(LoopAction::Return(Ok(AgentResult::interrupted(
-            messages.clone(),
-        ))));
+        return Err(LoopAction::Return(Ok(AgentResult::interrupted(messages.clone()))));
     }
 
     // Handle HTTP failure
     if !http_result.success {
-        let err_msg = http_result
-            .error
-            .as_deref()
-            .unwrap_or("HTTP request failed");
+        let err_msg = http_result.error.as_deref().unwrap_or("HTTP request failed");
         warn!(error = err_msg, "LLM HTTP call failed");
         if let Some(logger) = debug_logger {
             logger.log_llm_error(state.iteration, err_msg);
@@ -187,9 +177,7 @@ where
             tokio::time::sleep(backoff).await;
             return Err(LoopAction::Continue);
         }
-        return Err(LoopAction::Return(Err(AgentError::LlmError(
-            err_msg.to_string(),
-        ))));
+        return Err(LoopAction::Return(Err(AgentError::LlmError(err_msg.to_string()))));
     }
 
     // Extract body
@@ -199,16 +187,11 @@ where
 
     // Check for API error in response body
     if let Some(error_obj) = body.get("error") {
-        let msg = error_obj
-            .get("message")
-            .and_then(|m| m.as_str())
-            .unwrap_or("Unknown API error");
+        let msg = error_obj.get("message").and_then(|m| m.as_str()).unwrap_or("Unknown API error");
         if let Some(logger) = debug_logger {
             logger.log_llm_error(state.iteration, msg);
         }
-        return Err(LoopAction::Return(Err(AgentError::LlmError(format!(
-            "API error: {msg}"
-        )))));
+        return Err(LoopAction::Return(Err(AgentError::LlmError(format!("API error: {msg}")))));
     }
 
     // Debug log: incoming LLM response
@@ -240,11 +223,7 @@ where
         executor.wait_for_completion().await;
     }
 
-    Ok(LlmCallResult {
-        body,
-        llm_latency_ms,
-        streaming_executor,
-    })
+    Ok(LlmCallResult { body, llm_latency_ms, streaming_executor })
 }
 
 /// Minimum backoff applied to any retryable LLM HTTP failure.

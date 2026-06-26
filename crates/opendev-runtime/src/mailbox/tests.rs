@@ -97,9 +97,7 @@ fn test_concurrent_writes() {
             let td = team_dir.clone();
             thread::spawn(move || {
                 let mailbox = Mailbox::new(&td, "agent-a");
-                mailbox
-                    .send(make_msg(&format!("thread-{i}"), &format!("msg from {i}")))
-                    .unwrap();
+                mailbox.send(make_msg(&format!("thread-{i}"), &format!("msg from {i}"))).unwrap();
             })
         })
         .collect();
@@ -142,9 +140,7 @@ fn test_message_cap_trims_old_read() {
 
     // Send MAX_INBOX_SIZE messages and read them all
     for i in 0..MAX_INBOX_SIZE {
-        mailbox
-            .send(make_msg("leader", &format!("msg {i}")))
-            .unwrap();
+        mailbox.send(make_msg("leader", &format!("msg {i}"))).unwrap();
     }
     let _ = mailbox.receive().unwrap(); // mark all as read
 

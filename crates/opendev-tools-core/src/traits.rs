@@ -197,10 +197,7 @@ pub struct ToolTimeoutConfig {
 
 impl Default for ToolTimeoutConfig {
     fn default() -> Self {
-        Self {
-            idle_timeout_secs: 60,
-            max_timeout_secs: 600,
-        }
+        Self { idle_timeout_secs: 60, max_timeout_secs: 600 }
     }
 }
 

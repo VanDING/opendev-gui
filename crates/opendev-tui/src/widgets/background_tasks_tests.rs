@@ -57,11 +57,8 @@ fn test_empty_panel() {
 
 #[test]
 fn test_panel_with_subagents() {
-    let subagents = vec![SubagentDisplayState::new(
-        "id-1".into(),
-        "Explore".into(),
-        "Find TODOs".into(),
-    )];
+    let subagents =
+        vec![SubagentDisplayState::new("id-1".into(), "Explore".into(), "Find TODOs".into())];
     let mgr = BackgroundAgentManager::new();
     let covered = HashSet::new();
     let shortener = PathShortener::new(Some("."));
@@ -71,11 +68,8 @@ fn test_panel_with_subagents() {
 
 #[test]
 fn test_panel_render_no_crash() {
-    let subagents = vec![SubagentDisplayState::new(
-        "id-1".into(),
-        "Explore".into(),
-        "Find TODOs".into(),
-    )];
+    let subagents =
+        vec![SubagentDisplayState::new("id-1".into(), "Explore".into(), "Find TODOs".into())];
     let mgr = BackgroundAgentManager::new();
     let covered = HashSet::new();
     let shortener = PathShortener::new(Some("."));
@@ -166,10 +160,7 @@ fn test_finished_bg_subagent_still_covers_parent() {
 #[test]
 fn test_mixed_running_and_finished_bg_subagents_cover_parent() {
     // Both running and finished backgrounded subagents should cover the parent.
-    let subagents = vec![
-        make_subagent("sa1", true, false),
-        make_subagent("sa2", true, true),
-    ];
+    let subagents = vec![make_subagent("sa1", true, false), make_subagent("sa2", true, true)];
     // Both map to same parent
     let covered: HashSet<String> = ["bg_task_1".to_string()].into_iter().collect();
     let mgr = BackgroundAgentManager::new();

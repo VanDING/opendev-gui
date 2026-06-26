@@ -90,7 +90,7 @@ pub trait AgentExecutor: Send + Sync {
         &self,
         session_id: &str,
         message_text: &str,
-        _chunk_tx: tokio::sync::mpsc::UnboundedSender<String>,
+        _chunk_tx: tokio::sync::mpsc::Sender<String>,
     ) -> ChannelResult<String> {
         self.execute(session_id, message_text).await
     }
@@ -171,19 +171,10 @@ impl MessageRouter {
         {
             let mut contexts = self.delivery_contexts.write().await;
             let mut ctx = DeliveryContext::new();
-            ctx.insert(
-                "channel".to_string(),
-                serde_json::Value::String(message.channel.clone()),
-            );
-            ctx.insert(
-                "user_id".to_string(),
-                serde_json::Value::String(message.user_id.clone()),
-            );
+            ctx.insert("channel".to_string(), serde_json::Value::String(message.channel.clone()));
+            ctx.insert("user_id".to_string(), serde_json::Value::String(message.user_id.clone()));
             if let Some(ref tid) = message.thread_id {
-                ctx.insert(
-                    "thread_id".to_string(),
-                    serde_json::Value::String(tid.clone()),
-                );
+                ctx.insert("thread_id".to_string(), serde_json::Value::String(tid.clone()));
             }
             for (k, v) in &message.metadata {
                 ctx.insert(k.clone(), v.clone());
@@ -236,7 +227,7 @@ impl MessageRouter {
     pub async fn handle_inbound_streaming(
         &self,
         message: InboundMessage,
-        chunk_tx: tokio::sync::mpsc::UnboundedSender<String>,
+        chunk_tx: tokio::sync::mpsc::Sender<String>,
     ) -> ChannelResult<String> {
         info!(
             "Streaming route from {}:{} (thread={:?})",
@@ -250,19 +241,10 @@ impl MessageRouter {
         {
             let mut contexts = self.delivery_contexts.write().await;
             let mut ctx = DeliveryContext::new();
-            ctx.insert(
-                "channel".to_string(),
-                serde_json::Value::String(message.channel.clone()),
-            );
-            ctx.insert(
-                "user_id".to_string(),
-                serde_json::Value::String(message.user_id.clone()),
-            );
+            ctx.insert("channel".to_string(), serde_json::Value::String(message.channel.clone()));
+            ctx.insert("user_id".to_string(), serde_json::Value::String(message.user_id.clone()));
             if let Some(ref tid) = message.thread_id {
-                ctx.insert(
-                    "thread_id".to_string(),
-                    serde_json::Value::String(tid.clone()),
-                );
+                ctx.insert("thread_id".to_string(), serde_json::Value::String(tid.clone()));
             }
             for (k, v) in &message.metadata {
                 ctx.insert(k.clone(), v.clone());
@@ -273,12 +255,9 @@ impl MessageRouter {
         // Dispatch to agent with streaming
         let executor = self.executor.read().await;
         if let Some(ref exec) = *executor {
-            exec.execute_streaming(&session_id, &message.text, chunk_tx)
-                .await
+            exec.execute_streaming(&session_id, &message.text, chunk_tx).await
         } else {
-            Err(ChannelError::AgentError(
-                "no executor configured".to_string(),
-            ))
+            Err(ChannelError::AgentError("no executor configured".to_string()))
         }
     }
 
@@ -299,10 +278,7 @@ impl MessageRouter {
 
         // Create new session ID
         let session_id = uuid::Uuid::new_v4().to_string()[..12].to_string();
-        info!(
-            "Created new session {} for {}:{}",
-            session_id, message.channel, message.user_id
-        );
+        info!("Created new session {} for {}:{}", session_id, message.channel, message.user_id);
 
         let mut session_map = self.session_map.write().await;
         session_map.insert(key, session_id.clone());

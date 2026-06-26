@@ -63,10 +63,7 @@ pub fn should_consolidate(working_dir: &Path) -> bool {
     {
         let elapsed = chrono::Utc::now().signed_duration_since(last_time);
         if elapsed < chrono::Duration::hours(24) {
-            debug!(
-                "Last consolidation was {} hours ago, skipping",
-                elapsed.num_hours()
-            );
+            debug!("Last consolidation was {} hours ago, skipping", elapsed.num_hours());
             return false;
         }
     }
@@ -127,20 +124,14 @@ pub async fn consolidate(working_dir: &Path) -> Option<ConsolidationReport> {
 async fn run_consolidation(memory_dir: &Path, backup_dir: &Path) -> Option<ConsolidationReport> {
     // Phase 1: Orient — collect all memory files
     let all_files = scan_all_memory_files(memory_dir);
-    let session_files: Vec<&MemoryFile> = all_files
-        .iter()
-        .filter(|f| f.file_type == "session")
-        .take(MAX_FILES_PER_RUN)
-        .collect();
+    let session_files: Vec<&MemoryFile> =
+        all_files.iter().filter(|f| f.file_type == "session").take(MAX_FILES_PER_RUN).collect();
 
     if session_files.is_empty() {
         return None;
     }
 
-    info!(
-        "Starting memory consolidation: {} session files to process",
-        session_files.len()
-    );
+    info!("Starting memory consolidation: {} session files to process", session_files.len());
 
     // Phase 2: Backup
     if let Err(e) = std::fs::create_dir_all(backup_dir) {
@@ -190,10 +181,7 @@ async fn run_consolidation(memory_dir: &Path, backup_dir: &Path) -> Option<Conso
     let full_content = format!("{frontmatter}{merged_content}");
     let tmp_path = consolidated_path.with_file_name(format!(
         ".{}.tmp.{}",
-        consolidated_path
-            .file_name()
-            .unwrap_or_default()
-            .to_string_lossy(),
+        consolidated_path.file_name().unwrap_or_default().to_string_lossy(),
         uuid::Uuid::new_v4()
     ));
 
@@ -230,10 +218,7 @@ async fn run_consolidation(memory_dir: &Path, backup_dir: &Path) -> Option<Conso
     let mut pruned = 0;
     for file in &session_files {
         if let Err(e) = std::fs::remove_file(&file.path) {
-            warn!(
-                "Failed to remove consolidated session file {}: {e}",
-                file.filename
-            );
+            warn!("Failed to remove consolidated session file {}: {e}", file.filename);
         } else {
             pruned += 1;
         }
@@ -276,10 +261,7 @@ async fn merge_session_files(files: &[&MemoryFile]) -> Option<String> {
         bugs found, and learnings. Return a clean markdown document with sections. \
         Return ONLY the markdown, no code fences.";
 
-    match selector
-        .select_with_prompt(&input, "Merge session notes", prompt)
-        .await
-    {
+    match selector.select_with_prompt(&input, "Merge session notes", prompt).await {
         Ok(result) => result.into_iter().next(),
         Err(e) => {
             warn!("LLM merge failed: {e}");
@@ -318,10 +300,8 @@ fn scan_all_memory_files(dir: &Path) -> Vec<MemoryFile> {
             _ => continue,
         };
 
-        let modified = entry
-            .metadata()
-            .and_then(|m| m.modified())
-            .unwrap_or(SystemTime::UNIX_EPOCH);
+        let modified =
+            entry.metadata().and_then(|m| m.modified()).unwrap_or(SystemTime::UNIX_EPOCH);
 
         let content = match std::fs::read_to_string(&path) {
             Ok(c) => c,
@@ -330,13 +310,7 @@ fn scan_all_memory_files(dir: &Path) -> Vec<MemoryFile> {
 
         let (file_type, body) = parse_type_and_body(&content);
 
-        files.push(MemoryFile {
-            filename,
-            path,
-            file_type,
-            body,
-            modified,
-        });
+        files.push(MemoryFile { filename, path, file_type, body, modified });
     }
 
     // Sort oldest first (process oldest sessions first)
@@ -447,10 +421,7 @@ fn regenerate_index(dir: &Path) -> std::io::Result<()> {
         if !path.is_file() {
             continue;
         }
-        let name = path
-            .file_name()
-            .map(|n| n.to_string_lossy().to_string())
-            .unwrap_or_default();
+        let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
 
         if name == "MEMORY.md" || !name.ends_with(".md") {
             continue;
@@ -473,11 +444,8 @@ fn regenerate_index(dir: &Path) -> std::io::Result<()> {
     }
 
     let truncated: String = index.lines().take(200).collect::<Vec<_>>().join("\n");
-    let final_content = if truncated.len() > 25 * 1024 {
-        &truncated[..25 * 1024]
-    } else {
-        &truncated
-    };
+    let final_content =
+        if truncated.len() > 25 * 1024 { &truncated[..25 * 1024] } else { &truncated };
 
     let index_path = dir.join("MEMORY.md");
     let tmp_path = index_path.with_file_name(format!(".MEMORY.md.tmp.{}", uuid::Uuid::new_v4()));

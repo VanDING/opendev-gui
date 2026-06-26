@@ -16,13 +16,7 @@ fn make_state() -> AppState {
     let config = AppConfig::default();
     let user_store = UserStore::new(tmp_path).unwrap();
     let model_registry = ModelRegistry::new();
-    AppState::new(
-        session_manager,
-        config,
-        "/tmp/test".to_string(),
-        user_store,
-        model_registry,
-    )
+    AppState::new(session_manager, config, "/tmp/test".to_string(), user_store, model_registry)
 }
 
 #[tokio::test]
@@ -31,20 +25,13 @@ async fn test_health_check() {
     let app = build_app(state, None);
 
     let response = app
-        .oneshot(
-            Request::builder()
-                .uri("/api/health")
-                .body(Body::empty())
-                .unwrap(),
-        )
+        .oneshot(Request::builder().uri("/api/health").body(Body::empty()).unwrap())
         .await
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["status"], "ok");
 }

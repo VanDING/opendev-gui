@@ -63,11 +63,8 @@ impl CredentialStore {
     ///
     /// If `auth_path` is `None`, defaults to `~/.opendev/auth.json`.
     pub fn new(auth_path: Option<PathBuf>) -> Self {
-        let path = auth_path.unwrap_or_else(|| {
-            opendev_config::Paths::default()
-                .config_dir()
-                .join("auth.json")
-        });
+        let path = auth_path
+            .unwrap_or_else(|| opendev_config::Paths::default().config_dir().join("auth.json"));
         Self { path, cache: None }
     }
 
@@ -113,9 +110,7 @@ impl CredentialStore {
         ENV_VAR_MAP
             .iter()
             .map(|&(provider, env_var)| {
-                let has_env = std::env::var(env_var)
-                    .map(|v| !v.is_empty())
-                    .unwrap_or(false);
+                let has_env = std::env::var(env_var).map(|v| !v.is_empty()).unwrap_or(false);
                 let has_stored = data.keys.contains_key(provider);
                 ProviderStatus {
                     provider: provider.to_string(),
@@ -135,13 +130,7 @@ impl CredentialStore {
         metadata: Option<serde_json::Value>,
     ) -> Result<(), HttpError> {
         let mut data = self.load().clone();
-        data.tokens.insert(
-            name.to_string(),
-            TokenEntry {
-                token: token.to_string(),
-                metadata,
-            },
-        );
+        data.tokens.insert(name.to_string(), TokenEntry { token: token.to_string(), metadata });
         self.save(&data)
     }
 
@@ -201,10 +190,7 @@ impl CredentialStore {
         #[cfg(not(unix))]
         {
             std::io::Write::write_all(
-                &mut std::fs::OpenOptions::new()
-                    .write(true)
-                    .create_new(true)
-                    .open(&tmp_path)?,
+                &mut std::fs::OpenOptions::new().write(true).create_new(true).open(&tmp_path)?,
                 json.as_bytes(),
             )?;
         }
@@ -238,18 +224,13 @@ impl CredentialStore {
 
 impl std::fmt::Debug for CredentialStore {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("CredentialStore")
-            .field("path", &self.path)
-            .finish()
+        f.debug_struct("CredentialStore").field("path", &self.path).finish()
     }
 }
 
 /// Look up the environment variable name for a provider.
 fn env_var_for_provider(provider: &str) -> Option<&'static str> {
-    ENV_VAR_MAP
-        .iter()
-        .find(|&&(p, _)| p == provider)
-        .map(|&(_, v)| v)
+    ENV_VAR_MAP.iter().find(|&&(p, _)| p == provider).map(|&(_, v)| v)
 }
 
 #[cfg(test)]

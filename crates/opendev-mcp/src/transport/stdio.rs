@@ -88,9 +88,7 @@ impl McpTransport for StdioTransport {
     async fn connect(&mut self) -> McpResult<()> {
         let mut lock = self.state.lock().await;
         if lock.is_some() {
-            return Err(McpError::Transport(
-                "Transport already connected".to_string(),
-            ));
+            return Err(McpError::Transport("Transport already connected".to_string()));
         }
 
         debug!(
@@ -119,10 +117,7 @@ impl McpTransport for StdioTransport {
         // Take stderr to log it.
         let stderr = child.stderr.take();
 
-        let process = StdioProcess {
-            child,
-            pending: HashMap::new(),
-        };
+        let process = StdioProcess { child, pending: HashMap::new() };
         *lock = Some(process);
         drop(lock);
 
@@ -215,12 +210,10 @@ impl McpTransport for StdioTransport {
                 .as_mut()
                 .ok_or_else(|| McpError::Transport("Child stdin not available".to_string()))?;
 
-            Self::write_message(stdin, &payload)
-                .await
-                .inspect_err(|_e| {
-                    // Remove pending entry on write failure.
-                    proc.pending.remove(&request.id);
-                })?;
+            Self::write_message(stdin, &payload).await.inspect_err(|_e| {
+                // Remove pending entry on write failure.
+                proc.pending.remove(&request.id);
+            })?;
 
             rx
         };
@@ -265,11 +258,8 @@ impl McpTransport for StdioTransport {
             // Collect descendant PIDs before killing the main process,
             // so we can clean up grandchild processes (e.g. Chrome spawned
             // by chrome-devtools-mcp) that would otherwise be orphaned.
-            let descendant_pids = if let Some(pid) = proc.child.id() {
-                collect_descendant_pids(pid)
-            } else {
-                vec![]
-            };
+            let descendant_pids =
+                if let Some(pid) = proc.child.id() { collect_descendant_pids(pid) } else { vec![] };
 
             // Drop stdin to signal EOF to the child.
             drop(proc.child.stdin.take());
@@ -302,10 +292,7 @@ impl McpTransport for StdioTransport {
 
     fn is_connected(&self) -> bool {
         // We can't async-lock here, so use try_lock as best effort.
-        self.state
-            .try_lock()
-            .map(|guard| guard.is_some())
-            .unwrap_or(true) // If locked, assume connected (in use).
+        self.state.try_lock().map(|guard| guard.is_some()).unwrap_or(true) // If locked, assume connected (in use).
     }
 
     fn transport_type(&self) -> &str {

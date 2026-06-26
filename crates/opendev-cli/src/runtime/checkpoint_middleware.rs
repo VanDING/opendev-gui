@@ -54,11 +54,7 @@ impl ToolMiddleware for FileCheckpointMiddleware {
         if let Ok(mut mgr) = self.manager.lock()
             && let Err(e) = mgr.capture_file(&abs_path)
         {
-            warn!(
-                "Checkpoint capture failed for {}: {}",
-                abs_path.display(),
-                e
-            );
+            warn!("Checkpoint capture failed for {}: {}", abs_path.display(), e);
         }
 
         Ok(())

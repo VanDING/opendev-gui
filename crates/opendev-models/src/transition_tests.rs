@@ -2,9 +2,7 @@ use super::*;
 
 #[test]
 fn test_transition_error_display_session_archived() {
-    let err = TransitionError::SessionArchived {
-        action: "add message to".to_string(),
-    };
+    let err = TransitionError::SessionArchived { action: "add message to".to_string() };
     assert_eq!(err.to_string(), "cannot add message to an archived session");
 }
 
@@ -22,14 +20,8 @@ fn test_transition_error_display_not_archived() {
 
 #[test]
 fn test_transition_error_display_fork_point_out_of_range() {
-    let err = TransitionError::ForkPointOutOfRange {
-        point: 10,
-        message_count: 5,
-    };
-    assert_eq!(
-        err.to_string(),
-        "fork point 10 is out of range (session has 5 messages)"
-    );
+    let err = TransitionError::ForkPointOutOfRange { point: 10, message_count: 5 };
+    assert_eq!(err.to_string(), "fork point 10 is out of range (session has 5 messages)");
 }
 
 #[test]
@@ -40,9 +32,7 @@ fn test_transition_error_display_empty_title() {
 
 #[test]
 fn test_transition_error_display_invalid() {
-    let err = TransitionError::Invalid {
-        reason: "something went wrong".to_string(),
-    };
+    let err = TransitionError::Invalid { reason: "something went wrong".to_string() };
     assert_eq!(err.to_string(), "invalid transition: something went wrong");
 }
 
@@ -59,12 +49,12 @@ fn test_validate_transition_trait_implementable() {
     impl ValidateTransition<DummyEvent> for DummyState {
         fn validate_transition(&self, event: &DummyEvent) -> Result<(), TransitionError> {
             match event {
-                DummyEvent::Lock if self.locked => Err(TransitionError::Invalid {
-                    reason: "already locked".to_string(),
-                }),
-                DummyEvent::Unlock if !self.locked => Err(TransitionError::Invalid {
-                    reason: "not locked".to_string(),
-                }),
+                DummyEvent::Lock if self.locked => {
+                    Err(TransitionError::Invalid { reason: "already locked".to_string() })
+                }
+                DummyEvent::Unlock if !self.locked => {
+                    Err(TransitionError::Invalid { reason: "not locked".to_string() })
+                }
                 _ => Ok(()),
             }
         }

@@ -24,18 +24,12 @@ pub struct AnthropicAdapter {
 impl AnthropicAdapter {
     /// Create a new Anthropic adapter.
     pub fn new() -> Self {
-        Self {
-            api_url: DEFAULT_API_URL.to_string(),
-            enable_caching: true,
-        }
+        Self { api_url: DEFAULT_API_URL.to_string(), enable_caching: true }
     }
 
     /// Create with a custom API URL.
     pub fn with_url(url: impl Into<String>) -> Self {
-        Self {
-            api_url: url.into(),
-            enable_caching: true,
-        }
+        Self { api_url: url.into(), enable_caching: true }
     }
 
     /// Enable or disable prompt caching.
@@ -93,11 +87,7 @@ impl super::base::ProviderAdapter for AnthropicAdapter {
         Self::ensure_max_tokens(&mut payload);
 
         // Configure extended thinking if requested and supported
-        let model = payload
-            .get("model")
-            .and_then(|m| m.as_str())
-            .unwrap_or("")
-            .to_string();
+        let model = payload.get("model").and_then(|m| m.as_str()).unwrap_or("").to_string();
         if let Some(ref effort) = reasoning_effort
             && effort != "none"
             && supports_thinking(&model)
@@ -122,10 +112,8 @@ impl super::base::ProviderAdapter for AnthropicAdapter {
                     "budget_tokens": budget_tokens
                 });
                 // Ensure max_tokens >= budget_tokens + 1024
-                let current_max = payload
-                    .get("max_tokens")
-                    .and_then(|v| v.as_u64())
-                    .unwrap_or(16384);
+                let current_max =
+                    payload.get("max_tokens").and_then(|v| v.as_u64()).unwrap_or(16384);
                 let min_max = budget_tokens + 1024;
                 if current_max < min_max {
                     payload["max_tokens"] = json!(min_max);

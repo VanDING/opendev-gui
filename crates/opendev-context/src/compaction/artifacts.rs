@@ -115,10 +115,7 @@ impl ArtifactIndex {
 
         #[cfg(not(unix))]
         {
-            let mut file = std::fs::OpenOptions::new()
-                .write(true)
-                .create_new(true)
-                .open(&tmp)?;
+            let mut file = std::fs::OpenOptions::new().write(true).create_new(true).open(&tmp)?;
             std::io::Write::write_all(&mut file, json.as_bytes())?;
         }
 

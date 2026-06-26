@@ -67,10 +67,7 @@ fn tool_groups() -> HashMap<&'static str, HashSet<&'static str>> {
         ]),
     );
 
-    groups.insert(
-        "group:memory",
-        HashSet::from(["memory_search", "memory_write"]),
-    );
+    groups.insert("group:memory", HashSet::from(["memory_search", "memory_write"]));
 
     groups.insert(
         "group:meta",
@@ -100,10 +97,7 @@ fn tool_groups() -> HashMap<&'static str, HashSet<&'static str>> {
 fn profiles() -> HashMap<&'static str, Vec<&'static str>> {
     let mut p = HashMap::new();
     p.insert("minimal", vec!["group:read", "group:meta"]);
-    p.insert(
-        "review",
-        vec!["group:read", "group:meta", "group:web", "group:session"],
-    );
+    p.insert("review", vec!["group:read", "group:meta", "group:web", "group:session"]);
     p.insert(
         "coding",
         vec![
@@ -249,10 +243,7 @@ impl ToolPolicy {
         let mut category_map: HashMap<&str, HashSet<String>> = HashMap::new();
         for (cat, names) in &tool_categories {
             let group_name = Self::category_to_group(*cat);
-            category_map
-                .entry(group_name)
-                .or_default()
-                .extend(names.iter().cloned());
+            category_map.entry(group_name).or_default().extend(names.iter().cloned());
         }
 
         // Also include hardcoded groups for tools not yet migrated

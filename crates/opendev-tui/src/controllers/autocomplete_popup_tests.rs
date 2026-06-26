@@ -12,11 +12,7 @@ fn sample_items() -> Vec<CompletionItem> {
             label: "/mode".into(),
             description: Some("Switch mode".into()),
         },
-        CompletionItem {
-            text: "/models".into(),
-            label: "/models".into(),
-            description: None,
-        },
+        CompletionItem { text: "/models".into(), label: "/models".into(), description: None },
     ]
 }
 

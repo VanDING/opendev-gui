@@ -35,10 +35,7 @@ impl MicroSandbox {
         // For now, return a placeholder that will be wired when we
         // integrate the microsandbox SDK's PythonSandbox type.
 
-        Ok(Self {
-            session_id: session_id.to_string(),
-            started: false,
-        })
+        Ok(Self { session_id: session_id.to_string(), started: false })
     }
 
     /// Start the sandbox with resource limits from config.
@@ -109,9 +106,7 @@ pub struct SandboxPool {
 
 impl SandboxPool {
     pub fn new() -> Self {
-        Self {
-            sandboxes: Mutex::new(HashMap::new()),
-        }
+        Self { sandboxes: Mutex::new(HashMap::new()) }
     }
 
     /// Get an existing sandbox or create a new one for the given session.

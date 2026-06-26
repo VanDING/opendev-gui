@@ -52,10 +52,7 @@ pub(super) fn is_binary(bytes: &[u8]) -> bool {
     }
 
     // Check non-printable character ratio
-    let non_printable = sample
-        .iter()
-        .filter(|&&b| b < 9 || (b > 13 && b < 32))
-        .count();
+    let non_printable = sample.iter().filter(|&&b| b < 9 || (b > 13 && b < 32)).count();
 
     let ratio = non_printable as f64 / check_len as f64;
     ratio > 0.3

@@ -35,11 +35,7 @@ pub struct NestedToolWidget<'a> {
 
 impl<'a> NestedToolWidget<'a> {
     pub fn new(subagents: &'a [SubagentDisplayState]) -> Self {
-        Self {
-            subagents,
-            working_dir: None,
-            shortener: None,
-        }
+        Self { subagents, working_dir: None, shortener: None }
     }
 
     pub fn working_dir(mut self, wd: &'a str) -> Self {
@@ -72,9 +68,7 @@ impl Widget for NestedToolWidget<'_> {
             .border_style(Style::default().fg(style_tokens::BORDER))
             .title(Span::styled(
                 " Subagents ",
-                Style::default()
-                    .fg(style_tokens::HEADING_1)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(style_tokens::HEADING_1).add_modifier(Modifier::BOLD),
             ));
 
         let mut lines: Vec<Line> = Vec::new();
@@ -93,10 +87,7 @@ impl Widget for NestedToolWidget<'_> {
             } else {
                 let slow_tick = subagent.tick / 3;
                 let spinner_idx = slow_tick % SPINNER_FRAMES.len();
-                (
-                    SPINNER_FRAMES[spinner_idx].to_string(),
-                    style_tokens::BLUE_BRIGHT,
-                )
+                (SPINNER_FRAMES[spinner_idx].to_string(), style_tokens::BLUE_BRIGHT)
             };
 
             let elapsed = subagent.elapsed_secs();
@@ -128,16 +119,11 @@ impl Widget for NestedToolWidget<'_> {
             );
 
             lines.push(Line::from(vec![
-                Span::styled(
-                    format!("  {connector} "),
-                    Style::default().fg(style_tokens::SUBTLE),
-                ),
+                Span::styled(format!("  {connector} "), Style::default().fg(style_tokens::SUBTLE)),
                 Span::styled(format!("{status_str} "), Style::default().fg(status_color)),
                 Span::styled(
                     subagent.name.clone(),
-                    Style::default()
-                        .fg(style_tokens::CYAN)
-                        .add_modifier(Modifier::BOLD),
+                    Style::default().fg(style_tokens::CYAN).add_modifier(Modifier::BOLD),
                 ),
                 Span::styled(
                     format!(": {task_preview}"),
@@ -147,11 +133,7 @@ impl Widget for NestedToolWidget<'_> {
             ]));
 
             // Show active tool calls
-            let vertical = if is_last {
-                "   "
-            } else {
-                &format!(" {TREE_VERTICAL}  ")
-            };
+            let vertical = if is_last { "   " } else { &format!(" {TREE_VERTICAL}  ") };
             let active_count = subagent.active_tools.len();
 
             for (j, tool_state) in subagent.active_tools.values().enumerate() {
@@ -207,9 +189,8 @@ impl Widget for NestedToolWidget<'_> {
 
             // Show hidden count if there are more completed tools
             // Use tool_call_count (actual total) since completed_tools is capped at 100
-            let total_completed = subagent
-                .tool_call_count
-                .saturating_sub(subagent.active_tools.len());
+            let total_completed =
+                subagent.tool_call_count.saturating_sub(subagent.active_tools.len());
             let visible_count = visible_completed.len();
             let hidden_count = total_completed.saturating_sub(visible_count);
             if hidden_count > 0 {

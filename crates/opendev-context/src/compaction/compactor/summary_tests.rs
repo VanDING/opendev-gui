@@ -106,10 +106,7 @@ fn test_extract_content_string() {
 #[test]
 fn test_extract_content_array() {
     let msg = make_array_content_msg("user", "multi-part content");
-    assert_eq!(
-        ContextCompactor::extract_content(&msg),
-        "multi-part content"
-    );
+    assert_eq!(ContextCompactor::extract_content(&msg), "multi-part content");
 }
 
 #[test]

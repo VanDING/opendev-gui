@@ -22,22 +22,19 @@ impl InvokeSkillTool {
             return None;
         }
 
-        let prompt_args = args
-            .get("arguments")
-            .and_then(|v| v.as_str())
-            .and_then(|s| {
-                let s = s.trim();
-                if s.is_empty() {
-                    return None;
+        let prompt_args = args.get("arguments").and_then(|v| v.as_str()).and_then(|s| {
+            let s = s.trim();
+            if s.is_empty() {
+                return None;
+            }
+            let mut map = HashMap::new();
+            for pair in s.split_whitespace() {
+                if let Some((k, v)) = pair.split_once('=') {
+                    map.insert(k.to_string(), v.to_string());
                 }
-                let mut map = HashMap::new();
-                for pair in s.split_whitespace() {
-                    if let Some((k, v)) = pair.split_once('=') {
-                        map.insert(k.to_string(), v.to_string());
-                    }
-                }
-                if map.is_empty() { None } else { Some(map) }
-            });
+            }
+            if map.is_empty() { None } else { Some(map) }
+        });
 
         match mgr.get_prompt(server_name, prompt_name, prompt_args).await {
             Ok(result) => {

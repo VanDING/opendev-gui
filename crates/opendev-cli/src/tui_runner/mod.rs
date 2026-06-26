@@ -54,10 +54,7 @@ impl AgentEventCallback for TuiEventCallback {
     }
 
     fn on_tool_finished(&self, tool_id: &str, success: bool) {
-        let _ = self.tx.send(AppEvent::ToolFinished {
-            tool_id: tool_id.to_string(),
-            success,
-        });
+        let _ = self.tx.send(AppEvent::ToolFinished { tool_id: tool_id.to_string(), success });
         // ToolFinished remote event is sent via on_tool_result for more info
     }
 
@@ -86,9 +83,7 @@ impl AgentEventCallback for TuiEventCallback {
     }
 
     fn on_reasoning(&self, content: &str) {
-        let _ = self
-            .tx
-            .send(AppEvent::ReasoningContent(content.to_string()));
+        let _ = self.tx.send(AppEvent::ReasoningContent(content.to_string()));
     }
 
     fn on_reasoning_block_start(&self) {
@@ -103,17 +98,9 @@ impl AgentEventCallback for TuiEventCallback {
     }
 
     fn on_file_changed(&self, files: usize, additions: u64, deletions: u64) {
-        let _ = self.tx.send(AppEvent::FileChangeSummary {
-            files,
-            additions,
-            deletions,
-        });
+        let _ = self.tx.send(AppEvent::FileChangeSummary { files, additions, deletions });
         if let Some(ref rtx) = self.remote_tx {
-            let _ = rtx.send(RemoteEvent::FileChangeSummary {
-                files,
-                additions,
-                deletions,
-            });
+            let _ = rtx.send(RemoteEvent::FileChangeSummary { files, additions, deletions });
         }
     }
 }
@@ -376,31 +363,23 @@ impl TuiRunner {
                                 task_id,
                                 tool_name,
                                 tool_count,
-                            } => AppEvent::BackgroundAgentProgress {
-                                task_id,
-                                tool_name,
-                                tool_count,
-                            },
+                            } => {
+                                AppEvent::BackgroundAgentProgress { task_id, tool_name, tool_count }
+                            }
                             SubagentEvent::BackgroundActivity { task_id, line } => {
                                 AppEvent::BackgroundAgentActivity { task_id, line }
                             }
 
                             // Team events
-                            SubagentEvent::TeamCreated {
-                                team_id,
-                                leader,
-                                members,
-                            } => AppEvent::TeamCreated {
-                                team_id,
-                                leader_name: leader,
-                                member_names: members,
-                            },
-                            SubagentEvent::TeamMessageSent { from, to, preview } => {
-                                AppEvent::TeamMessageSent {
-                                    from,
-                                    to,
-                                    content_preview: preview,
+                            SubagentEvent::TeamCreated { team_id, leader, members } => {
+                                AppEvent::TeamCreated {
+                                    team_id,
+                                    leader_name: leader,
+                                    member_names: members,
                                 }
+                            }
+                            SubagentEvent::TeamMessageSent { from, to, preview } => {
+                                AppEvent::TeamMessageSent { from, to, content_preview: preview }
                             }
                             SubagentEvent::TeamDeleted { team_id } => {
                                 AppEvent::TeamDeleted { team_id }
@@ -416,10 +395,8 @@ impl TuiRunner {
 
         // Create the event callback for tool/agent events
         let remote_event_tx = self.remote_event_tx.take();
-        let callback = TuiEventCallback {
-            tx: event_tx.clone(),
-            remote_tx: remote_event_tx.clone(),
-        };
+        let callback =
+            TuiEventCallback { tx: event_tx.clone(), remote_tx: remote_event_tx.clone() };
 
         // Spawn remote control bridges (Telegram → TUI)
         if let Some(remote_rx) = self.remote_command_rx.take() {
@@ -438,11 +415,7 @@ impl TuiRunner {
             while let Some(msg) = user_rx.recv().await {
                 // Handle reasoning effort change sentinel
                 if let Some(effort) = msg.strip_prefix("\x00__REASONING_EFFORT__") {
-                    let new_effort = if effort == "none" {
-                        None
-                    } else {
-                        Some(effort.to_string())
-                    };
+                    let new_effort = if effort == "none" { None } else { Some(effort.to_string()) };
                     info!(effort = ?new_effort, "Reasoning effort changed");
                     runtime.llm_caller.config.reasoning_effort = new_effort;
                     continue;
@@ -472,10 +445,8 @@ impl TuiRunner {
                     };
                     match result {
                         Some(desc) => {
-                            let _ = event_tx.send(AppEvent::UndoResult {
-                                success: true,
-                                message: desc,
-                            });
+                            let _ = event_tx
+                                .send(AppEvent::UndoResult { success: true, message: desc });
                         }
                         None => {
                             let _ = event_tx.send(AppEvent::UndoResult {
@@ -514,9 +485,8 @@ impl TuiRunner {
                             }
                         }
                     } else {
-                        let _ = event_tx.send(AppEvent::AgentError(
-                            "No active session to share.".to_string(),
-                        ));
+                        let _ = event_tx
+                            .send(AppEvent::AgentError("No active session to share.".to_string()));
                     }
                     continue;
                 }
@@ -555,10 +525,8 @@ impl TuiRunner {
                             });
                         }
                         Err(e) => {
-                            let _ = event_tx.send(AppEvent::CompactionFinished {
-                                success: false,
-                                message: e,
-                            });
+                            let _ = event_tx
+                                .send(AppEvent::CompactionFinished { success: false, message: e });
                         }
                     }
                     continue;
@@ -573,10 +541,7 @@ impl TuiRunner {
                         let tool_call_count =
                             payload["tool_call_count"].as_u64().unwrap_or(0) as usize;
 
-                        info!(
-                            task_id,
-                            tool_call_count, "Injecting background result as tool pair"
-                        );
+                        info!(task_id, tool_call_count, "Injecting background result as tool pair");
 
                         let interrupt_token = InterruptToken::new();
                         let _ = event_tx.send(AppEvent::SetInterruptToken(interrupt_token.clone()));
@@ -624,10 +589,7 @@ impl TuiRunner {
                         (msg, false)
                     };
 
-                info!(
-                    msg_len = msg.len(),
-                    plan_requested, "TUI: user submitted message"
-                );
+                info!(msg_len = msg.len(), plan_requested, "TUI: user submitted message");
 
                 // Create fresh interrupt token for this query
                 let interrupt_token = InterruptToken::new();
@@ -635,9 +597,8 @@ impl TuiRunner {
 
                 // Signal agent started
                 let _ = event_tx.send(AppEvent::AgentStarted);
-                let _ = event_tx.send(AppEvent::TaskProgressStarted {
-                    description: "Thinking".to_string(),
-                });
+                let _ = event_tx
+                    .send(AppEvent::TaskProgressStarted { description: "Thinking".to_string() });
                 if let Some(ref rtx) = remote_tx_for_agent {
                     let _ = rtx.send(RemoteEvent::AgentStarted);
                 }

@@ -14,10 +14,7 @@ fn test_deserialize_python_session() {
     assert_eq!(session.id, "test12345678");
     assert_eq!(session.channel, "cli");
     assert_eq!(session.chat_type, "direct");
-    assert_eq!(
-        session.working_directory,
-        Some("/home/user/project".to_string())
-    );
+    assert_eq!(session.working_directory, Some("/home/user/project".to_string()));
     assert_eq!(session.slug, Some("test-session".to_string()));
     assert!(!session.is_archived());
 }
@@ -39,10 +36,7 @@ fn test_python_session_messages() {
     assert_eq!(asst_msg.role, Role::Assistant);
     assert_eq!(asst_msg.content, "Of course! How can I help?");
     assert_eq!(asst_msg.tokens, Some(150));
-    assert_eq!(
-        asst_msg.thinking_trace.as_deref(),
-        Some("Let me read the file first.")
-    );
+    assert_eq!(asst_msg.thinking_trace.as_deref(), Some("Let me read the file first."));
 
     // Tool call
     assert_eq!(asst_msg.tool_calls.len(), 1);

@@ -16,14 +16,8 @@ use super::{CompletionItem, CompletionKind};
 /// The color string maps to ratatui `Color` names (used by the caller when
 /// rendering styled spans).
 pub fn file_type_indicator(path: &str) -> (&'static str, &'static str) {
-    let ext = Path::new(path)
-        .extension()
-        .and_then(|e| e.to_str())
-        .unwrap_or("");
-    let name = Path::new(path)
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or("");
+    let ext = Path::new(path).extension().and_then(|e| e.to_str()).unwrap_or("");
+    let name = Path::new(path).file_name().and_then(|n| n.to_str()).unwrap_or("");
 
     match ext.to_lowercase().as_str() {
         "py" => ("py", "Cyan"),
@@ -86,11 +80,8 @@ pub fn shorten_path(path: &str, max_len: usize) -> String {
     let parts: Vec<&str> = path.split('/').collect();
     let mut result = String::new();
     for (i, part) in parts.iter().enumerate().rev() {
-        let candidate = if result.is_empty() {
-            part.to_string()
-        } else {
-            format!("{}/{}", part, result)
-        };
+        let candidate =
+            if result.is_empty() { part.to_string() } else { format!("{}/{}", part, result) };
         if candidate.len() + 4 > max_len && i > 0 {
             // 4 = ".../"
             return format!(".../{}", result);

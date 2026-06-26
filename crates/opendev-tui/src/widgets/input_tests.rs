@@ -20,10 +20,7 @@ fn test_queue_indicator_in_separator() {
     widget.render(area, &mut buf);
 
     let rendered: String = (0..area.width)
-        .map(|x| {
-            buf.cell((x, 0))
-                .map_or(' ', |c| c.symbol().chars().next().unwrap_or(' '))
-        })
+        .map(|x| buf.cell((x, 0)).map_or(' ', |c| c.symbol().chars().next().unwrap_or(' ')))
         .collect();
     assert!(
         rendered.contains("2 messages queued"),
@@ -40,19 +37,13 @@ fn test_queue_indicator_single_message() {
     widget.render(area, &mut buf);
 
     let rendered: String = (0..area.width)
-        .map(|x| {
-            buf.cell((x, 0))
-                .map_or(' ', |c| c.symbol().chars().next().unwrap_or(' '))
-        })
+        .map(|x| buf.cell((x, 0)).map_or(' ', |c| c.symbol().chars().next().unwrap_or(' ')))
         .collect();
     assert!(
         rendered.contains("1 message queued"),
         "Expected '1 message queued' in separator line, got: {rendered:?}"
     );
-    assert!(
-        !rendered.contains("1 messages"),
-        "Should use singular 'message' for count=1"
-    );
+    assert!(!rendered.contains("1 messages"), "Should use singular 'message' for count=1");
 }
 
 #[test]
@@ -64,10 +55,7 @@ fn test_queue_indicator_bg_results_only() {
     widget.render(area, &mut buf);
 
     let rendered: String = (0..area.width)
-        .map(|x| {
-            buf.cell((x, 0))
-                .map_or(' ', |c| c.symbol().chars().next().unwrap_or(' '))
-        })
+        .map(|x| buf.cell((x, 0)).map_or(' ', |c| c.symbol().chars().next().unwrap_or(' ')))
         .collect();
     assert!(
         rendered.contains("2 results queued"),
@@ -89,10 +77,7 @@ fn test_queue_indicator_mixed() {
     widget.render(area, &mut buf);
 
     let rendered: String = (0..area.width)
-        .map(|x| {
-            buf.cell((x, 0))
-                .map_or(' ', |c| c.symbol().chars().next().unwrap_or(' '))
-        })
+        .map(|x| buf.cell((x, 0)).map_or(' ', |c| c.symbol().chars().next().unwrap_or(' ')))
         .collect();
     assert!(
         rendered.contains("3 queued"),
@@ -109,10 +94,7 @@ fn test_activity_tag_renders() {
     widget.render(area, &mut buf);
 
     let rendered: String = (0..area.width)
-        .map(|x| {
-            buf.cell((x, 0))
-                .map_or(' ', |c| c.symbol().chars().next().unwrap_or(' '))
-        })
+        .map(|x| buf.cell((x, 0)).map_or(' ', |c| c.symbol().chars().next().unwrap_or(' ')))
         .collect();
     assert!(
         rendered.contains("implementing-status-bar"),
@@ -129,15 +111,9 @@ fn test_activity_tag_with_queue() {
     widget.render(area, &mut buf);
 
     let rendered: String = (0..area.width)
-        .map(|x| {
-            buf.cell((x, 0))
-                .map_or(' ', |c| c.symbol().chars().next().unwrap_or(' '))
-        })
+        .map(|x| buf.cell((x, 0)).map_or(' ', |c| c.symbol().chars().next().unwrap_or(' ')))
         .collect();
-    assert!(
-        rendered.contains("1 message queued"),
-        "Expected queue indicator, got: {rendered:?}"
-    );
+    assert!(rendered.contains("1 message queued"), "Expected queue indicator, got: {rendered:?}");
     assert!(
         rendered.contains("debugging-login"),
         "Expected kebab-cased activity tag, got: {rendered:?}"
@@ -158,10 +134,7 @@ fn test_to_kebab_display() {
 fn test_to_kebab_display_long_title_no_truncation() {
     let long_title = "implementing the new authentication middleware refactor";
     let kebab = to_kebab_display(long_title);
-    assert_eq!(
-        kebab,
-        "implementing-the-new-authentication-middleware-refactor"
-    );
+    assert_eq!(kebab, "implementing-the-new-authentication-middleware-refactor");
     // No truncation — full string preserved
     assert!(!kebab.contains("..."));
     assert!(kebab.len() > 30);
@@ -177,18 +150,12 @@ fn test_activity_tag_long_title_not_truncated() {
     widget.render(area, &mut buf);
 
     let rendered: String = (0..area.width)
-        .map(|x| {
-            buf.cell((x, 0))
-                .map_or(' ', |c| c.symbol().chars().next().unwrap_or(' '))
-        })
+        .map(|x| buf.cell((x, 0)).map_or(' ', |c| c.symbol().chars().next().unwrap_or(' ')))
         .collect();
     // Full kebab tag should appear, no "..." truncation
     assert!(
         rendered.contains("implementing-the-new-authentication-middleware-refactor"),
         "Expected full long tag without truncation, got: {rendered:?}"
     );
-    assert!(
-        !rendered.contains("..."),
-        "Tag should not be truncated, got: {rendered:?}"
-    );
+    assert!(!rendered.contains("..."), "Tag should not be truncated, got: {rendered:?}");
 }

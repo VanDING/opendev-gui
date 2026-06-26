@@ -7,10 +7,7 @@ use tracing::debug;
 pub const CHEAP_MODELS: &[(&str, &str)] = &[
     ("openai", "gpt-4o-mini"),
     ("anthropic", "claude-3-5-haiku-20241022"),
-    (
-        "fireworks",
-        "accounts/fireworks/models/llama-v3p1-8b-instruct",
-    ),
+    ("fireworks", "accounts/fireworks/models/llama-v3p1-8b-instruct"),
 ];
 
 /// Env var names per provider.
@@ -47,11 +44,7 @@ impl MemorySelector {
     /// Try to create a selector by resolving a cheap model and API key.
     pub fn try_new() -> Option<Self> {
         for &(prov, model) in CHEAP_MODELS {
-            let env_key = ENV_KEYS
-                .iter()
-                .find(|&&(p, _)| p == prov)
-                .map(|&(_, k)| k)
-                .unwrap_or("");
+            let env_key = ENV_KEYS.iter().find(|&&(p, _)| p == prov).map(|&(_, k)| k).unwrap_or("");
             if let Ok(key) = std::env::var(env_key)
                 && !key.is_empty()
             {
@@ -73,8 +66,7 @@ impl MemorySelector {
         manifest: &str,
         user_query: &str,
     ) -> Result<Vec<String>, Box<dyn std::error::Error + Send + Sync>> {
-        self.select_with_prompt(manifest, user_query, SELECTION_PROMPT)
-            .await
+        self.select_with_prompt(manifest, user_query, SELECTION_PROMPT).await
     }
 
     /// Call the LLM with a custom system prompt.

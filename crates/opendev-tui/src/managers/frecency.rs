@@ -25,9 +25,7 @@ pub struct FrecencyTracker {
 impl FrecencyTracker {
     /// Create a new empty tracker.
     pub fn new() -> Self {
-        Self {
-            entries: HashMap::new(),
-        }
+        Self { entries: HashMap::new() }
     }
 
     /// Record a usage of the given key.
@@ -39,10 +37,7 @@ impl FrecencyTracker {
                 e.frequency += 1;
                 e.last_used = now;
             })
-            .or_insert(FrecencyEntry {
-                frequency: 1,
-                last_used: now,
-            });
+            .or_insert(FrecencyEntry { frequency: 1, last_used: now });
     }
 
     /// Calculate the frecency score for a key.
@@ -61,11 +56,8 @@ impl FrecencyTracker {
 
     /// Get the top N items sorted by frecency score (highest first).
     pub fn top_n(&self, n: usize) -> Vec<(&str, f64)> {
-        let mut scored: Vec<(&str, f64)> = self
-            .entries
-            .keys()
-            .map(|k| (k.as_str(), self.score(k)))
-            .collect();
+        let mut scored: Vec<(&str, f64)> =
+            self.entries.keys().map(|k| (k.as_str(), self.score(k))).collect();
         scored.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
         scored.truncate(n);
         scored

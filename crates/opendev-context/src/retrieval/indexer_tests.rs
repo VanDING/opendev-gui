@@ -5,11 +5,7 @@ use std::fs;
 fn test_generate_index_with_temp_dir() {
     let dir = tempfile::tempdir().unwrap();
     fs::write(dir.path().join("main.py"), "print('hello')").unwrap();
-    fs::write(
-        dir.path().join("README.md"),
-        "# My Project\n\nA test project.",
-    )
-    .unwrap();
+    fs::write(dir.path().join("README.md"), "# My Project\n\nA test project.").unwrap();
 
     let indexer = CodebaseIndexer::new(dir.path());
     let index = indexer.generate_index(5000);
@@ -47,11 +43,8 @@ fn test_detect_project_type_none() {
 #[test]
 fn test_generate_dependencies_requirements_txt() {
     let dir = tempfile::tempdir().unwrap();
-    fs::write(
-        dir.path().join("requirements.txt"),
-        "flask==2.0\nrequests\n# comment\npytest",
-    )
-    .unwrap();
+    fs::write(dir.path().join("requirements.txt"), "flask==2.0\nrequests\n# comment\npytest")
+        .unwrap();
 
     let indexer = CodebaseIndexer::new(dir.path());
     let deps = indexer.generate_dependencies().unwrap();
@@ -77,11 +70,7 @@ fn test_compress_content() {
 #[test]
 fn test_generate_overview_with_readme() {
     let dir = tempfile::tempdir().unwrap();
-    fs::write(
-        dir.path().join("README.md"),
-        "# Title\n\nThis is the description.",
-    )
-    .unwrap();
+    fs::write(dir.path().join("README.md"), "# Title\n\nThis is the description.").unwrap();
 
     let indexer = CodebaseIndexer::new(dir.path());
     let overview = indexer.generate_overview();

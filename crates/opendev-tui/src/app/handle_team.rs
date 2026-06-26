@@ -15,11 +15,8 @@ impl App {
     ) {
         let count = member_names.len();
         self.state.toasts.push(
-            Toast::new(
-                format!("Team '{team_id}' created with {count} members"),
-                ToastLevel::Info,
-            )
-            .with_duration(Duration::from_secs(3)),
+            Toast::new(format!("Team '{team_id}' created with {count} members"), ToastLevel::Info)
+                .with_duration(Duration::from_secs(3)),
         );
         self.state.dirty = true;
     }
@@ -44,10 +41,7 @@ impl App {
 
     /// Handle team deletion event.
     pub(super) fn handle_team_deleted(&mut self, team_id: String) {
-        self.state.toasts.push(Toast::new(
-            format!("Team '{team_id}' disbanded"),
-            ToastLevel::Info,
-        ));
+        self.state.toasts.push(Toast::new(format!("Team '{team_id}' disbanded"), ToastLevel::Info));
         self.state.dirty = true;
     }
 }

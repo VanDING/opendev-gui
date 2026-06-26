@@ -84,17 +84,10 @@ impl BaseTool for AskUserTool {
         let options: Vec<String> = args
             .get("options")
             .and_then(|v| v.as_array())
-            .map(|arr| {
-                arr.iter()
-                    .filter_map(|v| v.as_str().map(String::from))
-                    .collect()
-            })
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
             .unwrap_or_default();
 
-        let default = args
-            .get("default")
-            .and_then(|v| v.as_str())
-            .map(String::from);
+        let default = args.get("default").and_then(|v| v.as_str()).map(String::from);
 
         // --- Interactive mode: block until user answers ---
         if let Some(ref tx) = self.ask_tx {

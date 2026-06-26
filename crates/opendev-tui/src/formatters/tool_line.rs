@@ -21,11 +21,7 @@ pub enum ToolLineStyle {
 
 /// Format elapsed seconds consistently: `"0s"`, `"5s"`, `"1m 5s"`.
 pub fn format_elapsed(secs: u64) -> String {
-    if secs >= 60 {
-        format!("{}m {}s", secs / 60, secs % 60)
-    } else {
-        format!("{secs}s")
-    }
+    if secs >= 60 { format!("{}m {}s", secs / 60, secs % 60) } else { format!("{secs}s") }
 }
 
 /// Format a token count as human-readable (e.g., `"500 tokens"`, `"1.5k tokens"`, `"3.5M tokens"`).
@@ -59,9 +55,7 @@ pub fn tool_line_active(
 
     let (verb_style, arg_style, elapsed_style) = match style {
         ToolLineStyle::Primary => (
-            Style::default()
-                .fg(style_tokens::PRIMARY)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(style_tokens::PRIMARY).add_modifier(Modifier::BOLD),
             Style::default().fg(style_tokens::SUBTLE),
             Style::default().fg(style_tokens::GREY),
         ),
@@ -101,16 +95,11 @@ pub fn tool_line_completed(
         (FAILURE_CHAR, style_tokens::ERROR)
     };
 
-    spans.push(Span::styled(
-        format!("{icon} "),
-        Style::default().fg(icon_color),
-    ));
+    spans.push(Span::styled(format!("{icon} "), Style::default().fg(icon_color)));
 
     let (verb_style, arg_style, elapsed_style) = match style {
         ToolLineStyle::Primary => (
-            Style::default()
-                .fg(style_tokens::PRIMARY)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(style_tokens::PRIMARY).add_modifier(Modifier::BOLD),
             Style::default().fg(style_tokens::SUBTLE),
             Style::default().fg(style_tokens::GREY),
         ),

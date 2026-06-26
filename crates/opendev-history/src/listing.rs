@@ -30,16 +30,9 @@ impl SessionListing {
             let entries = if include_archived {
                 index.entries
             } else {
-                index
-                    .entries
-                    .into_iter()
-                    .filter(|e| e.time_archived.is_none())
-                    .collect()
+                index.entries.into_iter().filter(|e| e.time_archived.is_none()).collect()
             };
-            entries
-                .iter()
-                .map(SessionIndex::entry_to_metadata)
-                .collect()
+            entries.iter().map(SessionIndex::entry_to_metadata).collect()
         } else {
             // Index missing/corrupted; return empty for now
             // (rebuild_index would require loading session files)
@@ -180,11 +173,9 @@ impl SessionListing {
 
             // Remove empty project directories (no session files at all)
             if let Ok(files) = std::fs::read_dir(&path) {
-                let has_sessions = files.flatten().any(|f| {
-                    f.path()
-                        .extension()
-                        .is_some_and(|e| e == "json" || e == "jsonl")
-                });
+                let has_sessions = files
+                    .flatten()
+                    .any(|f| f.path().extension().is_some_and(|e| e == "json" || e == "jsonl"));
                 if !has_sessions {
                     // Check if directory is truly empty (only marker or index files)
                     let file_count = std::fs::read_dir(&path).map(|d| d.count()).unwrap_or(1);

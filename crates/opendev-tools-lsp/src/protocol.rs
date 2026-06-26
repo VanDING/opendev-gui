@@ -190,10 +190,7 @@ pub struct TextEdit {
 
 impl TextEdit {
     pub fn new(range: SourceRange, new_text: impl Into<String>) -> Self {
-        Self {
-            range,
-            new_text: new_text.into(),
-        }
+        Self { range, new_text: new_text.into() }
     }
 }
 
@@ -248,11 +245,7 @@ impl WorkspaceEdit {
 /// Convert a file URI string to a filesystem path.
 pub fn uri_string_to_path(uri: &str) -> Option<PathBuf> {
     let url = Url::parse(uri).ok()?;
-    if url.scheme() == "file" {
-        url.to_file_path().ok()
-    } else {
-        None
-    }
+    if url.scheme() == "file" { url.to_file_path().ok() } else { None }
 }
 
 /// Convert a filesystem path to a file URI string.
@@ -269,10 +262,7 @@ pub fn parse_range_json(value: &serde_json::Value) -> Option<SourceRange> {
             start.get("line")?.as_u64()? as u32,
             start.get("character")?.as_u64()? as u32,
         ),
-        Position::new(
-            end.get("line")?.as_u64()? as u32,
-            end.get("character")?.as_u64()? as u32,
-        ),
+        Position::new(end.get("line")?.as_u64()? as u32, end.get("character")?.as_u64()? as u32),
     ))
 }
 

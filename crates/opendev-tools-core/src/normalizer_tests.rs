@@ -51,10 +51,7 @@ fn test_normalize_params_path_resolution_relative() {
     args.insert("file_path".into(), serde_json::json!("src/main.rs"));
 
     let result = normalize_params("read_file", args, Some("/workspace"));
-    assert_eq!(
-        result["file_path"],
-        serde_json::json!("/workspace/src/main.rs")
-    );
+    assert_eq!(result["file_path"], serde_json::json!("/workspace/src/main.rs"));
 }
 
 #[cfg(unix)]
@@ -113,18 +110,9 @@ fn test_normalize_params_non_string_values_preserved() {
 #[test]
 fn test_normalize_path() {
     use std::path::PathBuf;
-    assert_eq!(
-        crate::path::normalize_path(Path::new("/a/b/../c")),
-        PathBuf::from("/a/c")
-    );
-    assert_eq!(
-        crate::path::normalize_path(Path::new("/a/./b/c")),
-        PathBuf::from("/a/b/c")
-    );
-    assert_eq!(
-        crate::path::normalize_path(Path::new("/a/b/c")),
-        PathBuf::from("/a/b/c")
-    );
+    assert_eq!(crate::path::normalize_path(Path::new("/a/b/../c")), PathBuf::from("/a/c"));
+    assert_eq!(crate::path::normalize_path(Path::new("/a/./b/c")), PathBuf::from("/a/b/c"));
+    assert_eq!(crate::path::normalize_path(Path::new("/a/b/c")), PathBuf::from("/a/b/c"));
 }
 
 #[cfg(unix)]
@@ -136,10 +124,7 @@ fn test_normalize_params_redundant_basename() {
     args.insert("file_path".into(), serde_json::json!("myproject/main.rs"));
 
     let result = normalize_params("read_file", args, Some("/home/user/myproject"));
-    assert_eq!(
-        result["file_path"],
-        serde_json::json!("/home/user/myproject/myproject/main.rs")
-    );
+    assert_eq!(result["file_path"], serde_json::json!("/home/user/myproject/myproject/main.rs"));
     // Note: without the actual filesystem, resolve_file_path can't detect the
     // redundancy (it checks .exists()). The normalizer test above confirms delegation;
     // the path module's own tests cover the filesystem-dependent redundancy detection.
@@ -163,8 +148,5 @@ fn test_normalize_params_working_dir_param_resolved() {
     args.insert("working_dir".into(), serde_json::json!("subdir"));
 
     let result = normalize_params("spawn_subagent", args, Some("/workspace"));
-    assert_eq!(
-        result["working_dir"],
-        serde_json::json!("/workspace/subdir")
-    );
+    assert_eq!(result["working_dir"], serde_json::json!("/workspace/subdir"));
 }

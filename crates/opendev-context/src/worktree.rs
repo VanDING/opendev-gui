@@ -31,9 +31,7 @@ pub struct WorktreeManager {
 impl WorktreeManager {
     /// Create a new worktree manager for the given repository root.
     pub fn new(repo_root: &Path) -> Self {
-        Self {
-            repo_root: repo_root.to_path_buf(),
-        }
+        Self { repo_root: repo_root.to_path_buf() }
     }
 
     /// Create a new worktree with an auto-generated branch name.
@@ -64,16 +62,11 @@ impl WorktreeManager {
             return Err(format!("git worktree add failed: {stderr}"));
         }
 
-        debug!(
-            "Created worktree at {} on branch {}",
-            path.display(),
-            branch
-        );
+        debug!("Created worktree at {} on branch {}", path.display(), branch);
 
         // Get HEAD
-        let head = self
-            .git_in(path, &["rev-parse", "HEAD"])
-            .unwrap_or_else(|| "unknown".to_string());
+        let head =
+            self.git_in(path, &["rev-parse", "HEAD"]).unwrap_or_else(|| "unknown".to_string());
 
         Ok(WorktreeInfo {
             path: path.to_path_buf(),
@@ -164,11 +157,7 @@ impl WorktreeManager {
     }
 
     fn git_in(&self, dir: &Path, args: &[&str]) -> Option<String> {
-        let output = Command::new("git")
-            .args(args)
-            .current_dir(dir)
-            .output()
-            .ok()?;
+        let output = Command::new("git").args(args).current_dir(dir).output().ok()?;
 
         if output.status.success() {
             Some(String::from_utf8_lossy(&output.stdout).to_string())
@@ -209,12 +198,7 @@ fn parse_porcelain_output(output: &str) -> Vec<WorktreeInfo> {
 
     // Push last entry
     if let Some(p) = path {
-        worktrees.push(WorktreeInfo {
-            path: p,
-            branch,
-            head,
-            is_main,
-        });
+        worktrees.push(WorktreeInfo { path: p, branch, head, is_main });
     }
 
     worktrees
@@ -233,9 +217,7 @@ fn generate_short_id() -> String {
 
 impl std::fmt::Debug for WorktreeManager {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("WorktreeManager")
-            .field("repo_root", &self.repo_root)
-            .finish()
+        f.debug_struct("WorktreeManager").field("repo_root", &self.repo_root).finish()
     }
 }
 

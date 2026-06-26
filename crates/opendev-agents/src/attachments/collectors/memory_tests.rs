@@ -98,11 +98,7 @@ fn test_scan_memory_dir_with_files() {
     std::fs::create_dir_all(&memory_dir).unwrap();
 
     // Write MEMORY.md (should be excluded)
-    std::fs::write(
-        memory_dir.join("MEMORY.md"),
-        "# Memory Index\n- [test](test.md)\n",
-    )
-    .unwrap();
+    std::fs::write(memory_dir.join("MEMORY.md"), "# Memory Index\n- [test](test.md)\n").unwrap();
 
     // Write a memory file with frontmatter
     std::fs::write(
@@ -118,10 +114,7 @@ fn test_scan_memory_dir_with_files() {
     assert_eq!(entries.len(), 2);
 
     // Find the frontmatter one
-    let feedback = entries
-        .iter()
-        .find(|e| e.filename == "feedback_testing.md")
-        .unwrap();
+    let feedback = entries.iter().find(|e| e.filename == "feedback_testing.md").unwrap();
     assert_eq!(feedback.description, "Run tests first");
     assert_eq!(feedback.file_type, "feedback");
 
@@ -193,9 +186,7 @@ fn test_cumulative_byte_limit() {
     std::fs::create_dir_all(&memory_dir).unwrap();
 
     // Simulate already having consumed most of the budget
-    collector
-        .cumulative_bytes
-        .store(MAX_SESSION_BYTES - 10, Ordering::Relaxed);
+    collector.cumulative_bytes.store(MAX_SESSION_BYTES - 10, Ordering::Relaxed);
 
     // Write a file that exceeds remaining budget
     std::fs::write(memory_dir.join("big.md"), "x".repeat(100)).unwrap();
@@ -215,11 +206,8 @@ fn test_fallback_to_memory_index() {
     std::fs::create_dir_all(&memory_dir).unwrap();
 
     // Only MEMORY.md exists, no individual files
-    std::fs::write(
-        memory_dir.join("MEMORY.md"),
-        "# Memories\n- [note](note.md) — a note\n",
-    )
-    .unwrap();
+    std::fs::write(memory_dir.join("MEMORY.md"), "# Memories\n- [note](note.md) — a note\n")
+        .unwrap();
 
     let content = SemanticMemoryCollector::load_memory_index(&tmp_path);
     assert!(content.is_some());

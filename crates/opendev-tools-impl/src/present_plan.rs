@@ -34,10 +34,7 @@ pub struct PresentPlanTool {
 impl PresentPlanTool {
     /// Create a present_plan tool without todo integration (auto-approve only).
     pub fn new() -> Self {
-        Self {
-            todo_manager: None,
-            approval_tx: None,
-        }
+        Self { todo_manager: None, approval_tx: None }
     }
 
     /// Create a present_plan tool with a shared todo manager.
@@ -45,10 +42,7 @@ impl PresentPlanTool {
     /// When a plan is approved, its implementation steps will be added
     /// as todos to this manager.
     pub fn with_todo_manager(manager: Arc<Mutex<TodoManager>>) -> Self {
-        Self {
-            todo_manager: Some(manager),
-            approval_tx: None,
-        }
+        Self { todo_manager: Some(manager), approval_tx: None }
     }
 
     /// Attach a plan approval channel for interactive (TUI) mode.
@@ -336,10 +330,7 @@ impl BaseTool for PresentPlanTool {
             metadata.insert("plan_name".into(), serde_json::json!(name));
         }
 
-        let plan_name_display = plan_name
-            .as_deref()
-            .map(|n| format!(" ({n})"))
-            .unwrap_or_default();
+        let plan_name_display = plan_name.as_deref().map(|n| format!(" ({n})")).unwrap_or_default();
 
         ToolResult::ok_with_metadata(
             format!(

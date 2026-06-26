@@ -75,10 +75,7 @@ pub struct CustomCommandLoader {
 impl CustomCommandLoader {
     /// Create a new loader rooted at the given working directory.
     pub fn new(working_dir: &Path) -> Self {
-        Self {
-            working_dir: working_dir.to_path_buf(),
-            commands: None,
-        }
+        Self { working_dir: working_dir.to_path_buf(), commands: None }
     }
 
     /// Load all custom commands from command directories.
@@ -174,9 +171,7 @@ impl CustomCommandLoader {
 
         self.commands = Some(commands);
         // SAFETY: we just set self.commands to Some on the line above
-        self.commands
-            .as_ref()
-            .expect("commands was just set to Some")
+        self.commands.as_ref().expect("commands was just set to Some")
     }
 
     /// Get a custom command by name.

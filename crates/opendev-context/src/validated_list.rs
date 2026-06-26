@@ -39,11 +39,7 @@ impl ValidatedMessageList {
     /// (trusts existing data), then rebuilds pending state.
     pub fn new(initial: Option<Vec<ApiMessage>>, strict: bool) -> Self {
         let messages = initial.unwrap_or_default();
-        let mut list = Self {
-            messages,
-            pending_tool_ids: Mutex::new(HashSet::new()),
-            strict,
-        };
+        let mut list = Self { messages, pending_tool_ids: Mutex::new(HashSet::new()), strict };
         list.rebuild_pending_state();
         list
     }
@@ -68,26 +64,20 @@ impl ValidatedMessageList {
 
     /// Tool call IDs still awaiting results.
     pub fn pending_tool_ids(&self) -> HashSet<String> {
-        self.pending_tool_ids.lock().unwrap().clone()
+        self.pending_tool_ids.lock().unwrap_or_else(|e| e.into_inner()).clone()
     }
 
     /// True if in EXPECT_TOOL_RESULTS state.
     pub fn has_pending_tools(&self) -> bool {
-        !self.pending_tool_ids.lock().unwrap().is_empty()
+        !self.pending_tool_ids.lock().unwrap_or_else(|e| e.into_inner()).is_empty()
     }
 
     /// Append a user message. Auto-completes pending tool results if any.
     pub fn add_user(&mut self, content: &str) {
         self.auto_complete_pending("add_user");
         let mut msg = ApiMessage::new();
-        msg.insert(
-            "role".to_string(),
-            serde_json::Value::String("user".to_string()),
-        );
-        msg.insert(
-            "content".to_string(),
-            serde_json::Value::String(content.to_string()),
-        );
+        msg.insert("role".to_string(), serde_json::Value::String("user".to_string()));
+        msg.insert("content".to_string(), serde_json::Value::String(content.to_string()));
         self.messages.push(msg);
     }
 
@@ -99,16 +89,13 @@ impl ValidatedMessageList {
     ) {
         self.auto_complete_pending("add_assistant");
         let mut msg = ApiMessage::new();
-        msg.insert(
-            "role".to_string(),
-            serde_json::Value::String("assistant".to_string()),
-        );
+        msg.insert("role".to_string(), serde_json::Value::String("assistant".to_string()));
         msg.insert(
             "content".to_string(),
             serde_json::Value::String(content.unwrap_or("").to_string()),
         );
         if let Some(tcs) = tool_calls {
-            let mut pending = self.pending_tool_ids.lock().unwrap();
+            let mut pending = self.pending_tool_ids.lock().unwrap_or_else(|e| e.into_inner());
             for tc in &tcs {
                 if let Some(id) = tc.get("id").and_then(|v| v.as_str())
                     && !id.is_empty()
@@ -123,34 +110,22 @@ impl ValidatedMessageList {
 
     /// Append tool result. Rejects orphaned IDs not in pending set (in strict mode).
     pub fn add_tool_result(&mut self, tool_call_id: &str, content: &str) -> Result<(), String> {
-        let mut pending = self.pending_tool_ids.lock().unwrap();
+        let mut pending = self.pending_tool_ids.lock().unwrap_or_else(|e| e.into_inner());
         if !pending.contains(tool_call_id) {
             let detail = format!("Orphaned tool result for id={tool_call_id}");
             if self.strict {
                 return Err(detail);
             }
-            warn!(
-                "ValidatedMessageList: {} (permissive mode, accepting)",
-                detail
-            );
+            warn!("ValidatedMessageList: {} (permissive mode, accepting)", detail);
         } else {
             pending.remove(tool_call_id);
         }
         drop(pending);
 
         let mut msg = ApiMessage::new();
-        msg.insert(
-            "role".to_string(),
-            serde_json::Value::String("tool".to_string()),
-        );
-        msg.insert(
-            "tool_call_id".to_string(),
-            serde_json::Value::String(tool_call_id.to_string()),
-        );
-        msg.insert(
-            "content".to_string(),
-            serde_json::Value::String(content.to_string()),
-        );
+        msg.insert("role".to_string(), serde_json::Value::String("tool".to_string()));
+        msg.insert("tool_call_id".to_string(), serde_json::Value::String(tool_call_id.to_string()));
+        msg.insert("content".to_string(), serde_json::Value::String(content.to_string()));
         self.messages.push(msg);
         Ok(())
     }
@@ -161,7 +136,7 @@ impl ValidatedMessageList {
         tool_calls: &[serde_json::Value],
         results_by_id: &std::collections::HashMap<String, String>,
     ) {
-        let mut pending = self.pending_tool_ids.lock().unwrap();
+        let mut pending = self.pending_tool_ids.lock().unwrap_or_else(|e| e.into_inner());
         for tc in tool_calls {
             let tc_id = tc.get("id").and_then(|v| v.as_str()).unwrap_or("");
             if tc_id.is_empty() {
@@ -184,18 +159,12 @@ impl ValidatedMessageList {
             pending.remove(tc_id);
 
             let mut msg = ApiMessage::new();
-            msg.insert(
-                "role".to_string(),
-                serde_json::Value::String("tool".to_string()),
-            );
-            msg.insert(
-                "tool_call_id".to_string(),
-                serde_json::Value::String(tc_id.to_string()),
-            );
+            msg.insert("role".to_string(), serde_json::Value::String("tool".to_string()));
+            msg.insert("tool_call_id".to_string(), serde_json::Value::String(tc_id.to_string()));
             msg.insert("content".to_string(), serde_json::Value::String(content));
             drop(pending);
             self.messages.push(msg);
-            pending = self.pending_tool_ids.lock().unwrap();
+            pending = self.pending_tool_ids.lock().unwrap_or_else(|e| e.into_inner());
         }
     }
 
@@ -226,12 +195,12 @@ impl ValidatedMessageList {
                 expected.remove(id);
             }
         }
-        *self.pending_tool_ids.lock().unwrap() = expected;
+        *self.pending_tool_ids.lock().unwrap_or_else(|e| e.into_inner()) = expected;
     }
 
     /// Insert synthetic error results for any pending tool calls.
     fn auto_complete_pending(&mut self, source: &str) {
-        let mut pending = self.pending_tool_ids.lock().unwrap();
+        let mut pending = self.pending_tool_ids.lock().unwrap_or_else(|e| e.into_inner());
         if pending.is_empty() {
             return;
         }
@@ -246,10 +215,7 @@ impl ValidatedMessageList {
 
         for tc_id in ids {
             let mut msg = ApiMessage::new();
-            msg.insert(
-                "role".to_string(),
-                serde_json::Value::String("tool".to_string()),
-            );
+            msg.insert("role".to_string(), serde_json::Value::String("tool".to_string()));
             msg.insert("tool_call_id".to_string(), serde_json::Value::String(tc_id));
             msg.insert(
                 "content".to_string(),

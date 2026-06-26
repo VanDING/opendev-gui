@@ -64,20 +64,14 @@ pub fn create_transport(config: &McpServerConfig) -> McpResult<Box<dyn McpTransp
                 .url
                 .as_ref()
                 .ok_or_else(|| McpError::Config("HTTP transport requires a URL".to_string()))?;
-            Ok(Box::new(HttpTransport::new(
-                url.clone(),
-                config.headers.clone(),
-            )))
+            Ok(Box::new(HttpTransport::new(url.clone(), config.headers.clone())))
         }
         TransportType::Sse => {
             let url = config
                 .url
                 .as_ref()
                 .ok_or_else(|| McpError::Config("SSE transport requires a URL".to_string()))?;
-            Ok(Box::new(SseTransport::new(
-                url.clone(),
-                config.headers.clone(),
-            )))
+            Ok(Box::new(SseTransport::new(url.clone(), config.headers.clone())))
         }
         TransportType::Stdio => Ok(Box::new(create_stdio_transport(config)?)),
     }
@@ -92,9 +86,7 @@ fn create_stdio_transport(config: &McpServerConfig) -> McpResult<StdioTransport>
     let args = &config.args;
 
     if command.is_empty() {
-        return Err(McpError::Config(
-            "Stdio transport requires a command".to_string(),
-        ));
+        return Err(McpError::Config("Stdio transport requires a command".to_string()));
     }
 
     // Validate commands that require arguments
@@ -107,11 +99,7 @@ fn create_stdio_transport(config: &McpServerConfig) -> McpResult<StdioTransport>
         _ => {}
     }
 
-    Ok(StdioTransport::new(
-        command.clone(),
-        args.clone(),
-        config.env.clone(),
-    ))
+    Ok(StdioTransport::new(command.clone(), args.clone(), config.env.clone()))
 }
 
 #[cfg(test)]

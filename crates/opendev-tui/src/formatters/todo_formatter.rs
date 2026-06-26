@@ -123,18 +123,11 @@ impl ToolFormatter for TodoFormatter {
         let summary = summarize_todo_result(tool_name, output);
 
         let header = Line::from(vec![
-            Span::styled(
-                "  \u{2714} ".to_string(),
-                Style::default().fg(style_tokens::SUCCESS),
-            ),
+            Span::styled("  \u{2714} ".to_string(), Style::default().fg(style_tokens::SUCCESS)),
             Span::styled(summary, Style::default().fg(style_tokens::PRIMARY)),
         ]);
 
-        FormattedOutput {
-            header,
-            body: Vec::new(),
-            footer: None,
-        }
+        FormattedOutput { header, body: Vec::new(), footer: None }
     }
 
     fn handles(&self, tool_name: &str) -> bool {

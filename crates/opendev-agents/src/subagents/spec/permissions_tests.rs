@@ -32,10 +32,7 @@ fn test_permission_action_serde() {
 #[test]
 fn test_permission_rule_single_action() {
     let rule: PermissionRule = serde_json::from_str("\"deny\"").unwrap();
-    assert!(matches!(
-        rule,
-        PermissionRule::Action(PermissionAction::Deny)
-    ));
+    assert!(matches!(rule, PermissionRule::Action(PermissionAction::Deny)));
 }
 
 #[test]
@@ -60,24 +57,15 @@ fn test_permission_serde_roundtrip() {
 
     let mut perms = HashMap::new();
     perms.insert("bash".to_string(), PermissionRule::Patterns(patterns));
-    perms.insert(
-        "edit".to_string(),
-        PermissionRule::Action(PermissionAction::Deny),
-    );
+    perms.insert("edit".to_string(), PermissionRule::Action(PermissionAction::Deny));
 
     let spec = SubAgentSpec::new("test", "desc", "prompt").with_permission(perms);
 
     let json = serde_json::to_string(&spec).unwrap();
     let restored: SubAgentSpec = serde_json::from_str(&json).unwrap();
 
-    assert_eq!(
-        restored.evaluate_permission("bash", "git status"),
-        Some(PermissionAction::Allow)
-    );
-    assert_eq!(
-        restored.evaluate_permission("edit", "any_file"),
-        Some(PermissionAction::Deny)
-    );
+    assert_eq!(restored.evaluate_permission("bash", "git status"), Some(PermissionAction::Allow));
+    assert_eq!(restored.evaluate_permission("edit", "any_file"), Some(PermissionAction::Deny));
 }
 
 #[test]

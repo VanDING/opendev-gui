@@ -100,10 +100,7 @@ impl ProviderInfo {
 
     /// Get the recommended model for this provider.
     pub fn get_recommended_model(&self) -> Option<&ModelInfo> {
-        self.models
-            .values()
-            .find(|m| m.recommended)
-            .or_else(|| self.models.values().next())
+        self.models.values().find(|m| m.recommended).or_else(|| self.models.values().next())
     }
 }
 

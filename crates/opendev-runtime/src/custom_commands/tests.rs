@@ -17,11 +17,7 @@ fn test_loader_loads_md_files() {
     let tmp = TempDir::new().unwrap();
     let cmd_dir = tmp.path().join(".opendev").join("commands");
     fs::create_dir_all(&cmd_dir).unwrap();
-    fs::write(
-        cmd_dir.join("review.md"),
-        "# Code review\nReview $ARGUMENTS",
-    )
-    .unwrap();
+    fs::write(cmd_dir.join("review.md"), "# Code review\nReview $ARGUMENTS").unwrap();
     fs::write(cmd_dir.join("_hidden.md"), "should be skipped").unwrap();
     fs::write(cmd_dir.join(".secret.txt"), "should be skipped").unwrap();
 

@@ -16,12 +16,7 @@ fn test_format_success() {
     let result = f.format("Bash", output);
 
     // Header should contain the command
-    let header_text: String = result
-        .header
-        .spans
-        .iter()
-        .map(|s| s.content.as_ref())
-        .collect();
+    let header_text: String = result.header.spans.iter().map(|s| s.content.as_ref()).collect();
     assert!(header_text.contains("ls -la"));
 
     // Body should have 2 file lines
@@ -57,13 +52,7 @@ fn test_format_no_exit_code() {
 
 #[test]
 fn test_parse_exit_code() {
-    assert_eq!(
-        BashFormatter::parse_exit_code("output\nExit code: 0"),
-        Some(0)
-    );
-    assert_eq!(
-        BashFormatter::parse_exit_code("output\nexit_code: 42"),
-        Some(42)
-    );
+    assert_eq!(BashFormatter::parse_exit_code("output\nExit code: 0"), Some(0));
+    assert_eq!(BashFormatter::parse_exit_code("output\nexit_code: 42"), Some(42));
     assert_eq!(BashFormatter::parse_exit_code("no code here"), None);
 }

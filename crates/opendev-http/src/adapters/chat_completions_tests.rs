@@ -102,12 +102,7 @@ fn test_parse_tool_call_start_with_object_args() {
     });
     let event = ChatCompletionsAdapter::parse_chat_completions_sse(&chunk);
     match event {
-        Some(StreamEvent::FunctionCallStart {
-            index,
-            call_id,
-            name,
-            ..
-        }) => {
+        Some(StreamEvent::FunctionCallStart { index, call_id, name, .. }) => {
             assert_eq!(index, 0);
             assert_eq!(call_id, "call_abc");
             assert_eq!(name, "Write");
@@ -149,12 +144,9 @@ fn test_parse_tool_call_id_name_and_full_args_in_one_chunk() {
     });
     let event = ChatCompletionsAdapter::parse_chat_completions_sse(&chunk);
     let (call_id, name, initial_args) = match event {
-        Some(StreamEvent::FunctionCallStart {
-            call_id,
-            name,
-            initial_args,
-            ..
-        }) => (call_id, name, initial_args),
+        Some(StreamEvent::FunctionCallStart { call_id, name, initial_args, .. }) => {
+            (call_id, name, initial_args)
+        }
         other => panic!("expected FunctionCallStart carrying initial_args, got {other:?}"),
     };
     assert_eq!(call_id, "call_c3ebf1e3ec8d4a4981472f38");
@@ -184,11 +176,7 @@ fn test_parse_tool_call_start_without_args_leaves_initial_args_none() {
     });
     let event = ChatCompletionsAdapter::parse_chat_completions_sse(&chunk);
     match event {
-        Some(StreamEvent::FunctionCallStart {
-            call_id,
-            initial_args,
-            ..
-        }) => {
+        Some(StreamEvent::FunctionCallStart { call_id, initial_args, .. }) => {
             assert_eq!(call_id, "call_xyz");
             assert!(
                 initial_args.is_none(),

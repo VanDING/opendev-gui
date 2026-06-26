@@ -128,11 +128,7 @@ impl ConfigLoader {
         for i in 1..=m {
             curr[0] = i;
             for j in 1..=n {
-                let cost = if a_bytes[i - 1] == b_bytes[j - 1] {
-                    0
-                } else {
-                    1
-                };
+                let cost = if a_bytes[i - 1] == b_bytes[j - 1] { 0 } else { 1 };
                 curr[j] = (prev[j] + 1).min(curr[j - 1] + 1).min(prev[j - 1] + cost);
             }
             std::mem::swap(&mut prev, &mut curr);
@@ -187,12 +183,8 @@ impl ConfigLoader {
         let mut warnings = Vec::new();
 
         // 1. Model-provider pairing: model set without matching provider
-        let model_pairs: &[(&str, &Option<String>, &str, &Option<String>)] = &[(
-            "model_vlm",
-            &config.model_vlm,
-            "model_vlm_provider",
-            &config.model_vlm_provider,
-        )];
+        let model_pairs: &[(&str, &Option<String>, &str, &Option<String>)] =
+            &[("model_vlm", &config.model_vlm, "model_vlm_provider", &config.model_vlm_provider)];
         for (model_key, model_val, provider_key, provider_val) in model_pairs {
             if model_val.is_some() && provider_val.is_none() {
                 warnings.push(format!(

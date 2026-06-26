@@ -39,10 +39,7 @@ pub struct SessionModelManager {
 impl SessionModelManager {
     /// Create a new manager with no active overlay.
     pub fn new() -> Self {
-        Self {
-            originals: HashMap::new(),
-            active_overlay: None,
-        }
+        Self { originals: HashMap::new(), active_overlay: None }
     }
 
     /// Whether a session-model overlay is currently active.
@@ -119,10 +116,7 @@ pub fn get_session_model(metadata: &serde_json::Value) -> Option<SessionOverlay>
 /// Write session-model overlay to session metadata.
 pub fn set_session_model(metadata: &mut serde_json::Value, overlay: &SessionOverlay) {
     if let Some(obj) = metadata.as_object_mut() {
-        obj.insert(
-            "session_model".to_string(),
-            serde_json::to_value(overlay).unwrap_or_default(),
-        );
+        obj.insert("session_model".to_string(), serde_json::to_value(overlay).unwrap_or_default());
     }
 }
 

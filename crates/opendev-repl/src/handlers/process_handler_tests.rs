@@ -40,16 +40,10 @@ fn test_pre_check_normal_command() {
 fn test_pre_check_server_promoted_to_background() {
     let h = handler();
     let mut args = HashMap::new();
-    args.insert(
-        "command".to_string(),
-        Value::String("npm run dev".to_string()),
-    );
+    args.insert("command".to_string(), Value::String("npm run dev".to_string()));
     match h.pre_check("Bash", &args) {
         PreCheckResult::ModifyArgs(new_args) => {
-            assert_eq!(
-                new_args.get("background").and_then(|v| v.as_bool()),
-                Some(true)
-            );
+            assert_eq!(new_args.get("background").and_then(|v| v.as_bool()), Some(true));
         }
         other => panic!("Expected ModifyArgs, got {:?}", other),
     }
@@ -59,10 +53,7 @@ fn test_pre_check_server_promoted_to_background() {
 fn test_pre_check_already_background_no_modify() {
     let h = handler();
     let mut args = HashMap::new();
-    args.insert(
-        "command".to_string(),
-        Value::String("npm run dev".to_string()),
-    );
+    args.insert("command".to_string(), Value::String("npm run dev".to_string()));
     args.insert("background".to_string(), Value::Bool(true));
     match h.pre_check("Bash", &args) {
         PreCheckResult::Allow => {}

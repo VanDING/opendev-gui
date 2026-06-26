@@ -49,12 +49,7 @@ fn test_finish_preserves_higher_live_count() {
 #[test]
 fn test_finish_with_shallow_warning() {
     let mut state = SubagentDisplayState::new("id-test".into(), "test".into(), "task".into());
-    state.finish(
-        true,
-        "Done".into(),
-        1,
-        Some("Shallow subagent warning".into()),
-    );
+    state.finish(true, "Done".into(), 1, Some("Shallow subagent warning".into()));
     assert!(state.shallow_warning.is_some());
 }
 

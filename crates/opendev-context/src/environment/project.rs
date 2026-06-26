@@ -5,11 +5,7 @@ use std::process::Command;
 
 /// Run a git command and return trimmed stdout, or None on failure.
 pub(super) fn git_cmd(working_dir: &Path, args: &[&str]) -> Option<String> {
-    let output = Command::new("git")
-        .args(args)
-        .current_dir(working_dir)
-        .output()
-        .ok()?;
+    let output = Command::new("git").args(args).current_dir(working_dir).output().ok()?;
     if output.status.success() {
         let s = String::from_utf8_lossy(&output.stdout).trim().to_string();
         if s.is_empty() { None } else { Some(s) }
@@ -22,17 +18,12 @@ pub(super) fn git_cmd(working_dir: &Path, args: &[&str]) -> Option<String> {
 pub(super) fn detect_default_branch(working_dir: &Path) -> Option<String> {
     // Try symbolic-ref first
     if let Some(branch) = git_cmd(working_dir, &["symbolic-ref", "refs/remotes/origin/HEAD"]) {
-        return branch
-            .strip_prefix("refs/remotes/origin/")
-            .map(String::from);
+        return branch.strip_prefix("refs/remotes/origin/").map(String::from);
     }
     // Fallback: check if main or master exists
     for branch in &["main", "master"] {
-        if git_cmd(
-            working_dir,
-            &["rev-parse", "--verify", &format!("refs/heads/{branch}")],
-        )
-        .is_some()
+        if git_cmd(working_dir, &["rev-parse", "--verify", &format!("refs/heads/{branch}")])
+            .is_some()
         {
             return Some(branch.to_string());
         }
@@ -86,10 +77,7 @@ pub(super) fn infer_tech_stack(config_files: &[String]) -> Vec<String> {
     let mut stack: Vec<String> = config_files
         .iter()
         .filter_map(|file| {
-            CONFIG_FILES
-                .iter()
-                .find(|(f, _)| *f == file.as_str())
-                .map(|(_, tech)| tech.to_string())
+            CONFIG_FILES.iter().find(|(f, _)| *f == file.as_str()).map(|(_, tech)| tech.to_string())
         })
         .collect();
     stack.sort();
@@ -153,21 +141,12 @@ fn collect_tree_entries(
         let name = entry.file_name().to_string_lossy().to_string();
         let is_last = i == total.min(30) - 1;
         let connector = if is_last { "└── " } else { "├── " };
-        let child_prefix = if is_last {
-            format!("{prefix}    ")
-        } else {
-            format!("{prefix}│   ")
-        };
+        let child_prefix =
+            if is_last { format!("{prefix}    ") } else { format!("{prefix}│   ") };
 
         if entry.path().is_dir() {
             lines.push(format!("{prefix}{connector}{name}/"));
-            collect_tree_entries(
-                &entry.path(),
-                &child_prefix,
-                max_depth,
-                current_depth + 1,
-                lines,
-            );
+            collect_tree_entries(&entry.path(), &child_prefix, max_depth, current_depth + 1, lines);
         } else {
             lines.push(format!("{prefix}{connector}{name}"));
         }

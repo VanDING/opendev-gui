@@ -37,10 +37,7 @@ impl std::fmt::Debug for InvokeSkillTool {
         f.debug_struct("InvokeSkillTool")
             .field("skill_loader", &"<SkillLoader>")
             .field("invoked_skills", &self.invoked_skills)
-            .field(
-                "mcp_manager",
-                &self.mcp_manager.as_ref().map(|_| "<McpManager>"),
-            )
+            .field("mcp_manager", &self.mcp_manager.as_ref().map(|_| "<McpManager>"))
             .finish()
     }
 }
@@ -48,11 +45,7 @@ impl std::fmt::Debug for InvokeSkillTool {
 impl InvokeSkillTool {
     /// Create a new invoke_skill tool with a shared skill loader.
     pub fn new(skill_loader: Arc<Mutex<SkillLoader>>) -> Self {
-        Self {
-            skill_loader,
-            invoked_skills: Mutex::new(HashSet::new()),
-            mcp_manager: None,
-        }
+        Self { skill_loader, invoked_skills: Mutex::new(HashSet::new()), mcp_manager: None }
     }
 
     /// Create a new invoke_skill tool with MCP prompt support.
@@ -105,11 +98,7 @@ impl BaseTool for InvokeSkillTool {
         args: HashMap<String, serde_json::Value>,
         _ctx: &ToolContext,
     ) -> ToolResult {
-        let skill_name = args
-            .get("skill_name")
-            .and_then(|v| v.as_str())
-            .unwrap_or("")
-            .trim();
+        let skill_name = args.get("skill_name").and_then(|v| v.as_str()).unwrap_or("").trim();
 
         enum SkillLookup {
             ListOnly(Vec<String>),
@@ -219,18 +208,13 @@ impl BaseTool for InvokeSkillTool {
             SkillLookup::Found(_) => {}
         }
 
-        let SkillLookup::Found(skill) = lookup else {
-            unreachable!()
-        };
+        let SkillLookup::Found(skill) = lookup else { unreachable!() };
 
         // Dedup: if already invoked this session, return a short reminder.
         if let Ok(mut invoked) = self.invoked_skills.lock() {
             if invoked.contains(skill_name) {
                 let mut meta = HashMap::new();
-                meta.insert(
-                    "skill_name".to_string(),
-                    serde_json::json!(skill.metadata.name),
-                );
+                meta.insert("skill_name".to_string(), serde_json::json!(skill.metadata.name));
                 meta.insert(
                     "skill_namespace".to_string(),
                     serde_json::json!(skill.metadata.namespace),
@@ -249,11 +233,7 @@ impl BaseTool for InvokeSkillTool {
         }
 
         // Apply argument substitution if provided.
-        let arguments = args
-            .get("arguments")
-            .and_then(|v| v.as_str())
-            .unwrap_or("")
-            .trim();
+        let arguments = args.get("arguments").and_then(|v| v.as_str()).unwrap_or("").trim();
         let skill_content = if !arguments.is_empty() {
             expand_skill_arguments(&skill.content, arguments)
         } else {
@@ -262,14 +242,8 @@ impl BaseTool for InvokeSkillTool {
 
         // Return the full skill content with metadata.
         let mut meta = HashMap::new();
-        meta.insert(
-            "skill_name".to_string(),
-            serde_json::json!(skill.metadata.name),
-        );
-        meta.insert(
-            "skill_namespace".to_string(),
-            serde_json::json!(skill.metadata.namespace),
-        );
+        meta.insert("skill_name".to_string(), serde_json::json!(skill.metadata.name));
+        meta.insert("skill_namespace".to_string(), serde_json::json!(skill.metadata.namespace));
         if let Some(ref model) = skill.metadata.model {
             meta.insert("skill_model".to_string(), serde_json::json!(model));
         }
@@ -279,6 +253,11 @@ impl BaseTool for InvokeSkillTool {
 
         let token_estimate = skill_content.len() / 4;
         meta.insert("token_estimate".into(), serde_json::json!(token_estimate));
+
+        // Record usage for curator to track lifecycle.
+        if let Ok(mut loader) = self.skill_loader.lock() {
+            loader.record_usage(&skill.metadata.full_name());
+        }
 
         let mut output = format!(
             "Loaded skill: {} (~{} tokens)\n\n<skill_content name=\"{}\">\n{}\n</skill_content>",

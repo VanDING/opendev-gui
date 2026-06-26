@@ -83,11 +83,7 @@ fn redact_json_value(value: &mut serde_json::Value, re: &Regex) {
 
 /// Generate a self-contained HTML page from a session transcript.
 fn render_session_html(session: &Session) -> String {
-    let title = session
-        .metadata
-        .get("title")
-        .and_then(|v| v.as_str())
-        .unwrap_or("Shared Session");
+    let title = session.metadata.get("title").and_then(|v| v.as_str()).unwrap_or("Shared Session");
 
     let mut body = String::new();
     for msg in &session.messages {
@@ -130,10 +126,7 @@ pre {{ white-space: pre-wrap; word-break: break-word; margin: 0; }}
 }
 
 fn html_escape(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
+    s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('"', "&quot;")
 }
 
 /// Share a session transcript.
@@ -163,12 +156,10 @@ pub async fn share_session(session: &Session, endpoint: &str) -> Result<String, 
             opts.mode(0o600);
         }
 
-        let mut file = opts
-            .open(&path)
-            .map_err(|e| format!("Failed to create HTML file: {}", e))?;
+        let mut file =
+            opts.open(&path).map_err(|e| format!("Failed to create HTML file: {}", e))?;
         use std::io::Write;
-        file.write_all(html.as_bytes())
-            .map_err(|e| format!("Failed to write HTML file: {}", e))?;
+        file.write_all(html.as_bytes()).map_err(|e| format!("Failed to write HTML file: {}", e))?;
 
         let url = format!("file://{}", path.display());
         info!(path = %path.display(), "Session shared as local HTML");
@@ -194,10 +185,8 @@ pub async fn share_session(session: &Session, endpoint: &str) -> Result<String, 
             return Err(format!("Share endpoint returned {}: {}", status, body));
         }
 
-        let result: serde_json::Value = response
-            .json()
-            .await
-            .map_err(|e| format!("Failed to parse share response: {}", e))?;
+        let result: serde_json::Value =
+            response.json().await.map_err(|e| format!("Failed to parse share response: {}", e))?;
 
         let url = result
             .get("url")

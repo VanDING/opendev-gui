@@ -30,9 +30,7 @@ fn test_has_hooks_for() {
 #[tokio::test]
 async fn test_run_hooks_no_matchers() {
     let manager = HookManager::noop();
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("bash"), None).await;
     assert!(outcome.allowed());
     assert!(outcome.results.is_empty());
 }
@@ -42,9 +40,7 @@ async fn test_run_hooks_no_matchers() {
 async fn test_run_hooks_success() {
     let config = make_config_with_echo(HookEvent::PreToolUse, None, "echo ok");
     let manager = HookManager::new(config, "sess-1", "/tmp");
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("bash"), None).await;
     assert!(outcome.allowed());
     assert_eq!(outcome.results.len(), 1);
     assert!(outcome.results[0].success());
@@ -59,9 +55,7 @@ async fn test_run_hooks_blocked() {
         r#"echo '{"reason":"dangerous"}' && exit 2"#,
     );
     let manager = HookManager::new(config, "sess-1", "/tmp");
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("bash"), None).await;
     assert!(outcome.blocked);
     assert_eq!(outcome.block_reason, "dangerous");
 }
@@ -69,15 +63,10 @@ async fn test_run_hooks_blocked() {
 #[cfg(unix)]
 #[tokio::test]
 async fn test_run_hooks_block_stderr_fallback() {
-    let config = make_config_with_echo(
-        HookEvent::PreToolUse,
-        None,
-        "echo 'not blocked' >&2; exit 2",
-    );
+    let config =
+        make_config_with_echo(HookEvent::PreToolUse, None, "echo 'not blocked' >&2; exit 2");
     let manager = HookManager::new(config, "sess-1", "/tmp");
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("bash"), None).await;
     assert!(outcome.blocked);
     assert_eq!(outcome.block_reason, "not blocked");
 }
@@ -88,15 +77,11 @@ async fn test_run_hooks_matcher_filters() {
     let manager = HookManager::new(config, "sess-1", "/tmp");
 
     // "bash" matches the pattern -> blocked
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("bash"), None).await;
     assert!(outcome.blocked);
 
     // "edit" does not match -> allowed, no hooks run
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("edit"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("edit"), None).await;
     assert!(outcome.allowed());
     assert!(outcome.results.is_empty());
 }
@@ -110,9 +95,7 @@ async fn test_run_hooks_additional_context() {
         r#"echo '{"additionalContext":"extra info"}'"#,
     );
     let manager = HookManager::new(config, "sess-1", "/tmp");
-    let outcome = manager
-        .run_hooks(HookEvent::PostToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PostToolUse, Some("bash"), None).await;
     assert!(outcome.allowed());
     assert_eq!(outcome.additional_context.as_deref(), Some("extra info"));
 }
@@ -126,9 +109,7 @@ async fn test_run_hooks_permission_decision() {
         r#"echo '{"permissionDecision":"allow"}'"#,
     );
     let manager = HookManager::new(config, "sess-1", "/tmp");
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("bash"), None).await;
     assert!(outcome.allowed());
     assert_eq!(outcome.permission_decision.as_deref(), Some("allow"));
 }
@@ -142,9 +123,7 @@ async fn test_run_hooks_updated_input() {
         r#"echo '{"updatedInput":{"command":"ls -la"}}'"#,
     );
     let manager = HookManager::new(config, "sess-1", "/tmp");
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("bash"), None).await;
     assert!(outcome.allowed());
     let updated = outcome.updated_input.unwrap();
     assert_eq!(updated["command"], "ls -la");
@@ -161,9 +140,7 @@ async fn test_run_hooks_multiple_commands_short_circuit() {
     config.add_matcher(HookEvent::PreToolUse, matcher);
 
     let manager = HookManager::new(config, "sess-1", "/tmp");
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("bash"), None).await;
     assert!(outcome.blocked);
     // Only one result because we short-circuited
     assert_eq!(outcome.results.len(), 1);
@@ -174,9 +151,7 @@ async fn test_run_hooks_error_continues() {
     // A failing command (non-zero, non-2 exit) should not block
     let config = make_config_with_echo(HookEvent::PostToolUse, None, "exit 1");
     let manager = HookManager::new(config, "sess-1", "/tmp");
-    let outcome = manager
-        .run_hooks(HookEvent::PostToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PostToolUse, Some("bash"), None).await;
     assert!(outcome.allowed());
     assert_eq!(outcome.results.len(), 1);
     assert!(!outcome.results[0].success());
@@ -196,9 +171,7 @@ async fn test_build_stdin_tool_event() {
         "extra_field": "value"
     });
 
-    let outcome = manager
-        .run_hooks(HookEvent::PreToolUse, Some("bash"), Some(&event_data))
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreToolUse, Some("bash"), Some(&event_data)).await;
 
     assert!(outcome.allowed());
     let stdout = &outcome.results[0].stdout;
@@ -217,9 +190,7 @@ async fn test_build_stdin_session_start() {
     let config = make_config_with_echo(HookEvent::SessionStart, None, "cat");
     let manager = HookManager::new(config, "sess-1", "/tmp");
 
-    let outcome = manager
-        .run_hooks(HookEvent::SessionStart, Some("resume"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::SessionStart, Some("resume"), None).await;
 
     let stdout = &outcome.results[0].stdout;
     let parsed: Value = serde_json::from_str(stdout).unwrap();
@@ -245,9 +216,7 @@ async fn test_build_stdin_subagent_event() {
     let config = make_config_with_echo(HookEvent::SubagentStart, None, "cat");
     let manager = HookManager::new(config, "sess-1", "/tmp");
 
-    let outcome = manager
-        .run_hooks(HookEvent::SubagentStart, Some("code_explorer"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::SubagentStart, Some("code_explorer"), None).await;
 
     let stdout = &outcome.results[0].stdout;
     let parsed: Value = serde_json::from_str(stdout).unwrap();
@@ -259,9 +228,7 @@ async fn test_build_stdin_pre_compact() {
     let config = make_config_with_echo(HookEvent::PreCompact, None, "cat");
     let manager = HookManager::new(config, "sess-1", "/tmp");
 
-    let outcome = manager
-        .run_hooks(HookEvent::PreCompact, Some("manual"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PreCompact, Some("manual"), None).await;
 
     let stdout = &outcome.results[0].stdout;
     let parsed: Value = serde_json::from_str(stdout).unwrap();
@@ -282,9 +249,7 @@ async fn test_multiple_matchers_both_run() {
     );
 
     let manager = HookManager::new(config, "sess-1", "/tmp");
-    let outcome = manager
-        .run_hooks(HookEvent::PostToolUse, Some("bash"), None)
-        .await;
+    let outcome = manager.run_hooks(HookEvent::PostToolUse, Some("bash"), None).await;
 
     assert!(outcome.allowed());
     assert_eq!(outcome.results.len(), 2);

@@ -26,21 +26,9 @@ fn test_format_reference_results_empty() {
 #[test]
 fn test_format_reference_results() {
     let refs = vec![
-        SymbolReference {
-            file: PathBuf::from("/ws/src/main.rs"),
-            line: 10,
-            character: 5,
-        },
-        SymbolReference {
-            file: PathBuf::from("/ws/src/main.rs"),
-            line: 20,
-            character: 3,
-        },
-        SymbolReference {
-            file: PathBuf::from("/ws/src/lib.rs"),
-            line: 5,
-            character: 0,
-        },
+        SymbolReference { file: PathBuf::from("/ws/src/main.rs"), line: 10, character: 5 },
+        SymbolReference { file: PathBuf::from("/ws/src/main.rs"), line: 20, character: 3 },
+        SymbolReference { file: PathBuf::from("/ws/src/lib.rs"), line: 5, character: 0 },
     ];
 
     let result = format_reference_results(&refs, Path::new("/ws"));

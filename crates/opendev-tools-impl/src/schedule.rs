@@ -12,11 +12,7 @@ pub struct ScheduleTool;
 
 impl ScheduleTool {
     fn schedules_path() -> Option<PathBuf> {
-        Some(
-            opendev_config::Paths::default()
-                .data_dir()
-                .join("schedules.json"),
-        )
+        Some(opendev_config::Paths::default().data_dir().join("schedules.json"))
     }
 }
 
@@ -102,10 +98,8 @@ impl BaseTool for ScheduleTool {
 
         match action {
             "create" => {
-                let desc = args
-                    .get("description")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("Untitled schedule");
+                let desc =
+                    args.get("description").and_then(|v| v.as_str()).unwrap_or("Untitled schedule");
                 let command = match args.get("command").and_then(|v| v.as_str()) {
                     Some(c) => c,
                     None => return ToolResult::fail("command is required for create"),

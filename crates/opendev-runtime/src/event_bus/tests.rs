@@ -23,10 +23,7 @@ async fn test_publish_subscribe() {
 
     let event = rx.recv().await.unwrap();
     assert!(matches!(event, RuntimeEvent::Custom { .. }));
-    if let RuntimeEvent::Custom {
-        event_type, data, ..
-    } = event
-    {
+    if let RuntimeEvent::Custom { event_type, data, .. } = event {
         assert_eq!(event_type, "test_event");
         assert_eq!(data["count"], 1);
     }
@@ -119,10 +116,7 @@ fn test_runtime_event_topic() {
     };
     assert_eq!(ev.topic(), EventTopic::Agent);
 
-    let ev = RuntimeEvent::SessionStart {
-        session_id: "s1".into(),
-        timestamp_ms: now_ms(),
-    };
+    let ev = RuntimeEvent::SessionStart { session_id: "s1".into(), timestamp_ms: now_ms() };
     assert_eq!(ev.topic(), EventTopic::Session);
 
     let ev = RuntimeEvent::TokenUsage {
@@ -134,9 +128,7 @@ fn test_runtime_event_topic() {
     };
     assert_eq!(ev.topic(), EventTopic::Cost);
 
-    let ev = RuntimeEvent::ConfigReloaded {
-        timestamp_ms: now_ms(),
-    };
+    let ev = RuntimeEvent::ConfigReloaded { timestamp_ms: now_ms() };
     assert_eq!(ev.topic(), EventTopic::System);
 }
 
@@ -192,10 +184,7 @@ async fn test_topic_subscriber_multiple_topics() {
         request_id: "r".into(),
         timestamp_ms: now_ms(),
     });
-    bus.publish(RuntimeEvent::SessionStart {
-        session_id: "s1".into(),
-        timestamp_ms: now_ms(),
-    });
+    bus.publish(RuntimeEvent::SessionStart { session_id: "s1".into(), timestamp_ms: now_ms() });
 
     let received = sub.recv().await.unwrap();
     assert_eq!(received.topic(), EventTopic::Session);
@@ -206,10 +195,7 @@ fn test_legacy_event_into_runtime_event() {
     let legacy = Event::new("test", "comp", serde_json::json!(42));
     let rt = legacy.into_runtime_event();
     assert_eq!(rt.topic(), EventTopic::Custom);
-    if let RuntimeEvent::Custom {
-        event_type, data, ..
-    } = rt
-    {
+    if let RuntimeEvent::Custom { event_type, data, .. } = rt {
         assert_eq!(event_type, "test");
         assert_eq!(data, serde_json::json!(42));
     } else {
@@ -220,11 +206,7 @@ fn test_legacy_event_into_runtime_event() {
 #[test]
 fn test_group_runtime_events_by_topic() {
     let events = vec![
-        RuntimeEvent::ToolCallStart {
-            tool_name: "a".into(),
-            call_id: "1".into(),
-            timestamp_ms: 0,
-        },
+        RuntimeEvent::ToolCallStart { tool_name: "a".into(), call_id: "1".into(), timestamp_ms: 0 },
         RuntimeEvent::LlmRequestStart {
             model: "m".into(),
             request_id: "r".into(),
@@ -299,12 +281,7 @@ fn test_budget_exhausted_serialization() {
     let deserialized: RuntimeEvent = serde_json::from_str(&json).unwrap();
     assert_eq!(deserialized.topic(), EventTopic::Cost);
     assert_eq!(deserialized.timestamp_ms(), 99999);
-    if let RuntimeEvent::BudgetExhausted {
-        budget_usd,
-        total_cost_usd,
-        ..
-    } = deserialized
-    {
+    if let RuntimeEvent::BudgetExhausted { budget_usd, total_cost_usd, .. } = deserialized {
         assert!((budget_usd - 2.50).abs() < 1e-10);
         assert!((total_cost_usd - 2.75).abs() < 1e-10);
     } else {

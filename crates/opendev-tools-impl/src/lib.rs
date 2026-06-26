@@ -62,6 +62,7 @@ pub mod vlm;
 pub mod web_fetch;
 pub mod web_screenshot;
 pub mod web_search;
+pub mod workflow;
 pub mod worktree;
 pub mod write_todos;
 
@@ -103,5 +104,6 @@ pub use vlm::VlmTool;
 pub use web_fetch::WebFetchTool;
 pub use web_screenshot::WebScreenshotTool;
 pub use web_search::WebSearchTool;
+pub use workflow::RunWorkflowTool;
 pub use worktree::{WorktreeInfo, WorktreeManager};
 pub use write_todos::WriteTodosTool;

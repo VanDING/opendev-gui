@@ -42,15 +42,11 @@ fn test_apply_hunks_simple() {
 
 #[test]
 fn test_is_structured_patch() {
-    assert!(structured::is_structured_patch(
-        "*** Begin Patch\n*** End Patch"
-    ));
+    assert!(structured::is_structured_patch("*** Begin Patch\n*** End Patch"));
     assert!(structured::is_structured_patch(
         "\n*** Begin Patch\n*** Add File: foo.rs\n*** End Patch"
     ));
-    assert!(!structured::is_structured_patch(
-        "--- a/foo.rs\n+++ b/foo.rs\n"
-    ));
+    assert!(!structured::is_structured_patch("--- a/foo.rs\n+++ b/foo.rs\n"));
     assert!(!structured::is_structured_patch("random text"));
 }
 
@@ -198,24 +194,14 @@ fn test_structured_empty_patch() {
     let patch = "*** Begin Patch\n*** End Patch";
     let result = structured::apply_structured_patch(patch, tmp.path());
     assert!(!result.success);
-    assert!(
-        result
-            .error
-            .as_deref()
-            .unwrap_or("")
-            .contains("No operations")
-    );
+    assert!(result.error.as_deref().unwrap_or("").contains("No operations"));
 }
 
 #[test]
 fn test_structured_update_with_trimmed_match() {
     let tmp = TempDir::new().unwrap();
     // File has trailing spaces on a line
-    std::fs::write(
-        tmp.path().join("spaced.rs"),
-        "fn main() {  \n    old_line\n}\n",
-    )
-    .unwrap();
+    std::fs::write(tmp.path().join("spaced.rs"), "fn main() {  \n    old_line\n}\n").unwrap();
 
     let patch = "\
 *** Begin Patch
@@ -243,11 +229,7 @@ fn test_apply_context_changes_no_changes() {
 
 #[test]
 fn test_parse_change_groups_simple() {
-    let changes = vec![
-        " context".to_string(),
-        "-old".to_string(),
-        "+new".to_string(),
-    ];
+    let changes = vec![" context".to_string(), "-old".to_string(), "+new".to_string()];
     let groups = structured::parse_change_groups(&changes);
     assert_eq!(groups.len(), 1);
     assert_eq!(groups[0].context_before, vec!["context"]);

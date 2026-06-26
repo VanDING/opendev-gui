@@ -34,11 +34,7 @@ impl HttpTransport {
             .build()
             .unwrap_or_default();
 
-        Self {
-            url,
-            headers,
-            client,
-        }
+        Self { url, headers, client }
     }
 }
 

@@ -30,11 +30,6 @@ impl ServerConfig {
         language_id: impl Into<String>,
         extensions: Vec<String>,
     ) -> Self {
-        Self {
-            command: command.into(),
-            args,
-            language_id: language_id.into(),
-            extensions,
-        }
+        Self { command: command.into(), args, language_id: language_id.into(), extensions }
     }
 }

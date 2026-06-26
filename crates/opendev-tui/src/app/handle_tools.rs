@@ -23,21 +23,15 @@ impl App {
         if matches!(tool_name.as_str(), "Agent" | "spawn_subagent") {
             // Skip eager display creation for run_in_background agents —
             // they go directly to the task watcher via SetBackgroundAgentToken.
-            let is_background = args
-                .get("run_in_background")
-                .and_then(|v| v.as_bool())
-                .unwrap_or(false);
+            let is_background =
+                args.get("run_in_background").and_then(|v| v.as_bool()).unwrap_or(false);
 
             if !is_background {
                 // Clear stale subagent entries before adding new ones:
                 // - All finished non-backgrounded subagents (previous batch completed)
                 // - Orphaned unfinished subagents whose parent tool is gone (race condition)
-                let active_tool_ids: std::collections::HashSet<&str> = self
-                    .state
-                    .active_tools
-                    .iter()
-                    .map(|t| t.id.as_str())
-                    .collect();
+                let active_tool_ids: std::collections::HashSet<&str> =
+                    self.state.active_tools.iter().map(|t| t.id.as_str()).collect();
                 self.state.active_subagents.retain(|s| {
                     if s.backgrounded {
                         return true;
@@ -52,26 +46,16 @@ impl App {
                     }
                 });
 
-                let agent_name = args
-                    .get("agent_type")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("Agent")
-                    .to_string();
-                let task = args
-                    .get("task")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("")
-                    .to_string();
+                let agent_name =
+                    args.get("agent_type").and_then(|v| v.as_str()).unwrap_or("Agent").to_string();
+                let task = args.get("task").and_then(|v| v.as_str()).unwrap_or("").to_string();
                 let mut sa = crate::widgets::nested_tool::SubagentDisplayState::new(
                     String::new(), // subagent_id filled in by SubagentStarted later
                     agent_name,
                     task,
                 );
                 sa.parent_tool_id = Some(tool_id.clone());
-                sa.description = args
-                    .get("description")
-                    .and_then(|v| v.as_str())
-                    .map(String::from);
+                sa.description = args.get("description").and_then(|v| v.as_str()).map(String::from);
                 self.state.active_subagents.push(sa);
             }
         }
@@ -123,11 +107,7 @@ impl App {
                 &arguments,
                 &self.state.path_shortener,
             );
-            let ctx = if arg.is_empty() {
-                verb
-            } else {
-                format!("{verb} {arg}")
-            };
+            let ctx = if arg.is_empty() { verb } else { format!("{verb} {arg}") };
             self.state.last_tool_context = Some(ctx);
         }
 
@@ -147,10 +127,8 @@ impl App {
         let (display_lines, collapsed) =
             if matches!(tool_name.as_str(), "AskUserQuestion" | "ask_user") {
                 // Format as "· question → answer"
-                let question = arguments
-                    .get("question")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("question");
+                let question =
+                    arguments.get("question").and_then(|v| v.as_str()).unwrap_or("question");
                 let answer = output.strip_prefix("User answered: ").unwrap_or(&output);
                 (vec![format!("· {question} → {answer}")], false)
             } else if is_todo_tool {
@@ -167,10 +145,7 @@ impl App {
                         .and_then(|s| s.parse::<usize>().ok())
                         .unwrap_or(0);
                     if step_count > 0 {
-                        (
-                            vec![format!("Plan approved · {step_count} todos created")],
-                            false,
-                        )
+                        (vec![format!("Plan approved · {step_count} todos created")], false)
                     } else {
                         (vec!["Plan approved".to_string()], false)
                     }
@@ -220,10 +195,7 @@ impl App {
                 .position(|s| s.parent_tool_id.as_deref() == Some(&tool_id))
                 .or_else(|| {
                     let task_text = arguments.get("task").and_then(|v| v.as_str()).unwrap_or("");
-                    self.state
-                        .active_subagents
-                        .iter()
-                        .position(|s| s.task == task_text)
+                    self.state.active_subagents.iter().position(|s| s.task == task_text)
                 });
             if let Some(idx) = subagent_idx {
                 let removed = self.state.active_subagents.remove(idx);
@@ -295,11 +267,7 @@ impl App {
 
     pub(super) fn handle_tool_finished(&mut self, tool_id: String, success: bool) {
         if let Some(tool) = self.state.active_tools.iter_mut().find(|t| t.id == tool_id) {
-            tool.state = if success {
-                ToolState::Completed
-            } else {
-                ToolState::Error
-            };
+            tool.state = if success { ToolState::Completed } else { ToolState::Error };
         }
         // Remove finished tools after a brief display period
         self.state.active_tools.retain(|t| !t.is_finished());

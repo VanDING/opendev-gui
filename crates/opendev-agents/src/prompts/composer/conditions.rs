@@ -17,9 +17,7 @@ pub fn ctx_eq(key: &str, expected: &str) -> ConditionFn {
     let key = key.to_string();
     let expected = expected.to_string();
     Box::new(move |ctx: &PromptContext| {
-        ctx.get(&key)
-            .and_then(|v| v.as_str())
-            .is_some_and(|v| v == expected)
+        ctx.get(&key).and_then(|v| v.as_str()).is_some_and(|v| v == expected)
     })
 }
 
@@ -28,9 +26,7 @@ pub fn ctx_in(key: &str, values: &[&str]) -> ConditionFn {
     let key = key.to_string();
     let values: Vec<String> = values.iter().map(|s| s.to_string()).collect();
     Box::new(move |ctx: &PromptContext| {
-        ctx.get(&key)
-            .and_then(|v| v.as_str())
-            .is_some_and(|v| values.iter().any(|exp| exp == v))
+        ctx.get(&key).and_then(|v| v.as_str()).is_some_and(|v| values.iter().any(|exp| exp == v))
     })
 }
 

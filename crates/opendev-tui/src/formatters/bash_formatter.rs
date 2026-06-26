@@ -80,27 +80,18 @@ impl ToolFormatter for BashFormatter {
             lines.len()
         };
 
-        let body: Vec<Line<'a>> = lines[start..end]
-            .iter()
-            .map(|l| Line::from(Span::raw(format!("    {l}"))))
-            .collect();
+        let body: Vec<Line<'a>> =
+            lines[start..end].iter().map(|l| Line::from(Span::raw(format!("    {l}")))).collect();
 
         // Footer: exit code
         let footer = exit_code.map(|code| {
             Line::from(vec![
-                Span::styled(
-                    "  ─ exit ".to_string(),
-                    Style::default().fg(style_tokens::GREY),
-                ),
+                Span::styled("  ─ exit ".to_string(), Style::default().fg(style_tokens::GREY)),
                 Span::styled(code.to_string(), Style::default().fg(status_color)),
             ])
         });
 
-        FormattedOutput {
-            header,
-            body,
-            footer,
-        }
+        FormattedOutput { header, body, footer }
     }
 
     fn handles(&self, tool_name: &str) -> bool {

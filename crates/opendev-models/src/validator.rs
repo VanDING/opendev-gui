@@ -15,17 +15,11 @@ pub struct ValidationVerdict {
 
 impl ValidationVerdict {
     fn valid() -> Self {
-        Self {
-            is_valid: true,
-            reason: String::new(),
-        }
+        Self { is_valid: true, reason: String::new() }
     }
 
     fn invalid(reason: impl Into<String>) -> Self {
-        Self {
-            is_valid: false,
-            reason: reason.into(),
-        }
+        Self { is_valid: false, reason: reason.into() }
     }
 }
 
@@ -37,11 +31,7 @@ fn is_json_serializable(value: &serde_json::Value) -> bool {
 
 /// Validate a single tool call. Returns error reason or None if valid.
 fn validate_tool_call(tc: &ToolCall, path: &str) -> Option<String> {
-    let prefix = if path.is_empty() {
-        "tool_call".to_string()
-    } else {
-        format!("{path}tool_call")
-    };
+    let prefix = if path.is_empty() { "tool_call".to_string() } else { format!("{path}tool_call") };
 
     if tc.id.trim().is_empty() {
         return Some(format!("{prefix} has empty id"));
@@ -53,10 +43,7 @@ fn validate_tool_call(tc: &ToolCall, path: &str) -> Option<String> {
 
     // A tool call must have result or error (except task_complete)
     if tc.result.is_none() && tc.error.is_none() && tc.name != "task_complete" {
-        return Some(format!(
-            "{prefix} [{}] ({}) has no result and no error",
-            tc.id, tc.name
-        ));
+        return Some(format!("{prefix} [{}] ({}) has no result and no error", tc.id, tc.name));
     }
 
     // Check result serializability

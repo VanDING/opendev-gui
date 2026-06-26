@@ -32,9 +32,7 @@ impl CommandCompleter {
     /// If `extra` is `Some`, those commands are added on top of the built-in
     /// set.
     pub fn new(extra: Option<&[SlashCommand]>) -> Self {
-        Self {
-            extra_commands: extra.map(|e| e.to_vec()).unwrap_or_default(),
-        }
+        Self { extra_commands: extra.map(|e| e.to_vec()).unwrap_or_default() }
     }
 
     /// Add more commands to the completer.
@@ -135,9 +133,7 @@ pub struct FileCompleter {
 impl FileCompleter {
     /// Create a new file completer rooted at `working_dir`.
     pub fn new(working_dir: PathBuf) -> Self {
-        Self {
-            finder: FileFinder::new(working_dir),
-        }
+        Self { finder: FileFinder::new(working_dir) }
     }
 }
 
@@ -148,11 +144,8 @@ impl Completer for FileCompleter {
             .into_iter()
             .map(|rel| {
                 let is_dir = self.finder.working_dir().join(&rel).is_dir();
-                let display = if is_dir {
-                    format!("{}/", rel.display())
-                } else {
-                    rel.display().to_string()
-                };
+                let display =
+                    if is_dir { format!("{}/", rel.display()) } else { rel.display().to_string() };
                 CompletionItem {
                     insert_text: format!("@{}", display),
                     label: display,
@@ -184,9 +177,7 @@ pub struct SymbolCompleter {
 impl SymbolCompleter {
     /// Create a new (empty) symbol completer.
     pub fn new() -> Self {
-        Self {
-            symbols: Vec::new(),
-        }
+        Self { symbols: Vec::new() }
     }
 
     /// Register known symbols for completion.

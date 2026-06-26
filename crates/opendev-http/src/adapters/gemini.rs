@@ -23,10 +23,7 @@ pub struct GeminiAdapter {
 impl GeminiAdapter {
     /// Create a new Gemini adapter for the given model.
     pub fn new(model: impl Into<String>) -> Self {
-        Self {
-            base_url: DEFAULT_BASE_URL.to_string(),
-            model: model.into(),
-        }
+        Self { base_url: DEFAULT_BASE_URL.to_string(), model: model.into() }
     }
 
     /// Create with a custom base URL (for proxies, etc.).
@@ -70,10 +67,8 @@ impl GeminiAdapter {
                     if let Some(tool_calls) = msg.get("tool_calls").and_then(|tc| tc.as_array()) {
                         for tc in tool_calls {
                             let func = tc.get("function").cloned().unwrap_or(json!({}));
-                            let args_str = func
-                                .get("arguments")
-                                .and_then(|a| a.as_str())
-                                .unwrap_or("{}");
+                            let args_str =
+                                func.get("arguments").and_then(|a| a.as_str()).unwrap_or("{}");
                             let args: Value = serde_json::from_str(args_str).unwrap_or(json!({}));
                             parts.push(json!({
                                 "functionCall": {
@@ -93,10 +88,7 @@ impl GeminiAdapter {
                 }
                 "tool" => {
                     // Tool results → functionResponse in a user turn
-                    let name = msg
-                        .get("name")
-                        .and_then(|n| n.as_str())
-                        .unwrap_or("function");
+                    let name = msg.get("name").and_then(|n| n.as_str()).unwrap_or("function");
                     let content = msg.get("content").and_then(|c| c.as_str()).unwrap_or("");
                     // Try to parse content as JSON for structured response
                     let response_val: Value = serde_json::from_str(content)
@@ -179,11 +171,8 @@ impl GeminiAdapter {
 
     /// Convert a Gemini generateContent response to Chat Completions format.
     fn response_to_chat_completions(&self, response: &Value) -> Value {
-        let candidates = response
-            .get("candidates")
-            .and_then(|c| c.as_array())
-            .cloned()
-            .unwrap_or_default();
+        let candidates =
+            response.get("candidates").and_then(|c| c.as_array()).cloned().unwrap_or_default();
 
         let candidate = candidates.first().cloned().unwrap_or(json!({}));
         let parts = candidate
@@ -216,11 +205,8 @@ impl GeminiAdapter {
                 }
             })
             .collect();
-        let reasoning_content = if thinking_parts.is_empty() {
-            None
-        } else {
-            Some(thinking_parts.join("\n\n"))
-        };
+        let reasoning_content =
+            if thinking_parts.is_empty() { None } else { Some(thinking_parts.join("\n\n")) };
 
         // Extract function calls
         let tool_calls: Vec<Value> = parts
@@ -241,16 +227,11 @@ impl GeminiAdapter {
             })
             .collect();
 
-        let content = if text_parts.is_empty() {
-            Value::Null
-        } else {
-            Value::String(text_parts.join(""))
-        };
+        let content =
+            if text_parts.is_empty() { Value::Null } else { Value::String(text_parts.join("")) };
 
-        let finish_reason_raw = candidate
-            .get("finishReason")
-            .and_then(|r| r.as_str())
-            .unwrap_or("STOP");
+        let finish_reason_raw =
+            candidate.get("finishReason").and_then(|r| r.as_str()).unwrap_or("STOP");
 
         let finish_reason = match finish_reason_raw {
             "STOP" => {
@@ -279,14 +260,10 @@ impl GeminiAdapter {
 
         // Usage
         let usage_meta = response.get("usageMetadata").cloned().unwrap_or(json!({}));
-        let prompt_tokens = usage_meta
-            .get("promptTokenCount")
-            .and_then(|t| t.as_u64())
-            .unwrap_or(0);
-        let completion_tokens = usage_meta
-            .get("candidatesTokenCount")
-            .and_then(|t| t.as_u64())
-            .unwrap_or(0);
+        let prompt_tokens =
+            usage_meta.get("promptTokenCount").and_then(|t| t.as_u64()).unwrap_or(0);
+        let completion_tokens =
+            usage_meta.get("candidatesTokenCount").and_then(|t| t.as_u64()).unwrap_or(0);
 
         json!({
             "id": format!("gemini-{}", uuid::Uuid::new_v4()),
@@ -341,11 +318,8 @@ impl super::base::ProviderAdapter for GeminiAdapter {
             .and_then(|obj| obj.remove("_reasoning_effort"))
             .and_then(|v| v.as_str().map(String::from));
 
-        let messages = payload
-            .get("messages")
-            .and_then(|m| m.as_array())
-            .cloned()
-            .unwrap_or_default();
+        let messages =
+            payload.get("messages").and_then(|m| m.as_array()).cloned().unwrap_or_default();
 
         let (system_instruction, contents) = Self::convert_messages(&messages);
 
@@ -367,9 +341,7 @@ impl super::base::ProviderAdapter for GeminiAdapter {
         if let Some(top_p) = payload.get("top_p") {
             gen_config["topP"] = top_p.clone();
         }
-        let max_tok = payload
-            .get("max_tokens")
-            .or_else(|| payload.get("max_completion_tokens"));
+        let max_tok = payload.get("max_tokens").or_else(|| payload.get("max_completion_tokens"));
         if let Some(tok) = max_tok {
             gen_config["maxOutputTokens"] = tok.clone();
         }
@@ -448,10 +420,8 @@ impl super::base::ProviderAdapter for GeminiAdapter {
 
         // Check for error
         if let Some(error) = data.get("error") {
-            let msg = error
-                .get("message")
-                .and_then(|m| m.as_str())
-                .unwrap_or("Unknown Gemini error");
+            let msg =
+                error.get("message").and_then(|m| m.as_str()).unwrap_or("Unknown Gemini error");
             return Some(StreamEvent::Error(msg.to_string()));
         }
 

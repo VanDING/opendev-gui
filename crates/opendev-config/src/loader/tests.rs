@@ -178,10 +178,8 @@ fn test_validate_boundary_temperature() {
 // Uses apply_env_overrides_with() with a mock lookup to avoid global env var races.
 
 fn mock_env(vars: &[(&str, &str)]) -> impl Fn(&str) -> Option<String> {
-    let map: std::collections::HashMap<String, String> = vars
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.to_string()))
-        .collect();
+    let map: std::collections::HashMap<String, String> =
+        vars.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect();
     move |key| map.get(key).cloned()
 }
 
@@ -402,11 +400,7 @@ fn test_load_with_unknown_fields_still_works() {
 fn test_cross_field_default_config_no_warnings() {
     let config = AppConfig::default();
     let warnings = ConfigLoader::validate_cross_field(&config);
-    assert!(
-        warnings.is_empty(),
-        "Default config should have no warnings, got: {:?}",
-        warnings
-    );
+    assert!(warnings.is_empty(), "Default config should have no warnings, got: {:?}", warnings);
 }
 #[test]
 fn test_cross_field_zero_explore_agents() {
@@ -414,9 +408,7 @@ fn test_cross_field_zero_explore_agents() {
     config.plan_mode_explore_agent_count = 0;
     let warnings = ConfigLoader::validate_cross_field(&config);
     assert!(
-        warnings
-            .iter()
-            .any(|w| w.contains("plan_mode_explore_agent_count")),
+        warnings.iter().any(|w| w.contains("plan_mode_explore_agent_count")),
         "Should warn about 0 explore agents: {:?}",
         warnings
     );
@@ -429,9 +421,7 @@ fn test_cross_field_auto_mode_no_bash() {
     config.enable_bash = false;
     let warnings = ConfigLoader::validate_cross_field(&config);
     assert!(
-        warnings
-            .iter()
-            .any(|w| w.contains("auto_mode") && w.contains("enable_bash")),
+        warnings.iter().any(|w| w.contains("auto_mode") && w.contains("enable_bash")),
         "Should warn about auto mode without bash: {:?}",
         warnings
     );
@@ -453,9 +443,7 @@ fn test_cross_field_model_variant_empty_model() {
     );
     let warnings = ConfigLoader::validate_cross_field(&config);
     assert!(
-        warnings
-            .iter()
-            .any(|w| w.contains("model_variants") && w.contains("model is empty")),
+        warnings.iter().any(|w| w.contains("model_variants") && w.contains("model is empty")),
         "Should warn about empty model in variant: {:?}",
         warnings
     );
@@ -477,9 +465,7 @@ fn test_cross_field_model_variant_bad_temperature() {
     );
     let warnings = ConfigLoader::validate_cross_field(&config);
     assert!(
-        warnings
-            .iter()
-            .any(|w| w.contains("temperature") && w.contains("hot")),
+        warnings.iter().any(|w| w.contains("temperature") && w.contains("hot")),
         "Should warn about bad variant temperature: {:?}",
         warnings
     );
@@ -515,11 +501,7 @@ fn test_cross_field_multiple_warnings() {
     config.bash_timeout = 0;
     config.max_context_tokens = 100;
     let warnings = ConfigLoader::validate_cross_field(&config);
-    assert!(
-        warnings.len() >= 2,
-        "Should have multiple warnings: {:?}",
-        warnings
-    );
+    assert!(warnings.len() >= 2, "Should have multiple warnings: {:?}", warnings);
 }
 
 // --- Template substitution tests ---
@@ -604,11 +586,8 @@ fn test_substitute_env_then_load() {
     unsafe { std::env::set_var("OPENDEV_TEST_PROVIDER_SUB", "anthropic") };
 
     let config_file = tmp.path().join("config.json");
-    std::fs::write(
-        &config_file,
-        r#"{"model_provider": "{env:OPENDEV_TEST_PROVIDER_SUB}"}"#,
-    )
-    .unwrap();
+    std::fs::write(&config_file, r#"{"model_provider": "{env:OPENDEV_TEST_PROVIDER_SUB}"}"#)
+        .unwrap();
 
     let empty = tmp.path().join("empty.json");
     let config = ConfigLoader::load(&config_file, &empty).unwrap();

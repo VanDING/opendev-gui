@@ -81,9 +81,8 @@ impl Paths {
         }
 
         // Legacy: if ~/.opendev exists, use it (don't force migration)
-        let legacy_dir = dirs::home_dir()
-            .unwrap_or_else(|| PathBuf::from("/tmp"))
-            .join(APP_DIR_NAME);
+        let legacy_dir =
+            dirs::home_dir().unwrap_or_else(|| PathBuf::from("/tmp")).join(APP_DIR_NAME);
         if legacy_dir.exists() {
             return Self {
                 working_dir,
@@ -253,9 +252,7 @@ impl Paths {
     /// Get the project-scoped memory directory.
     pub fn project_memory_dir(&self) -> PathBuf {
         let encoded = encode_project_path(&self.working_dir);
-        self.global_projects_dir()
-            .join(encoded)
-            .join(MEMORY_DIR_NAME)
+        self.global_projects_dir().join(encoded).join(MEMORY_DIR_NAME)
     }
 
     /// Get the project MEMORY.md index file path.
@@ -281,9 +278,7 @@ impl Paths {
     /// Get the project-scoped file history path.
     pub fn project_file_history(&self) -> PathBuf {
         let encoded = encode_project_path(&self.working_dir);
-        self.global_projects_dir()
-            .join(encoded)
-            .join("file-history.json")
+        self.global_projects_dir().join(encoded).join("file-history.json")
     }
 
     // ========================================================================
@@ -376,8 +371,7 @@ impl Paths {
 
     /// Get path to a specific session file.
     pub fn session_file(&self, session_id: &str) -> PathBuf {
-        self.global_sessions_dir()
-            .join(format!("{session_id}.json"))
+        self.global_sessions_dir().join(format!("{session_id}.json"))
     }
 
     // ========================================================================

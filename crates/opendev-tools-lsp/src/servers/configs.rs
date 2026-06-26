@@ -32,12 +32,7 @@ pub fn default_server_configs() -> Vec<ServerConfig> {
             ],
         ),
         // Go
-        ServerConfig::new(
-            "gopls",
-            vec!["serve".to_string()],
-            "go",
-            vec!["go".to_string()],
-        ),
+        ServerConfig::new("gopls", vec!["serve".to_string()], "go", vec!["go".to_string()]),
         // C / C++
         ServerConfig::new(
             "clangd",
@@ -73,19 +68,9 @@ pub fn default_server_configs() -> Vec<ServerConfig> {
             vec!["kt".to_string(), "kts".to_string()],
         ),
         // Scala
-        ServerConfig::new(
-            "metals",
-            vec![],
-            "scala",
-            vec!["scala".to_string(), "sc".to_string()],
-        ),
+        ServerConfig::new("metals", vec![], "scala", vec!["scala".to_string(), "sc".to_string()]),
         // Lua
-        ServerConfig::new(
-            "lua-language-server",
-            vec![],
-            "lua",
-            vec!["lua".to_string()],
-        ),
+        ServerConfig::new("lua-language-server", vec![], "lua", vec!["lua".to_string()]),
         // Haskell
         ServerConfig::new(
             "haskell-language-server-wrapper",
@@ -94,12 +79,7 @@ pub fn default_server_configs() -> Vec<ServerConfig> {
             vec!["hs".to_string()],
         ),
         // Elixir
-        ServerConfig::new(
-            "elixir-ls",
-            vec![],
-            "elixir",
-            vec!["ex".to_string(), "exs".to_string()],
-        ),
+        ServerConfig::new("elixir-ls", vec![], "elixir", vec!["ex".to_string(), "exs".to_string()]),
         // Dart
         ServerConfig::new(
             "dart",
@@ -161,40 +141,20 @@ pub fn default_server_configs() -> Vec<ServerConfig> {
             vec!["astro".to_string()],
         ),
         // OCaml
-        ServerConfig::new(
-            "ocamllsp",
-            vec![],
-            "ocaml",
-            vec!["ml".to_string(), "mli".to_string()],
-        ),
+        ServerConfig::new("ocamllsp", vec![], "ocaml", vec!["ml".to_string(), "mli".to_string()]),
         // Gleam
-        ServerConfig::new(
-            "gleam",
-            vec!["lsp".to_string()],
-            "gleam",
-            vec!["gleam".to_string()],
-        ),
+        ServerConfig::new("gleam", vec!["lsp".to_string()], "gleam", vec!["gleam".to_string()]),
         // Clojure
         ServerConfig::new(
             "clojure-lsp",
             vec![],
             "clojure",
-            vec![
-                "clj".to_string(),
-                "cljs".to_string(),
-                "cljc".to_string(),
-                "edn".to_string(),
-            ],
+            vec!["clj".to_string(), "cljs".to_string(), "cljc".to_string(), "edn".to_string()],
         ),
         // Nix
         ServerConfig::new("nixd", vec![], "nix", vec!["nix".to_string()]),
         // LaTeX
-        ServerConfig::new(
-            "texlab",
-            vec![],
-            "latex",
-            vec!["tex".to_string(), "bib".to_string()],
-        ),
+        ServerConfig::new("texlab", vec![], "latex", vec!["tex".to_string(), "bib".to_string()]),
         // Dockerfile
         ServerConfig::new(
             "docker-langserver",

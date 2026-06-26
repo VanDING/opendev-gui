@@ -36,10 +36,7 @@ fn test_tool_display_parts() {
 #[test]
 fn test_format_tool_call_display() {
     let mut args = std::collections::HashMap::new();
-    args.insert(
-        "command".to_string(),
-        serde_json::Value::String("ls -la".to_string()),
-    );
+    args.insert("command".to_string(), serde_json::Value::String("ls -la".to_string()));
     let display = format_tool_call_display("run_command", &args);
     assert_eq!(display, "Bash ls -la");
 }
@@ -120,10 +117,7 @@ fn test_unknown_tool_derives_pretty_name() {
 #[test]
 fn test_unknown_tool_with_arg() {
     let mut args = HashMap::new();
-    args.insert(
-        "command".to_string(),
-        serde_json::Value::String("do stuff".to_string()),
-    );
+    args.insert("command".to_string(), serde_json::Value::String("do stuff".to_string()));
     let (verb, arg) = format_tool_call_parts("my_tool", &args);
     assert_eq!(verb, "My Tool");
     assert_eq!(arg, "do stuff");
@@ -133,20 +127,14 @@ fn test_unknown_tool_with_arg() {
 fn test_result_format_mapping() {
     assert_eq!(lookup_tool("run_command").result_format, ResultFormat::Bash);
     assert_eq!(lookup_tool("read_file").result_format, ResultFormat::File);
-    assert_eq!(
-        lookup_tool("list_files").result_format,
-        ResultFormat::Directory
-    );
+    assert_eq!(lookup_tool("list_files").result_format, ResultFormat::Directory);
     assert_eq!(lookup_tool("ask_user").result_format, ResultFormat::Generic);
 }
 
 #[test]
 fn test_format_spawn_subagent_strips_paths() {
     let mut args = HashMap::new();
-    args.insert(
-        "agent_type".to_string(),
-        serde_json::Value::String("Explore".to_string()),
-    );
+    args.insert("agent_type".to_string(), serde_json::Value::String("Explore".to_string()));
     args.insert(
         "task".to_string(),
         serde_json::Value::String(
@@ -162,10 +150,7 @@ fn test_format_spawn_subagent_strips_paths() {
 #[test]
 fn test_list_files_shows_pattern() {
     let mut args = HashMap::new();
-    args.insert(
-        "pattern".to_string(),
-        serde_json::json!("packages/*/package.json"),
-    );
+    args.insert("pattern".to_string(), serde_json::json!("packages/*/package.json"));
     args.insert("path".to_string(), serde_json::json!("."));
     let (verb, arg) = format_tool_call_parts("list_files", &args);
     assert_eq!(verb, "List");
@@ -176,10 +161,7 @@ fn test_list_files_shows_pattern() {
 fn test_list_files_shows_pattern_with_path() {
     let mut args = HashMap::new();
     args.insert("pattern".to_string(), serde_json::json!("**/*.ts"));
-    args.insert(
-        "path".to_string(),
-        serde_json::json!("/Users/me/project/src"),
-    );
+    args.insert("path".to_string(), serde_json::json!("/Users/me/project/src"));
     let (verb, arg) =
         format_tool_call_parts_with_wd("list_files", &args, Some("/Users/me/project"));
     assert_eq!(verb, "List");
@@ -198,10 +180,7 @@ fn test_list_files_pattern_only() {
 #[test]
 fn test_ast_grep_shows_pattern() {
     let mut args = HashMap::new();
-    args.insert(
-        "pattern".to_string(),
-        serde_json::json!("fn $NAME($$$ARGS)"),
-    );
+    args.insert("pattern".to_string(), serde_json::json!("fn $NAME($$$ARGS)"));
     let (verb, arg) = format_tool_call_parts("ast_grep", &args);
     assert_eq!(verb, "AST-Grep");
     assert_eq!(arg, "\"fn $NAME($$$ARGS)\"");
@@ -210,10 +189,7 @@ fn test_ast_grep_shows_pattern() {
 #[test]
 fn test_ast_grep_shows_pattern_with_lang() {
     let mut args = HashMap::new();
-    args.insert(
-        "pattern".to_string(),
-        serde_json::json!("fn $NAME($$$ARGS)"),
-    );
+    args.insert("pattern".to_string(), serde_json::json!("fn $NAME($$$ARGS)"));
     args.insert("lang".to_string(), serde_json::json!("rust"));
     let (verb, arg) = format_tool_call_parts("ast_grep", &args);
     assert_eq!(verb, "AST-Grep");

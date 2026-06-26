@@ -15,12 +15,7 @@ pub struct MessageHistory {
 impl MessageHistory {
     /// Create a new message history with the given capacity.
     pub fn new(capacity: usize) -> Self {
-        Self {
-            history: Vec::new(),
-            cursor: 0,
-            capacity,
-            navigating: false,
-        }
+        Self { history: Vec::new(), cursor: 0, capacity, navigating: false }
     }
 
     /// Push a new message onto the history.

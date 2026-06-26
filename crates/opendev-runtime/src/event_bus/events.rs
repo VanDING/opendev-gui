@@ -46,11 +46,7 @@ pub enum EventTopic {
 pub enum RuntimeEvent {
     // -- Tool events --
     /// A tool call is about to start.
-    ToolCallStart {
-        tool_name: String,
-        call_id: String,
-        timestamp_ms: u64,
-    },
+    ToolCallStart { tool_name: String, call_id: String, timestamp_ms: u64 },
     /// A tool call completed.
     ToolCallEnd {
         tool_name: String,
@@ -62,11 +58,7 @@ pub enum RuntimeEvent {
 
     // -- LLM events --
     /// An LLM request was sent.
-    LlmRequestStart {
-        model: String,
-        request_id: String,
-        timestamp_ms: u64,
-    },
+    LlmRequestStart { model: String, request_id: String, timestamp_ms: u64 },
     /// An LLM response was received.
     LlmResponseEnd {
         model: String,
@@ -79,51 +71,24 @@ pub enum RuntimeEvent {
 
     // -- Agent events --
     /// An agent started working.
-    AgentStart {
-        agent_id: String,
-        task: String,
-        timestamp_ms: u64,
-    },
+    AgentStart { agent_id: String, task: String, timestamp_ms: u64 },
     /// An agent finished.
-    AgentEnd {
-        agent_id: String,
-        success: bool,
-        timestamp_ms: u64,
-    },
+    AgentEnd { agent_id: String, success: bool, timestamp_ms: u64 },
     /// An agent encountered an error.
-    AgentError {
-        agent_id: String,
-        error: String,
-        timestamp_ms: u64,
-    },
+    AgentError { agent_id: String, error: String, timestamp_ms: u64 },
 
     // -- Session events --
     /// Session started.
-    SessionStart {
-        session_id: String,
-        timestamp_ms: u64,
-    },
+    SessionStart { session_id: String, timestamp_ms: u64 },
     /// Session ended.
-    SessionEnd {
-        session_id: String,
-        timestamp_ms: u64,
-    },
+    SessionEnd { session_id: String, timestamp_ms: u64 },
     /// Session status changed (idle -> busy -> retry -> idle).
-    SessionStatusChanged {
-        session_id: String,
-        status: SessionStatus,
-        timestamp_ms: u64,
-    },
+    SessionStatusChanged { session_id: String, status: SessionStatus, timestamp_ms: u64 },
     /// A session state mutation was persisted to the event log.
     ///
     /// Published after events are written to disk, enabling real-time
     /// notification of session changes to WebSocket clients and other subscribers.
-    SessionMutation {
-        session_id: String,
-        event_type: String,
-        seq: u64,
-        timestamp_ms: u64,
-    },
+    SessionMutation { session_id: String, event_type: String, seq: u64, timestamp_ms: u64 },
 
     // -- Cost events --
     /// Token usage was recorded.
@@ -140,11 +105,7 @@ pub enum RuntimeEvent {
     ///
     /// Published when [`CostTracker::is_over_budget`] returns `true` after
     /// recording token usage. The agent loop should pause and notify the user.
-    BudgetExhausted {
-        budget_usd: f64,
-        total_cost_usd: f64,
-        timestamp_ms: u64,
-    },
+    BudgetExhausted { budget_usd: f64, total_cost_usd: f64, timestamp_ms: u64 },
 
     // -- System events --
     /// Configuration was reloaded.
@@ -154,12 +115,7 @@ pub enum RuntimeEvent {
 
     // -- Custom --
     /// Escape hatch for events not covered by the typed variants.
-    Custom {
-        event_type: String,
-        source: String,
-        data: Value,
-        timestamp_ms: u64,
-    },
+    Custom { event_type: String, source: String, data: Value, timestamp_ms: u64 },
 }
 
 impl RuntimeEvent {
@@ -234,12 +190,7 @@ pub struct Event {
 impl Event {
     /// Create a new event.
     pub fn new(event_type: impl Into<String>, source: impl Into<String>, data: Value) -> Self {
-        Self {
-            event_type: event_type.into(),
-            source: source.into(),
-            data,
-            timestamp_ms: now_ms(),
-        }
+        Self { event_type: event_type.into(), source: source.into(), data, timestamp_ms: now_ms() }
     }
 
     /// Convert a legacy `Event` into a [`RuntimeEvent::Custom`].

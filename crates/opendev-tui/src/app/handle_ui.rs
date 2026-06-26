@@ -61,9 +61,7 @@ impl App {
         // Store plan content for display in conversation
         self.state.plan_content_display = Some(plan_content.clone());
         // Add plan as a message in the conversation
-        self.state
-            .messages
-            .push(DisplayMessage::new(DisplayRole::Plan, plan_content.clone()));
+        self.state.messages.push(DisplayMessage::new(DisplayRole::Plan, plan_content.clone()));
         self.state.message_generation += 1;
         // Start the plan approval controller
         let _rx = self.plan_approval_controller.start(plan_content);
@@ -169,31 +167,21 @@ impl App {
     }
 
     pub(super) fn handle_undo_result(&mut self, success: bool, message: String) {
-        let level = if success {
-            ToastLevel::Success
-        } else {
-            ToastLevel::Warning
-        };
+        let level = if success { ToastLevel::Success } else { ToastLevel::Warning };
         self.state.toasts.push(Toast::new(message, level));
         self.state.dirty = true;
         self.state.message_generation += 1;
     }
 
     pub(super) fn handle_redo_result(&mut self, success: bool, message: String) {
-        let level = if success {
-            ToastLevel::Success
-        } else {
-            ToastLevel::Warning
-        };
+        let level = if success { ToastLevel::Success } else { ToastLevel::Warning };
         self.state.toasts.push(Toast::new(message, level));
         self.state.dirty = true;
         self.state.message_generation += 1;
     }
 
     pub(super) fn handle_share_result(&mut self, path: String) {
-        self.state
-            .toasts
-            .push(Toast::new(format!("Shared: {path}"), ToastLevel::Success));
+        self.state.toasts.push(Toast::new(format!("Shared: {path}"), ToastLevel::Success));
         self.state.dirty = true;
     }
 

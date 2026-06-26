@@ -34,12 +34,7 @@ struct FormatterDef {
 
 /// Known formatters and their configurations.
 const FORMATTERS: &[FormatterDef] = &[
-    FormatterDef {
-        name: "rustfmt",
-        command: "rustfmt",
-        args: &["{file}"],
-        extensions: &[".rs"],
-    },
+    FormatterDef { name: "rustfmt", command: "rustfmt", args: &["{file}"], extensions: &[".rs"] },
     FormatterDef {
         name: "black",
         command: "black",
@@ -54,12 +49,7 @@ const FORMATTERS: &[FormatterDef] = &[
             ".js", ".jsx", ".ts", ".tsx", ".css", ".scss", ".html", ".json", ".md", ".yaml", ".yml",
         ],
     },
-    FormatterDef {
-        name: "gofmt",
-        command: "gofmt",
-        args: &["-w", "{file}"],
-        extensions: &[".go"],
-    },
+    FormatterDef { name: "gofmt", command: "gofmt", args: &["-w", "{file}"], extensions: &[".go"] },
     FormatterDef {
         name: "clang-format",
         command: "clang-format",
@@ -88,9 +78,7 @@ const FORMATTERS: &[FormatterDef] = &[
         name: "biome",
         command: "biome",
         args: &["check", "--write", "{file}"],
-        extensions: &[
-            ".js", ".jsx", ".ts", ".tsx", ".css", ".scss", ".json", ".jsonc",
-        ],
+        extensions: &[".js", ".jsx", ".ts", ".tsx", ".css", ".scss", ".json", ".jsonc"],
     },
     FormatterDef {
         name: "mix",
@@ -134,12 +122,7 @@ const FORMATTERS: &[FormatterDef] = &[
         args: &["format", "{file}"],
         extensions: &[".gleam"],
     },
-    FormatterDef {
-        name: "nixfmt",
-        command: "nixfmt",
-        args: &["{file}"],
-        extensions: &[".nix"],
-    },
+    FormatterDef { name: "nixfmt", command: "nixfmt", args: &["{file}"], extensions: &[".nix"] },
     FormatterDef {
         name: "rubocop",
         command: "rubocop",
@@ -158,12 +141,7 @@ const FORMATTERS: &[FormatterDef] = &[
         args: &["-w", "-s", "{file}"],
         extensions: &[".tex"],
     },
-    FormatterDef {
-        name: "dfmt",
-        command: "dfmt",
-        args: &["-i", "{file}"],
-        extensions: &[".d"],
-    },
+    FormatterDef { name: "dfmt", command: "dfmt", args: &["-i", "{file}"], extensions: &[".d"] },
     FormatterDef {
         name: "cljfmt",
         command: "cljfmt",
@@ -204,17 +182,13 @@ static STATE: LazyLock<Mutex<FormatterState>> = LazyLock::new(|| {
 
 /// Check if a command is available on the system PATH.
 fn command_exists(cmd: &str) -> bool {
-    Command::new("which")
-        .arg(cmd)
-        .output()
-        .map(|o| o.status.success())
-        .unwrap_or(false)
+    Command::new("which").arg(cmd).output().map(|o| o.status.success()).unwrap_or(false)
 }
 
 /// Detect which formatters are available on the system.
 /// Results are cached after the first call.
 pub fn detect_formatters() -> Vec<FormatterInfo> {
-    let mut state = STATE.lock().unwrap();
+    let mut state = STATE.lock().unwrap_or_else(|e| e.into_inner());
     if state.initialized {
         return state.detected.clone();
     }
@@ -229,12 +203,7 @@ pub fn detect_formatters() -> Vec<FormatterInfo> {
         })
         .collect();
 
-    let found: Vec<&str> = state
-        .detected
-        .iter()
-        .filter(|f| f.available)
-        .map(|f| f.name)
-        .collect();
+    let found: Vec<&str> = state.detected.iter().filter(|f| f.available).map(|f| f.name).collect();
     if !found.is_empty() {
         debug!("Detected {} formatters: {}", found.len(), found.join(", "));
     }
@@ -250,7 +219,7 @@ pub fn detect_formatters() -> Vec<FormatterInfo> {
 pub fn apply_config(config: &opendev_models::config::FormatterConfig) {
     if config.is_disabled() {
         // Disable all formatters
-        let mut state = STATE.lock().unwrap();
+        let mut state = STATE.lock().unwrap_or_else(|e| e.into_inner());
         let names: Vec<String> = state.detected.iter().map(|f| f.name.to_string()).collect();
         for name in names {
             state.disabled.insert(name);
@@ -260,7 +229,7 @@ pub fn apply_config(config: &opendev_models::config::FormatterConfig) {
     }
 
     let overrides = config.overrides();
-    let mut state = STATE.lock().unwrap();
+    let mut state = STATE.lock().unwrap_or_else(|e| e.into_inner());
     for (name, override_cfg) in overrides {
         if override_cfg.disabled {
             state.disabled.insert(name.clone());
@@ -347,7 +316,7 @@ pub fn get_formatter_for_file(file_path: &str) -> Option<&'static str> {
     let state = {
         // Ensure detection has run
         drop(detect_formatters());
-        STATE.lock().unwrap()
+        STATE.lock().unwrap_or_else(|e| e.into_inner())
     };
 
     for info in &state.detected {
@@ -376,17 +345,9 @@ pub fn format_file(file_path: &str, working_dir: &Path) -> bool {
         None => return false,
     };
 
-    let args: Vec<String> = def
-        .args
-        .iter()
-        .map(|a| a.replace("{file}", file_path))
-        .collect();
+    let args: Vec<String> = def.args.iter().map(|a| a.replace("{file}", file_path)).collect();
 
-    match Command::new(def.command)
-        .args(&args)
-        .current_dir(working_dir)
-        .output()
-    {
+    match Command::new(def.command).args(&args).current_dir(working_dir).output() {
         Ok(output) => {
             if output.status.success() {
                 debug!("Formatted {} with {}", file_path, formatter_name);
@@ -408,13 +369,13 @@ pub fn format_file(file_path: &str, working_dir: &Path) -> bool {
 
 /// Disable a specific formatter by name.
 pub fn disable_formatter(name: &str) {
-    let mut state = STATE.lock().unwrap();
+    let mut state = STATE.lock().unwrap_or_else(|e| e.into_inner());
     state.disabled.insert(name.to_string());
 }
 
 /// Enable a previously disabled formatter.
 pub fn enable_formatter(name: &str) {
-    let mut state = STATE.lock().unwrap();
+    let mut state = STATE.lock().unwrap_or_else(|e| e.into_inner());
     state.disabled.remove(name);
 }
 

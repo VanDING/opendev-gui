@@ -40,9 +40,7 @@ pub fn expand_home(path: &str) -> String {
 /// Strip leading `.` and `./` components from a path, returning the
 /// meaningful portion. E.g., `./myproject/src` -> `myproject/src`.
 pub fn strip_curdir(path: &Path) -> PathBuf {
-    path.components()
-        .filter(|c| !matches!(c, Component::CurDir))
-        .collect()
+    path.components().filter(|c| !matches!(c, Component::CurDir)).collect()
 }
 
 /// Normalize a path by collapsing `.` and `..` components without touching the filesystem.
@@ -135,11 +133,7 @@ pub fn resolve_file_path(user_path: &str, working_dir: &Path) -> PathBuf {
             && let Some(first) = rel.components().next()
         {
             let first_name = first.as_os_str();
-            if working_dir
-                .file_name()
-                .map(|n| n == first_name)
-                .unwrap_or(false)
-            {
+            if working_dir.file_name().map(|n| n == first_name).unwrap_or(false) {
                 let fixed = working_dir.join(rel.strip_prefix(first_name).unwrap_or(rel));
                 // Accept if the file exists OR its parent directory exists
                 // (supports new file creation with redundant prefix)
@@ -158,11 +152,7 @@ pub fn resolve_file_path(user_path: &str, working_dir: &Path) -> PathBuf {
         let mut components = path.components();
         if let Some(first) = components.next() {
             let first_name = first.as_os_str();
-            if working_dir
-                .file_name()
-                .map(|n| n == first_name)
-                .unwrap_or(false)
-            {
+            if working_dir.file_name().map(|n| n == first_name).unwrap_or(false) {
                 let rest: PathBuf = components.collect();
                 if !rest.as_os_str().is_empty() {
                     let fixed = normalize_path(&working_dir.join(&rest));
@@ -197,11 +187,7 @@ pub fn resolve_dir_path(user_path: &str, working_dir: &Path) -> PathBuf {
             && let Some(first) = rel.components().next()
         {
             let first_name = first.as_os_str();
-            if working_dir
-                .file_name()
-                .map(|n| n == first_name)
-                .unwrap_or(false)
-            {
+            if working_dir.file_name().map(|n| n == first_name).unwrap_or(false) {
                 let fixed = working_dir.join(rel.strip_prefix(first_name).unwrap_or(rel));
                 if fixed.is_dir() || fixed.parent().map(|p| p.is_dir()).unwrap_or(false) {
                     return fixed;
@@ -224,11 +210,7 @@ pub fn resolve_dir_path(user_path: &str, working_dir: &Path) -> PathBuf {
         let mut components = path.components();
         if let Some(first) = components.next() {
             let first_name = first.as_os_str();
-            if working_dir
-                .file_name()
-                .map(|n| n == first_name)
-                .unwrap_or(false)
-            {
+            if working_dir.file_name().map(|n| n == first_name).unwrap_or(false) {
                 let rest: PathBuf = components.collect();
                 if rest.as_os_str().is_empty() {
                     // Single component matching basename — fall back to cwd

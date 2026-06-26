@@ -3,10 +3,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 #[tokio::test]
@@ -185,14 +182,8 @@ async fn test_file_not_found_suggestions_levenshtein() {
     assert!(!result.success);
     let err = result.error.unwrap();
     assert!(err.contains("not found"));
-    assert!(
-        err.contains("Did you mean"),
-        "Should suggest similar files, got: {err}"
-    );
-    assert!(
-        err.contains("file.rs"),
-        "Should suggest file.rs for typo flie.rs, got: {err}"
-    );
+    assert!(err.contains("Did you mean"), "Should suggest similar files, got: {err}");
+    assert!(err.contains("file.rs"), "Should suggest file.rs for typo flie.rs, got: {err}");
 }
 
 #[tokio::test]
@@ -235,14 +226,8 @@ async fn test_file_not_found_missing_parent_shows_dirs() {
     assert!(!result.success);
     let err = result.error.unwrap();
     assert!(err.contains("not found"), "got: {err}");
-    assert!(
-        err.contains("does not exist"),
-        "should note parent dir doesn't exist, got: {err}"
-    );
-    assert!(
-        err.contains("crates/"),
-        "should suggest crates/, got: {err}"
-    );
+    assert!(err.contains("does not exist"), "should note parent dir doesn't exist, got: {err}");
+    assert!(err.contains("crates/"), "should suggest crates/, got: {err}");
 }
 
 // ---- Next offset hint ----
@@ -267,16 +252,10 @@ async fn test_read_next_offset_hint() {
     assert!(result.success);
     let output = result.output.unwrap();
     // Should hint next offset
-    assert!(
-        output.contains("offset=6"),
-        "Should hint offset=6, got: {output}"
-    );
+    assert!(output.contains("offset=6"), "Should hint offset=6, got: {output}");
     assert!(output.contains("15 more lines below"));
     // Metadata should have next_offset
-    assert_eq!(
-        result.metadata.get("next_offset"),
-        Some(&serde_json::json!(6))
-    );
+    assert_eq!(result.metadata.get("next_offset"), Some(&serde_json::json!(6)));
 }
 
 #[tokio::test]
@@ -305,18 +284,13 @@ async fn test_read_large_file_byte_truncation() {
 
     // Create a file with very long lines that exceed 50KB output
     let long_line = "x".repeat(500);
-    let content: String = (0..200)
-        .map(|_| long_line.as_str())
-        .collect::<Vec<_>>()
-        .join("\n");
+    let content: String = (0..200).map(|_| long_line.as_str()).collect::<Vec<_>>().join("\n");
     fs::write(tmp_path.join("big.txt"), &content).unwrap();
 
     let tool = FileReadTool;
     let ctx = ToolContext::new(&tmp_path);
-    let args = make_args(&[(
-        "file_path",
-        serde_json::json!(tmp_path.join("big.txt").to_str().unwrap()),
-    )]);
+    let args =
+        make_args(&[("file_path", serde_json::json!(tmp_path.join("big.txt").to_str().unwrap()))]);
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
 
@@ -325,10 +299,7 @@ async fn test_read_large_file_byte_truncation() {
     assert!(output.len() <= FileReadTool::MAX_OUTPUT_BYTES + 200); // some margin for truncation message
     if content.len() > FileReadTool::MAX_OUTPUT_BYTES {
         assert!(output.contains("truncated"));
-        assert_eq!(
-            result.metadata.get("truncated"),
-            Some(&serde_json::json!(true))
-        );
+        assert_eq!(result.metadata.get("truncated"), Some(&serde_json::json!(true)));
     }
 }
 
@@ -370,8 +341,5 @@ async fn test_read_env_example_no_warning() {
 
     assert!(result.success);
     let output = result.output.unwrap();
-    assert!(
-        !output.starts_with("WARNING:"),
-        ".env.example should NOT have warning"
-    );
+    assert!(!output.starts_with("WARNING:"), ".env.example should NOT have warning");
 }

@@ -18,11 +18,7 @@ async fn test_tool_approval_roundtrip() {
     assert!(req.command.contains("rm"));
 
     req.response_tx
-        .send(ToolApprovalDecision {
-            approved: true,
-            choice: "yes".into(),
-            command: req.command,
-        })
+        .send(ToolApprovalDecision { approved: true, choice: "yes".into(), command: req.command })
         .unwrap();
 
     let decision = resp_rx.await.unwrap();

@@ -76,11 +76,7 @@ const INTENT_PREFIXES: &[&str] = &[
 ///
 /// Uses heuristics — no API call needed.
 pub fn summarize_action(text: &str, max_length: usize) -> String {
-    let max_len = if max_length == 0 {
-        DEFAULT_MAX_LENGTH
-    } else {
-        max_length
-    };
+    let max_len = if max_length == 0 { DEFAULT_MAX_LENGTH } else { max_length };
 
     // Try extracting from intent prefixes
     if let Some(summary) = extract_from_intent(text) {
@@ -168,11 +164,7 @@ fn verb_to_gerund(text: &str) -> String {
         format!("{verb}ing")
     };
 
-    if rest.is_empty() {
-        gerund
-    } else {
-        format!("{gerund} {rest}")
-    }
+    if rest.is_empty() { gerund } else { format!("{gerund} {rest}") }
 }
 
 fn is_vowel(c: char) -> bool {
@@ -208,11 +200,7 @@ fn first_clause(text: &str) -> String {
 }
 
 fn truncate_to(s: &str, max_len: usize) -> String {
-    if s.len() <= max_len {
-        s.to_string()
-    } else {
-        format!("{}...", &s[..max_len - 3])
-    }
+    if s.len() <= max_len { s.to_string() } else { format!("{}...", &s[..max_len - 3]) }
 }
 
 #[cfg(test)]

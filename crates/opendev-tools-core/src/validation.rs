@@ -20,11 +20,7 @@ pub fn validate_args(
     schema: &serde_json::Value,
 ) -> Result<(), String> {
     let errors = validate_args_detailed(args, schema);
-    if errors.is_empty() {
-        Ok(())
-    } else {
-        Err(errors[0].to_string())
-    }
+    if errors.is_empty() { Ok(()) } else { Err(errors[0].to_string()) }
 }
 
 /// Validate tool arguments and return all validation errors (not just the first).
@@ -57,10 +53,7 @@ pub fn validate_args_detailed(
             if let Some(prop_schema) = properties.get(key)
                 && let Err(msg) = validate_value_type(key, value, prop_schema)
             {
-                errors.push(ValidationError {
-                    path: key.clone(),
-                    message: msg,
-                });
+                errors.push(ValidationError { path: key.clone(), message: msg });
             }
         }
     }

@@ -63,14 +63,8 @@ fn test_max_depth_prevents_infinite_recursion() {
     std::fs::write(dir_path.join("self.md"), "@./self.md\nContent").unwrap();
 
     let mut visited = HashSet::new();
-    let (_, included) = process_includes(
-        "@./self.md\nMain",
-        &dir_path,
-        &dir_path,
-        0,
-        &mut visited,
-        None,
-    );
+    let (_, included) =
+        process_includes("@./self.md\nMain", &dir_path, &dir_path, 0, &mut visited, None);
 
     // Should include the file once (circular ref prevention)
     assert_eq!(included.len(), 1);
@@ -192,14 +186,8 @@ fn test_included_from_field_set() {
     std::fs::write(&parent, "@./child.md\nParent content").unwrap();
 
     let mut visited = HashSet::new();
-    let (_, included) = process_includes(
-        "@./child.md\nMain",
-        &dir_path,
-        &dir_path,
-        0,
-        &mut visited,
-        Some(&parent),
-    );
+    let (_, included) =
+        process_includes("@./child.md\nMain", &dir_path, &dir_path, 0, &mut visited, Some(&parent));
 
     assert_eq!(included.len(), 1);
     assert_eq!(included[0].included_from.as_ref().unwrap(), &parent);

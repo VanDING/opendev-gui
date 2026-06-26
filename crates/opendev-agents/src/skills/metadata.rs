@@ -3,6 +3,23 @@
 use std::path::PathBuf;
 use std::time::SystemTime;
 
+use chrono::{DateTime, Utc};
+
+/// Lifecycle status of a skill.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SkillStatus {
+    Active,
+    Stale,
+    Archived,
+    Superseded,
+}
+
+impl SkillStatus {
+    pub fn is_injectable(&self) -> bool {
+        matches!(self, SkillStatus::Active)
+    }
+}
+
 /// Where a skill was loaded from.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SkillSource {
@@ -46,6 +63,22 @@ pub struct SkillMetadata {
     /// Optional agent override for this skill.
     /// When set, the skill should be executed by the specified agent instead of the current one.
     pub agent: Option<String>,
+    /// Whether the skill is pinned for injection.
+    pub pinned: bool,
+    /// Current lifecycle status.
+    pub status: SkillStatus,
+    /// Optional required tool names the agent must possess.
+    pub requires_tools: Option<Vec<String>>,
+    /// Optional tool names this skill can replace.
+    pub fallback_for_tools: Option<Vec<String>>,
+    /// Optional allow-list of tool names the skill may use.
+    pub allowed_tools: Option<Vec<String>>,
+    /// Number of times used.
+    pub usage_count: u32,
+    /// Last usage timestamp.
+    pub last_used: Option<DateTime<Utc>>,
+    /// Tags for grouping/filtering.
+    pub tags: Vec<String>,
 }
 
 impl SkillMetadata {

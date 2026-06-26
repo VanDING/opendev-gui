@@ -60,9 +60,7 @@ pub fn generate_plan_name(existing_dir: Option<&Path>, max_attempts: u32) -> Str
 
     for _ in 0..max_attempts {
         // SAFETY: ADJECTIVES, VERBS, NOUNS are non-empty compile-time arrays
-        let adj = ADJECTIVES
-            .choose(&mut rng)
-            .expect("ADJECTIVES is non-empty");
+        let adj = ADJECTIVES.choose(&mut rng).expect("ADJECTIVES is non-empty");
         let verb = VERBS.choose(&mut rng).expect("VERBS is non-empty");
         let noun = NOUNS.choose(&mut rng).expect("NOUNS is non-empty");
         let name = format!("{}-{}-{}", adj, verb, noun);
@@ -77,9 +75,7 @@ pub fn generate_plan_name(existing_dir: Option<&Path>, max_attempts: u32) -> Str
     }
 
     // Fallback: append random digits
-    let adj = ADJECTIVES
-        .choose(&mut rng)
-        .expect("ADJECTIVES is non-empty");
+    let adj = ADJECTIVES.choose(&mut rng).expect("ADJECTIVES is non-empty");
     let verb = VERBS.choose(&mut rng).expect("VERBS is non-empty");
     let noun = NOUNS.choose(&mut rng).expect("NOUNS is non-empty");
     let suffix: u32 = rng.gen_range(1000..10000);

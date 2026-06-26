@@ -17,11 +17,7 @@ pub fn export_markdown(session: &Session) -> String {
     // Metadata header
     out.push_str("# Session Export\n\n");
 
-    let title = session
-        .metadata
-        .get("title")
-        .and_then(|v| v.as_str())
-        .unwrap_or("Untitled");
+    let title = session.metadata.get("title").and_then(|v| v.as_str()).unwrap_or("Untitled");
     out.push_str(&format!("- **Title:** {}\n", title));
     out.push_str(&format!("- **Session ID:** {}\n", session.id));
     out.push_str(&format!(

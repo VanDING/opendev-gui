@@ -28,14 +28,8 @@ pub fn router() -> Router<AppState> {
         .route("/api/sessions/bridge-info", get(get_bridge_info))
         .route("/api/sessions/files", get(filesystem::list_files))
         .route("/api/sessions/verify-path", post(filesystem::verify_path))
-        .route(
-            "/api/sessions/browse-directory",
-            post(filesystem::browse_directory),
-        )
-        .route(
-            "/api/sessions/{id}",
-            get(get_session).delete(delete_session),
-        )
+        .route("/api/sessions/browse-directory", post(filesystem::browse_directory))
+        .route("/api/sessions/{id}", get(get_session).delete(delete_session))
         .route("/api/sessions/{id}/resume", post(resume_session))
         .route("/api/sessions/{id}/messages", get(get_session_messages))
         .route(
@@ -91,11 +85,7 @@ async fn create_session(
     {
         let empty_match = index.entries.iter().find(|entry| {
             entry.message_count == 0
-                && entry
-                    .working_directory
-                    .as_deref()
-                    .map(|d| d == wd.as_str())
-                    .unwrap_or(false)
+                && entry.working_directory.as_deref().map(|d| d == wd.as_str()).unwrap_or(false)
         });
 
         if let Some(entry) = empty_match {
@@ -134,8 +124,7 @@ async fn create_session(
     }
 
     // Save the new session.
-    mgr.save_current()
-        .map_err(|e| WebError::Internal(format!("Failed to save session: {}", e)))?;
+    mgr.save_current().map_err(|e| WebError::Internal(format!("Failed to save session: {}", e)))?;
 
     Ok(Json(serde_json::json!({
         "id": session_id,
@@ -153,9 +142,10 @@ async fn get_session(
         .load_session(&id)
         .map_err(|e| WebError::NotFound(format!("Session {} not found: {}", id, e)))?;
 
-    Ok(Json(serde_json::to_value(session.get_metadata()).map_err(
-        |e| WebError::Internal(format!("Failed to serialize session: {}", e)),
-    )?))
+    Ok(Json(
+        serde_json::to_value(session.get_metadata())
+            .map_err(|e| WebError::Internal(format!("Failed to serialize session: {}", e)))?,
+    ))
 }
 
 /// Delete a specific session.

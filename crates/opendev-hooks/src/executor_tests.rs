@@ -9,10 +9,7 @@ fn test_hook_result_success() {
 
 #[test]
 fn test_hook_result_block() {
-    let r = HookResult {
-        exit_code: 2,
-        ..Default::default()
-    };
+    let r = HookResult { exit_code: 2, ..Default::default() };
     assert!(!r.success());
     assert!(r.should_block());
 }
@@ -31,11 +28,7 @@ fn test_hook_result_timeout() {
 
 #[test]
 fn test_hook_result_error() {
-    let r = HookResult {
-        exit_code: 0,
-        error: Some("oops".into()),
-        ..Default::default()
-    };
+    let r = HookResult { exit_code: 0, error: Some("oops".into()), ..Default::default() };
     assert!(!r.success());
 }
 
@@ -46,14 +39,8 @@ fn test_parse_json_output_valid() {
         ..Default::default()
     };
     let parsed = r.parse_json_output();
-    assert_eq!(
-        parsed.get("reason").and_then(|v| v.as_str()),
-        Some("blocked")
-    );
-    assert_eq!(
-        parsed.get("decision").and_then(|v| v.as_str()),
-        Some("deny")
-    );
+    assert_eq!(parsed.get("reason").and_then(|v| v.as_str()), Some("blocked"));
+    assert_eq!(parsed.get("decision").and_then(|v| v.as_str()), Some("deny"));
 }
 
 #[test]
@@ -64,10 +51,7 @@ fn test_parse_json_output_empty() {
 
 #[test]
 fn test_parse_json_output_invalid() {
-    let r = HookResult {
-        stdout: "not json".into(),
-        ..Default::default()
-    };
+    let r = HookResult { stdout: "not json".into(), ..Default::default() };
     assert!(r.parse_json_output().is_empty());
 }
 
@@ -160,8 +144,5 @@ async fn test_executor_json_stdout() {
     let result = executor.execute(&cmd, &stdin).await;
     assert!(result.success());
     let parsed = result.parse_json_output();
-    assert_eq!(
-        parsed.get("additionalContext").and_then(|v| v.as_str()),
-        Some("extra info")
-    );
+    assert_eq!(parsed.get("additionalContext").and_then(|v| v.as_str()), Some("extra info"));
 }

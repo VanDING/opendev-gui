@@ -34,12 +34,6 @@ fn test_change_summary() {
 
 #[test]
 fn test_file_icons() {
-    assert_eq!(
-        FileChange::new(FileChangeType::Created, "a".to_string()).get_file_icon(),
-        "+"
-    );
-    assert_eq!(
-        FileChange::new(FileChangeType::Deleted, "a".to_string()).get_file_icon(),
-        "-"
-    );
+    assert_eq!(FileChange::new(FileChangeType::Created, "a".to_string()).get_file_icon(), "+");
+    assert_eq!(FileChange::new(FileChangeType::Deleted, "a".to_string()).get_file_icon(), "-");
 }

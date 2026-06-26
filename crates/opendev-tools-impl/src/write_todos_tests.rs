@@ -7,10 +7,7 @@ fn make_tool() -> (WriteTodosTool, Arc<Mutex<TodoManager>>) {
 }
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 #[tokio::test]
@@ -18,10 +15,7 @@ async fn test_write_todos_strings() {
     let (tool, mgr) = make_tool();
     let ctx = ToolContext::new("/tmp");
     let result = tool
-        .execute(
-            make_args(&[("todos", serde_json::json!(["Step A", "Step B", "Step C"]))]),
-            &ctx,
-        )
+        .execute(make_args(&[("todos", serde_json::json!(["Step A", "Step B", "Step C"]))]), &ctx)
         .await;
     assert!(result.success);
     assert_eq!(mgr.lock().unwrap().total(), 3);
@@ -55,16 +49,11 @@ async fn test_write_todos_replaces() {
     let (tool, mgr) = make_tool();
     let ctx = ToolContext::new("/tmp");
     // Write initial
-    tool.execute(make_args(&[("todos", serde_json::json!(["Old"]))]), &ctx)
-        .await;
+    tool.execute(make_args(&[("todos", serde_json::json!(["Old"]))]), &ctx).await;
     assert_eq!(mgr.lock().unwrap().total(), 1);
 
     // Replace
-    tool.execute(
-        make_args(&[("todos", serde_json::json!(["New A", "New B"]))]),
-        &ctx,
-    )
-    .await;
+    tool.execute(make_args(&[("todos", serde_json::json!(["New A", "New B"]))]), &ctx).await;
     assert_eq!(mgr.lock().unwrap().total(), 2);
     assert_eq!(mgr.lock().unwrap().get(1).unwrap().title, "New A");
 }
@@ -145,11 +134,7 @@ async fn test_write_todos_children_bypass_status_only() {
     let (tool, _mgr) = make_tool();
     let ctx = ToolContext::new("/tmp");
     // Write initial without children
-    tool.execute(
-        make_args(&[("todos", serde_json::json!(["Auth", "Tests"]))]),
-        &ctx,
-    )
-    .await;
+    tool.execute(make_args(&[("todos", serde_json::json!(["Auth", "Tests"]))]), &ctx).await;
 
     // Write same titles but with children — should NOT use status-only path
     let result = tool

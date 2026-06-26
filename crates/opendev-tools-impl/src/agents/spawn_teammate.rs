@@ -161,18 +161,12 @@ impl BaseTool for SpawnTeammateTool {
         let model_override = args.get("model").and_then(|v| v.as_str());
         let inline_agent_type = args.get("agent_type").and_then(|v| v.as_str());
         let inline_task = args.get("task").and_then(|v| v.as_str());
-        let use_worktree = args
-            .get("worktree")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
+        let use_worktree = args.get("worktree").and_then(|v| v.as_bool()).unwrap_or(false);
 
         // Auto-create team if it doesn't exist
         if self.team_manager.get_team(team_name).is_none() {
             let session_id = ctx.session_id.as_deref().unwrap_or("unknown");
-            if let Err(e) = self
-                .team_manager
-                .create_team(team_name, "leader", session_id)
-            {
+            if let Err(e) = self.team_manager.create_team(team_name, "leader", session_id) {
                 return ToolResult::fail(format!("Failed to auto-create team: {e}"));
             }
             info!(team = %team_name, "Auto-created team");
@@ -256,8 +250,7 @@ impl BaseTool for SpawnTeammateTool {
         );
 
         // Update status to Busy
-        self.team_manager
-            .update_member_status(team_name, member_name, TeamMemberStatus::Busy);
+        self.team_manager.update_member_status(team_name, member_name, TeamMemberStatus::Busy);
 
         // Notify TUI
         if let Some(ref tx) = self.event_tx {
@@ -298,12 +291,7 @@ impl BaseTool for SpawnTeammateTool {
         let working_dir = if use_worktree {
             if let Some(ref wt_mgr) = self.worktree_manager {
                 let wt_name = format!("{team_name}-{member_name}");
-                match wt_mgr
-                    .lock()
-                    .await
-                    .create(Some(&wt_name), None, "HEAD")
-                    .await
-                {
+                match wt_mgr.lock().await.create(Some(&wt_name), None, "HEAD").await {
                     Ok(info) => {
                         let wt_path = info.path.clone();
                         info!(
@@ -343,10 +331,7 @@ impl BaseTool for SpawnTeammateTool {
         tokio::spawn(async move {
             let progress: Arc<dyn opendev_agents::SubagentProgressCallback> =
                 if let Some(ref tx) = event_tx {
-                    Arc::new(BackgroundProgressCallback::new(
-                        tx.clone(),
-                        task_id_clone.clone(),
-                    ))
+                    Arc::new(BackgroundProgressCallback::new(tx.clone(), task_id_clone.clone()))
                 } else {
                     Arc::new(opendev_agents::NoopProgressCallback)
                 };
@@ -389,11 +374,8 @@ impl BaseTool for SpawnTeammateTool {
                 Err(ref e) => (false, e.to_string(), String::new()),
             };
 
-            let new_status = if success {
-                TeamMemberStatus::Done
-            } else {
-                TeamMemberStatus::Failed
-            };
+            let new_status =
+                if success { TeamMemberStatus::Done } else { TeamMemberStatus::Failed };
             team_manager.update_member_status(&team_name_owned, &member_name_owned, new_status);
 
             // Save child session
@@ -410,10 +392,9 @@ impl BaseTool for SpawnTeammateTool {
                     session
                         .metadata
                         .insert("team_name".to_string(), serde_json::json!(&team_name_owned));
-                    session.metadata.insert(
-                        "member_name".to_string(),
-                        serde_json::json!(&member_name_owned),
-                    );
+                    session
+                        .metadata
+                        .insert("member_name".to_string(), serde_json::json!(&member_name_owned));
                     let messages = opendev_history::message_convert::api_values_to_chatmessages(
                         &run_result.agent_result.messages,
                     );

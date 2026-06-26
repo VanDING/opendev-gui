@@ -23,11 +23,8 @@ fn apply_pagination(output: &str, offset: usize, head_limit: usize) -> String {
     let lines: Vec<&str> = output.lines().collect();
     let start = offset.min(lines.len());
     let selected = &lines[start..];
-    let selected = if head_limit > 0 {
-        &selected[..head_limit.min(selected.len())]
-    } else {
-        selected
-    };
+    let selected =
+        if head_limit > 0 { &selected[..head_limit.min(selected.len())] } else { selected };
     let mut result = selected.join("\n");
     if !result.is_empty() {
         result.push('\n');

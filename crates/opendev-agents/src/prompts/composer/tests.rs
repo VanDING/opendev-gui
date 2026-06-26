@@ -8,11 +8,8 @@ fn setup_templates(dir: &std::path::Path) {
 
     fs::write(main_dir.join("section-a.md"), "# Section A\nContent A").unwrap();
     fs::write(main_dir.join("section-b.md"), "# Section B\nContent B").unwrap();
-    fs::write(
-        main_dir.join("section-c.md"),
-        "<!-- frontmatter: true -->\n# Section C\nContent C",
-    )
-    .unwrap();
+    fs::write(main_dir.join("section-c.md"), "<!-- frontmatter: true -->\n# Section C\nContent C")
+        .unwrap();
     fs::write(main_dir.join("section-d.md"), "# Dynamic\nDynamic content").unwrap();
 }
 
@@ -53,13 +50,7 @@ fn test_compose_with_condition() {
 
     let mut composer = PromptComposer::new(dir.path());
     composer.register_section("a", "system/main/section-a.md", None, 10, true);
-    composer.register_section(
-        "b",
-        "system/main/section-b.md",
-        Some(ctx_bool("show_b")),
-        20,
-        true,
-    );
+    composer.register_section("b", "system/main/section-b.md", Some(ctx_bool("show_b")), 20, true);
 
     // Without condition met
     let result = composer.compose(&HashMap::new());
@@ -116,10 +107,7 @@ fn test_compose_missing_file() {
 
 #[test]
 fn test_strip_frontmatter() {
-    assert_eq!(
-        strip_frontmatter("<!-- key: value -->\n# Title\nContent"),
-        "# Title\nContent"
-    );
+    assert_eq!(strip_frontmatter("<!-- key: value -->\n# Title\nContent"), "# Title\nContent");
     assert_eq!(strip_frontmatter("No frontmatter"), "No frontmatter");
     assert_eq!(strip_frontmatter(""), "");
 }
@@ -141,10 +129,7 @@ fn test_section_count_and_names() {
 fn test_substitute_variables_basic() {
     let mut vars = HashMap::new();
     vars.insert("name".to_string(), "world".to_string());
-    assert_eq!(
-        substitute_variables("Hello {{name}}!", &vars),
-        "Hello world!"
-    );
+    assert_eq!(substitute_variables("Hello {{name}}!", &vars), "Hello world!");
 }
 
 #[test]
@@ -154,19 +139,13 @@ fn test_substitute_variables_multiple() {
     vars.insert("path".to_string(), "/home/user".to_string());
 
     let template = "Session {{session_id}} at {{path}}";
-    assert_eq!(
-        substitute_variables(template, &vars),
-        "Session abc-123 at /home/user"
-    );
+    assert_eq!(substitute_variables(template, &vars), "Session abc-123 at /home/user");
 }
 
 #[test]
 fn test_substitute_variables_missing_left_as_is() {
     let vars = HashMap::new();
-    assert_eq!(
-        substitute_variables("Hello {{unknown}}!", &vars),
-        "Hello {{unknown}}!"
-    );
+    assert_eq!(substitute_variables("Hello {{unknown}}!", &vars), "Hello {{unknown}}!");
 }
 
 #[test]
@@ -180,11 +159,7 @@ fn test_compose_with_vars() {
     let dir = tempfile::TempDir::new().unwrap();
     let main_dir = dir.path().join("system/main");
     fs::create_dir_all(&main_dir).unwrap();
-    fs::write(
-        main_dir.join("template.md"),
-        "Session: {{session_id}}\nPath: {{path}}",
-    )
-    .unwrap();
+    fs::write(main_dir.join("template.md"), "Session: {{session_id}}\nPath: {{path}}").unwrap();
 
     let mut composer = PromptComposer::new(dir.path());
     composer.register_section("t", "system/main/template.md", None, 10, true);
@@ -229,10 +204,7 @@ fn test_embedded_templates_used_by_default_composer() {
 
     // The security policy section is always included (no condition) and should
     // come from embedded templates even though the filesystem dir is empty.
-    assert!(
-        result.contains("Security Policy"),
-        "Expected embedded security policy template"
-    );
+    assert!(result.contains("Security Policy"), "Expected embedded security policy template");
 }
 
 // ─── Section Cache Tests ─────────────────────────────────────────────

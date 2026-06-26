@@ -10,10 +10,7 @@ fn test_reformat_summary() {
         reformat_summary("Edited file.rs: 1 replacement(s), 0 addition(s) and 3 removal(s)"),
         "removed 3 lines"
     );
-    assert_eq!(
-        reformat_summary("Some unknown format"),
-        "Some unknown format"
-    );
+    assert_eq!(reformat_summary("Some unknown format"), "Some unknown format");
 }
 
 #[test]

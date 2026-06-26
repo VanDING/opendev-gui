@@ -36,27 +36,15 @@ fn test_adapter_for_provider_unknown_is_none() {
 
 #[test]
 fn test_resolve_provider_explicit() {
-    assert_eq!(
-        AdaptedClient::resolve_provider("anthropic", ""),
-        "anthropic"
-    );
-    assert_eq!(
-        AdaptedClient::resolve_provider("custom", "sk-ant-abc"),
-        "custom"
-    );
+    assert_eq!(AdaptedClient::resolve_provider("anthropic", ""), "anthropic");
+    assert_eq!(AdaptedClient::resolve_provider("custom", "sk-ant-abc"), "custom");
 }
 
 #[test]
 fn test_resolve_provider_auto_detect() {
-    assert_eq!(
-        AdaptedClient::resolve_provider("", "sk-ant-api03-abc"),
-        "anthropic"
-    );
+    assert_eq!(AdaptedClient::resolve_provider("", "sk-ant-api03-abc"), "anthropic");
     assert_eq!(AdaptedClient::resolve_provider("", "sk-proj-abc"), "openai");
-    assert_eq!(
-        AdaptedClient::resolve_provider("", "AIzaSyAbc123"),
-        "gemini"
-    );
+    assert_eq!(AdaptedClient::resolve_provider("", "AIzaSyAbc123"), "gemini");
     assert_eq!(AdaptedClient::resolve_provider("", "gsk_abc123"), "groq");
 }
 

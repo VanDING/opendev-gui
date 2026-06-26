@@ -52,11 +52,8 @@ impl FileContentInjector {
         }
 
         let language = Self::get_language(path);
-        let lang_attr = if language.is_empty() {
-            String::new()
-        } else {
-            format!(" language=\"{}\"", language)
-        };
+        let lang_attr =
+            if language.is_empty() { String::new() } else { format!(" language=\"{}\"", language) };
 
         let abs_path = path.to_string_lossy();
 
@@ -84,11 +81,8 @@ impl FileContentInjector {
         };
 
         let language = Self::get_language(path);
-        let lang_attr = if language.is_empty() {
-            String::new()
-        } else {
-            format!(" language=\"{}\"", language)
-        };
+        let lang_attr =
+            if language.is_empty() { String::new() } else { format!(" language=\"{}\"", language) };
 
         let abs_path = path.to_string_lossy();
         let head_content = head.join("\n");
@@ -145,10 +139,7 @@ impl FileContentInjector {
         };
 
         let mut items: Vec<std::path::PathBuf> = entries
-            .filter_map(|e| {
-                e.ok()
-                    .map(|e| e.path().canonicalize().unwrap_or_else(|_| e.path()))
-            })
+            .filter_map(|e| e.ok().map(|e| e.path().canonicalize().unwrap_or_else(|_| e.path())))
             .collect();
 
         // Sort: directories first, then by lowercase name
@@ -159,16 +150,8 @@ impl FileContentInjector {
                 (true, false) => std::cmp::Ordering::Less,
                 (false, true) => std::cmp::Ordering::Greater,
                 _ => {
-                    let a_name = a
-                        .file_name()
-                        .unwrap_or_default()
-                        .to_string_lossy()
-                        .to_lowercase();
-                    let b_name = b
-                        .file_name()
-                        .unwrap_or_default()
-                        .to_string_lossy()
-                        .to_lowercase();
+                    let a_name = a.file_name().unwrap_or_default().to_string_lossy().to_lowercase();
+                    let b_name = b.file_name().unwrap_or_default().to_string_lossy().to_lowercase();
                     a_name.cmp(&b_name)
                 }
             }
@@ -186,22 +169,12 @@ impl FileContentInjector {
 
         for (i, item) in items.iter().enumerate() {
             let is_last = i == count - 1;
-            let connector = if is_last {
-                "\u{2514}\u{2500}\u{2500} "
-            } else {
-                "\u{251C}\u{2500}\u{2500} "
-            };
-            let new_prefix = if is_last {
-                format!("{}    ", prefix)
-            } else {
-                format!("{}\u{2502}   ", prefix)
-            };
+            let connector =
+                if is_last { "\u{2514}\u{2500}\u{2500} " } else { "\u{251C}\u{2500}\u{2500} " };
+            let new_prefix =
+                if is_last { format!("{}    ", prefix) } else { format!("{}\u{2502}   ", prefix) };
 
-            let name = item
-                .file_name()
-                .unwrap_or_default()
-                .to_string_lossy()
-                .to_string();
+            let name = item.file_name().unwrap_or_default().to_string_lossy().to_string();
 
             if item.is_dir() {
                 lines.push(format!("{}{}{}/", prefix, connector, name));
@@ -263,10 +236,7 @@ impl FileContentInjector {
             ref_str, mime_type,
         );
 
-        let block = ImageBlock {
-            media_type: mime_type.to_string(),
-            data: b64,
-        };
+        let block = ImageBlock { media_type: mime_type.to_string(), data: b64 };
 
         (tag, Some(block))
     }

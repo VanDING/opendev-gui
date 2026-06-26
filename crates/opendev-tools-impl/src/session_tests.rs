@@ -33,10 +33,7 @@ fn create_test_session(dir: &std::path::Path, id: &str, title: &str, messages: V
     // We need to manipulate the session directly
     if let Some(s) = manager.current_session_mut() {
         s.id = id.to_string();
-        s.metadata.insert(
-            "title".to_string(),
-            serde_json::Value::String(title.to_string()),
-        );
+        s.metadata.insert("title".to_string(), serde_json::Value::String(title.to_string()));
         for (role, content) in messages {
             s.messages.push(make_message(role, content));
         }
@@ -72,12 +69,7 @@ fn test_list_sessions() {
         "First session",
         vec![("user", "hello"), ("assistant", "hi there")],
     );
-    create_test_session(
-        tmp.path(),
-        "sess-002",
-        "Second session",
-        vec![("user", "how are you")],
-    );
+    create_test_session(tmp.path(), "sess-002", "Second session", vec![("user", "how are you")]);
 
     let manager = SessionManager::new(tmp.path().to_path_buf()).unwrap();
     let result = action_list(&manager, &HashMap::new(), None);
@@ -89,12 +81,7 @@ fn test_list_sessions() {
 #[test]
 fn test_list_excludes_current() {
     let tmp = TempDir::new().unwrap();
-    create_test_session(
-        tmp.path(),
-        "current-sess",
-        "Current",
-        vec![("user", "test")],
-    );
+    create_test_session(tmp.path(), "current-sess", "Current", vec![("user", "test")]);
     create_test_session(tmp.path(), "other-sess", "Other", vec![("user", "test")]);
 
     let manager = SessionManager::new(tmp.path().to_path_buf()).unwrap();
@@ -109,13 +96,7 @@ fn test_list_excludes_current() {
 fn test_read_pagination() {
     let tmp = TempDir::new().unwrap();
     let messages: Vec<(&str, &str)> = (0..10)
-        .map(|i| {
-            if i % 2 == 0 {
-                ("user", "question")
-            } else {
-                ("assistant", "answer")
-            }
-        })
+        .map(|i| if i % 2 == 0 { ("user", "question") } else { ("assistant", "answer") })
         .collect();
     create_test_session(tmp.path(), "paged-sess", "Paged", messages);
 

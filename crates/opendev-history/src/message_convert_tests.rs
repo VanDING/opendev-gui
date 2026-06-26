@@ -79,10 +79,8 @@ fn test_simple_roundtrip() {
 #[test]
 fn test_tool_calls_roundtrip() {
     let tc = make_tool_call("tc-1", "bash", Some("output here"), None);
-    let messages = vec![
-        make_user("Run ls"),
-        make_assistant_with_tools("Let me run that.", vec![tc]),
-    ];
+    let messages =
+        vec![make_user("Run ls"), make_assistant_with_tools("Let me run that.", vec![tc])];
 
     let api_values = chatmessages_to_api_values(&messages);
     // user + assistant + tool result = 3
@@ -111,10 +109,7 @@ fn test_tool_call_error_roundtrip() {
     let restored = api_values_to_chatmessages(&api_values);
     assert_eq!(restored.len(), 1);
     assert!(restored[0].tool_calls[0].error.is_some());
-    assert_eq!(
-        restored[0].tool_calls[0].error.as_deref(),
-        Some("command not found")
-    );
+    assert_eq!(restored[0].tool_calls[0].error.as_deref(), Some("command not found"));
 }
 
 #[test]
@@ -138,16 +133,10 @@ fn test_thinking_trace_preserved() {
     let messages = vec![make_user("Do this"), msg];
 
     let api_values = chatmessages_to_api_values(&messages);
-    assert_eq!(
-        api_values[1]["_thinking_trace"],
-        "I should check the file first."
-    );
+    assert_eq!(api_values[1]["_thinking_trace"], "I should check the file first.");
 
     let restored = api_values_to_chatmessages(&api_values);
-    assert_eq!(
-        restored[1].thinking_trace.as_deref(),
-        Some("I should check the file first.")
-    );
+    assert_eq!(restored[1].thinking_trace.as_deref(), Some("I should check the file first."));
 }
 
 #[test]
@@ -174,13 +163,7 @@ fn test_incomplete_tool_call_gets_synthetic_error() {
     assert_eq!(restored.len(), 2);
     assert_eq!(restored[1].tool_calls.len(), 1);
     assert!(restored[1].tool_calls[0].error.is_some());
-    assert!(
-        restored[1].tool_calls[0]
-            .error
-            .as_deref()
-            .unwrap()
-            .contains("interrupted")
-    );
+    assert!(restored[1].tool_calls[0].error.as_deref().unwrap().contains("interrupted"));
 }
 
 #[test]
@@ -204,10 +187,7 @@ fn test_thinking_marker_skipped() {
 fn test_multiple_tool_calls() {
     let tc1 = make_tool_call("tc-a", "bash", Some("result 1"), None);
     let tc2 = make_tool_call("tc-b", "read_file", Some("result 2"), None);
-    let messages = vec![make_assistant_with_tools(
-        "Running multiple tools",
-        vec![tc1, tc2],
-    )];
+    let messages = vec![make_assistant_with_tools("Running multiple tools", vec![tc1, tc2])];
 
     let api_values = chatmessages_to_api_values(&messages);
     // assistant + 2 tool results = 3
@@ -252,10 +232,7 @@ fn test_msg_class_preserved_roundtrip() {
     let restored = api_values_to_chatmessages(&api_values);
     assert_eq!(restored.len(), 2);
     assert_eq!(
-        restored[0]
-            .metadata
-            .get("_msg_class")
-            .and_then(|v| v.as_str()),
+        restored[0].metadata.get("_msg_class").and_then(|v| v.as_str()),
         Some("nudge"),
         "_msg_class should be preserved in metadata"
     );

@@ -114,20 +114,13 @@ impl BaseTool for FileListTool {
             .map(|p| resolve_dir_path(p, &ctx.working_dir))
             .unwrap_or_else(|| ctx.working_dir.clone());
 
-        let max_depth = args
-            .get("max_depth")
-            .and_then(|v| v.as_u64())
-            .map(|v| v as usize);
+        let max_depth = args.get("max_depth").and_then(|v| v.as_u64()).map(|v| v as usize);
 
         // Parse custom ignore patterns.
         let custom_ignores: Vec<String> = args
             .get("ignore")
             .and_then(|v| v.as_array())
-            .map(|arr| {
-                arr.iter()
-                    .filter_map(|v| v.as_str().map(|s| s.to_string()))
-                    .collect()
-            })
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
             .unwrap_or_default();
 
         if !base_dir.exists() {

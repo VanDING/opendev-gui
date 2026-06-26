@@ -25,11 +25,7 @@ pub(super) fn parse_ddg_html(html: &str) -> Vec<SearchResult> {
         let url = extract_attr(part, "href=\"")
             .map(|u| {
                 // DuckDuckGo wraps URLs in redirect links
-                if let Some(actual) = extract_redirect_url(u) {
-                    actual
-                } else {
-                    u.to_string()
-                }
+                if let Some(actual) = extract_redirect_url(u) { actual } else { u.to_string() }
             })
             .unwrap_or_default();
 
@@ -88,11 +84,7 @@ fn extract_domain(url: &str) -> Option<String> {
     let domain = domain.split(':').next().unwrap_or(domain); // strip port
     let domain = domain.to_lowercase();
     let domain = domain.strip_prefix("www.").unwrap_or(&domain).to_string();
-    if domain.is_empty() {
-        None
-    } else {
-        Some(domain)
-    }
+    if domain.is_empty() { None } else { Some(domain) }
 }
 
 /// Filter results by allowed/blocked domain lists.

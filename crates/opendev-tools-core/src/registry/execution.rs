@@ -16,7 +16,7 @@ use super::helpers::{camel_to_snake_name, edit_distance, make_dedup_key};
 impl ToolRegistry {
     /// Suggest similar tool names for a mistyped name (edit distance or substring match).
     fn suggest_tool_names(&self, name: &str) -> Vec<String> {
-        let tools = self.tools.read().expect("ToolRegistry lock poisoned");
+        let tools = self.tools.read().unwrap_or_else(|e| e.into_inner());
         let lower = name.to_lowercase();
         let mut suggestions: Vec<String> = Vec::new();
         for registered in tools.keys() {
@@ -42,7 +42,7 @@ impl ToolRegistry {
     ///
     /// Returns `(tool, resolved_name)` or `None`.
     fn resolve_tool(&self, name: &str) -> Option<(Arc<dyn BaseTool>, String)> {
-        let tools = self.tools.read().expect("ToolRegistry lock poisoned");
+        let tools = self.tools.read().unwrap_or_else(|e| e.into_inner());
 
         // Strip "functions." prefix (OpenAI function-calling artifact)
         let name = name.strip_prefix("functions.").unwrap_or(name);
@@ -180,7 +180,7 @@ impl ToolRegistry {
 
         // Clone middleware Arcs out of the lock so we can call async methods
         let middleware: Vec<Arc<dyn ToolMiddleware>> = {
-            let mw = self.middleware.read().expect("ToolRegistry lock poisoned");
+            let mw = self.middleware.read().unwrap_or_else(|e| e.into_inner());
             mw.clone()
         };
 
@@ -194,10 +194,7 @@ impl ToolRegistry {
 
         // Apply per-tool timeout config
         let exec_ctx = {
-            let timeouts = self
-                .tool_timeouts
-                .read()
-                .expect("ToolRegistry lock poisoned");
+            let timeouts = self.tool_timeouts.read().unwrap_or_else(|e| e.into_inner());
             if let Some(timeout_config) = timeouts.get(tool_name) {
                 let mut new_ctx = ctx.clone();
                 new_ctx.timeout_config = Some(timeout_config.clone());

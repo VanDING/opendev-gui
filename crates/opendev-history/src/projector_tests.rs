@@ -29,10 +29,7 @@ fn test_project_from_session_created() {
     assert_eq!(session.id, "sess-001");
     assert_eq!(session.working_directory.as_deref(), Some("/tmp/project"));
     assert_eq!(session.channel, "cli");
-    assert_eq!(
-        session.metadata.get("title").and_then(|v| v.as_str()),
-        Some("Test Session")
-    );
+    assert_eq!(session.metadata.get("title").and_then(|v| v.as_str()), Some("Test Session"));
     assert!(session.messages.is_empty());
 }
 
@@ -95,16 +92,9 @@ fn test_apply_message_edited() {
         thinking_trace: None,
         reasoning_content: None,
     };
-    let edit = SessionEvent::MessageEdited {
-        seq: 0,
-        content: "Edited content".to_string(),
-    };
+    let edit = SessionEvent::MessageEdited { seq: 0, content: "Edited content".to_string() };
 
-    let events = vec![
-        make_envelope(0, &created),
-        make_envelope(1, &msg),
-        make_envelope(2, &edit),
-    ];
+    let events = vec![make_envelope(0, &created), make_envelope(1, &msg), make_envelope(2, &edit)];
     let session = SessionProjector::project_from_events(&events).unwrap();
 
     assert_eq!(session.messages.len(), 1);
@@ -114,25 +104,18 @@ fn test_apply_message_edited() {
 #[test]
 fn test_apply_title_changed() {
     let created = session_created_event();
-    let title = SessionEvent::TitleChanged {
-        title: "New Title".to_string(),
-    };
+    let title = SessionEvent::TitleChanged { title: "New Title".to_string() };
 
     let events = vec![make_envelope(0, &created), make_envelope(1, &title)];
     let session = SessionProjector::project_from_events(&events).unwrap();
 
-    assert_eq!(
-        session.metadata.get("title").and_then(|v| v.as_str()),
-        Some("New Title")
-    );
+    assert_eq!(session.metadata.get("title").and_then(|v| v.as_str()), Some("New Title"));
 }
 
 #[test]
 fn test_apply_session_archived_unarchived() {
     let created = session_created_event();
-    let archived = SessionEvent::SessionArchived {
-        time_archived: Utc::now(),
-    };
+    let archived = SessionEvent::SessionArchived { time_archived: Utc::now() };
     let unarchived = SessionEvent::SessionUnarchived;
 
     // Archive
@@ -143,12 +126,7 @@ fn test_apply_session_archived_unarchived() {
     // Unarchive
     let events = vec![
         make_envelope(0, &session_created_event()),
-        make_envelope(
-            1,
-            &SessionEvent::SessionArchived {
-                time_archived: Utc::now(),
-            },
-        ),
+        make_envelope(1, &SessionEvent::SessionArchived { time_archived: Utc::now() }),
         make_envelope(2, &unarchived),
     ];
     let session = SessionProjector::project_from_events(&events).unwrap();
@@ -173,18 +151,12 @@ fn test_apply_file_change_recorded() {
 #[test]
 fn test_apply_metadata_updated() {
     let created = session_created_event();
-    let meta = SessionEvent::MetadataUpdated {
-        key: "model".to_string(),
-        value: json!("gpt-4"),
-    };
+    let meta = SessionEvent::MetadataUpdated { key: "model".to_string(), value: json!("gpt-4") };
 
     let events = vec![make_envelope(0, &created), make_envelope(1, &meta)];
     let session = SessionProjector::project_from_events(&events).unwrap();
 
-    assert_eq!(
-        session.metadata.get("model").and_then(|v| v.as_str()),
-        Some("gpt-4")
-    );
+    assert_eq!(session.metadata.get("model").and_then(|v| v.as_str()), Some("gpt-4"));
 }
 
 #[test]
@@ -217,12 +189,7 @@ fn test_project_full_sequence() {
                 reasoning_content: None,
             },
         ),
-        make_envelope(
-            3,
-            &SessionEvent::TitleChanged {
-                title: "Bug Fix Session".to_string(),
-            },
-        ),
+        make_envelope(3, &SessionEvent::TitleChanged { title: "Bug Fix Session".to_string() }),
         make_envelope(
             4,
             &SessionEvent::FileChangeRecorded {
@@ -231,10 +198,7 @@ fn test_project_full_sequence() {
         ),
         make_envelope(
             5,
-            &SessionEvent::MetadataUpdated {
-                key: "priority".to_string(),
-                value: json!("high"),
-            },
+            &SessionEvent::MetadataUpdated { key: "priority".to_string(), value: json!("high") },
         ),
     ];
 
@@ -244,19 +208,10 @@ fn test_project_full_sequence() {
     assert_eq!(session.messages.len(), 2);
     assert_eq!(session.messages[0].content, "Fix the bug");
     assert_eq!(session.messages[1].content, "I'll fix it");
-    assert_eq!(
-        session.messages[1].thinking_trace.as_deref(),
-        Some("thinking...")
-    );
-    assert_eq!(
-        session.metadata.get("title").and_then(|v| v.as_str()),
-        Some("Bug Fix Session")
-    );
+    assert_eq!(session.messages[1].thinking_trace.as_deref(), Some("thinking..."));
+    assert_eq!(session.metadata.get("title").and_then(|v| v.as_str()), Some("Bug Fix Session"));
     assert_eq!(session.file_changes.len(), 1);
-    assert_eq!(
-        session.metadata.get("priority").and_then(|v| v.as_str()),
-        Some("high")
-    );
+    assert_eq!(session.metadata.get("priority").and_then(|v| v.as_str()), Some("high"));
 }
 
 // ---------------------------------------------------------------------------
@@ -291,12 +246,7 @@ fn test_replay_to_specific_seq() {
                 reasoning_content: None,
             },
         ),
-        make_envelope(
-            4,
-            &SessionEvent::TitleChanged {
-                title: "Changed".to_string(),
-            },
-        ),
+        make_envelope(4, &SessionEvent::TitleChanged { title: "Changed".to_string() }),
         make_envelope(
             5,
             &SessionEvent::MessageAdded {
@@ -317,10 +267,7 @@ fn test_replay_to_specific_seq() {
     assert_eq!(session.messages[0].content, "First");
     assert_eq!(session.messages[1].content, "Second");
     // Title should still be from SessionCreated, not the TitleChanged at seq 4.
-    assert_eq!(
-        session.metadata.get("title").and_then(|v| v.as_str()),
-        Some("Test Session")
-    );
+    assert_eq!(session.metadata.get("title").and_then(|v| v.as_str()), Some("Test Session"));
 }
 
 #[test]

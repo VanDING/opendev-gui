@@ -106,11 +106,8 @@ fn test_convert_request_with_tools() {
 
 #[test]
 fn test_build_azure_url() {
-    let url = build_azure_url(
-        "https://myresource.openai.azure.com",
-        "gpt-4o",
-        "2024-02-15-preview",
-    );
+    let url =
+        build_azure_url("https://myresource.openai.azure.com", "gpt-4o", "2024-02-15-preview");
     assert_eq!(
         url,
         "https://myresource.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview"

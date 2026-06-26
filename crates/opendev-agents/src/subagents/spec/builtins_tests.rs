@@ -56,10 +56,7 @@ fn test_verification_builtin() {
 fn test_project_init_builtin() {
     let spec = project_init("You analyze codebases.");
     assert_eq!(spec.name, "project_init");
-    assert_eq!(
-        spec.description,
-        "Analyze codebase and generate project instructions"
-    );
+    assert_eq!(spec.description, "Analyze codebase and generate project instructions");
     assert!(spec.has_tool_restriction());
     assert_eq!(spec.tools.len(), 4);
     assert!(spec.tools.contains(&"Read".to_string()));

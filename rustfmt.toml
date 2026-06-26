@@ -1,0 +1,7 @@
+# Rustfmt configuration for OpenDev Desktop
+#
+# Only uses stable features. Nightly features (imports_granularity,
+# group_imports, etc.) are left out until they stabilize.
+edition = "2024"
+max_width = 100
+use_small_heuristics = "Max"

@@ -73,13 +73,7 @@ impl TaskScheduler {
             let inner = Arc::clone(&self.inner);
             let label_str = label_str.clone();
             tokio::spawn(async move {
-                inner.tasks.lock().await.insert(
-                    id,
-                    TaskEntry {
-                        label: label_str,
-                        handle,
-                    },
-                );
+                inner.tasks.lock().await.insert(id, TaskEntry { label: label_str, handle });
             });
         }
 
@@ -124,13 +118,7 @@ impl TaskScheduler {
         let inner = Arc::clone(&self.inner);
         let label_owned = label_str;
         tokio::spawn(async move {
-            inner.tasks.lock().await.insert(
-                id,
-                TaskEntry {
-                    label: label_owned,
-                    handle,
-                },
-            );
+            inner.tasks.lock().await.insert(id, TaskEntry { label: label_owned, handle });
         });
 
         id

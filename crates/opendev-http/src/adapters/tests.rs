@@ -2,10 +2,7 @@ use super::*;
 
 #[test]
 fn test_detect_anthropic() {
-    assert_eq!(
-        detect_provider_from_key("sk-ant-api03-abc123"),
-        Some("anthropic")
-    );
+    assert_eq!(detect_provider_from_key("sk-ant-api03-abc123"), Some("anthropic"));
 }
 
 #[test]
@@ -33,8 +30,5 @@ fn test_detect_unknown() {
 #[test]
 fn test_anthropic_before_openai() {
     // sk-ant- should match anthropic, not openai
-    assert_eq!(
-        detect_provider_from_key("sk-ant-api03-test"),
-        Some("anthropic")
-    );
+    assert_eq!(detect_provider_from_key("sk-ant-api03-test"), Some("anthropic"));
 }

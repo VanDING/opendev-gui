@@ -50,14 +50,7 @@ impl<'a> InputWidget<'a> {
         bg_result_count: usize,
         activity_tag: Option<&'a str>,
     ) -> Self {
-        Self {
-            buffer,
-            cursor,
-            mode,
-            user_msg_count,
-            bg_result_count,
-            activity_tag,
-        }
+        Self { buffer, cursor, mode, user_msg_count, bg_result_count, activity_tag }
     }
 }
 
@@ -67,11 +60,8 @@ impl Widget for InputWidget<'_> {
             return;
         }
 
-        let accent = if self.mode == "PLAN" {
-            style_tokens::GREEN_LIGHT
-        } else {
-            style_tokens::ACCENT
-        };
+        let accent =
+            if self.mode == "PLAN" { style_tokens::GREEN_LIGHT } else { style_tokens::ACCENT };
 
         let placeholder = "Type a message...";
 
@@ -88,11 +78,7 @@ impl Widget for InputWidget<'_> {
 
         let queue_text = match (self.user_msg_count, self.bg_result_count) {
             (0, 0) => String::new(),
-            (u, 0) => format!(
-                "── {} message{} queued (ESC) ",
-                u,
-                if u == 1 { "" } else { "s" }
-            ),
+            (u, 0) => format!("── {} message{} queued (ESC) ", u, if u == 1 { "" } else { "s" }),
             (0, b) => format!("── {} result{} queued ", b, if b == 1 { "" } else { "s" }),
             (u, b) => format!("── {} queued (ESC) ", u + b),
         };
@@ -103,18 +89,13 @@ impl Widget for InputWidget<'_> {
         let sep_style = Style::default().fg(accent);
         let mut spans = vec![
             Span::styled("── ", sep_style),
-            Span::styled(
-                mode_text,
-                Style::default().fg(accent).add_modifier(Modifier::BOLD),
-            ),
+            Span::styled(mode_text, Style::default().fg(accent).add_modifier(Modifier::BOLD)),
             Span::styled(hint_text, Style::default().fg(style_tokens::GREY)),
         ];
         if !queue_text.is_empty() {
             spans.push(Span::styled(
                 queue_text,
-                Style::default()
-                    .fg(Color::Yellow)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
             ));
         }
         if let Some(tag) = self.activity_tag {
@@ -134,12 +115,7 @@ impl Widget for InputWidget<'_> {
         }
         let sep_line = Line::from(spans);
         // Pre-fill entire row with ─ so any rendering gap stays filled
-        buf.set_string(
-            area.left(),
-            area.top(),
-            "─".repeat(area.width as usize),
-            sep_style,
-        );
+        buf.set_string(area.left(), area.top(), "─".repeat(area.width as usize), sep_style);
         buf.set_line(area.left(), area.top(), &sep_line, area.width);
 
         // Rows below separator: multiline input
@@ -147,22 +123,15 @@ impl Widget for InputWidget<'_> {
         if text_height == 0 {
             return;
         }
-        let text_area = Rect {
-            x: area.x,
-            y: area.y + 1,
-            width: area.width,
-            height: text_height,
-        };
+        let text_area = Rect { x: area.x, y: area.y + 1, width: area.width, height: text_height };
 
         if self.buffer.is_empty() {
             let prefix = Span::styled(
                 "> ".to_string(),
                 Style::default().fg(accent).add_modifier(Modifier::BOLD),
             );
-            let content = vec![
-                prefix,
-                Span::styled(placeholder, Style::default().fg(style_tokens::SUBTLE)),
-            ];
+            let content =
+                vec![prefix, Span::styled(placeholder, Style::default().fg(style_tokens::SUBTLE))];
             Paragraph::new(Line::from(content)).render(text_area, buf);
         } else {
             // Split buffer into lines and render each with proper prefix

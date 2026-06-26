@@ -12,10 +12,7 @@ fn make_tool() -> (UpdateTodoTool, Arc<Mutex<TodoManager>>) {
 }
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 #[tokio::test]
@@ -32,10 +29,7 @@ async fn test_update_status_by_number() {
         )
         .await;
     assert!(result.success);
-    assert_eq!(
-        mgr.lock().unwrap().get(2).unwrap().status,
-        TodoStatus::InProgress
-    );
+    assert_eq!(mgr.lock().unwrap().get(2).unwrap().status, TodoStatus::InProgress);
 }
 
 #[tokio::test]
@@ -52,10 +46,7 @@ async fn test_update_status_by_todo_dash_n() {
         )
         .await;
     assert!(result.success);
-    assert_eq!(
-        mgr.lock().unwrap().get(1).unwrap().status,
-        TodoStatus::InProgress
-    );
+    assert_eq!(mgr.lock().unwrap().get(1).unwrap().status, TodoStatus::InProgress);
 }
 
 #[tokio::test]
@@ -64,10 +55,7 @@ async fn test_update_not_found() {
     let ctx = ToolContext::new("/tmp");
     let result = tool
         .execute(
-            make_args(&[
-                ("id", serde_json::json!("999")),
-                ("status", serde_json::json!("done")),
-            ]),
+            make_args(&[("id", serde_json::json!("999")), ("status", serde_json::json!("done"))]),
             &ctx,
         )
         .await;
@@ -80,10 +68,7 @@ async fn test_update_invalid_status() {
     let ctx = ToolContext::new("/tmp");
     let result = tool
         .execute(
-            make_args(&[
-                ("id", serde_json::json!("1")),
-                ("status", serde_json::json!("invalid")),
-            ]),
+            make_args(&[("id", serde_json::json!("1")), ("status", serde_json::json!("invalid"))]),
             &ctx,
         )
         .await;

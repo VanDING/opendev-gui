@@ -90,11 +90,7 @@ impl BaseTool for McpBridgeTool {
     ) -> ToolResult {
         let arguments = serde_json::Value::Object(args.into_iter().collect());
 
-        match self
-            .manager
-            .call_tool(&self.server_name, &self.original_name, arguments)
-            .await
-        {
+        match self.manager.call_tool(&self.server_name, &self.original_name, arguments).await {
             Ok(result) => {
                 // Convert MCP content blocks to a single output string
                 let output = result

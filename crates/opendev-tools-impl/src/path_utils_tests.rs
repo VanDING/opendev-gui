@@ -33,10 +33,7 @@ fn test_external_path_opendev_config_allowed() {
     let tmp = TempDir::new().unwrap();
     let wd = tmp.path().canonicalize().unwrap();
     if let Some(home) = dirs::home_dir() {
-        assert!(!is_external_path(
-            &home.join(".opendev/memory/test.md"),
-            &wd
-        ));
+        assert!(!is_external_path(&home.join(".opendev/memory/test.md"), &wd));
     }
 }
 
@@ -45,10 +42,7 @@ fn test_external_path_xdg_config_allowed() {
     let tmp = TempDir::new().unwrap();
     let wd = tmp.path().canonicalize().unwrap();
     if let Some(home) = dirs::home_dir() {
-        assert!(!is_external_path(
-            &home.join(".config/opendev/settings.toml"),
-            &wd
-        ));
+        assert!(!is_external_path(&home.join(".config/opendev/settings.toml"), &wd));
     }
 }
 
@@ -63,10 +57,7 @@ fn test_external_path_tmp_allowed() {
 fn test_external_path_var_tmp_allowed() {
     let tmp = TempDir::new().unwrap();
     let wd = tmp.path().canonicalize().unwrap();
-    assert!(!is_external_path(
-        Path::new("/var/tmp/opendev-test.txt"),
-        &wd
-    ));
+    assert!(!is_external_path(Path::new("/var/tmp/opendev-test.txt"), &wd));
 }
 
 #[test]
@@ -97,10 +88,7 @@ fn test_external_path_home_claude_is_external() {
     let wd = tmp.path().canonicalize().unwrap();
     if let Some(home) = dirs::home_dir() {
         // ~/.claude is external (not in the allowed list)
-        assert!(is_external_path(
-            &home.join(".claude/skills/my-skill.md"),
-            &wd
-        ));
+        assert!(is_external_path(&home.join(".claude/skills/my-skill.md"), &wd));
     }
 }
 

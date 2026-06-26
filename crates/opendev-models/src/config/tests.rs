@@ -71,11 +71,11 @@ fn test_get_api_key_custom_provider_openai_env_fallback() {
         api_key: None,
         ..AppConfig::default()
     };
-    if let Ok(key) = std::env::var("OPENAI_API_KEY") {
-        if !key.is_empty() {
-            assert!(config_no_key.get_api_key().is_ok());
-            return;
-        }
+    if let Ok(key) = std::env::var("OPENAI_API_KEY")
+        && !key.is_empty()
+    {
+        assert!(config_no_key.get_api_key().is_ok());
+        return;
     }
     assert!(config_no_key.get_api_key().is_err());
 }
@@ -92,19 +92,11 @@ fn test_get_api_key_with_env_prefers_registry() {
     // With a unique registry env var that IS set
     let env_name = "OPENDEV_TEST_REGISTRY_KEY_7391";
     unsafe { std::env::set_var(env_name, "registry-key") };
-    assert_eq!(
-        config.get_api_key_with_env(Some(env_name)).unwrap(),
-        "registry-key"
-    );
+    assert_eq!(config.get_api_key_with_env(Some(env_name)).unwrap(), "registry-key");
     unsafe { std::env::remove_var(env_name) };
 
     // With registry env var NOT set → falls back to config key
-    assert_eq!(
-        config
-            .get_api_key_with_env(Some("NONEXISTENT_VAR_XYZ"))
-            .unwrap(),
-        "config-key"
-    );
+    assert_eq!(config.get_api_key_with_env(Some("NONEXISTENT_VAR_XYZ")).unwrap(), "config-key");
 
     // With no registry info at all → same as get_api_key()
     assert_eq!(config.get_api_key_with_env(None).unwrap(), "config-key");
@@ -115,10 +107,7 @@ fn test_builtin_env_var_mapping() {
     assert_eq!(AppConfig::builtin_env_var("openai"), "OPENAI_API_KEY");
     assert_eq!(AppConfig::builtin_env_var("anthropic"), "ANTHROPIC_API_KEY");
     assert_eq!(AppConfig::builtin_env_var("deepseek"), "DEEPSEEK_API_KEY");
-    assert_eq!(
-        AppConfig::builtin_env_var("fireworks-ai"),
-        "FIREWORKS_API_KEY"
-    );
+    assert_eq!(AppConfig::builtin_env_var("fireworks-ai"), "FIREWORKS_API_KEY");
     assert_eq!(AppConfig::builtin_env_var("xai"), "XAI_API_KEY");
     assert_eq!(AppConfig::builtin_env_var("unknown-provider"), "");
 }
@@ -126,25 +115,10 @@ fn test_builtin_env_var_mapping() {
 #[test]
 fn test_convention_env_var() {
     assert_eq!(AppConfig::convention_env_var("zai"), "ZAI_API_KEY");
-    assert_eq!(
-        AppConfig::convention_env_var("zai-coding-plan"),
-        "ZAI_API_KEY"
-    );
-    assert_eq!(
-        AppConfig::convention_env_var("siliconflow-cn"),
-        "SILICONFLOW_API_KEY"
-    );
-    assert_eq!(
-        AppConfig::convention_env_var("siliconflow"),
-        "SILICONFLOW_API_KEY"
-    );
-    assert_eq!(
-        AppConfig::convention_env_var("perplexity-agent"),
-        "PERPLEXITY_API_KEY"
-    );
-    assert_eq!(
-        AppConfig::convention_env_var("nano-gpt"),
-        "NANO_GPT_API_KEY"
-    );
+    assert_eq!(AppConfig::convention_env_var("zai-coding-plan"), "ZAI_API_KEY");
+    assert_eq!(AppConfig::convention_env_var("siliconflow-cn"), "SILICONFLOW_API_KEY");
+    assert_eq!(AppConfig::convention_env_var("siliconflow"), "SILICONFLOW_API_KEY");
+    assert_eq!(AppConfig::convention_env_var("perplexity-agent"), "PERPLEXITY_API_KEY");
+    assert_eq!(AppConfig::convention_env_var("nano-gpt"), "NANO_GPT_API_KEY");
     assert_eq!(AppConfig::convention_env_var(""), "");
 }

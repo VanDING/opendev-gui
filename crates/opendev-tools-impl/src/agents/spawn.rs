@@ -200,10 +200,7 @@ impl BaseTool for SpawnSubagentTool {
             && let Some(ref shared) = ctx.shared_state
             && let Ok(state) = shared.lock()
         {
-            let phase = state
-                .get("planning_phase")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let phase = state.get("planning_phase").and_then(|v| v.as_str()).unwrap_or("");
             if phase == "explore" {
                 return ToolResult::fail(
                     "Before planning, first list the current directory structure \
@@ -262,9 +259,8 @@ impl BaseTool for SpawnSubagentTool {
         };
 
         // Generate child session ID (reuse task_id for resume, new UUID otherwise)
-        let child_session_id = task_id
-            .map(|id| id.to_string())
-            .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+        let child_session_id =
+            task_id.map(|id| id.to_string()).unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
 
         // Unique ID for this subagent instance (disambiguates parallel subagents)
         let subagent_id = uuid::Uuid::new_v4().to_string();
@@ -277,19 +273,13 @@ impl BaseTool for SpawnSubagentTool {
         };
 
         // Check run_in_background (also check spec.background for auto-background agents)
-        let run_in_background = args
-            .get("run_in_background")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false)
-            || self.manager.get(agent_type).is_some_and(|s| s.background);
+        let run_in_background =
+            args.get("run_in_background").and_then(|v| v.as_bool()).unwrap_or(false)
+                || self.manager.get(agent_type).is_some_and(|s| s.background);
 
         // Prevent background-in-background spawning
         if run_in_background
-            && ctx
-                .values
-                .get("is_background_agent")
-                .and_then(|v| v.as_bool())
-                .unwrap_or(false)
+            && ctx.values.get("is_background_agent").and_then(|v| v.as_bool()).unwrap_or(false)
         {
             return ToolResult::fail(
                 "Background agents cannot spawn other background agents. \
@@ -437,10 +427,7 @@ impl BaseTool for SpawnSubagentTool {
                     && let Some(ref shared) = ctx.shared_state
                     && let Ok(mut state) = shared.lock()
                 {
-                    let count = state
-                        .get("explore_count")
-                        .and_then(|v| v.as_u64())
-                        .unwrap_or(0);
+                    let count = state.get("explore_count").and_then(|v| v.as_u64()).unwrap_or(0);
                     state.insert("explore_count".into(), serde_json::json!(count + 1));
                     if state.get("planning_phase").and_then(|v| v.as_str()) == Some("explore") {
                         state.insert("planning_phase".into(), serde_json::json!("plan"));
@@ -640,9 +627,7 @@ fn clean_subagent_output(text: &str) -> String {
         let trimmed = line.trim();
         // Strip horizontal rules (---, ***, ___)
         if (trimmed.starts_with("---") || trimmed.starts_with("***") || trimmed.starts_with("___"))
-            && trimmed
-                .chars()
-                .all(|c| c == '-' || c == '*' || c == '_' || c == ' ')
+            && trimmed.chars().all(|c| c == '-' || c == '*' || c == '_' || c == ' ')
             && trimmed.len() >= 3
         {
             result.push('\n');

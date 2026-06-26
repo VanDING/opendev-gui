@@ -32,11 +32,8 @@ fn test_memory_path_traversal_blocked() {
 #[test]
 fn test_memory_search() {
     let tmp = TempDir::new().unwrap();
-    std::fs::write(
-        tmp.path().join("notes.md"),
-        "Rust is a systems language\nPython is dynamic",
-    )
-    .unwrap();
+    std::fs::write(tmp.path().join("notes.md"), "Rust is a systems language\nPython is dynamic")
+        .unwrap();
     std::fs::write(tmp.path().join("other.md"), "unrelated content").unwrap();
 
     // keyword_search is synchronous, test it directly
@@ -80,11 +77,7 @@ fn test_resolve_memory_dir_global() {
 fn test_update_memory_index_generates_index() {
     let tmp = TempDir::new().unwrap();
     std::fs::write(tmp.path().join("patterns.md"), "Use snake_case everywhere").unwrap();
-    std::fs::write(
-        tmp.path().join("decisions.md"),
-        "# Decisions\nWe chose Rust",
-    )
-    .unwrap();
+    std::fs::write(tmp.path().join("decisions.md"), "# Decisions\nWe chose Rust").unwrap();
 
     update_memory_index(tmp.path()).unwrap();
 

@@ -19,10 +19,7 @@ pub struct CheckMailboxTool {
 
 impl CheckMailboxTool {
     pub fn new(team_manager: Arc<TeamManager>, agent_name: impl Into<String>) -> Self {
-        Self {
-            team_manager,
-            agent_name: agent_name.into(),
-        }
+        Self { team_manager, agent_name: agent_name.into() }
     }
 }
 
@@ -60,10 +57,8 @@ impl BaseTool for CheckMailboxTool {
         _ctx: &ToolContext,
     ) -> ToolResult {
         // Use explicit agent_name from args if provided, fallback to self.agent_name
-        let agent_name = args
-            .get("agent_name")
-            .and_then(|v| v.as_str())
-            .unwrap_or(&self.agent_name);
+        let agent_name =
+            args.get("agent_name").and_then(|v| v.as_str()).unwrap_or(&self.agent_name);
 
         // Resolve the team
         let teams = self.team_manager.list_teams();

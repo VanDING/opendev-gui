@@ -144,24 +144,9 @@ fn test_metadata_persists_across_save_load() {
     let mgr2 = SessionManager::new(tmp.path().to_path_buf()).unwrap();
     let loaded = mgr2.load_session(&session_id).unwrap();
 
-    assert_eq!(
-        loaded.metadata.get("mode").and_then(|v| v.as_str()),
-        Some("PLAN")
-    );
-    assert_eq!(
-        loaded
-            .metadata
-            .get("thinking_level")
-            .and_then(|v| v.as_str()),
-        Some("High")
-    );
-    assert_eq!(
-        loaded
-            .metadata
-            .get("autonomy_level")
-            .and_then(|v| v.as_str()),
-        Some("Manual")
-    );
+    assert_eq!(loaded.metadata.get("mode").and_then(|v| v.as_str()), Some("PLAN"));
+    assert_eq!(loaded.metadata.get("thinking_level").and_then(|v| v.as_str()), Some("High"));
+    assert_eq!(loaded.metadata.get("autonomy_level").and_then(|v| v.as_str()), Some("Manual"));
 }
 
 // --- Session forking tests ---
@@ -174,18 +159,10 @@ fn test_fork_session() {
     let mut session = Session::new();
     session.id = "parent-sess".to_string();
     session.working_directory = Some("/tmp/project".to_string());
-    session
-        .messages
-        .push(make_msg(Role::User, "first question"));
-    session
-        .messages
-        .push(make_msg(Role::Assistant, "first answer"));
-    session
-        .messages
-        .push(make_msg(Role::User, "second question"));
-    session
-        .messages
-        .push(make_msg(Role::Assistant, "second answer"));
+    session.messages.push(make_msg(Role::User, "first question"));
+    session.messages.push(make_msg(Role::Assistant, "first answer"));
+    session.messages.push(make_msg(Role::User, "second question"));
+    session.messages.push(make_msg(Role::Assistant, "second answer"));
     mgr.save_session(&session).unwrap();
 
     let forked = mgr.fork_session("parent-sess", Some(2)).unwrap();
@@ -246,20 +223,12 @@ fn test_fork_generates_title() {
 
     let mut session = Session::new();
     session.id = "title-src".to_string();
-    session
-        .messages
-        .push(make_msg(Role::User, "Implement the new auth flow"));
-    session
-        .messages
-        .push(make_msg(Role::Assistant, "Sure, I will help"));
+    session.messages.push(make_msg(Role::User, "Implement the new auth flow"));
+    session.messages.push(make_msg(Role::Assistant, "Sure, I will help"));
     mgr.save_session(&session).unwrap();
 
     let forked = mgr.fork_session("title-src", Some(2)).unwrap();
-    let title = forked
-        .metadata
-        .get("title")
-        .and_then(|v| v.as_str())
-        .unwrap();
+    let title = forked.metadata.get("title").and_then(|v| v.as_str()).unwrap();
     // Fork inherits parent title with "(fork #1)" suffix
     assert_eq!(title, "Implement the new auth flow (fork #1)");
 }
@@ -269,10 +238,7 @@ fn test_fork_generates_title() {
 #[test]
 fn test_generate_title_short_message() {
     let msgs = vec![make_msg(Role::User, "Fix the login bug")];
-    assert_eq!(
-        generate_title_from_messages(&msgs),
-        Some("Fix the login bug".to_string())
-    );
+    assert_eq!(generate_title_from_messages(&msgs), Some("Fix the login bug".to_string()));
 }
 
 #[test]
@@ -468,8 +434,7 @@ fn test_search_sessions() {
     let mut s1 = Session::new();
     s1.id = "search-1".to_string();
     s1.messages.push(make_msg(Role::User, "Fix the login bug"));
-    s1.messages
-        .push(make_msg(Role::Assistant, "I will fix that"));
+    s1.messages.push(make_msg(Role::Assistant, "I will fix that"));
     mgr.save_session(&s1).unwrap();
 
     let mut s2 = Session::new();
@@ -479,8 +444,7 @@ fn test_search_sessions() {
 
     let mut s3 = Session::new();
     s3.id = "search-3".to_string();
-    s3.messages
-        .push(make_msg(Role::User, "Another login issue"));
+    s3.messages.push(make_msg(Role::User, "Another login issue"));
     mgr.save_session(&s3).unwrap();
 
     let results = mgr.search_sessions("login");
@@ -515,10 +479,8 @@ fn test_search_sessions_returns_indices() {
     let mut s1 = Session::new();
     s1.id = "idx-test".to_string();
     s1.messages.push(make_msg(Role::User, "first message"));
-    s1.messages
-        .push(make_msg(Role::Assistant, "target keyword here"));
-    s1.messages
-        .push(make_msg(Role::User, "another target message"));
+    s1.messages.push(make_msg(Role::Assistant, "target keyword here"));
+    s1.messages.push(make_msg(Role::User, "another target message"));
     mgr.save_session(&s1).unwrap();
 
     let results = mgr.search_sessions("target");
@@ -549,18 +511,12 @@ fn test_forked_title_first_fork() {
 
 #[test]
 fn test_forked_title_increment() {
-    assert_eq!(
-        get_forked_title("My Session (fork #1)"),
-        "My Session (fork #2)"
-    );
+    assert_eq!(get_forked_title("My Session (fork #1)"), "My Session (fork #2)");
 }
 
 #[test]
 fn test_forked_title_high_number() {
-    assert_eq!(
-        get_forked_title("Debug auth (fork #99)"),
-        "Debug auth (fork #100)"
-    );
+    assert_eq!(get_forked_title("Debug auth (fork #99)"), "Debug auth (fork #100)");
 }
 
 #[test]
@@ -581,20 +537,12 @@ fn test_fork_session_uses_parent_title() {
 
     let mut session = Session::new();
     session.id = "fork-title-parent".to_string();
-    session
-        .metadata
-        .insert("title".to_string(), serde_json::json!("Auth refactor"));
-    session
-        .messages
-        .push(make_msg(Role::User, "Some unrelated first message"));
+    session.metadata.insert("title".to_string(), serde_json::json!("Auth refactor"));
+    session.messages.push(make_msg(Role::User, "Some unrelated first message"));
     mgr.save_session(&session).unwrap();
 
     let forked = mgr.fork_session("fork-title-parent", None).unwrap();
-    let title = forked
-        .metadata
-        .get("title")
-        .and_then(|v| v.as_str())
-        .unwrap();
+    let title = forked.metadata.get("title").and_then(|v| v.as_str()).unwrap();
     // Should use parent's explicit title, not re-generate from messages
     assert_eq!(title, "Auth refactor (fork #1)");
 }
@@ -606,18 +554,12 @@ fn test_fork_double_fork_increments() {
 
     let mut session = Session::new();
     session.id = "double-fork-src".to_string();
-    session
-        .metadata
-        .insert("title".to_string(), serde_json::json!("My task (fork #2)"));
+    session.metadata.insert("title".to_string(), serde_json::json!("My task (fork #2)"));
     session.messages.push(make_msg(Role::User, "hello"));
     mgr.save_session(&session).unwrap();
 
     let forked = mgr.fork_session("double-fork-src", None).unwrap();
-    let title = forked
-        .metadata
-        .get("title")
-        .and_then(|v| v.as_str())
-        .unwrap();
+    let title = forked.metadata.get("title").and_then(|v| v.as_str()).unwrap();
     assert_eq!(title, "My task (fork #3)");
 }
 
@@ -682,9 +624,7 @@ fn test_event_store_failure_doesnt_block_save() {
     let tmp = TempDir::new().unwrap();
     let dir = tmp.path().canonicalize().unwrap();
     let bad_store = EventStore::new(dir.join("nonexistent/deeply/nested"));
-    let mut mgr = SessionManager::new(dir)
-        .unwrap()
-        .with_event_store(bad_store);
+    let mut mgr = SessionManager::new(dir).unwrap().with_event_store(bad_store);
 
     // create_session should succeed even though event store write fails
     let session = mgr.create_session();

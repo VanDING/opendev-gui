@@ -66,11 +66,7 @@ impl ProviderSetup {
     /// Get full config for a provider by ID.
     pub fn get_provider_config(registry: &ModelRegistry, id: &str) -> Option<ProviderConfig> {
         let provider = registry.get_provider(id)?;
-        let api_format = if id == "anthropic" {
-            ApiFormat::Anthropic
-        } else {
-            ApiFormat::OpenAi
-        };
+        let api_format = if id == "anthropic" { ApiFormat::Anthropic } else { ApiFormat::OpenAi };
         let models = provider
             .list_models(None)
             .iter()
@@ -132,11 +128,7 @@ impl ProviderSetup {
 // ── Validation helpers ──────────────────────────────────────────────────────
 
 async fn validate_openai_key(base_url: &str, api_key: &str) -> Result<(), ValidationError> {
-    let effective_base = if base_url.is_empty() {
-        "https://api.openai.com/v1"
-    } else {
-        base_url
-    };
+    let effective_base = if base_url.is_empty() { "https://api.openai.com/v1" } else { base_url };
     let url = format!("{}/models", effective_base.trim_end_matches('/'));
 
     let client = reqwest::Client::new();
@@ -158,11 +150,8 @@ async fn validate_openai_key(base_url: &str, api_key: &str) -> Result<(), Valida
 }
 
 async fn validate_anthropic_key(base_url: &str, api_key: &str) -> Result<(), ValidationError> {
-    let effective_base = if base_url.is_empty() {
-        "https://api.anthropic.com/v1"
-    } else {
-        base_url
-    };
+    let effective_base =
+        if base_url.is_empty() { "https://api.anthropic.com/v1" } else { base_url };
     let url = format!("{}/messages", effective_base.trim_end_matches('/'));
 
     let client = reqwest::Client::new();

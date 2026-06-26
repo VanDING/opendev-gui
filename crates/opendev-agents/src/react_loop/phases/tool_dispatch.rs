@@ -75,10 +75,7 @@ where
                     .collect();
                 let nudge = get_reminder(
                     "incomplete_todos_nudge",
-                    &[
-                        ("count", &count.to_string()),
-                        ("todo_list", &titles.join("\n")),
-                    ],
+                    &[("count", &count.to_string()), ("todo_list", &titles.join("\n"))],
                 );
                 append_nudge(messages, &nudge);
                 continue;
@@ -111,17 +108,10 @@ where
             && let Some(preparsed) =
                 executor.take_preparsed_args(tc.get("id").and_then(|id| id.as_str()).unwrap_or(""))
         {
-            debug!(
-                tool = tool_name,
-                "Using pre-parsed args from streaming executor"
-            );
+            debug!(tool = tool_name, "Using pre-parsed args from streaming executor");
             // Reconstruct args_value from pre-parsed map for record_artifact()
             let value = Value::Object(
-                preparsed
-                    .args_map
-                    .iter()
-                    .map(|(k, v)| (k.clone(), v.clone()))
-                    .collect(),
+                preparsed.args_map.iter().map(|(k, v)| (k.clone(), v.clone())).collect(),
             );
             (value, preparsed.args_map)
         } else {
@@ -151,14 +141,8 @@ where
         // Permission enforcement
         let mut permission_allows = false;
         if !react_loop.config.permission.is_empty() {
-            let arg_pattern = args_map
-                .get("command")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
-            if let Some(action) = react_loop
-                .config
-                .evaluate_permission(tool_name, arg_pattern)
-            {
+            let arg_pattern = args_map.get("command").and_then(|v| v.as_str()).unwrap_or("");
+            if let Some(action) = react_loop.config.evaluate_permission(tool_name, arg_pattern) {
                 match action {
                     PermissionAction::Deny => {
                         debug!(tool = tool_name, "Tool call denied by permission rules");
@@ -240,11 +224,7 @@ where
         let needs_approval_gate =
             matches!(tool_name, "Bash" | "run_command") || tool_name.starts_with("mcp__");
         let auto_approved = if matches!(tool_name, "Bash" | "run_command") {
-            let cmd = args_map
-                .get("command")
-                .and_then(|v| v.as_str())
-                .unwrap_or("")
-                .trim();
+            let cmd = args_map.get("command").and_then(|v| v.as_str()).unwrap_or("").trim();
             state.auto_approved_patterns.iter().any(|pattern| {
                 let cmd_lower = cmd.to_lowercase();
                 let pat_lower = pattern.to_lowercase();
@@ -259,17 +239,10 @@ where
             && let Some(approval_tx) = tool_approval_tx
         {
             let command = if matches!(tool_name, "Bash" | "run_command") {
-                args_map
-                    .get("command")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("")
-                    .to_string()
+                args_map.get("command").and_then(|v| v.as_str()).unwrap_or("").to_string()
             } else {
                 serde_json::to_string_pretty(&serde_json::Value::Object(
-                    args_map
-                        .iter()
-                        .map(|(k, v)| (k.clone(), v.clone()))
-                        .collect(),
+                    args_map.iter().map(|(k, v)| (k.clone(), v.clone())).collect(),
                 ))
                 .unwrap_or_default()
             };
@@ -330,10 +303,8 @@ where
 
         // Plan edit review gate — when user selected "review edits" at plan approval,
         // file-writing tools require per-call user approval.
-        let is_file_edit_tool = matches!(
-            tool_name,
-            "Write" | "write_file" | "Edit" | "edit_file" | "multi_edit"
-        );
+        let is_file_edit_tool =
+            matches!(tool_name, "Write" | "write_file" | "Edit" | "edit_file" | "multi_edit");
         if is_file_edit_tool
             && state.plan_edit_review_mode
             && !permission_allows
@@ -410,12 +381,7 @@ where
             }
 
             let output_str = tool_result_display_output(&tool_result);
-            emitter.emit_tool_result(
-                tool_call_id_str,
-                tool_name,
-                &output_str,
-                tool_result.success,
-            );
+            emitter.emit_tool_result(tool_call_id_str, tool_name, &output_str, tool_result.success);
             emitter.emit_tool_finished(tool_call_id_str, tool_result.success);
 
             if !tool_result.success {
@@ -462,17 +428,14 @@ where
         let tool_start = Instant::now();
         let is_task_stop = matches!(tool_name, "TaskStop" | "task_complete");
         let (tool_result, was_interrupted) = {
-            let exec_fut = async {
-                tool_registry
-                    .execute(tool_name, args_map, &exec_tool_context)
-                    .await
-            }
-            .instrument(info_span!(
-                "tool_execution",
-                tool_name = tool_name,
-                tool_call_id = tool_call_id_str,
-                iteration = state.iteration,
-            ));
+            let exec_fut =
+                async { tool_registry.execute(tool_name, args_map, &exec_tool_context).await }
+                    .instrument(info_span!(
+                        "tool_execution",
+                        tool_name = tool_name,
+                        tool_call_id = tool_call_id_str,
+                        iteration = state.iteration,
+                    ));
 
             // TaskStop must never be interrupted by background completion events.
             // Cancelling TaskStop creates an orphaned tool call with no result,
@@ -507,12 +470,7 @@ where
         // Emit tool result (skip if interrupted)
         if !was_interrupted {
             let output_str = tool_result_display_output(&tool_result);
-            emitter.emit_tool_result(
-                tool_call_id_str,
-                tool_name,
-                &output_str,
-                tool_result.success,
-            );
+            emitter.emit_tool_result(tool_call_id_str, tool_name, &output_str, tool_result.success);
         } else if task_monitor.is_some_and(|m| m.is_background_requested()) {
             messages.push(serde_json::json!({
                 "role": "tool",
@@ -522,9 +480,7 @@ where
             }));
             iter_metrics.total_duration_ms = iter_start.elapsed().as_millis() as u64;
             react_loop.push_metrics(iter_metrics.clone());
-            return Some(LoopAction::Return(Ok(AgentResult::backgrounded(
-                messages.clone(),
-            ))));
+            return Some(LoopAction::Return(Ok(AgentResult::backgrounded(messages.clone()))));
         }
         emitter.emit_tool_finished(tool_call_id_str, tool_result.success);
 
@@ -532,11 +488,7 @@ where
         let _result_summary = summarize_tool_result(
             tool_name,
             tool_result.output.as_deref(),
-            if tool_result.success {
-                None
-            } else {
-                tool_result.error.as_deref()
-            },
+            if tool_result.success { None } else { tool_result.error.as_deref() },
         );
         debug!(tool = tool_name, summary = %_result_summary, "Tool result summary");
 
@@ -580,10 +532,7 @@ where
         // Capture skill model override from invoke_skill
         if matches!(tool_name, "Skill" | "invoke_skill")
             && tool_result.success
-            && let Some(model) = tool_result
-                .metadata
-                .get("skill_model")
-                .and_then(|v| v.as_str())
+            && let Some(model) = tool_result.metadata.get("skill_model").and_then(|v| v.as_str())
         {
             info!(model, "Skill model override activated");
             state.skill_model_override = Some(model.to_string());
@@ -592,10 +541,8 @@ where
         // Activate deferred tools returned by ToolSearch
         if tool_name == "ToolSearch"
             && tool_result.success
-            && let Some(tools) = tool_result
-                .metadata
-                .get("activated_tools")
-                .and_then(|v| v.as_array())
+            && let Some(tools) =
+                tool_result.metadata.get("activated_tools").and_then(|v| v.as_array())
         {
             for name in tools.iter().filter_map(|v| v.as_str()) {
                 state.activated_tools.insert(name.to_string());
@@ -676,11 +623,8 @@ where
 
         // Inject plan_approved_signal after successful present_plan / EnterPlanMode
         if matches!(tool_name, "EnterPlanMode" | "present_plan") && tool_result.success {
-            let plan_content = tool_result
-                .metadata
-                .get("plan_content")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let plan_content =
+                tool_result.metadata.get("plan_content").and_then(|v| v.as_str()).unwrap_or("");
             let reminder = get_reminder("plan_approved_signal", &[("plan_content", plan_content)]);
             if !reminder.is_empty() {
                 append_directive(messages, &reminder);
@@ -688,10 +632,8 @@ where
 
             // Store plan edit review mode from approval decision.
             // When auto_approve is false, user selected "review edits" mode.
-            if let Some(auto_approve) = tool_result
-                .metadata
-                .get("auto_approve")
-                .and_then(|v| v.as_bool())
+            if let Some(auto_approve) =
+                tool_result.metadata.get("auto_approve").and_then(|v| v.as_bool())
             {
                 state.plan_edit_review_mode = !auto_approve;
             }
@@ -713,17 +655,12 @@ where
                 );
                 iter_metrics.total_duration_ms = iter_start.elapsed().as_millis() as u64;
                 react_loop.push_metrics(iter_metrics.clone());
-                return Some(LoopAction::Return(Ok(AgentResult::backgrounded(
-                    messages.clone(),
-                ))));
+                return Some(LoopAction::Return(Ok(AgentResult::backgrounded(messages.clone()))));
             }
 
             // Append stub results for remaining unexecuted tool calls
             for remaining_tc in &tool_calls[completed_tool_count..] {
-                let tc_id = remaining_tc
-                    .get("id")
-                    .and_then(|id| id.as_str())
-                    .unwrap_or("");
+                let tc_id = remaining_tc.get("id").and_then(|id| id.as_str()).unwrap_or("");
                 let tc_name = remaining_tc
                     .get("function")
                     .and_then(|f| f.get("name"))
@@ -765,9 +702,7 @@ where
             );
             iter_metrics.total_duration_ms = iter_start.elapsed().as_millis() as u64;
             react_loop.push_metrics(iter_metrics.clone());
-            return Some(LoopAction::Return(Ok(AgentResult::backgrounded(
-                messages.clone(),
-            ))));
+            return Some(LoopAction::Return(Ok(AgentResult::backgrounded(messages.clone()))));
         }
     }
 
@@ -775,11 +710,8 @@ where
 
     // Consecutive reads detection
     let all_reads = tool_calls.iter().all(|tc| {
-        let name = tc
-            .get("function")
-            .and_then(|f| f.get("name"))
-            .and_then(|n| n.as_str())
-            .unwrap_or("");
+        let name =
+            tc.get("function").and_then(|f| f.get("name")).and_then(|n| n.as_str()).unwrap_or("");
         READ_OPS.contains(&name)
     });
     if all_reads && !any_tool_failed {
@@ -819,22 +751,12 @@ fn extract_file_tool_path(
 ) -> Option<String> {
     match tool_name {
         "Read" | "read_file" | "Edit" | "edit_file" | "Write" | "write_file" | "multi_edit"
-        | "insert_symbol" => args
-            .get("file_path")
-            .and_then(|v| v.as_str())
-            .map(String::from),
-        "NotebookEdit" | "notebook_edit" => args
-            .get("notebook_path")
-            .and_then(|v| v.as_str())
-            .map(String::from),
-        "vlm" => args
-            .get("image_path")
-            .and_then(|v| v.as_str())
-            .map(String::from),
-        "web_screenshot" => args
-            .get("output_path")
-            .and_then(|v| v.as_str())
-            .map(String::from),
+        | "insert_symbol" => args.get("file_path").and_then(|v| v.as_str()).map(String::from),
+        "NotebookEdit" | "notebook_edit" => {
+            args.get("notebook_path").and_then(|v| v.as_str()).map(String::from)
+        }
+        "vlm" => args.get("image_path").and_then(|v| v.as_str()).map(String::from),
+        "web_screenshot" => args.get("output_path").and_then(|v| v.as_str()).map(String::from),
         "Grep" | "grep" | "ast_grep" | "Glob" | "list_files" => {
             args.get("path").and_then(|v| v.as_str()).map(String::from)
         }
@@ -862,11 +784,7 @@ fn format_edit_preview(tool_name: &str, args: &std::collections::HashMap<String,
                 .or_else(|| args.get("new_content"))
                 .and_then(|v| v.as_str())
                 .unwrap_or("");
-            format!(
-                "--- old\n{}\n+++ new\n{}",
-                truncate_preview(old),
-                truncate_preview(new)
-            )
+            format!("--- old\n{}\n+++ new\n{}", truncate_preview(old), truncate_preview(new))
         }
         "multi_edit" => {
             let edits = args.get("edits").and_then(|v| v.as_array());
@@ -884,10 +802,7 @@ fn truncate_preview(text: &str) -> String {
     let all_lines: Vec<&str> = text.lines().collect();
     if all_lines.len() > PREVIEW_MAX_LINES {
         let shown = all_lines[..PREVIEW_MAX_LINES].join("\n");
-        format!(
-            "{shown}\n... ({} more lines)",
-            all_lines.len() - PREVIEW_MAX_LINES
-        )
+        format!("{shown}\n... ({} more lines)", all_lines.len() - PREVIEW_MAX_LINES)
     } else {
         all_lines.join("\n")
     }
@@ -902,10 +817,7 @@ const MAX_CONCURRENT_TOOLS: usize = 10;
 
 /// Extract tool name from a raw tool call Value.
 fn tool_name_from(tc: &Value) -> &str {
-    tc.get("function")
-        .and_then(|f| f.get("name"))
-        .and_then(|n| n.as_str())
-        .unwrap_or("unknown")
+    tc.get("function").and_then(|f| f.get("name")).and_then(|n| n.as_str()).unwrap_or("unknown")
 }
 
 /// Extract tool call ID from a raw tool call Value.
@@ -966,10 +878,8 @@ where
         .collect();
 
     // Look up tool instances for input-dependent concurrency decisions
-    let tool_instances: Vec<_> = parallel_calls
-        .iter()
-        .filter_map(|tc| tool_registry.get(&tc.name))
-        .collect();
+    let tool_instances: Vec<_> =
+        parallel_calls.iter().filter_map(|tc| tool_registry.get(&tc.name)).collect();
     let tool_refs: Vec<&dyn opendev_tools_core::BaseTool> =
         tool_instances.iter().map(|t| t.as_ref()).collect();
 
@@ -985,10 +895,7 @@ where
         return None;
     }
 
-    info!(
-        batch_count = batches.len(),
-        "Executing tool calls with batched parallelism"
-    );
+    info!(batch_count = batches.len(), "Executing tool calls with batched parallelism");
 
     let total_tool_count = tool_calls.len();
     let mut completed_tool_count: usize = 0;
@@ -1006,9 +913,7 @@ where
                 );
                 iter_metrics.total_duration_ms = iter_start.elapsed().as_millis() as u64;
                 react_loop.push_metrics(iter_metrics.clone());
-                return Some(LoopAction::Return(Ok(AgentResult::backgrounded(
-                    messages.clone(),
-                ))));
+                return Some(LoopAction::Return(Ok(AgentResult::backgrounded(messages.clone()))));
             }
 
             // Stub remaining tool calls
@@ -1174,13 +1079,7 @@ async fn execute_concurrent_batch(
             opendev_tools_core::normalizer::normalize_params(&tool_name, args_map, Some(&wd_str));
 
         emitter.emit_tool_started(&tool_call_id, &tool_name, &args_map);
-        preps.push(ToolPrep {
-            idx,
-            tool_call_id,
-            tool_name,
-            args_value,
-            args_map,
-        });
+        preps.push(ToolPrep { idx, tool_call_id, tool_name, args_value, args_map });
     }
 
     if preps.is_empty() {
@@ -1251,11 +1150,7 @@ async fn execute_concurrent_batch(
         let _result_summary = summarize_tool_result(
             &t_name,
             tool_result.output.as_deref(),
-            if tool_result.success {
-                None
-            } else {
-                tool_result.error.as_deref()
-            },
+            if tool_result.success { None } else { tool_result.error.as_deref() },
         );
         debug!(tool = %t_name, summary = %_result_summary, "Tool result summary (concurrent)");
 

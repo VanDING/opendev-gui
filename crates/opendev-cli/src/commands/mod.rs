@@ -70,16 +70,8 @@ pub fn handle_mcp(action: McpAction, working_dir: &std::path::Path) {
             names.sort();
             for name in names {
                 let server = &config.mcp_servers[name];
-                let status = if server.enabled {
-                    "enabled"
-                } else {
-                    "disabled"
-                };
-                let auto = if server.auto_start {
-                    "auto-start"
-                } else {
-                    "manual"
-                };
+                let status = if server.enabled { "enabled" } else { "disabled" };
+                let auto = if server.auto_start { "auto-start" } else { "manual" };
                 println!(
                     "  {name}  [{status}, {auto}]  {} {}",
                     server.command,
@@ -122,13 +114,7 @@ pub fn handle_mcp(action: McpAction, working_dir: &std::path::Path) {
                 }
             }
         }
-        McpAction::Add {
-            name,
-            command,
-            args,
-            env,
-            no_auto_start,
-        } => {
+        McpAction::Add { name, command, args, env, no_auto_start } => {
             // Parse KEY=VALUE env pairs
             let mut env_map: HashMap<String, String> = HashMap::new();
             for pair in &env {
@@ -226,11 +212,7 @@ pub fn handle_session(action: SessionAction, working_dir: &std::path::Path) {
     };
 
     match action {
-        SessionAction::List {
-            archived,
-            max_count,
-            json,
-        } => {
+        SessionAction::List { archived, max_count, json } => {
             let sessions = session_manager.list_sessions(archived);
             let sessions: Vec<_> = sessions.into_iter().take(max_count).collect();
 
@@ -254,10 +236,7 @@ pub fn handle_session(action: SessionAction, working_dir: &std::path::Path) {
             }
 
             let header_title = "TITLE";
-            println!(
-                "{:<38}  {:<20}  {:>5}  {header_title}",
-                "ID", "UPDATED", "MSGS"
-            );
+            println!("{:<38}  {:<20}  {:>5}  {header_title}", "ID", "UPDATED", "MSGS");
             println!("{}", "-".repeat(90));
             for s in &sessions {
                 let updated = s.updated_at.format("%Y-%m-%d %H:%M");
@@ -272,10 +251,7 @@ pub fn handle_session(action: SessionAction, working_dir: &std::path::Path) {
                     s.id, updated, s.message_count, title_display
                 );
             }
-            println!(
-                "\nShowing {} session(s). Use -n to show more.",
-                sessions.len()
-            );
+            println!("\nShowing {} session(s). Use -n to show more.", sessions.len());
         }
         SessionAction::Delete { id } => {
             if let Err(e) = session_manager.delete_session(&id) {
@@ -386,9 +362,7 @@ pub async fn handle_run(action: RunAction, working_dir: &std::path::Path) {
                     }
 
                     let executor = crate::web_executor::WebAgentExecutor::new(agent_runtime);
-                    state
-                        .set_agent_executor(std::sync::Arc::new(executor))
-                        .await;
+                    state.set_agent_executor(std::sync::Arc::new(executor)).await;
                     println!("Agent executor initialized — Web UI can execute queries");
                 }
                 Err(e) => {
@@ -403,11 +377,7 @@ pub async fn handle_run(action: RunAction, working_dir: &std::path::Path) {
             // Vite outputs to opendev/web/static/ relative to project root
             let static_dir =
                 PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../opendev/web/static");
-            let static_path = if static_dir.exists() {
-                Some(static_dir)
-            } else {
-                None
-            };
+            let static_path = if static_dir.exists() { Some(static_dir) } else { None };
 
             if let Err(e) =
                 opendev_web::server::start_server(state, &ui_host, ui_port, static_path.as_deref())

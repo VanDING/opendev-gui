@@ -225,10 +225,7 @@ impl BuiltinCommands {
                     println!("Usage: /mcp add <name> <command> [args...]");
                 } else {
                     let name = sub_args.split_whitespace().next().unwrap_or(sub_args);
-                    println!(
-                        "MCP server '{}' registered (restart required to activate).",
-                        name
-                    );
+                    println!("MCP server '{}' registered (restart required to activate).", name);
                 }
             }
             "remove" => {
@@ -313,10 +310,7 @@ impl BuiltinCommands {
                 if sub_args.is_empty() {
                     println!("Usage: /plugins remove <name>");
                 } else {
-                    println!(
-                        "Plugin '{}' not found in installed plugins.",
-                        sub_args.trim()
-                    );
+                    println!("Plugin '{}' not found in installed plugins.", sub_args.trim());
                 }
             }
             _ => {

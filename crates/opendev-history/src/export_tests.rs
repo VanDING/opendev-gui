@@ -30,13 +30,9 @@ fn test_export_empty_session() {
 #[test]
 fn test_export_with_messages() {
     let mut session = Session::new();
-    session
-        .metadata
-        .insert("title".to_string(), serde_json::json!("Test Session"));
+    session.metadata.insert("title".to_string(), serde_json::json!("Test Session"));
     session.messages.push(make_msg(Role::User, "Hello there"));
-    session
-        .messages
-        .push(make_msg(Role::Assistant, "Hi! How can I help?"));
+    session.messages.push(make_msg(Role::Assistant, "Hi! How can I help?"));
 
     let md = export_markdown(&session);
     assert!(md.contains("**Title:** Test Session"));
@@ -123,9 +119,7 @@ fn test_export_with_working_directory() {
 #[test]
 fn test_export_system_message() {
     let mut session = Session::new();
-    session
-        .messages
-        .push(make_msg(Role::System, "Context loaded."));
+    session.messages.push(make_msg(Role::System, "Context loaded."));
 
     let md = export_markdown(&session);
     assert!(md.contains("## System (Turn 1)"));

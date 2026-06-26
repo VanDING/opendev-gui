@@ -12,16 +12,11 @@ pub struct GitStatusCollector {
 
 impl GitStatusCollector {
     pub fn new(interval: usize) -> Self {
-        Self {
-            cadence: CadenceGate::new(interval),
-            is_git_repo: OnceLock::new(),
-        }
+        Self { cadence: CadenceGate::new(interval), is_git_repo: OnceLock::new() }
     }
 
     fn check_is_git_repo(&self, working_dir: &std::path::Path) -> bool {
-        *self
-            .is_git_repo
-            .get_or_init(|| working_dir.join(".git").exists())
+        *self.is_git_repo.get_or_init(|| working_dir.join(".git").exists())
     }
 }
 
@@ -63,10 +58,7 @@ impl ContextCollector for GitStatusCollector {
             .map(|o| String::from_utf8_lossy(&o.stdout).to_string())
             .unwrap_or_default();
 
-        let mut lines = vec![
-            "Git status (live):".to_string(),
-            format!("- Branch: {branch}"),
-        ];
+        let mut lines = vec!["Git status (live):".to_string(), format!("- Branch: {branch}")];
 
         let status_trimmed = status.trim();
         if status_trimmed.is_empty() {

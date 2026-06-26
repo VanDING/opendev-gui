@@ -19,9 +19,7 @@ pub struct HandlerRegistry {
 impl HandlerRegistry {
     /// Create an empty registry.
     pub fn new() -> Self {
-        Self {
-            handlers: Vec::new(),
-        }
+        Self { handlers: Vec::new() }
     }
 
     /// Register a handler.
@@ -31,10 +29,7 @@ impl HandlerRegistry {
 
     /// Find the handler for a given tool name.
     fn find_handler(&self, tool_name: &str) -> Option<&dyn ToolHandler> {
-        self.handlers
-            .iter()
-            .find(|h| h.handles().contains(&tool_name))
-            .map(|h| h.as_ref())
+        self.handlers.iter().find(|h| h.handles().contains(&tool_name)).map(|h| h.as_ref())
     }
 
     /// Run pre-execution checks for a tool.
@@ -74,9 +69,7 @@ impl Default for HandlerRegistry {
 
 impl std::fmt::Debug for HandlerRegistry {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("HandlerRegistry")
-            .field("handler_count", &self.handlers.len())
-            .finish()
+        f.debug_struct("HandlerRegistry").field("handler_count", &self.handlers.len()).finish()
     }
 }
 

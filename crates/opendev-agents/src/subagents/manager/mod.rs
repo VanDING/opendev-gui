@@ -28,9 +28,7 @@ pub struct SubagentManager {
 impl SubagentManager {
     /// Create a new empty manager.
     pub fn new() -> Self {
-        Self {
-            specs: HashMap::new(),
-        }
+        Self { specs: HashMap::new() }
     }
 
     /// Create a manager pre-loaded with core built-in subagent specs.
@@ -42,18 +40,12 @@ impl SubagentManager {
         use crate::prompts::embedded;
 
         let mut mgr = Self::new();
-        mgr.register(builtins::code_explorer(
-            embedded::SUBAGENTS_SUBAGENT_CODE_EXPLORER,
-        ));
+        mgr.register(builtins::code_explorer(embedded::SUBAGENTS_SUBAGENT_CODE_EXPLORER));
         mgr.register(builtins::planner(embedded::SUBAGENTS_SUBAGENT_PLANNER));
         mgr.register(builtins::general(embedded::SUBAGENTS_SUBAGENT_GENERAL));
         mgr.register(builtins::build(embedded::SUBAGENTS_SUBAGENT_BUILD));
-        mgr.register(builtins::verification(
-            embedded::SUBAGENTS_SUBAGENT_VERIFICATION,
-        ));
-        mgr.register(builtins::project_init(
-            embedded::SUBAGENTS_SUBAGENT_PROJECT_INIT,
-        ));
+        mgr.register(builtins::verification(embedded::SUBAGENTS_SUBAGENT_VERIFICATION));
+        mgr.register(builtins::project_init(embedded::SUBAGENTS_SUBAGENT_PROJECT_INIT));
         mgr
     }
 
@@ -145,9 +137,7 @@ impl SubagentManager {
                 SubAgentSpec::new(
                     name,
                     cfg.description.as_deref().unwrap_or("Custom agent"),
-                    cfg.prompt
-                        .as_deref()
-                        .unwrap_or("You are a helpful assistant."),
+                    cfg.prompt.as_deref().unwrap_or("You are a helpful assistant."),
                 )
             });
 
@@ -188,10 +178,8 @@ impl SubagentManager {
                     "ask" => PermissionAction::Ask,
                     _ => continue,
                 };
-                spec.permission.insert(
-                    tool_pattern.clone(),
-                    super::spec::PermissionRule::Action(action),
-                );
+                spec.permission
+                    .insert(tool_pattern.clone(), super::spec::PermissionRule::Action(action));
             }
         }
     }
@@ -213,11 +201,7 @@ impl SubagentManager {
 
     /// List all registered subagent names (excludes hidden and disabled agents).
     pub fn names(&self) -> Vec<&str> {
-        self.specs
-            .values()
-            .filter(|s| !s.hidden && !s.disable)
-            .map(|s| s.name.as_str())
-            .collect()
+        self.specs.values().filter(|s| !s.hidden && !s.disable).map(|s| s.name.as_str()).collect()
     }
 
     /// List all registered subagent names including hidden ones.
@@ -288,11 +272,8 @@ impl SubagentManager {
     /// from live spec data. Sorted alphabetically for deterministic output.
     /// Excludes hidden and disabled agents.
     pub fn build_agent_listing(&self) -> String {
-        let mut specs: Vec<&SubAgentSpec> = self
-            .specs
-            .values()
-            .filter(|s| !s.hidden && !s.disable)
-            .collect();
+        let mut specs: Vec<&SubAgentSpec> =
+            self.specs.values().filter(|s| !s.hidden && !s.disable).collect();
         specs.sort_by_key(|s| &s.name);
 
         let lines: Vec<String> = specs
@@ -303,10 +284,7 @@ impl SubagentManager {
                 } else {
                     spec.tools.join(", ")
                 };
-                format!(
-                    "- {}: {} (Tools: {})",
-                    spec.name, spec.description, tools_str
-                )
+                format!("- {}: {} (Tools: {})", spec.name, spec.description, tools_str)
             })
             .collect();
         lines.join("\n")

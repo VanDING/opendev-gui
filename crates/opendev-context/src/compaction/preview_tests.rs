@@ -3,11 +3,8 @@ use super::*;
 
 #[test]
 fn test_compact_preview_small() {
-    let messages = vec![
-        make_msg("system", "sys"),
-        make_msg("user", "hi"),
-        make_msg("assistant", "hello"),
-    ];
+    let messages =
+        vec![make_msg("system", "sys"), make_msg("user", "hi"), make_msg("assistant", "hello")];
     let preview = compact_preview(&messages);
     // No sliding window (too few messages)
     assert!(preview.sliding_window.is_none());
@@ -54,10 +51,7 @@ fn test_compact_preview_compact_stage() {
 
 #[test]
 fn test_summarize_tool_output_success() {
-    let output = format!(
-        "Line 1: all good\n{}\nLine 100: done",
-        "some data\n".repeat(50)
-    );
+    let output = format!("Line 1: all good\n{}\nLine 100: done", "some data\n".repeat(50));
     let summary = summarize_tool_output("bash", &output);
     assert!(summary.starts_with("[summary: bash succeeded"));
     // bash/run_command branch keeps last 3 meaningful lines
@@ -73,10 +67,8 @@ fn test_summarize_tool_output_failure() {
 
 #[test]
 fn test_summarize_tool_output_generic() {
-    let output = format!(
-        "First line of output\n{}\nLast line of output",
-        "middle data\n".repeat(50)
-    );
+    let output =
+        format!("First line of output\n{}\nLast line of output", "middle data\n".repeat(50));
     let summary = summarize_tool_output("edit_file", &output);
     assert!(summary.starts_with("[summary: edit_file succeeded"));
     // Generic branch keeps first + last lines
@@ -98,10 +90,8 @@ fn test_summarize_run_command_keeps_tail() {
 
 #[test]
 fn test_summarize_search_keeps_first_results() {
-    let output = (0..20)
-        .map(|i| format!("src/file_{i}.rs:42: match found"))
-        .collect::<Vec<_>>()
-        .join("\n");
+    let output =
+        (0..20).map(|i| format!("src/file_{i}.rs:42: match found")).collect::<Vec<_>>().join("\n");
     let summary = summarize_tool_output("search", &output);
     assert!(summary.starts_with("[summary: search succeeded, 20 results]"));
     // Should show first 5 results

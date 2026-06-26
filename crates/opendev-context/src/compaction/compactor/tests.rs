@@ -8,38 +8,23 @@ fn test_optimization_levels() {
 
     // At 0% usage
     let messages = vec![make_msg("user", "hi")];
-    assert_eq!(
-        compactor.check_usage(&messages, ""),
-        OptimizationLevel::None
-    );
+    assert_eq!(compactor.check_usage(&messages, ""), OptimizationLevel::None);
 
     // Force usage to 75% via API calibration
     compactor.update_from_api_usage(750, 1);
-    assert_eq!(
-        compactor.check_usage(&messages, ""),
-        OptimizationLevel::Warning
-    );
+    assert_eq!(compactor.check_usage(&messages, ""), OptimizationLevel::Warning);
 
     // 85%
     compactor.update_from_api_usage(850, 1);
-    assert_eq!(
-        compactor.check_usage(&messages, ""),
-        OptimizationLevel::Prune
-    );
+    assert_eq!(compactor.check_usage(&messages, ""), OptimizationLevel::Prune);
 
     // 95%
     compactor.update_from_api_usage(950, 1);
-    assert_eq!(
-        compactor.check_usage(&messages, ""),
-        OptimizationLevel::Aggressive
-    );
+    assert_eq!(compactor.check_usage(&messages, ""), OptimizationLevel::Aggressive);
 
     // 99.5%
     compactor.update_from_api_usage(995, 1);
-    assert_eq!(
-        compactor.check_usage(&messages, ""),
-        OptimizationLevel::Compact
-    );
+    assert_eq!(compactor.check_usage(&messages, ""), OptimizationLevel::Compact);
 }
 
 #[test]
@@ -90,11 +75,8 @@ fn test_protected_tools_not_masked() {
     for _ in 1..10 {
         names.push("bash");
     }
-    let pairs: Vec<(&str, &str)> = tc_ids
-        .iter()
-        .zip(names.iter())
-        .map(|(id, name)| (id.as_str(), *name))
-        .collect();
+    let pairs: Vec<(&str, &str)> =
+        tc_ids.iter().zip(names.iter()).map(|(id, name)| (id.as_str(), *name)).collect();
     messages.push(make_assistant_with_tc(pairs));
     for id in &tc_ids {
         messages.push(make_tool_msg(id, &"x".repeat(100)));
@@ -114,11 +96,8 @@ fn test_protected_tools_not_masked() {
 #[test]
 fn test_compact_small_conversation() {
     let mut compactor = ContextCompactor::new(100_000);
-    let messages = vec![
-        make_msg("system", "sys"),
-        make_msg("user", "hello"),
-        make_msg("assistant", "hi"),
-    ];
+    let messages =
+        vec![make_msg("system", "sys"), make_msg("user", "hello"), make_msg("assistant", "hi")];
     // Should not compact if <= 4 messages
     let result = compactor.compact(messages.clone(), "sys");
     assert_eq!(result.len(), 3);
@@ -136,10 +115,7 @@ fn test_compact_large_conversation() {
     let result = compactor.compact(messages, "sys");
     assert!(result.len() < original_len);
     // First message preserved
-    assert_eq!(
-        result[0].get("role").and_then(|v| v.as_str()),
-        Some("system")
-    );
+    assert_eq!(result[0].get("role").and_then(|v| v.as_str()), Some("system"));
     // Summary message present
     let has_summary = result.iter().any(|m| {
         m.get("content")
@@ -153,12 +129,8 @@ fn test_compact_large_conversation() {
 #[test]
 fn test_compactor_save_load_artifact_index() {
     let mut compactor = ContextCompactor::new(100_000);
-    compactor
-        .artifact_index
-        .record("src/app.rs", "created", "new file");
-    compactor
-        .artifact_index
-        .record("src/app.rs", "modified", "added fn");
+    compactor.artifact_index.record("src/app.rs", "created", "new file");
+    compactor.artifact_index.record("src/app.rs", "modified", "added fn");
 
     // Save to metadata
     let mut metadata = std::collections::HashMap::new();
@@ -241,10 +213,7 @@ fn test_sliding_window_above_threshold() {
     assert_eq!(result.len(), 1 + 1 + SLIDING_WINDOW_RECENT);
 
     // First message is system
-    assert_eq!(
-        result[0].get("role").and_then(|v| v.as_str()),
-        Some("system")
-    );
+    assert_eq!(result[0].get("role").and_then(|v| v.as_str()), Some("system"));
     // Second message is the sliding window summary
     let summary_content = result[1].get("content").and_then(|v| v.as_str()).unwrap();
     assert!(summary_content.contains("[SLIDING WINDOW SUMMARY"));
@@ -280,22 +249,14 @@ fn test_summarize_verbose_tool_outputs() {
         .iter()
         .find(|m| m.get("tool_call_id").and_then(|v| v.as_str()) == Some("tc-1"))
         .unwrap();
-    assert!(
-        tc1.get("content")
-            .and_then(|v| v.as_str())
-            .unwrap()
-            .starts_with("[summary:")
-    );
+    assert!(tc1.get("content").and_then(|v| v.as_str()).unwrap().starts_with("[summary:"));
 
     // tc-3 should remain [pruned]
     let tc3 = messages
         .iter()
         .find(|m| m.get("tool_call_id").and_then(|v| v.as_str()) == Some("tc-3"))
         .unwrap();
-    assert_eq!(
-        tc3.get("content").and_then(|v| v.as_str()).unwrap(),
-        "[pruned]"
-    );
+    assert_eq!(tc3.get("content").and_then(|v| v.as_str()).unwrap(), "[pruned]");
 }
 
 #[test]
@@ -315,24 +276,14 @@ fn test_summarize_skips_protected_tools() {
         .iter()
         .find(|m| m.get("tool_call_id").and_then(|v| v.as_str()) == Some("tc-0"))
         .unwrap();
-    assert!(
-        !tc0.get("content")
-            .and_then(|v| v.as_str())
-            .unwrap()
-            .starts_with("[summary:")
-    );
+    assert!(!tc0.get("content").and_then(|v| v.as_str()).unwrap().starts_with("[summary:"));
 
     // bash output SHOULD be summarized
     let tc1 = messages
         .iter()
         .find(|m| m.get("tool_call_id").and_then(|v| v.as_str()) == Some("tc-1"))
         .unwrap();
-    assert!(
-        tc1.get("content")
-            .and_then(|v| v.as_str())
-            .unwrap()
-            .starts_with("[summary:")
-    );
+    assert!(tc1.get("content").and_then(|v| v.as_str()).unwrap().starts_with("[summary:"));
 }
 
 #[test]
@@ -356,16 +307,10 @@ fn test_prune_skips_summarized_outputs() {
     messages.push(make_assistant_with_tc(pairs));
 
     // Some already summarized, some not
-    messages.push(make_tool_msg(
-        "tc-0",
-        "[summary: bash succeeded, 10 lines]\nfirst line",
-    ));
+    messages.push(make_tool_msg("tc-0", "[summary: bash succeeded, 10 lines]\nfirst line"));
     messages.push(make_tool_msg("tc-1", &"x".repeat(20_000)));
     messages.push(make_tool_msg("tc-2", &"y".repeat(20_000)));
-    messages.push(make_tool_msg(
-        "tc-3",
-        "[summary: bash failed, 5 lines]\nerror",
-    ));
+    messages.push(make_tool_msg("tc-3", "[summary: bash failed, 5 lines]\nerror"));
     messages.push(make_tool_msg("tc-4", &"z".repeat(20_000)));
 
     compactor.prune_old_tool_outputs(&mut messages);
@@ -375,12 +320,7 @@ fn test_prune_skips_summarized_outputs() {
         .iter()
         .find(|m| m.get("tool_call_id").and_then(|v| v.as_str()) == Some("tc-0"))
         .unwrap();
-    assert!(
-        tc0.get("content")
-            .and_then(|v| v.as_str())
-            .unwrap()
-            .starts_with("[summary:")
-    );
+    assert!(tc0.get("content").and_then(|v| v.as_str()).unwrap().starts_with("[summary:"));
 }
 
 #[test]
@@ -424,25 +364,15 @@ fn test_build_compaction_payload() {
     let (payload, middle_count, keep_recent) = result.unwrap();
     assert!(middle_count > 0);
     assert!(keep_recent >= 2);
-    assert_eq!(
-        payload.pointer("/messages/0/role").and_then(|v| v.as_str()),
-        Some("system")
-    );
-    assert_eq!(
-        payload.get("model").and_then(|v| v.as_str()),
-        Some("gpt-4o-mini")
-    );
+    assert_eq!(payload.pointer("/messages/0/role").and_then(|v| v.as_str()), Some("system"));
+    assert_eq!(payload.get("model").and_then(|v| v.as_str()), Some("gpt-4o-mini"));
 }
 
 #[test]
 fn test_build_compaction_payload_too_few() {
     let compactor = ContextCompactor::new(100_000);
     let messages = vec![make_msg("system", "sys"), make_msg("user", "hi")];
-    assert!(
-        compactor
-            .build_compaction_payload(&messages, "sys", "model")
-            .is_none()
-    );
+    assert!(compactor.build_compaction_payload(&messages, "sys", "model").is_none());
 }
 
 #[test]
@@ -467,10 +397,7 @@ fn test_apply_llm_compaction() {
 
     // head(1) + summary(1) + tail(keep_recent)
     assert_eq!(result.len(), 1 + 1 + keep_recent);
-    assert_eq!(
-        result[0].get("role").and_then(|v| v.as_str()),
-        Some("system")
-    );
+    assert_eq!(result[0].get("role").and_then(|v| v.as_str()), Some("system"));
     let summary = result[1].get("content").and_then(|v| v.as_str()).unwrap();
     assert!(summary.contains("[CONVERSATION SUMMARY]"));
     assert!(summary.contains("LLM summary"));
@@ -529,10 +456,7 @@ fn test_prune_skips_small_outputs() {
         .iter()
         .find(|m| m.get("tool_call_id").and_then(|v| v.as_str()) == Some("tc-1"))
         .unwrap();
-    assert_eq!(
-        tc1.get("content").and_then(|v| v.as_str()).unwrap(),
-        "short result"
-    );
+    assert_eq!(tc1.get("content").and_then(|v| v.as_str()).unwrap(), "short result");
 }
 
 #[test]
@@ -585,66 +509,40 @@ fn test_simulated_conversation_small_context() {
     // Turn 1: API reports 2,000 total tokens (input + output)
     compactor.update_from_api_usage(2_000, 3);
     assert!((compactor.usage_pct() - 20.0).abs() < 0.1);
-    assert_eq!(
-        compactor.check_usage(&[make_msg("user", "hi")], ""),
-        OptimizationLevel::None
-    );
+    assert_eq!(compactor.check_usage(&[make_msg("user", "hi")], ""), OptimizationLevel::None);
 
     // Turn 2: conversation grows to 5,500 tokens
     compactor.update_from_api_usage(5_500, 8);
     assert!((compactor.usage_pct() - 55.0).abs() < 0.1);
-    assert_eq!(
-        compactor.check_usage(&[make_msg("user", "hi")], ""),
-        OptimizationLevel::None
-    );
+    assert_eq!(compactor.check_usage(&[make_msg("user", "hi")], ""), OptimizationLevel::None);
 
     // Turn 3: hits 72% — warning threshold
     compactor.update_from_api_usage(7_200, 12);
     assert!((compactor.usage_pct() - 72.0).abs() < 0.1);
-    let messages: Vec<_> = (0..12)
-        .map(|i| make_msg("user", &format!("msg {i}")))
-        .collect();
-    assert_eq!(
-        compactor.check_usage(&messages, ""),
-        OptimizationLevel::Warning
-    );
+    let messages: Vec<_> = (0..12).map(|i| make_msg("user", &format!("msg {i}"))).collect();
+    assert_eq!(compactor.check_usage(&messages, ""), OptimizationLevel::Warning);
 
     // Turn 4: hits 82% — mask threshold
     compactor.update_from_api_usage(8_200, 15);
-    let messages: Vec<_> = (0..15)
-        .map(|i| make_msg("user", &format!("msg {i}")))
-        .collect();
-    assert_eq!(
-        compactor.check_usage(&messages, ""),
-        OptimizationLevel::Mask
-    );
+    let messages: Vec<_> = (0..15).map(|i| make_msg("user", &format!("msg {i}"))).collect();
+    assert_eq!(compactor.check_usage(&messages, ""), OptimizationLevel::Mask);
 
     // Turn 5: hits 92% — aggressive threshold
     compactor.update_from_api_usage(9_200, 18);
-    let messages: Vec<_> = (0..18)
-        .map(|i| make_msg("user", &format!("msg {i}")))
-        .collect();
-    assert_eq!(
-        compactor.check_usage(&messages, ""),
-        OptimizationLevel::Aggressive
-    );
+    let messages: Vec<_> = (0..18).map(|i| make_msg("user", &format!("msg {i}"))).collect();
+    assert_eq!(compactor.check_usage(&messages, ""), OptimizationLevel::Aggressive);
 
     // Simulate staged compaction: content is masked, calibration invalidated
     compactor.invalidate_calibration();
     // Recount from actual (small) messages — should show much lower usage
-    let small_messages: Vec<_> = (0..18)
-        .map(|i| make_msg("user", &format!("m{i}")))
-        .collect();
+    let small_messages: Vec<_> = (0..18).map(|i| make_msg("user", &format!("m{i}"))).collect();
     let level = compactor.check_usage(&small_messages, "sys");
     // Recounted from tiny messages — usage should be well under 70%
     assert!(
         compactor.usage_pct() < 70.0,
         "After invalidation, usage should recount from actual messages"
     );
-    assert!(matches!(
-        level,
-        OptimizationLevel::None | OptimizationLevel::Warning
-    ));
+    assert!(matches!(level, OptimizationLevel::None | OptimizationLevel::Warning));
 }
 
 /// Verify that with the correct model context_length (e.g. 400k for GPT-5.2),
@@ -654,24 +552,14 @@ fn test_no_premature_compaction_with_correct_context_length() {
     // Before fix: max_context defaulted to 100k, 93k tokens = 93% → Aggressive
     let mut compactor_wrong = ContextCompactor::new(100_000);
     compactor_wrong.update_from_api_usage(93_224, 39);
-    let msgs: Vec<_> = (0..39)
-        .map(|i| make_msg("user", &format!("msg {i}")))
-        .collect();
-    assert_eq!(
-        compactor_wrong.check_usage(&msgs, ""),
-        OptimizationLevel::Aggressive
-    );
+    let msgs: Vec<_> = (0..39).map(|i| make_msg("user", &format!("msg {i}"))).collect();
+    assert_eq!(compactor_wrong.check_usage(&msgs, ""), OptimizationLevel::Aggressive);
 
     // After fix: max_context = 400k (GPT-5.2 actual), 93k tokens = 23.3% → None
     let mut compactor_fixed = ContextCompactor::new(400_000);
     compactor_fixed.update_from_api_usage(93_224, 39);
-    let msgs: Vec<_> = (0..39)
-        .map(|i| make_msg("user", &format!("msg {i}")))
-        .collect();
-    assert_eq!(
-        compactor_fixed.check_usage(&msgs, ""),
-        OptimizationLevel::None
-    );
+    let msgs: Vec<_> = (0..39).map(|i| make_msg("user", &format!("msg {i}"))).collect();
+    assert_eq!(compactor_fixed.check_usage(&msgs, ""), OptimizationLevel::None);
     assert!((compactor_fixed.usage_pct() - 23.3).abs() < 0.1);
 }
 
@@ -689,9 +577,7 @@ fn test_model_switch_updates_context_percentage() {
     assert!((compactor.usage_pct() - 40.0).abs() < 0.1);
 
     // Compaction check should reflect new limit
-    let msgs: Vec<_> = (0..20)
-        .map(|i| make_msg("user", &format!("msg {i}")))
-        .collect();
+    let msgs: Vec<_> = (0..20).map(|i| make_msg("user", &format!("msg {i}"))).collect();
     assert_eq!(compactor.check_usage(&msgs, ""), OptimizationLevel::None);
 }
 

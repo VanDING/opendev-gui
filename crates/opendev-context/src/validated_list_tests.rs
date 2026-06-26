@@ -24,8 +24,7 @@ fn test_tool_call_flow() {
     assert!(list.has_pending_tools());
     assert!(list.pending_tool_ids().contains("tc-1"));
 
-    list.add_tool_result("tc-1", "file1.txt\nfile2.txt")
-        .unwrap();
+    list.add_tool_result("tc-1", "file1.txt\nfile2.txt").unwrap();
     assert!(!list.has_pending_tools());
     assert_eq!(list.len(), 3);
 }
@@ -45,10 +44,7 @@ fn test_auto_complete_pending_on_new_user() {
     // Check synthetic result was inserted
     let tool_msg = &list.messages()[1];
     assert_eq!(tool_msg.get("role").and_then(|v| v.as_str()), Some("tool"));
-    assert_eq!(
-        tool_msg.get("content").and_then(|v| v.as_str()),
-        Some(SYNTHETIC_TOOL_RESULT)
-    );
+    assert_eq!(tool_msg.get("content").and_then(|v| v.as_str()), Some(SYNTHETIC_TOOL_RESULT));
 }
 
 #[test]
@@ -97,14 +93,8 @@ fn test_replace_all_rebuilds_state() {
     // Replace with a clean conversation
     let mut new_msgs = vec![];
     let mut msg = ApiMessage::new();
-    msg.insert(
-        "role".to_string(),
-        serde_json::Value::String("user".to_string()),
-    );
-    msg.insert(
-        "content".to_string(),
-        serde_json::Value::String("fresh start".to_string()),
-    );
+    msg.insert("role".to_string(), serde_json::Value::String("user".to_string()));
+    msg.insert("content".to_string(), serde_json::Value::String("fresh start".to_string()));
     new_msgs.push(msg);
 
     list.replace_all(new_msgs);
@@ -117,14 +107,8 @@ fn test_initial_data_rebuild() {
     // Simulate loading from persisted data with a pending tool call
     let assistant_msg = {
         let mut msg = ApiMessage::new();
-        msg.insert(
-            "role".to_string(),
-            serde_json::Value::String("assistant".to_string()),
-        );
-        msg.insert(
-            "content".to_string(),
-            serde_json::Value::String(String::new()),
-        );
+        msg.insert("role".to_string(), serde_json::Value::String("assistant".to_string()));
+        msg.insert("content".to_string(), serde_json::Value::String(String::new()));
         msg.insert(
             "tool_calls".to_string(),
             serde_json::json!([{"id": "tc-1", "function": {"name": "bash", "arguments": "{}"}}]),

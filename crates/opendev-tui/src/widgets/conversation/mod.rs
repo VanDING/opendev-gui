@@ -226,11 +226,7 @@ impl<'a> ConversationWidget<'a> {
                 border_style.add_modifier(ratatui::style::Modifier::BOLD),
             ),
             Span::styled(
-                format!(
-                    "{}{}",
-                    style_tokens::BOX_H.repeat(top_after),
-                    style_tokens::BOX_TR
-                ),
+                format!("{}{}", style_tokens::BOX_H.repeat(top_after), style_tokens::BOX_TR),
                 border_style,
             ),
         ]));
@@ -303,11 +299,8 @@ impl<'a> ConversationWidget<'a> {
                     let mut leading_consumed = false;
                     for md_line in md_lines.into_iter() {
                         // Check if this line has non-empty content
-                        let line_text: String = md_line
-                            .spans
-                            .iter()
-                            .map(|s| s.content.to_string())
-                            .collect();
+                        let line_text: String =
+                            md_line.spans.iter().map(|s| s.content.to_string()).collect();
                         let has_content = !line_text.trim().is_empty();
 
                         if !leading_consumed && has_content {
@@ -358,9 +351,8 @@ impl<'a> ConversationWidget<'a> {
                     if msg.collapsed {
                         // Check if thinking just finalized (< 2s ago) — keep shimmer
                         // to avoid jarring flicker on brief thinking blocks.
-                        let recently_finalized = msg
-                            .thinking_finalized_at
-                            .is_some_and(|t| t.elapsed().as_secs() < 2);
+                        let recently_finalized =
+                            msg.thinking_finalized_at.is_some_and(|t| t.elapsed().as_secs() < 2);
 
                         if let Some(secs) = msg.thinking_duration_secs {
                             if recently_finalized {
@@ -368,11 +360,7 @@ impl<'a> ConversationWidget<'a> {
                                 let text = format!(
                                     "{} Thought for {}s",
                                     style_tokens::THINKING_ICON,
-                                    if secs == 0 {
-                                        "<1".to_string()
-                                    } else {
-                                        secs.to_string()
-                                    }
+                                    if secs == 0 { "<1".to_string() } else { secs.to_string() }
                                 );
                                 let highlight = ratatui::style::Color::Rgb(200, 200, 220);
                                 let mut spans = style_tokens::shimmer_line(
@@ -388,11 +376,8 @@ impl<'a> ConversationWidget<'a> {
                                 lines.push(Line::from(spans));
                             } else {
                                 // Finalized collapsed: static summary line
-                                let duration_text = if secs == 0 {
-                                    "<1".to_string()
-                                } else {
-                                    secs.to_string()
-                                };
+                                let duration_text =
+                                    if secs == 0 { "<1".to_string() } else { secs.to_string() };
                                 lines.push(Line::from(vec![
                                     Span::styled(
                                         format!(
@@ -432,11 +417,8 @@ impl<'a> ConversationWidget<'a> {
                             MarkdownRenderer::render_muted(&content, style_tokens::THINKING_BG);
                         let mut leading_consumed = false;
                         for md_line in md_lines.into_iter() {
-                            let line_text: String = md_line
-                                .spans
-                                .iter()
-                                .map(|s| s.content.to_string())
-                                .collect();
+                            let line_text: String =
+                                md_line.spans.iter().map(|s| s.content.to_string()).collect();
                             let has_content = !line_text.trim().is_empty();
 
                             if !leading_consumed && has_content {
@@ -481,11 +463,8 @@ impl<'a> ConversationWidget<'a> {
     }
 
     fn build_render_lines(&self) -> Vec<Line<'a>> {
-        let mut lines: Vec<Line<'a>> = if let Some(cached) = self.cached_lines {
-            cached.to_vec()
-        } else {
-            self.build_lines()
-        };
+        let mut lines: Vec<Line<'a>> =
+            if let Some(cached) = self.cached_lines { cached.to_vec() } else { self.build_lines() };
 
         let spinner_lines = self.build_spinner_lines();
         if !spinner_lines.is_empty() {
@@ -553,10 +532,7 @@ impl<'a> ConversationWidget<'a> {
                 let count = tc.result_lines.len();
                 let verb = crate::formatters::tool_registry::lookup_tool(&tc.name).verb;
                 let label = if !tc.success {
-                    format!(
-                        "  {}  {verb} {count} lines (Ctrl+O to expand)",
-                        CONTINUATION_CHAR
-                    )
+                    format!("  {}  {verb} {count} lines (Ctrl+O to expand)", CONTINUATION_CHAR)
                 } else {
                     format!("  {}  {verb} {count} lines", CONTINUATION_CHAR)
                 };
@@ -651,11 +627,8 @@ impl Widget for ConversationWidget<'_> {
             return;
         }
 
-        let content_area = Rect {
-            height: content_height,
-            width: area.width.saturating_sub(1),
-            ..area
-        };
+        let content_area =
+            Rect { height: content_height, width: area.width.saturating_sub(1), ..area };
 
         let render_lines = self.build_render_lines();
         let lines: &[Line] = &render_lines;

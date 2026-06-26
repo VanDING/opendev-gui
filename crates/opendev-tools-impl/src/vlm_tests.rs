@@ -1,10 +1,7 @@
 use super::*;
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 #[tokio::test]
@@ -45,10 +42,7 @@ async fn test_vlm_image_not_found() {
     let ctx = ToolContext::new("/tmp");
     let args = make_args(&[
         ("prompt", serde_json::json!("Describe this")),
-        (
-            "image_path",
-            serde_json::json!("/tmp/nonexistent_image.png"),
-        ),
+        ("image_path", serde_json::json!("/tmp/nonexistent_image.png")),
     ]);
     let result = tool.execute(args, &ctx).await;
     assert!(!result.success);

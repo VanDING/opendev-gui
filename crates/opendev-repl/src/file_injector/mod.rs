@@ -58,14 +58,9 @@ pub struct FileContentInjector {
 impl FileContentInjector {
     /// Create a new injector rooted at `working_dir`.
     pub fn new(working_dir: PathBuf) -> Self {
-        let working_dir = working_dir
-            .canonicalize()
-            .unwrap_or_else(|_| working_dir.clone());
+        let working_dir = working_dir.canonicalize().unwrap_or_else(|_| working_dir.clone());
         let gitignore = GitIgnoreParser::new(&working_dir);
-        Self {
-            working_dir,
-            gitignore,
-        }
+        Self { working_dir, gitignore }
     }
 
     // -- public API ---------------------------------------------------------
@@ -91,20 +86,14 @@ impl FileContentInjector {
                     }
                 }
                 Err(e) => {
-                    text_parts.push(format!(
-                        "<file_error path=\"{}\" reason=\"{}\" />",
-                        ref_str, e
-                    ));
+                    text_parts
+                        .push(format!("<file_error path=\"{}\" reason=\"{}\" />", ref_str, e));
                     errors.push(format!("{}: {}", ref_str, e));
                 }
             }
         }
 
-        InjectionResult {
-            text_content: text_parts.join("\n\n"),
-            image_blocks,
-            errors,
-        }
+        InjectionResult { text_content: text_parts.join("\n\n"), image_blocks, errors }
     }
 
     /// Extract file references from a query string.
@@ -149,11 +138,7 @@ impl FileContentInjector {
     /// Resolve a reference string to an absolute path.
     pub fn resolve_path(&self, ref_str: &str) -> PathBuf {
         let path = PathBuf::from(ref_str);
-        let resolved = if path.is_absolute() {
-            path
-        } else {
-            self.working_dir.join(path)
-        };
+        let resolved = if path.is_absolute() { path } else { self.working_dir.join(path) };
         // Canonicalize if the path exists; otherwise keep as-is.
         resolved.canonicalize().unwrap_or(resolved)
     }
@@ -161,10 +146,7 @@ impl FileContentInjector {
     /// Check whether a path is a text file suitable for injection.
     pub fn is_text_file(path: &Path) -> bool {
         let ext = ext_lower(path);
-        let name = path
-            .file_name()
-            .map(|n| n.to_string_lossy().to_string())
-            .unwrap_or_default();
+        let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
 
         if SAFE_TEXT_EXTENSIONS.contains(&ext.as_str()) || SAFE_FILENAMES.contains(&name.as_str()) {
             return true;

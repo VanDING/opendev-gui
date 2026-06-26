@@ -125,9 +125,7 @@ fn test_path_prefix_stripped() {
 
 #[test]
 fn test_env_and_path_combined() {
-    assert!(is_safe_command(
-        "RUST_LOG=info /usr/bin/cargo test --workspace"
-    ));
+    assert!(is_safe_command("RUST_LOG=info /usr/bin/cargo test --workspace"));
 }
 
 #[test]
@@ -190,42 +188,24 @@ fn test_normalize_segment_helper() {
     assert_eq!(normalize_segment("cargo test"), "cargo test");
     assert_eq!(normalize_segment("RUST_LOG=debug cargo test"), "cargo test");
     assert_eq!(normalize_segment("/usr/bin/git status"), "git status");
-    assert_eq!(
-        normalize_segment("CI=1 /usr/local/bin/cargo clippy"),
-        "cargo clippy"
-    );
+    assert_eq!(normalize_segment("CI=1 /usr/local/bin/cargo clippy"), "cargo clippy");
 }
 
 #[test]
 fn test_split_shell_segments_helper() {
     assert_eq!(split_shell_segments("ls"), vec!["ls"]);
-    assert_eq!(
-        split_shell_segments("cargo fmt && cargo test"),
-        vec!["cargo fmt", "cargo test"]
-    );
-    assert_eq!(
-        split_shell_segments("a; b || c && d"),
-        vec!["a", "b", "c", "d"]
-    );
+    assert_eq!(split_shell_segments("cargo fmt && cargo test"), vec!["cargo fmt", "cargo test"]);
+    assert_eq!(split_shell_segments("a; b || c && d"), vec!["a", "b", "c", "d"]);
     assert_eq!(split_shell_segments("a | b | c"), vec!["a", "b", "c"]);
 }
 
 #[test]
 fn test_extract_command_prefix() {
-    assert_eq!(
-        extract_command_prefix("cargo test --workspace"),
-        "cargo test"
-    );
+    assert_eq!(extract_command_prefix("cargo test --workspace"), "cargo test");
     assert_eq!(extract_command_prefix("git status"), "git status");
     assert_eq!(extract_command_prefix("eslint src/"), "eslint");
-    assert_eq!(
-        extract_command_prefix("RUST_LOG=debug cargo build"),
-        "cargo build"
-    );
-    assert_eq!(
-        extract_command_prefix("/usr/bin/cargo clippy"),
-        "cargo clippy"
-    );
+    assert_eq!(extract_command_prefix("RUST_LOG=debug cargo build"), "cargo build");
+    assert_eq!(extract_command_prefix("/usr/bin/cargo clippy"), "cargo clippy");
     assert_eq!(extract_command_prefix("npm run build"), "npm run");
     assert_eq!(extract_command_prefix("cargo --version"), "cargo");
 }
@@ -239,18 +219,9 @@ fn test_autonomy_level_display() {
 
 #[test]
 fn test_autonomy_level_parse() {
-    assert_eq!(
-        AutonomyLevel::from_str_loose("manual"),
-        Some(AutonomyLevel::Manual)
-    );
-    assert_eq!(
-        AutonomyLevel::from_str_loose("Semi-Auto"),
-        Some(AutonomyLevel::SemiAuto)
-    );
-    assert_eq!(
-        AutonomyLevel::from_str_loose("auto"),
-        Some(AutonomyLevel::Auto)
-    );
+    assert_eq!(AutonomyLevel::from_str_loose("manual"), Some(AutonomyLevel::Manual));
+    assert_eq!(AutonomyLevel::from_str_loose("Semi-Auto"), Some(AutonomyLevel::SemiAuto));
+    assert_eq!(AutonomyLevel::from_str_loose("auto"), Some(AutonomyLevel::Auto));
     assert_eq!(AutonomyLevel::from_str_loose("garbage"), None);
 }
 

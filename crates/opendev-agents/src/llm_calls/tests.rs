@@ -133,10 +133,7 @@ fn test_parse_response_with_reasoning_content() {
     });
     let resp = caller.parse_action_response(&body);
     assert!(resp.success);
-    assert_eq!(
-        resp.reasoning_content.as_deref(),
-        Some("Let me think step by step...")
-    );
+    assert_eq!(resp.reasoning_content.as_deref(), Some("Let me think step by step..."));
 }
 
 #[test]

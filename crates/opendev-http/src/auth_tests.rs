@@ -17,10 +17,7 @@ fn test_credential_store_set_get() {
     assert!(store.get_key("testprovider").is_none());
 
     store.set_key("testprovider", "sk-test-key-123").unwrap();
-    assert_eq!(
-        store.get_key("testprovider").as_deref(),
-        Some("sk-test-key-123")
-    );
+    assert_eq!(store.get_key("testprovider").as_deref(), Some("sk-test-key-123"));
 
     // Verify file was created
     assert!(auth_path.exists());
@@ -53,11 +50,7 @@ fn test_credential_store_tokens() {
     assert!(store.get_token("mcp-github").is_none());
 
     store
-        .store_token(
-            "mcp-github",
-            "ghp_abc123",
-            Some(serde_json::json!({"scope": "repo"})),
-        )
+        .store_token("mcp-github", "ghp_abc123", Some(serde_json::json!({"scope": "repo"})))
         .unwrap();
     assert_eq!(store.get_token("mcp-github").as_deref(), Some("ghp_abc123"));
 }

@@ -11,14 +11,8 @@ async fn test_spawn_subagent_missing_params() {
     )
     .unwrap();
     let http = Arc::new(opendev_http::AdaptedClient::new(raw));
-    let tool = SpawnSubagentTool::new(
-        manager,
-        registry,
-        http,
-        PathBuf::from("/tmp"),
-        "gpt-4o",
-        "/tmp",
-    );
+    let tool =
+        SpawnSubagentTool::new(manager, registry, http, PathBuf::from("/tmp"), "gpt-4o", "/tmp");
     let ctx = ToolContext::new("/tmp");
 
     // Missing agent_type
@@ -45,14 +39,8 @@ async fn test_spawn_subagent_unknown_type() {
     )
     .unwrap();
     let http = Arc::new(opendev_http::AdaptedClient::new(raw));
-    let tool = SpawnSubagentTool::new(
-        manager,
-        registry,
-        http,
-        PathBuf::from("/tmp"),
-        "gpt-4o",
-        "/tmp",
-    );
+    let tool =
+        SpawnSubagentTool::new(manager, registry, http, PathBuf::from("/tmp"), "gpt-4o", "/tmp");
     let ctx = ToolContext::new("/tmp");
 
     let mut args = HashMap::new();
@@ -74,14 +62,8 @@ async fn test_spawn_subagent_blocked_in_subagent_context() {
     )
     .unwrap();
     let http = Arc::new(opendev_http::AdaptedClient::new(raw));
-    let tool = SpawnSubagentTool::new(
-        manager,
-        registry,
-        http,
-        PathBuf::from("/tmp"),
-        "gpt-4o",
-        "/tmp",
-    );
+    let tool =
+        SpawnSubagentTool::new(manager, registry, http, PathBuf::from("/tmp"), "gpt-4o", "/tmp");
 
     // Simulate being called from within a subagent context
     let mut ctx = ToolContext::new("/tmp");
@@ -93,23 +75,14 @@ async fn test_spawn_subagent_blocked_in_subagent_context() {
 
     let result = tool.execute(args, &ctx).await;
     assert!(!result.success);
-    assert!(
-        result
-            .error
-            .unwrap()
-            .contains("cannot spawn other subagents")
-    );
+    assert!(result.error.unwrap().contains("cannot spawn other subagents"));
 }
 
 #[tokio::test]
 async fn test_planner_blocked_during_explore_phase() {
     let mut manager = opendev_agents::SubagentManager::new();
     // Register a planner spec so agent_type validation passes
-    manager.register(opendev_agents::SubAgentSpec::new(
-        "Planner",
-        "Plans tasks",
-        "",
-    ));
+    manager.register(opendev_agents::SubAgentSpec::new("Planner", "Plans tasks", ""));
     let manager = Arc::new(manager);
     let registry = Arc::new(opendev_tools_core::ToolRegistry::new());
     let raw = opendev_http::HttpClient::new(
@@ -119,14 +92,8 @@ async fn test_planner_blocked_during_explore_phase() {
     )
     .unwrap();
     let http = Arc::new(opendev_http::AdaptedClient::new(raw));
-    let tool = SpawnSubagentTool::new(
-        manager,
-        registry,
-        http,
-        PathBuf::from("/tmp"),
-        "gpt-4o",
-        "/tmp",
-    );
+    let tool =
+        SpawnSubagentTool::new(manager, registry, http, PathBuf::from("/tmp"), "gpt-4o", "/tmp");
 
     // Create shared state in explore phase
     let mut state = HashMap::new();
@@ -149,11 +116,7 @@ async fn test_planner_blocked_during_explore_phase() {
 #[tokio::test]
 async fn test_planner_allowed_during_plan_phase() {
     let mut manager = opendev_agents::SubagentManager::new();
-    manager.register(opendev_agents::SubAgentSpec::new(
-        "Planner",
-        "Plans tasks",
-        "",
-    ));
+    manager.register(opendev_agents::SubAgentSpec::new("Planner", "Plans tasks", ""));
     let manager = Arc::new(manager);
     let registry = Arc::new(opendev_tools_core::ToolRegistry::new());
     let raw = opendev_http::HttpClient::new(
@@ -189,10 +152,7 @@ async fn test_planner_allowed_during_plan_phase() {
 
     // Should NOT be blocked by the explore guard — will fail at dir validation
     // Use explicit non-existent working_dir arg to trigger fast failure
-    args.insert(
-        "working_dir".into(),
-        serde_json::json!("/nonexistent/test/path"),
-    );
+    args.insert("working_dir".into(), serde_json::json!("/nonexistent/test/path"));
     let result = tool.execute(args, &ctx).await;
     assert!(!result.success);
     let err = result.error.unwrap();
@@ -200,20 +160,13 @@ async fn test_planner_allowed_during_plan_phase() {
         !err.contains("Before planning"),
         "Planner should not be blocked in plan phase, got: {err}"
     );
-    assert!(
-        err.contains("does not exist"),
-        "Expected dir validation error, got: {err}"
-    );
+    assert!(err.contains("does not exist"), "Expected dir validation error, got: {err}");
 }
 
 #[tokio::test]
 async fn test_planner_allowed_without_shared_state() {
     let mut manager = opendev_agents::SubagentManager::new();
-    manager.register(opendev_agents::SubAgentSpec::new(
-        "Planner",
-        "Plans tasks",
-        "",
-    ));
+    manager.register(opendev_agents::SubAgentSpec::new("Planner", "Plans tasks", ""));
     let manager = Arc::new(manager);
     let registry = Arc::new(opendev_tools_core::ToolRegistry::new());
     let raw = opendev_http::HttpClient::new(
@@ -223,14 +176,8 @@ async fn test_planner_allowed_without_shared_state() {
     )
     .unwrap();
     let http = Arc::new(opendev_http::AdaptedClient::new(raw));
-    let tool = SpawnSubagentTool::new(
-        manager,
-        registry,
-        http,
-        PathBuf::from("/tmp"),
-        "gpt-4o",
-        "/tmp",
-    );
+    let tool =
+        SpawnSubagentTool::new(manager, registry, http, PathBuf::from("/tmp"), "gpt-4o", "/tmp");
 
     // No shared state — normal non-plan-mode usage
     let ctx = ToolContext::new("/tmp");
@@ -238,10 +185,7 @@ async fn test_planner_allowed_without_shared_state() {
     let mut args = HashMap::new();
     args.insert("agent_type".into(), serde_json::json!("Planner"));
     args.insert("task".into(), serde_json::json!("plan the task"));
-    args.insert(
-        "working_dir".into(),
-        serde_json::json!("/nonexistent/test/path"),
-    );
+    args.insert("working_dir".into(), serde_json::json!("/nonexistent/test/path"));
 
     let result = tool.execute(args, &ctx).await;
     assert!(!result.success);

@@ -74,10 +74,7 @@ impl BaseTool for WebScreenshotTool {
         args: HashMap<String, serde_json::Value>,
         ctx: &ToolContext,
     ) -> ToolResult {
-        let action = args
-            .get("action")
-            .and_then(|v| v.as_str())
-            .unwrap_or("capture");
+        let action = args.get("action").and_then(|v| v.as_str()).unwrap_or("capture");
 
         match action {
             "list" => list_screenshots(),
@@ -89,14 +86,10 @@ impl BaseTool for WebScreenshotTool {
                 };
 
                 let output_path = args.get("output_path").and_then(|v| v.as_str());
-                let viewport_width = args
-                    .get("viewport_width")
-                    .and_then(|v| v.as_u64())
-                    .unwrap_or(1920) as u32;
-                let viewport_height = args
-                    .get("viewport_height")
-                    .and_then(|v| v.as_u64())
-                    .unwrap_or(1080) as u32;
+                let viewport_width =
+                    args.get("viewport_width").and_then(|v| v.as_u64()).unwrap_or(1920) as u32;
+                let viewport_height =
+                    args.get("viewport_height").and_then(|v| v.as_u64()).unwrap_or(1080) as u32;
 
                 capture_screenshot(url, output_path, viewport_width, viewport_height, ctx).await
             }
@@ -214,15 +207,12 @@ async fn capture_screenshot(
 
         match result {
             Ok(output) if output.status.success() && dest.exists() => {
-                let size_kb = std::fs::metadata(&dest)
-                    .map(|m| m.len() as f64 / 1024.0)
-                    .unwrap_or(0.0);
+                let size_kb =
+                    std::fs::metadata(&dest).map(|m| m.len() as f64 / 1024.0).unwrap_or(0.0);
 
                 let mut metadata = HashMap::new();
-                metadata.insert(
-                    "screenshot_path".into(),
-                    serde_json::json!(dest.to_string_lossy()),
-                );
+                metadata
+                    .insert("screenshot_path".into(), serde_json::json!(dest.to_string_lossy()));
                 metadata.insert("url".into(), serde_json::json!(url));
                 metadata.insert(
                     "viewport".into(),
@@ -243,10 +233,7 @@ async fn capture_screenshot(
             }
             Ok(output) => {
                 let stderr = String::from_utf8_lossy(&output.stderr);
-                tracing::warn!(
-                    "Headless Chrome failed (status {}): {stderr}",
-                    output.status
-                );
+                tracing::warn!("Headless Chrome failed (status {}): {stderr}", output.status);
                 // Fall through to HTTP fallback
             }
             Err(e) => {
@@ -299,10 +286,8 @@ async fn capture_screenshot(
     match write_result {
         Ok(_) => {
             let mut metadata = HashMap::new();
-            metadata.insert(
-                "screenshot_path".into(),
-                serde_json::json!(html_dest.to_string_lossy()),
-            );
+            metadata
+                .insert("screenshot_path".into(), serde_json::json!(html_dest.to_string_lossy()));
             metadata.insert("url".into(), serde_json::json!(url));
             metadata.insert("format".into(), serde_json::json!("html"));
             metadata.insert(
@@ -396,22 +381,14 @@ fn clear_screenshots(keep_recent: usize) -> ToolResult {
 
     // Sort by modification time, newest first
     entries.sort_by(|a, b| {
-        let a_time = a
-            .metadata()
-            .and_then(|m| m.modified())
-            .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
-        let b_time = b
-            .metadata()
-            .and_then(|m| m.modified())
-            .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+        let a_time =
+            a.metadata().and_then(|m| m.modified()).unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+        let b_time =
+            b.metadata().and_then(|m| m.modified()).unwrap_or(std::time::SystemTime::UNIX_EPOCH);
         b_time.cmp(&a_time)
     });
 
-    let to_delete = if entries.len() > keep_recent {
-        &entries[keep_recent..]
-    } else {
-        &[]
-    };
+    let to_delete = if entries.len() > keep_recent { &entries[keep_recent..] } else { &[] };
 
     let mut deleted = 0;
     for path in to_delete {
@@ -426,10 +403,7 @@ fn clear_screenshots(keep_recent: usize) -> ToolResult {
     metadata.insert("deleted_count".into(), serde_json::json!(deleted));
     metadata.insert("kept_count".into(), serde_json::json!(kept));
 
-    ToolResult::ok_with_metadata(
-        format!("Cleared {deleted} screenshots, kept {kept}."),
-        metadata,
-    )
+    ToolResult::ok_with_metadata(format!("Cleared {deleted} screenshots, kept {kept}."), metadata)
 }
 
 #[cfg(test)]

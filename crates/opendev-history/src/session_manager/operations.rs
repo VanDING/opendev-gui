@@ -15,20 +15,15 @@ impl SessionManager {
     /// Updates the title in metadata, regenerates the slug, and persists.
     /// If it's the current session, updates in-memory; otherwise loads from disk.
     pub fn set_title(&mut self, session_id: &str, title: &str) -> std::io::Result<()> {
-        let title = if title.len() > 50 {
-            &title[..title.floor_char_boundary(50)]
-        } else {
-            title
-        };
+        let title = if title.len() > 50 { &title[..title.floor_char_boundary(50)] } else { title };
 
         // Update in-memory if it's the current session
         if let Some(session) = &mut self.current_session
             && session.id == session_id
         {
-            session.metadata.insert(
-                "title".to_string(),
-                serde_json::Value::String(title.to_string()),
-            );
+            session
+                .metadata
+                .insert("title".to_string(), serde_json::Value::String(title.to_string()));
             session.slug = Some(session.generate_slug(Some(title)));
             let session_clone = session.clone();
             self.save_session(&session_clone)?;
@@ -36,21 +31,15 @@ impl SessionManager {
         } else {
             // Otherwise load, update, save on disk
             let mut session = self.load_session(session_id)?;
-            session.metadata.insert(
-                "title".to_string(),
-                serde_json::Value::String(title.to_string()),
-            );
+            session
+                .metadata
+                .insert("title".to_string(), serde_json::Value::String(title.to_string()));
             session.slug = Some(session.generate_slug(Some(title)));
             self.save_session(&session)?;
             info!(session_id, title, "Updated session title (on-disk)");
         }
 
-        self.emit_event(
-            session_id,
-            SessionEvent::TitleChanged {
-                title: title.to_string(),
-            },
-        );
+        self.emit_event(session_id, SessionEvent::TitleChanged { title: title.to_string() });
         Ok(())
     }
 
@@ -97,9 +86,7 @@ impl SessionManager {
             .or_else(|| generate_title_from_messages(&source.messages))
             .unwrap_or_else(|| format!("Session {}", session_id));
         let title = get_forked_title(&parent_title);
-        forked
-            .metadata
-            .insert("title".to_string(), serde_json::Value::String(title));
+        forked.metadata.insert("title".to_string(), serde_json::Value::String(title));
 
         self.save_session(&forked)?;
 
@@ -111,10 +98,7 @@ impl SessionManager {
             },
         );
 
-        info!(
-            "Forked session {} from {} at message {}",
-            forked.id, session_id, at_message_index
-        );
+        info!("Forked session {} from {} at message {}", forked.id, session_id, at_message_index);
         Ok(forked)
     }
 
@@ -126,9 +110,7 @@ impl SessionManager {
 
         self.emit_event(
             session_id,
-            SessionEvent::SessionArchived {
-                time_archived: chrono::Utc::now(),
-            },
+            SessionEvent::SessionArchived { time_archived: chrono::Utc::now() },
         );
 
         info!("Archived session {}", session_id);
@@ -169,11 +151,7 @@ impl SessionManager {
         if step > session.messages.len() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
-                format!(
-                    "step {} exceeds message count {}",
-                    step,
-                    session.messages.len()
-                ),
+                format!("step {} exceeds message count {}", step, session.messages.len()),
             ));
         }
 

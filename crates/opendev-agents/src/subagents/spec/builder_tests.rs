@@ -92,17 +92,11 @@ fn test_max_tokens_serde() {
 #[test]
 fn test_evaluate_permission_blanket_action() {
     let mut perms = HashMap::new();
-    perms.insert(
-        "bash".to_string(),
-        PermissionRule::Action(PermissionAction::Deny),
-    );
+    perms.insert("bash".to_string(), PermissionRule::Action(PermissionAction::Deny));
 
     let spec = SubAgentSpec::new("test", "desc", "prompt").with_permission(perms);
 
-    assert_eq!(
-        spec.evaluate_permission("bash", "anything"),
-        Some(PermissionAction::Deny)
-    );
+    assert_eq!(spec.evaluate_permission("bash", "anything"), Some(PermissionAction::Deny));
     assert_eq!(
         spec.evaluate_permission("read_file", "anything"),
         None // No rule for read_file
@@ -112,21 +106,12 @@ fn test_evaluate_permission_blanket_action() {
 #[test]
 fn test_evaluate_permission_wildcard_tool() {
     let mut perms = HashMap::new();
-    perms.insert(
-        "*".to_string(),
-        PermissionRule::Action(PermissionAction::Ask),
-    );
+    perms.insert("*".to_string(), PermissionRule::Action(PermissionAction::Ask));
 
     let spec = SubAgentSpec::new("test", "desc", "prompt").with_permission(perms);
 
-    assert_eq!(
-        spec.evaluate_permission("bash", "anything"),
-        Some(PermissionAction::Ask)
-    );
-    assert_eq!(
-        spec.evaluate_permission("read_file", "anything"),
-        Some(PermissionAction::Ask)
-    );
+    assert_eq!(spec.evaluate_permission("bash", "anything"), Some(PermissionAction::Ask));
+    assert_eq!(spec.evaluate_permission("read_file", "anything"), Some(PermissionAction::Ask));
 }
 
 #[test]
@@ -141,18 +126,9 @@ fn test_evaluate_permission_pattern_matching() {
 
     let spec = SubAgentSpec::new("test", "desc", "prompt").with_permission(perms);
 
-    assert_eq!(
-        spec.evaluate_permission("bash", "git status"),
-        Some(PermissionAction::Allow)
-    );
-    assert_eq!(
-        spec.evaluate_permission("bash", "rm -rf /"),
-        Some(PermissionAction::Deny)
-    );
-    assert_eq!(
-        spec.evaluate_permission("bash", "npm install"),
-        Some(PermissionAction::Ask)
-    );
+    assert_eq!(spec.evaluate_permission("bash", "git status"), Some(PermissionAction::Allow));
+    assert_eq!(spec.evaluate_permission("bash", "rm -rf /"), Some(PermissionAction::Deny));
+    assert_eq!(spec.evaluate_permission("bash", "npm install"), Some(PermissionAction::Ask));
 }
 
 #[test]
@@ -164,14 +140,8 @@ fn test_evaluate_permission_no_rules() {
 #[test]
 fn test_disabled_tools_blanket_deny() {
     let mut perms = HashMap::new();
-    perms.insert(
-        "edit".to_string(),
-        PermissionRule::Action(PermissionAction::Deny),
-    );
-    perms.insert(
-        "bash".to_string(),
-        PermissionRule::Action(PermissionAction::Allow),
-    );
+    perms.insert("edit".to_string(), PermissionRule::Action(PermissionAction::Deny));
+    perms.insert("bash".to_string(), PermissionRule::Action(PermissionAction::Allow));
 
     let spec = SubAgentSpec::new("test", "desc", "prompt").with_permission(perms);
 
@@ -192,10 +162,7 @@ fn test_disabled_tools_pattern_deny_not_blanket() {
     let spec = SubAgentSpec::new("test", "desc", "prompt").with_permission(perms);
 
     let disabled = spec.disabled_tools(&["bash"]);
-    assert!(
-        disabled.is_empty(),
-        "Pattern-specific deny should not disable tool"
-    );
+    assert!(disabled.is_empty(), "Pattern-specific deny should not disable tool");
 }
 
 #[test]

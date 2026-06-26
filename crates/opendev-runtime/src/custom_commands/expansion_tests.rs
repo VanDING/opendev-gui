@@ -58,10 +58,7 @@ fn test_expand_combined() {
     let mut ctx = HashMap::new();
     ctx.insert("file".to_string(), "lib.rs".to_string());
     let result = cmd.expand("security perf", Some(&ctx));
-    assert_eq!(
-        result,
-        "Review security perf in lib.rs focusing on security"
-    );
+    assert_eq!(result, "Review security perf in lib.rs focusing on security");
 }
 
 // ── Shell substitution tests ──

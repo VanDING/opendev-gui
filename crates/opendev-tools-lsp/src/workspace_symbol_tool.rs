@@ -87,11 +87,8 @@ impl BaseTool for WorkspaceSymbolTool {
                     return ToolResult::ok(format!("No symbols found matching '{}'", query));
                 }
 
-                let mut output = format!(
-                    "Found {} symbol(s) matching '{}':\n\n",
-                    symbols.len(),
-                    query
-                );
+                let mut output =
+                    format!("Found {} symbol(s) matching '{}':\n\n", symbols.len(), query);
                 for sym in &symbols {
                     output.push_str(&format!(
                         "  {} ({:?}) — {}:{}\n",

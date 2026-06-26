@@ -34,11 +34,7 @@ impl SseTransport {
             .build()
             .unwrap_or_default();
 
-        Self {
-            url,
-            headers,
-            client,
-        }
+        Self { url, headers, client }
     }
 }
 
@@ -62,10 +58,7 @@ impl McpTransport for SseTransport {
         let status = response.status();
         if !status.is_success() {
             let body = response.text().await.unwrap_or_default();
-            return Err(McpError::Transport(format!(
-                "SSE HTTP {} — {}",
-                status, body
-            )));
+            return Err(McpError::Transport(format!("SSE HTTP {} — {}", status, body)));
         }
 
         let rpc_response = response.json::<JsonRpcResponse>().await?;

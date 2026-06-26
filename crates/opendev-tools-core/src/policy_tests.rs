@@ -95,27 +95,15 @@ fn test_profile_descriptions() {
         ToolPolicy::get_profile_description("minimal"),
         "Read-only tools + meta tools (for planning/exploration)"
     );
-    assert_eq!(
-        ToolPolicy::get_profile_description("full"),
-        "All available tools (default)"
-    );
-    assert_eq!(
-        ToolPolicy::get_profile_description("unknown"),
-        "Unknown profile"
-    );
+    assert_eq!(ToolPolicy::get_profile_description("full"), "All available tools (default)");
+    assert_eq!(ToolPolicy::get_profile_description("unknown"), "Unknown profile");
 }
 
 #[test]
 fn test_always_allowed_in_all_profiles() {
     for profile in &["minimal", "review", "coding", "full"] {
         let allowed = ToolPolicy::resolve(profile, None, None).unwrap();
-        assert!(
-            allowed.contains("TaskStop"),
-            "TaskStop missing from {profile}"
-        );
-        assert!(
-            allowed.contains("AskUserQuestion"),
-            "AskUserQuestion missing from {profile}"
-        );
+        assert!(allowed.contains("TaskStop"), "TaskStop missing from {profile}");
+        assert!(allowed.contains("AskUserQuestion"), "AskUserQuestion missing from {profile}");
     }
 }

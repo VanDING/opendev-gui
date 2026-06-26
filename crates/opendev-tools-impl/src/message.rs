@@ -73,10 +73,7 @@ impl BaseTool for MessageTool {
         };
 
         let target = args.get("target").and_then(|v| v.as_str());
-        let format = args
-            .get("format")
-            .and_then(|v| v.as_str())
-            .unwrap_or("text");
+        let format = args.get("format").and_then(|v| v.as_str()).unwrap_or("text");
 
         // Load channel config
         let channel_config = load_channel_config();
@@ -130,10 +127,8 @@ impl BaseTool for MessageTool {
                 if (200..300).contains(&status) {
                     ToolResult::ok(format!("Message sent to {channel} (status {status})"))
                 } else {
-                    let body = response
-                        .text()
-                        .await
-                        .unwrap_or_else(|_| "unknown error".to_string());
+                    let body =
+                        response.text().await.unwrap_or_else(|_| "unknown error".to_string());
                     ToolResult::fail(format!("Webhook returned status {status}: {body}"))
                 }
             }

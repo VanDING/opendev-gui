@@ -80,11 +80,7 @@ fn test_discover_deduplicates() {
     std::fs::write(dir2.join("dup.tool.json"), manifest).unwrap();
 
     let tools = discover_custom_tools(tmp.path());
-    assert_eq!(
-        tools.len(),
-        1,
-        "Duplicate tool names should be deduplicated"
-    );
+    assert_eq!(tools.len(), 1, "Duplicate tool names should be deduplicated");
 }
 
 #[test]
@@ -97,10 +93,7 @@ fn test_resolve_command_relative() {
         timeout_secs: 30,
     };
     let tool = CustomTool::new(manifest, PathBuf::from("/project/.opendev/tools"));
-    assert_eq!(
-        tool.resolve_command(),
-        PathBuf::from("/project/.opendev/tools/run.sh")
-    );
+    assert_eq!(tool.resolve_command(), PathBuf::from("/project/.opendev/tools/run.sh"));
 }
 
 #[test]

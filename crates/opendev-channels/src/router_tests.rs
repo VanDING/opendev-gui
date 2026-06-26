@@ -9,10 +9,7 @@ struct TestAdapter {
 impl TestAdapter {
     fn new(name: &str) -> (Arc<Self>, Arc<RwLock<Vec<OutboundMessage>>>) {
         let sent = Arc::new(RwLock::new(Vec::new()));
-        let adapter = Arc::new(Self {
-            name: name.to_string(),
-            sent: sent.clone(),
-        });
+        let adapter = Arc::new(Self { name: name.to_string(), sent: sent.clone() });
         (adapter, sent)
     }
 }

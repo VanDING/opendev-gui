@@ -37,10 +37,7 @@ async fn main() {
         .unwrap_or_else(|| std::env::current_dir().expect("Failed to get current directory"));
 
     if !working_dir.exists() {
-        eprintln!(
-            "Error: Working directory does not exist: {}",
-            working_dir.display()
-        );
+        eprintln!("Error: Working directory does not exist: {}", working_dir.display());
         std::process::exit(1);
     }
 
@@ -64,10 +61,7 @@ async fn main() {
         Some(Commands::Channel { action }) => {
             commands::handle_channel(action, &working_dir).await;
         }
-        Some(Commands::Remote {
-            continue_session,
-            resume,
-        }) => {
+        Some(Commands::Remote { continue_session, resume }) => {
             commands::handle_remote(&working_dir, continue_session, resume.as_deref()).await;
         }
         None => {

@@ -79,11 +79,7 @@ impl SandboxConfig {
         // Extract the base command (first word, stripping any env var prefix)
         let base_cmd = extract_base_command(trimmed);
 
-        if self
-            .allowed_commands
-            .iter()
-            .any(|allowed| base_cmd == allowed.as_str())
-        {
+        if self.allowed_commands.iter().any(|allowed| base_cmd == allowed.as_str()) {
             return Ok(());
         }
 

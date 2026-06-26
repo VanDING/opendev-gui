@@ -57,18 +57,13 @@ pub(super) fn save_server_to_config(
 
     // Read existing config.
     let mut mcp_config = if let Ok(content) = std::fs::read_to_string(config_path) {
-        serde_json::from_str::<McpConfigFile>(&content).unwrap_or(McpConfigFile {
-            mcp_servers: HashMap::new(),
-        })
+        serde_json::from_str::<McpConfigFile>(&content)
+            .unwrap_or(McpConfigFile { mcp_servers: HashMap::new() })
     } else {
-        McpConfigFile {
-            mcp_servers: HashMap::new(),
-        }
+        McpConfigFile { mcp_servers: HashMap::new() }
     };
 
-    mcp_config
-        .mcp_servers
-        .insert(name.to_string(), config.clone());
+    mcp_config.mcp_servers.insert(name.to_string(), config.clone());
 
     let content = serde_json::to_string_pretty(&mcp_config)
         .map_err(|e| WebError::Internal(format!("Failed to serialize config: {}", e)))?;
@@ -108,17 +103,15 @@ fn atomic_write_config(config_path: &Path, content: &str) -> Result<(), WebError
     #[cfg(not(unix))]
     {
         std::io::Write::write_all(
-            &mut std::fs::OpenOptions::new()
-                .write(true)
-                .create_new(true)
-                .open(&tmp_path)
-                .map_err(|e| {
+            &mut std::fs::OpenOptions::new().write(true).create_new(true).open(&tmp_path).map_err(
+                |e| {
                     WebError::Internal(format!(
                         "Failed to open temp config file {}: {}",
                         tmp_path.display(),
                         e
                     ))
-                })?,
+                },
+            )?,
             content.as_bytes(),
         )
         .map_err(|e| {

@@ -2,10 +2,7 @@ use super::*;
 use tempfile::TempDir;
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 #[test]
@@ -56,13 +53,7 @@ fn test_insert_before() {
     let code = "fn a() {}\n\nfn b() {\n    1\n}\n";
     let lines: Vec<&str> = code.lines().collect();
     let range = find_symbol_range(&lines, "b").unwrap();
-    let result = insert_content(
-        code,
-        &lines,
-        "// inserted\n",
-        &range,
-        InsertPosition::Before,
-    );
+    let result = insert_content(code, &lines, "// inserted\n", &range, InsertPosition::Before);
     assert!(result.contains("// inserted\nfn b()"));
 }
 

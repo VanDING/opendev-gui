@@ -115,10 +115,8 @@ impl HookManager {
                                 stderr.to_string()
                             }
                         });
-                    outcome.decision = parsed
-                        .get("decision")
-                        .and_then(|v| v.as_str())
-                        .map(|s| s.to_string());
+                    outcome.decision =
+                        parsed.get("decision").and_then(|v| v.as_str()).map(|s| s.to_string());
                     outcome.blocked = true;
                     outcome.results.push(result);
                     return outcome;
@@ -176,9 +174,7 @@ impl HookManager {
 
         tokio::spawn(async move {
             let manager = HookManager::new(config, session_id, cwd);
-            let _ = manager
-                .run_hooks(event, match_value.as_deref(), event_data.as_ref())
-                .await;
+            let _ = manager.run_hooks(event, match_value.as_deref(), event_data.as_ref()).await;
         });
     }
 
@@ -201,15 +197,9 @@ impl HookManager {
     ) -> Value {
         let mut payload = Map::new();
 
-        payload.insert(
-            "session_id".to_string(),
-            Value::String(self.session_id.clone()),
-        );
+        payload.insert("session_id".to_string(), Value::String(self.session_id.clone()));
         payload.insert("cwd".to_string(), Value::String(self.cwd.clone()));
-        payload.insert(
-            "hook_event_name".to_string(),
-            Value::String(event.as_str().to_string()),
-        );
+        payload.insert("hook_event_name".to_string(), Value::String(event.as_str().to_string()));
 
         let mv = match_value.unwrap_or("");
 
@@ -242,13 +232,8 @@ impl HookManager {
         // Merge event-specific data
         if let Some(Value::Object(data)) = event_data {
             // Standard fields first
-            for key in &[
-                "tool_input",
-                "tool_response",
-                "user_prompt",
-                "agent_task",
-                "agent_result",
-            ] {
+            for key in &["tool_input", "tool_response", "user_prompt", "agent_task", "agent_result"]
+            {
                 if let Some(val) = data.get(*key) {
                     payload.insert((*key).to_string(), val.clone());
                 }

@@ -80,10 +80,7 @@ pub struct BackgroundAgentManager {
 impl BackgroundAgentManager {
     /// Create a new manager with the default concurrency limit.
     pub fn new() -> Self {
-        Self {
-            tasks: HashMap::new(),
-            max_concurrent: 3,
-        }
+        Self { tasks: HashMap::new(), max_concurrent: 3 }
     }
 
     /// Add a new background agent task.
@@ -165,10 +162,7 @@ impl BackgroundAgentManager {
     pub fn push_activity(&mut self, task_id: &str, line: String) {
         if let Some(task) = self.tasks.get_mut(task_id) {
             if line.starts_with('\u{27e1}')
-                && task
-                    .activity_log
-                    .last()
-                    .is_some_and(|l| l.starts_with('\u{27e1}'))
+                && task.activity_log.last().is_some_and(|l| l.starts_with('\u{27e1}'))
             {
                 *task.activity_log.last_mut().unwrap() = line;
                 return;
@@ -233,8 +227,7 @@ impl BackgroundAgentManager {
 
     /// Remove completed/failed/killed tasks older than the given age.
     pub fn cleanup_old(&mut self, max_age_secs: f64) {
-        self.tasks
-            .retain(|_, t| t.is_running() || t.runtime_seconds() < max_age_secs);
+        self.tasks.retain(|_, t| t.is_running() || t.runtime_seconds() < max_age_secs);
     }
 }
 

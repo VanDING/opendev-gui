@@ -72,9 +72,9 @@ pub mod option {
     {
         let opt: Option<String> = Option::deserialize(deserializer)?;
         match opt {
-            Some(s) => super::parse_flexible_datetime(&s)
-                .map(Some)
-                .map_err(serde::de::Error::custom),
+            Some(s) => {
+                super::parse_flexible_datetime(&s).map(Some).map_err(serde::de::Error::custom)
+            }
             None => Ok(None),
         }
     }

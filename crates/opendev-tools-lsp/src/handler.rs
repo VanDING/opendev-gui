@@ -176,14 +176,10 @@ impl LspHandler {
         });
 
         let result = self.send_request("initialize", params).await?;
-        debug!(
-            "LSP initialized: {:?}",
-            result.get("capabilities").is_some()
-        );
+        debug!("LSP initialized: {:?}", result.get("capabilities").is_some());
 
         // Send initialized notification
-        self.send_notification("initialized", serde_json::json!({}))
-            .await?;
+        self.send_notification("initialized", serde_json::json!({})).await?;
 
         self.initialized = true;
         Ok(())

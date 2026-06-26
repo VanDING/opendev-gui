@@ -98,10 +98,7 @@ pub struct CadenceGate {
 impl CadenceGate {
     /// Create a gate that fires every `interval` turns.
     pub fn new(interval: usize) -> Self {
-        Self {
-            interval,
-            last_fired: AtomicUsize::new(0),
-        }
+        Self { interval, last_fired: AtomicUsize::new(0) }
     }
 
     /// Check if enough turns have passed since the last fire.

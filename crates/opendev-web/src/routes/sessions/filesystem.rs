@@ -308,7 +308,5 @@ pub(super) async fn browse_directory(
 
 /// Helper: get the home directory path as a String.
 fn dirs_path_home() -> Option<String> {
-    std::env::var("HOME")
-        .ok()
-        .or_else(|| std::env::var("USERPROFILE").ok())
+    std::env::var("HOME").ok().or_else(|| std::env::var("USERPROFILE").ok())
 }

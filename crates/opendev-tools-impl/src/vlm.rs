@@ -102,31 +102,18 @@ impl BaseTool for VlmTool {
             return ToolResult::fail("Either image_path or image_url must be provided");
         }
 
-        let provider = args
-            .get("provider")
-            .and_then(|v| v.as_str())
-            .unwrap_or("openai");
+        let provider = args.get("provider").and_then(|v| v.as_str()).unwrap_or("openai");
 
-        let model = args
-            .get("model")
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_string());
+        let model = args.get("model").and_then(|v| v.as_str()).map(|s| s.to_string());
 
-        let max_tokens = args
-            .get("max_tokens")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(4096) as u32;
+        let max_tokens = args.get("max_tokens").and_then(|v| v.as_u64()).unwrap_or(4096) as u32;
 
         // Resolve the image URL
         let final_image_url = if let Some(path_str) = image_path {
             // Local file — encode to base64
             let path = {
                 let p = PathBuf::from(path_str);
-                if p.is_absolute() {
-                    p
-                } else {
-                    ctx.working_dir.join(p)
-                }
+                if p.is_absolute() { p } else { ctx.working_dir.join(p) }
             };
 
             if !path.exists() {
@@ -138,11 +125,7 @@ impl BaseTool for VlmTool {
                 Err(e) => return ToolResult::fail(format!("Failed to read image file: {e}")),
             };
 
-            let ext = path
-                .extension()
-                .and_then(|e| e.to_str())
-                .unwrap_or("jpeg")
-                .to_lowercase();
+            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("jpeg").to_lowercase();
 
             let mime_type = IMAGE_MIME_TYPES
                 .iter()
@@ -169,11 +152,7 @@ impl BaseTool for VlmTool {
 
         // Get API key from environment
         let (api_key_env, default_model, api_url) = match provider {
-            "openai" => (
-                "OPENAI_API_KEY",
-                "gpt-4o",
-                "https://api.openai.com/v1/chat/completions",
-            ),
+            "openai" => ("OPENAI_API_KEY", "gpt-4o", "https://api.openai.com/v1/chat/completions"),
             "fireworks" => (
                 "FIREWORKS_API_KEY",
                 "accounts/fireworks/models/llama-v3p2-90b-vision-instruct",

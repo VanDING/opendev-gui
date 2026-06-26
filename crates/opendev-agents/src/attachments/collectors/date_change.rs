@@ -20,9 +20,7 @@ impl Default for DateChangeCollector {
 impl DateChangeCollector {
     pub fn new() -> Self {
         let today = chrono::Local::now().format(DATE_FMT).to_string();
-        Self {
-            last_date: Mutex::new(today),
-        }
+        Self { last_date: Mutex::new(today) }
     }
 }
 

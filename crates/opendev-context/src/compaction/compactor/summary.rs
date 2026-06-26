@@ -170,23 +170,14 @@ impl ContextCompactor {
         let actions_str = if key_actions.is_empty() {
             "None recorded".to_string()
         } else {
-            key_actions
-                .iter()
-                .take(20)
-                .map(|a| format!("- {a}"))
-                .collect::<Vec<_>>()
-                .join("\n")
+            key_actions.iter().take(20).map(|a| format!("- {a}")).collect::<Vec<_>>().join("\n")
         };
 
         format!(
             "## Goal\n{}\n\n## Key Actions\n{}\n\n## Current State\n{}",
             if goal.is_empty() { "Unknown" } else { &goal },
             actions_str,
-            if last_state.is_empty() {
-                "No assistant response recorded"
-            } else {
-                &last_state
-            },
+            if last_state.is_empty() { "No assistant response recorded" } else { &last_state },
         )
     }
 
@@ -219,10 +210,7 @@ impl ContextCompactor {
     pub(super) fn sanitize_for_summarization(messages: &[ApiMessage]) -> String {
         let mut parts = Vec::new();
         for msg in messages {
-            let role = msg
-                .get("role")
-                .and_then(|v| v.as_str())
-                .unwrap_or("unknown");
+            let role = msg.get("role").and_then(|v| v.as_str()).unwrap_or("unknown");
             let content = Self::extract_content(msg);
             if !content.is_empty() {
                 let snippet: String = content.chars().take(500).collect();

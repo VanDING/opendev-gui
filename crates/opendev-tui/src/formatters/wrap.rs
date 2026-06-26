@@ -14,17 +14,12 @@ use super::style_tokens::CODE_LINE_SENTINEL;
 /// Returns true if any span in `line` starts with the code-block sentinel character,
 /// indicating this line is inside a code block and should not be word-wrapped.
 fn is_code_line(line: &Line<'_>) -> bool {
-    line.spans
-        .iter()
-        .any(|s| s.content.starts_with(CODE_LINE_SENTINEL))
+    line.spans.iter().any(|s| s.content.starts_with(CODE_LINE_SENTINEL))
 }
 
 /// Compute the display width of a span's content using unicode widths.
 fn span_width(s: &Span<'_>) -> usize {
-    s.content
-        .chars()
-        .map(|c| UnicodeWidthChar::width(c).unwrap_or(0))
-        .sum()
+    s.content.chars().map(|c| UnicodeWidthChar::width(c).unwrap_or(0)).sum()
 }
 
 /// Compute the total display width of a slice of spans.
@@ -60,10 +55,8 @@ fn split_structural_prefix<'a>(
         let strip = leading_ws.min(strip_indent);
         let stripped_text = &first_text[strip..];
         let stripped_span = Span::styled(stripped_text.to_string(), spans[0].style);
-        let prefix_w: usize = stripped_text
-            .chars()
-            .map(|c| UnicodeWidthChar::width(c).unwrap_or(0))
-            .sum();
+        let prefix_w: usize =
+            stripped_text.chars().map(|c| UnicodeWidthChar::width(c).unwrap_or(0)).sum();
         (vec![stripped_span], spans[1..].to_vec(), prefix_w)
     } else {
         (vec![], spans.to_vec(), 0)
@@ -184,10 +177,7 @@ fn wrap_spans(spans: Vec<Span<'_>>, max_width: usize) -> Vec<Vec<Span<'_>>> {
     let tokens = tokenize_spans(&spans);
 
     for (token, byte_offset) in tokens {
-        let token_w = token
-            .chars()
-            .map(|c| UnicodeWidthChar::width(c).unwrap_or(0))
-            .sum::<usize>();
+        let token_w = token.chars().map(|c| UnicodeWidthChar::width(c).unwrap_or(0)).sum::<usize>();
         let style = style_at_byte_offset(&spans, byte_offset);
 
         if line_width + token_w <= max_width {

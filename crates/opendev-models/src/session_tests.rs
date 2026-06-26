@@ -34,14 +34,8 @@ fn test_archive_unarchive() {
 fn test_generate_slug() {
     let session = Session::new();
 
-    assert_eq!(
-        session.generate_slug(Some("Hello World Test")),
-        "hello-world-test"
-    );
-    assert_eq!(
-        session.generate_slug(Some("Special @#$ Characters!")),
-        "special-characters"
-    );
+    assert_eq!(session.generate_slug(Some("Hello World Test")), "hello-world-test");
+    assert_eq!(session.generate_slug(Some("Special @#$ Characters!")), "special-characters");
     // Empty title falls back to session ID prefix
     let slug = session.generate_slug(Some(""));
     assert_eq!(slug.len(), session.id.len().min(8));
@@ -158,20 +152,14 @@ fn test_python_session_compat() {
     assert_eq!(session.messages[1].tool_calls[0].name, "read_file");
     assert!(session.messages[1].thinking_trace.is_some());
     assert_eq!(session.context_files, vec!["src/main.py"]);
-    assert_eq!(
-        session.working_directory.as_deref(),
-        Some("/home/user/project")
-    );
+    assert_eq!(session.working_directory.as_deref(), Some("/home/user/project"));
     assert!(session.workspace_confirmed);
     assert_eq!(session.owner_id.as_deref(), Some("user-123"));
     assert_eq!(session.file_changes.len(), 1);
     assert_eq!(session.file_changes[0].lines_added, 10);
     assert_eq!(session.file_changes[0].lines_removed, 3);
     assert_eq!(
-        session
-            .subagent_sessions
-            .get("tc-agent-1")
-            .map(String::as_str),
+        session.subagent_sessions.get("tc-agent-1").map(String::as_str),
         Some("child-sess-1")
     );
     assert_eq!(session.slug.as_deref(), Some("test-session"));

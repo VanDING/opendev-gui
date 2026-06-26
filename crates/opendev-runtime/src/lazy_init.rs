@@ -26,10 +26,7 @@ pub struct LazySubsystem<T: Send + Sync + 'static> {
 impl<T: Send + Sync + 'static> LazySubsystem<T> {
     /// Create a new lazy subsystem with the given human-readable `name`.
     pub fn new(name: &'static str) -> Self {
-        Self {
-            name,
-            cell: Arc::new(OnceCell::new()),
-        }
+        Self { name, cell: Arc::new(OnceCell::new()) }
     }
 
     /// Get the value, initializing it with `init` if necessary.
@@ -88,10 +85,7 @@ impl<T: Send + Sync + 'static> LazySubsystem<T> {
 
 impl<T: Send + Sync + 'static> Clone for LazySubsystem<T> {
     fn clone(&self) -> Self {
-        Self {
-            name: self.name,
-            cell: Arc::clone(&self.cell),
-        }
+        Self { name: self.name, cell: Arc::clone(&self.cell) }
     }
 }
 
@@ -124,11 +118,7 @@ where
     M: Send + Sync + 'static,
     E: Send + Sync + 'static,
 {
-    (
-        LazySubsystem::new("LSP"),
-        LazySubsystem::new("MCP"),
-        LazySubsystem::new("Embeddings"),
-    )
+    (LazySubsystem::new("LSP"), LazySubsystem::new("MCP"), LazySubsystem::new("Embeddings"))
 }
 
 // ---------------------------------------------------------------------------
@@ -146,10 +136,7 @@ pub struct SyncLazy<T: Send + Sync + 'static> {
 impl<T: Send + Sync + 'static> SyncLazy<T> {
     /// Create a new synchronous lazy subsystem.
     pub const fn new(name: &'static str) -> Self {
-        Self {
-            name,
-            cell: std::sync::OnceLock::new(),
-        }
+        Self { name, cell: std::sync::OnceLock::new() }
     }
 
     /// Get the value, initializing with `init` if necessary.

@@ -41,10 +41,7 @@ pub struct LlmCaller {
 impl LlmCaller {
     /// Create a new LLM caller with the given primary model configuration.
     pub fn new(config: LlmCallConfig) -> Self {
-        Self {
-            cleaner: ResponseCleaner::new(),
-            config,
-        }
+        Self { cleaner: ResponseCleaner::new(), config }
     }
 
     /// Clean and normalize messages before sending to the LLM API.
@@ -154,11 +151,8 @@ impl LlmCaller {
         if let Some(source_tc) = source.get("tool_calls").and_then(|v| v.as_array())
             && !source_tc.is_empty()
         {
-            let mut combined = target
-                .get("tool_calls")
-                .and_then(|v| v.as_array())
-                .cloned()
-                .unwrap_or_default();
+            let mut combined =
+                target.get("tool_calls").and_then(|v| v.as_array()).cloned().unwrap_or_default();
             combined.extend(source_tc.iter().cloned());
             target["tool_calls"] = Value::Array(combined);
         }
@@ -168,9 +162,8 @@ impl LlmCaller {
     /// entry in any assistant message's `tool_calls` array.
     fn remove_orphaned_tool_results(messages: Vec<Value>) -> Vec<Value> {
         // Early exit: skip expensive HashSet building if no tool messages exist
-        let has_tool_msgs = messages
-            .iter()
-            .any(|m| m.get("role").and_then(|v| v.as_str()) == Some("tool"));
+        let has_tool_msgs =
+            messages.iter().any(|m| m.get("role").and_then(|v| v.as_str()) == Some("tool"));
         if !has_tool_msgs {
             return messages;
         }
@@ -254,10 +247,8 @@ impl LlmCaller {
 
         let raw_content = message.get("content").and_then(|c| c.as_str());
         let cleaned_content = self.cleaner.clean(raw_content);
-        let reasoning_content = message
-            .get("reasoning_content")
-            .and_then(|r| r.as_str())
-            .map(|s| s.to_string());
+        let reasoning_content =
+            message.get("reasoning_content").and_then(|r| r.as_str()).map(|s| s.to_string());
 
         debug!(
             has_content = raw_content.is_some(),
@@ -265,10 +256,8 @@ impl LlmCaller {
             "Parsed action response"
         );
 
-        let finish_reason = choice
-            .get("finish_reason")
-            .and_then(|f| f.as_str())
-            .map(|s| s.to_string());
+        let finish_reason =
+            choice.get("finish_reason").and_then(|f| f.as_str()).map(|s| s.to_string());
 
         let mut resp = LlmResponse::ok(cleaned_content, message.clone());
         resp.usage = body.get("usage").cloned();

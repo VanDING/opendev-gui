@@ -34,10 +34,7 @@ struct IndexData {
 
 impl Default for IndexData {
     fn default() -> Self {
-        Self {
-            version: VERSION,
-            entries: Vec::new(),
-        }
+        Self { version: VERSION, entries: Vec::new() }
     }
 }
 
@@ -55,10 +52,7 @@ impl PlanIndex {
     pub fn new(plans_dir: impl Into<PathBuf>) -> Self {
         let dir = plans_dir.into();
         let index_path = dir.join(INDEX_FILE);
-        Self {
-            plans_dir: dir,
-            index_path,
-        }
+        Self { plans_dir: dir, index_path }
     }
 
     /// Read the index file, returning default structure if missing or invalid.
@@ -113,10 +107,7 @@ impl PlanIndex {
 
     /// Look up a plan entry by session ID.
     pub fn get_by_session(&self, session_id: &str) -> Option<PlanEntry> {
-        self.read_index()
-            .entries
-            .into_iter()
-            .find(|e| e.session_id.as_deref() == Some(session_id))
+        self.read_index().entries.into_iter().find(|e| e.session_id.as_deref() == Some(session_id))
     }
 
     /// List all plan entries for a project.

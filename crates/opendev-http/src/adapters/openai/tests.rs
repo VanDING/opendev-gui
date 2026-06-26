@@ -21,21 +21,11 @@ fn test_api_url_custom() {
 
 #[test]
 fn test_is_reasoning_model() {
-    assert!(OpenAiAdapter::is_reasoning_model(
-        &json!({"model": "o1-preview"})
-    ));
-    assert!(OpenAiAdapter::is_reasoning_model(
-        &json!({"model": "o1-mini"})
-    ));
-    assert!(OpenAiAdapter::is_reasoning_model(
-        &json!({"model": "o3-mini"})
-    ));
-    assert!(!OpenAiAdapter::is_reasoning_model(
-        &json!({"model": "gpt-4"})
-    ));
-    assert!(!OpenAiAdapter::is_reasoning_model(
-        &json!({"model": "claude-3"})
-    ));
+    assert!(OpenAiAdapter::is_reasoning_model(&json!({"model": "o1-preview"})));
+    assert!(OpenAiAdapter::is_reasoning_model(&json!({"model": "o1-mini"})));
+    assert!(OpenAiAdapter::is_reasoning_model(&json!({"model": "o3-mini"})));
+    assert!(!OpenAiAdapter::is_reasoning_model(&json!({"model": "gpt-4"})));
+    assert!(!OpenAiAdapter::is_reasoning_model(&json!({"model": "claude-3"})));
 }
 
 #[test]
@@ -205,10 +195,7 @@ fn test_convert_response_tool_calls() {
     assert_eq!(tool_calls[0]["id"], "call_abc");
     assert_eq!(tool_calls[0]["type"], "function");
     assert_eq!(tool_calls[0]["function"]["name"], "read_file");
-    assert_eq!(
-        tool_calls[0]["function"]["arguments"],
-        "{\"path\": \"test.txt\"}"
-    );
+    assert_eq!(tool_calls[0]["function"]["arguments"], "{\"path\": \"test.txt\"}");
 }
 
 #[test]

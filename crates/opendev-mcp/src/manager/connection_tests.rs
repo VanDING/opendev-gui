@@ -59,19 +59,11 @@ async fn test_connect_all_skips_disabled_servers() {
         let mut cfg = McpConfig::default();
         cfg.mcp_servers.insert(
             "disabled_server".to_string(),
-            McpServerConfig {
-                enabled: false,
-                auto_start: true,
-                ..McpServerConfig::default()
-            },
+            McpServerConfig { enabled: false, auto_start: true, ..McpServerConfig::default() },
         );
         cfg.mcp_servers.insert(
             "non_autostart".to_string(),
-            McpServerConfig {
-                enabled: true,
-                auto_start: false,
-                ..McpServerConfig::default()
-            },
+            McpServerConfig { enabled: true, auto_start: false, ..McpServerConfig::default() },
         );
         *config = Some(cfg);
     }
@@ -126,10 +118,7 @@ async fn test_remove_server_cleans_up_health_and_cache() {
         let mut cache = manager.tool_schema_cache.write().await;
         cache.insert(
             "cleanup-test".to_string(),
-            super::super::ToolSchemaCache {
-                tools: vec![],
-                invalidated: false,
-            },
+            super::super::ToolSchemaCache { tools: vec![], invalidated: false },
         );
     }
 
@@ -251,10 +240,8 @@ else:
     assert_eq!(schemas[0].original_name, "greet");
     assert_eq!(schemas[0].description, "Say hello");
 
-    let result = manager
-        .call_tool("mock", "greet", serde_json::json!({"name": "Rust"}))
-        .await
-        .unwrap();
+    let result =
+        manager.call_tool("mock", "greet", serde_json::json!({"name": "Rust"})).await.unwrap();
     assert!(!result.is_error);
     assert_eq!(result.content.len(), 1);
 

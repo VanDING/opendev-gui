@@ -59,11 +59,7 @@ impl AgentEventCallback for RemoteEventCallback {
     }
 
     fn on_file_changed(&self, files: usize, additions: u64, deletions: u64) {
-        let _ = self.tx.send(RemoteEvent::FileChangeSummary {
-            files,
-            additions,
-            deletions,
-        });
+        let _ = self.tx.send(RemoteEvent::FileChangeSummary { files, additions, deletions });
     }
 }
 
@@ -79,9 +75,7 @@ pub async fn run_remote(
     // Connect MCP servers
     runtime.start_mcp_connections();
 
-    let callback = RemoteEventCallback {
-        tx: event_tx.clone(),
-    };
+    let callback = RemoteEventCallback { tx: event_tx.clone() };
 
     // Internal command type for the agent task
     enum AgentCmd {
@@ -93,7 +87,7 @@ pub async fn run_remote(
     }
 
     // Channel for forwarding commands to the agent task
-    let (user_tx, mut user_rx) = mpsc::unbounded_channel::<AgentCmd>();
+    let (user_tx, mut user_rx) = mpsc::channel::<AgentCmd>(128);
 
     // Bridge tool approval requests to Telegram
     if let Some(mut receivers) = runtime.channel_receivers.take() {
@@ -126,11 +120,7 @@ pub async fn run_remote(
                         opendev_channels::telegram::remote::ApprovalResponse::Approved {
                             command,
                         } => {
-                            let cmd = if command.is_empty() {
-                                original_command
-                            } else {
-                                command
-                            };
+                            let cmd = if command.is_empty() { original_command } else { command };
                             let _ = req.response_tx.send(opendev_runtime::ToolApprovalDecision {
                                 approved: true,
                                 choice: "yes".to_string(),
@@ -290,10 +280,8 @@ pub async fn run_remote(
                     let sessions = runtime.session_manager.list_sessions(false);
                     if let Some(latest) = sessions.first() {
                         let id = latest.id.clone();
-                        let title = latest
-                            .title
-                            .clone()
-                            .unwrap_or_else(|| "(untitled)".to_string());
+                        let title =
+                            latest.title.clone().unwrap_or_else(|| "(untitled)".to_string());
                         match runtime.session_manager.resume_session(&id) {
                             Ok(_) => {
                                 let _ = event_tx_for_agent.send(RemoteEvent::AgentError(format!(
@@ -343,8 +331,6 @@ pub async fn run_remote(
     // Block until Ctrl+C
     println!("Remote session active. Interact via Telegram.");
     println!("Press Ctrl+C to stop.");
-    tokio::signal::ctrl_c()
-        .await
-        .expect("failed to listen for Ctrl+C");
+    tokio::signal::ctrl_c().await.expect("failed to listen for Ctrl+C");
     println!("\nShutting down...");
 }

@@ -26,10 +26,7 @@ fn test_command_completer_no_match() {
 
 #[test]
 fn test_command_completer_extra_commands() {
-    let extra = vec![SlashCommand {
-        name: "custom",
-        description: "a custom command",
-    }];
+    let extra = vec![SlashCommand { name: "custom", description: "a custom command" }];
     let c = CommandCompleter::new(Some(&extra));
     let results = c.complete("cust");
     assert_eq!(results.len(), 1);
@@ -40,10 +37,7 @@ fn test_command_completer_extra_commands() {
 fn test_command_completer_add_commands() {
     let mut c = CommandCompleter::new(None);
     let before = c.complete("").len();
-    c.add_commands(&[SlashCommand {
-        name: "newcmd",
-        description: "new",
-    }]);
+    c.add_commands(&[SlashCommand { name: "newcmd", description: "new" }]);
     let after = c.complete("").len();
     assert_eq!(after, before + 1);
 }

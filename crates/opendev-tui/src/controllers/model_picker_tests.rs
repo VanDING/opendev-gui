@@ -140,10 +140,7 @@ fn test_format_context() {
 
 #[test]
 fn test_format_pricing() {
-    assert_eq!(
-        ModelPickerController::format_pricing(3.0, 15.0),
-        "$3.00/$15.00"
-    );
+    assert_eq!(ModelPickerController::format_pricing(3.0, 15.0), "$3.00/$15.00");
     assert_eq!(ModelPickerController::format_pricing(0.0, 0.0), "free");
 }
 
@@ -155,11 +152,7 @@ fn test_from_registry_loads_models() {
     // In CI without cache, picker may have 0 models — that's OK.
     // On dev machines with OPENAI_API_KEY set and cache populated, expect models.
     if std::env::var("OPENAI_API_KEY").is_ok() {
-        eprintln!(
-            "Picker loaded {} models, active={}",
-            picker.filtered_count(),
-            picker.active()
-        );
+        eprintln!("Picker loaded {} models, active={}", picker.filtered_count(), picker.active());
         // If we have the API key, we should have at least some OpenAI models
         assert!(
             picker.filtered_count() > 0,

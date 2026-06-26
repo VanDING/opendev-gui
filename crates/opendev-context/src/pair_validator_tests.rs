@@ -2,27 +2,15 @@ use super::*;
 
 fn make_msg(role: &str, content: &str) -> ApiMessage {
     let mut msg = ApiMessage::new();
-    msg.insert(
-        "role".to_string(),
-        serde_json::Value::String(role.to_string()),
-    );
-    msg.insert(
-        "content".to_string(),
-        serde_json::Value::String(content.to_string()),
-    );
+    msg.insert("role".to_string(), serde_json::Value::String(role.to_string()));
+    msg.insert("content".to_string(), serde_json::Value::String(content.to_string()));
     msg
 }
 
 fn make_assistant_with_tc(tc_ids: &[&str]) -> ApiMessage {
     let mut msg = ApiMessage::new();
-    msg.insert(
-        "role".to_string(),
-        serde_json::Value::String("assistant".to_string()),
-    );
-    msg.insert(
-        "content".to_string(),
-        serde_json::Value::String(String::new()),
-    );
+    msg.insert("role".to_string(), serde_json::Value::String("assistant".to_string()));
+    msg.insert("content".to_string(), serde_json::Value::String(String::new()));
     let tcs: Vec<serde_json::Value> = tc_ids
         .iter()
         .map(|id| {
@@ -38,18 +26,9 @@ fn make_assistant_with_tc(tc_ids: &[&str]) -> ApiMessage {
 
 fn make_tool_result(tool_call_id: &str, content: &str) -> ApiMessage {
     let mut msg = ApiMessage::new();
-    msg.insert(
-        "role".to_string(),
-        serde_json::Value::String("tool".to_string()),
-    );
-    msg.insert(
-        "tool_call_id".to_string(),
-        serde_json::Value::String(tool_call_id.to_string()),
-    );
-    msg.insert(
-        "content".to_string(),
-        serde_json::Value::String(content.to_string()),
-    );
+    msg.insert("role".to_string(), serde_json::Value::String("tool".to_string()));
+    msg.insert("tool_call_id".to_string(), serde_json::Value::String(tool_call_id.to_string()));
+    msg.insert("content".to_string(), serde_json::Value::String(content.to_string()));
     msg
 }
 
@@ -75,12 +54,7 @@ fn test_missing_tool_result() {
     ];
     let result = MessagePairValidator::validate(&messages);
     assert!(!result.is_valid());
-    assert!(
-        result
-            .violations
-            .iter()
-            .any(|v| v.violation_type == ViolationType::MissingToolResult)
-    );
+    assert!(result.violations.iter().any(|v| v.violation_type == ViolationType::MissingToolResult));
 }
 
 #[test]
@@ -93,10 +67,7 @@ fn test_orphaned_tool_result() {
     let result = MessagePairValidator::validate(&messages);
     assert!(!result.is_valid());
     assert!(
-        result
-            .violations
-            .iter()
-            .any(|v| v.violation_type == ViolationType::OrphanedToolResult)
+        result.violations.iter().any(|v| v.violation_type == ViolationType::OrphanedToolResult)
     );
 }
 
@@ -105,10 +76,7 @@ fn test_consecutive_same_role() {
     let messages = vec![make_msg("user", "hello"), make_msg("user", "hello again")];
     let result = MessagePairValidator::validate(&messages);
     assert!(
-        result
-            .violations
-            .iter()
-            .any(|v| v.violation_type == ViolationType::ConsecutiveSameRole)
+        result.violations.iter().any(|v| v.violation_type == ViolationType::ConsecutiveSameRole)
     );
 }
 
@@ -124,10 +92,7 @@ fn test_consecutive_tool_messages_ok() {
     let result = MessagePairValidator::validate(&messages);
     // Should not have ConsecutiveSameRole for tool messages
     assert!(
-        !result
-            .violations
-            .iter()
-            .any(|v| v.violation_type == ViolationType::ConsecutiveSameRole)
+        !result.violations.iter().any(|v| v.violation_type == ViolationType::ConsecutiveSameRole)
     );
 }
 

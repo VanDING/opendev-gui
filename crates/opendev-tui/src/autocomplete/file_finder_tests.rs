@@ -59,11 +59,7 @@ fn test_finder_excludes_git() {
     let results = finder.find_files("", 100);
     // Should only find visible.txt, not .git/HEAD
     for r in &results {
-        assert!(
-            !r.to_string_lossy().contains(".git"),
-            "should not contain .git paths: {:?}",
-            r
-        );
+        assert!(!r.to_string_lossy().contains(".git"), "should not contain .git paths: {:?}", r);
     }
 }
 
@@ -102,8 +98,6 @@ fn test_finder_respects_gitignore() {
     let finder = FileFinder::new(dir.path().to_path_buf());
     let results = finder.find_files("", 100);
     // .gitignore itself may appear, but debug.log should not
-    let has_log = results
-        .iter()
-        .any(|p| p.to_string_lossy().contains("debug.log"));
+    let has_log = results.iter().any(|p| p.to_string_lossy().contains("debug.log"));
     assert!(!has_log, "debug.log should be excluded by .gitignore");
 }

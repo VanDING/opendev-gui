@@ -90,10 +90,8 @@ impl SnapshotManager {
             .unwrap_or_else(|_| PathBuf::from(project_dir));
         let project_dir_str = abs_path.to_string_lossy().to_string();
         let project_id = encode_project_id(&project_dir_str);
-        let shadow_dir = opendev_config::Paths::default()
-            .data_dir()
-            .join("snapshot")
-            .join(&project_id);
+        let shadow_dir =
+            opendev_config::Paths::default().data_dir().join("snapshot").join(&project_id);
 
         Self {
             project_dir: project_dir_str,
@@ -173,11 +171,9 @@ impl SnapshotManager {
         };
 
         match self.git(&["diff-tree", "-r", "--name-only", tree_hash, &current_hash]) {
-            Ok(output) => output
-                .lines()
-                .filter(|line| !line.is_empty())
-                .map(|s| s.to_string())
-                .collect(),
+            Ok(output) => {
+                output.lines().filter(|line| !line.is_empty()).map(|s| s.to_string()).collect()
+            }
             Err(e) => {
                 debug!("Failed to compute patch: {}", e);
                 Vec::new()
@@ -242,13 +238,7 @@ impl SnapshotManager {
             return false;
         }
 
-        match self.git(&[
-            "--work-tree",
-            &self.project_dir,
-            "checkout-index",
-            "--all",
-            "--force",
-        ]) {
+        match self.git(&["--work-tree", &self.project_dir, "checkout-index", "--all", "--force"]) {
             Ok(_) => {
                 info!(
                     "Fully restored workspace to snapshot {}",
@@ -317,12 +307,7 @@ impl SnapshotManager {
                     let file_path = unquote_git_path(parts[2]);
                     // Binary files show "-" for both counts
                     let is_binary = parts[0] == "-" && parts[1] == "-";
-                    Some(FileDiffStat {
-                        file_path,
-                        additions,
-                        deletions,
-                        is_binary,
-                    })
+                    Some(FileDiffStat { file_path, additions, deletions, is_binary })
                 })
                 .collect(),
             Err(e) => {
@@ -431,10 +416,7 @@ impl SnapshotManager {
             if let Ok(project_path) = std::fs::read_to_string(&marker) {
                 let project_path = project_path.trim();
                 if !project_path.is_empty() && !Path::new(project_path).exists() {
-                    info!(
-                        "Removing orphaned snapshot for deleted project: {}",
-                        project_path
-                    );
+                    info!("Removing orphaned snapshot for deleted project: {}", project_path);
                     let _ = std::fs::remove_dir_all(&path);
                     continue;
                 }
@@ -490,10 +472,7 @@ impl SnapshotManager {
                 // Write project path marker for orphan detection during cleanup
                 let marker = self.shadow_dir.join("OPENDEV_PROJECT_PATH");
                 let _ = std::fs::write(&marker, &self.project_dir);
-                info!(
-                    "Shadow snapshot repo initialized at {}",
-                    self.shadow_dir.display()
-                );
+                info!("Shadow snapshot repo initialized at {}", self.shadow_dir.display());
                 true
             }
             Err(e) => {
@@ -505,16 +484,13 @@ impl SnapshotManager {
 
     fn git(&self, args: &[&str]) -> Result<String, String> {
         let mut cmd = Command::new("git");
-        cmd.arg("--git-dir")
-            .arg(self.shadow_dir.to_string_lossy().as_ref());
+        cmd.arg("--git-dir").arg(self.shadow_dir.to_string_lossy().as_ref());
         for arg in args {
             cmd.arg(arg);
         }
         cmd.current_dir(&self.project_dir);
 
-        let output = cmd
-            .output()
-            .map_err(|e| format!("Failed to execute git: {}", e))?;
+        let output = cmd.output().map_err(|e| format!("Failed to execute git: {}", e))?;
 
         if output.status.success() {
             Ok(String::from_utf8_lossy(&output.stdout).to_string())

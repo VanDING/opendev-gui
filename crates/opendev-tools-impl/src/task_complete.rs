@@ -58,19 +58,13 @@ impl BaseTool for TaskCompleteTool {
         args: HashMap<String, serde_json::Value>,
         _ctx: &ToolContext,
     ) -> ToolResult {
-        let summary = match args
-            .get("result")
-            .or_else(|| args.get("summary"))
-            .and_then(|v| v.as_str())
-        {
-            Some(s) if !s.trim().is_empty() => s.trim(),
-            _ => return ToolResult::fail("Result is required for task_complete"),
-        };
+        let summary =
+            match args.get("result").or_else(|| args.get("summary")).and_then(|v| v.as_str()) {
+                Some(s) if !s.trim().is_empty() => s.trim(),
+                _ => return ToolResult::fail("Result is required for task_complete"),
+            };
 
-        let status = args
-            .get("status")
-            .and_then(|v| v.as_str())
-            .unwrap_or("success");
+        let status = args.get("status").and_then(|v| v.as_str()).unwrap_or("success");
 
         if !VALID_STATUSES.contains(&status) {
             return ToolResult::fail(format!(

@@ -78,10 +78,7 @@ impl SessionMemoryCollector {
 
         let mut summary = String::new();
         for msg in recent {
-            let role = msg
-                .get("role")
-                .and_then(|v| v.as_str())
-                .unwrap_or("unknown");
+            let role = msg.get("role").and_then(|v| v.as_str()).unwrap_or("unknown");
             let content = msg.get("content").and_then(|v| v.as_str()).unwrap_or("");
 
             if content.is_empty() {
@@ -148,10 +145,7 @@ impl SessionMemoryCollector {
         let path = memory_dir.join(&filename);
 
         match std::fs::write(&path, &content) {
-            Ok(_) => debug!(
-                "Written session notes to {filename} ({} bytes)",
-                content.len()
-            ),
+            Ok(_) => debug!("Written session notes to {filename} ({} bytes)", content.len()),
             Err(e) => warn!("Failed to write session notes: {e}"),
         }
 
@@ -170,10 +164,7 @@ fn update_memory_index_after_session(dir: &Path) -> std::io::Result<()> {
         if !path.is_file() {
             continue;
         }
-        let name = path
-            .file_name()
-            .map(|n| n.to_string_lossy().to_string())
-            .unwrap_or_default();
+        let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
 
         if name == "MEMORY.md" || !name.ends_with(".md") {
             continue;
@@ -197,11 +188,8 @@ fn update_memory_index_after_session(dir: &Path) -> std::io::Result<()> {
 
     // Truncate to limits
     let truncated: String = index.lines().take(200).collect::<Vec<_>>().join("\n");
-    let final_content = if truncated.len() > 25 * 1024 {
-        &truncated[..25 * 1024]
-    } else {
-        &truncated
-    };
+    let final_content =
+        if truncated.len() > 25 * 1024 { &truncated[..25 * 1024] } else { &truncated };
 
     let index_path = dir.join("MEMORY.md");
     let tmp_path = dir.join("MEMORY.md.tmp");
@@ -274,7 +262,7 @@ impl ContextCollector for SessionMemoryCollector {
 
             // Update token checkpoint
             self.last_extraction_tokens.store(tokens, Ordering::Relaxed);
-            *self.session_file_written.lock().unwrap() = true;
+            *self.session_file_written.lock().unwrap_or_else(|e| e.into_inner()) = true;
 
             // Return a brief notification (not the full notes — those are on disk)
             Some(Attachment {

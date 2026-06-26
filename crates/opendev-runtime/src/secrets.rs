@@ -47,32 +47,17 @@ struct SecretPattern {
 }
 
 const SECRET_PATTERNS: &[SecretPattern] = &[
-    SecretPattern {
-        kind: SecretKind::AnthropicApiKey,
-        regex: r"sk-ant-[A-Za-z0-9_\-]{20,}",
-    },
+    SecretPattern { kind: SecretKind::AnthropicApiKey, regex: r"sk-ant-[A-Za-z0-9_\-]{20,}" },
     SecretPattern {
         kind: SecretKind::OpenAiApiKey,
         // sk- followed by a non-"ant-" prefix and at least 20 chars total
         // Uses character class to exclude 'a' as first char after sk- (crude but avoids lookahead)
         regex: r"sk-(?:proj-|live-|[b-zB-Z0-9_])[A-Za-z0-9_\-]{19,}",
     },
-    SecretPattern {
-        kind: SecretKind::GroqApiKey,
-        regex: r"gsk_[A-Za-z0-9_\-]{20,}",
-    },
-    SecretPattern {
-        kind: SecretKind::GoogleApiKey,
-        regex: r"AIza[A-Za-z0-9_\-]{30,}",
-    },
-    SecretPattern {
-        kind: SecretKind::GitHubToken,
-        regex: r"ghp_[A-Za-z0-9]{30,}",
-    },
-    SecretPattern {
-        kind: SecretKind::BearerToken,
-        regex: r"Bearer\s+[A-Za-z0-9_\-\.]{20,}",
-    },
+    SecretPattern { kind: SecretKind::GroqApiKey, regex: r"gsk_[A-Za-z0-9_\-]{20,}" },
+    SecretPattern { kind: SecretKind::GoogleApiKey, regex: r"AIza[A-Za-z0-9_\-]{30,}" },
+    SecretPattern { kind: SecretKind::GitHubToken, regex: r"ghp_[A-Za-z0-9]{30,}" },
+    SecretPattern { kind: SecretKind::BearerToken, regex: r"Bearer\s+[A-Za-z0-9_\-\.]{20,}" },
     SecretPattern {
         kind: SecretKind::PasswordAssignment,
         regex: r"(?i)(?:password|passwd|pass)\s*=\s*\S+",
@@ -91,10 +76,7 @@ fn compiled_patterns() -> &'static Vec<(SecretKind, Regex)> {
         SECRET_PATTERNS
             .iter()
             .map(|sp| {
-                (
-                    sp.kind.clone(),
-                    Regex::new(sp.regex).expect("invalid secret pattern regex"),
-                )
+                (sp.kind.clone(), Regex::new(sp.regex).expect("invalid secret pattern regex"))
             })
             .collect()
     })

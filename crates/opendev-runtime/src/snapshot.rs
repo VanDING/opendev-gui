@@ -18,9 +18,7 @@ pub struct SnapshotManager {
 impl SnapshotManager {
     /// Create a new snapshot manager for the given project directory.
     pub fn new(project_dir: &Path) -> Self {
-        let project_dir = project_dir
-            .canonicalize()
-            .unwrap_or_else(|_| project_dir.to_path_buf());
+        let project_dir = project_dir.canonicalize().unwrap_or_else(|_| project_dir.to_path_buf());
         let project_id = compute_project_id(&project_dir);
 
         let snapshot_dir = dirs_next::home_dir()
@@ -30,11 +28,7 @@ impl SnapshotManager {
             .join("snapshot")
             .join(&project_id);
 
-        Self {
-            project_dir,
-            snapshot_dir,
-            initialized: false,
-        }
+        Self { project_dir, snapshot_dir, initialized: false }
     }
 
     /// Path to the snapshot directory.
@@ -82,11 +76,8 @@ impl SnapshotManager {
             return None;
         }
 
-        let msg = if label.is_empty() {
-            "snapshot".to_string()
-        } else {
-            format!("snapshot: {label}")
-        };
+        let msg =
+            if label.is_empty() { "snapshot".to_string() } else { format!("snapshot: {label}") };
 
         self.git(&["commit", "-m", &msg, "--allow-empty"]);
 
@@ -109,13 +100,8 @@ impl SnapshotManager {
             return None;
         }
 
-        let output = self.git(&[
-            "diff-tree",
-            "--no-commit-id",
-            "-r",
-            "--name-only",
-            snapshot_id,
-        ])?;
+        let output =
+            self.git(&["diff-tree", "--no-commit-id", "-r", "--name-only", snapshot_id])?;
         let files: Vec<&str> = output.lines().filter(|l| !l.is_empty()).collect();
 
         for rel_path in &files {
@@ -143,16 +129,11 @@ impl SnapshotManager {
             return Vec::new();
         }
 
-        let output = match self.git(&[
-            "diff-tree",
-            "--no-commit-id",
-            "-r",
-            "--name-only",
-            snapshot_id,
-        ]) {
-            Some(o) => o,
-            None => return Vec::new(),
-        };
+        let output =
+            match self.git(&["diff-tree", "--no-commit-id", "-r", "--name-only", snapshot_id]) {
+                Some(o) => o,
+                None => return Vec::new(),
+            };
 
         let mut reverted = Vec::new();
 
@@ -212,10 +193,7 @@ impl SnapshotManager {
     }
 
     fn git(&self, args: &[&str]) -> Option<String> {
-        let result = Command::new("git")
-            .args(args)
-            .current_dir(&self.snapshot_dir)
-            .output();
+        let result = Command::new("git").args(args).current_dir(&self.snapshot_dir).output();
 
         match result {
             Ok(output) => {

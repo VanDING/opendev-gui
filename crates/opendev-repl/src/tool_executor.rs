@@ -51,10 +51,7 @@ impl ToolExecutor {
         registry: &ToolRegistry,
         context: &ToolContext,
     ) -> Result<ToolExecutionResult, ReplError> {
-        let tool_name = tool_call["function"]["name"]
-            .as_str()
-            .unwrap_or("unknown")
-            .to_string();
+        let tool_name = tool_call["function"]["name"].as_str().unwrap_or("unknown").to_string();
 
         self.execution_count += 1;
         info!(
@@ -122,10 +119,7 @@ impl ToolExecutor {
         let policy_calls: Vec<PolicyToolCall> = tool_calls
             .iter()
             .map(|tc| {
-                let name = tc["function"]["name"]
-                    .as_str()
-                    .unwrap_or("unknown")
-                    .to_string();
+                let name = tc["function"]["name"].as_str().unwrap_or("unknown").to_string();
                 let arguments = tc["function"]["arguments"].clone();
                 let args_val = if let Some(s) = arguments.as_str() {
                     serde_json::from_str(s).unwrap_or(Value::Object(Default::default()))
@@ -137,10 +131,8 @@ impl ToolExecutor {
             .collect();
 
         // Look up tool instances for input-dependent concurrency decisions
-        let tool_instances: Vec<_> = policy_calls
-            .iter()
-            .filter_map(|tc| registry.get(&tc.name))
-            .collect();
+        let tool_instances: Vec<_> =
+            policy_calls.iter().filter_map(|tc| registry.get(&tc.name)).collect();
         let tool_refs: Vec<&dyn opendev_tools_core::BaseTool> =
             tool_instances.iter().map(|t| t.as_ref()).collect();
 
@@ -159,9 +151,7 @@ impl ToolExecutor {
                 // Single tool -- run sequentially (avoids spawn overhead).
                 let idx = group[0];
                 self.execution_count += 1;
-                let res = self
-                    .execute_single(&tool_calls[idx], registry, context)
-                    .await;
+                let res = self.execute_single(&tool_calls[idx], registry, context).await;
                 results[idx] = Some(res);
             } else {
                 // Multiple tools in this group -- run concurrently.
@@ -215,10 +205,7 @@ impl ToolExecutor {
         registry: &ToolRegistry,
         context: &ToolContext,
     ) -> Result<ToolExecutionResult, ReplError> {
-        let tool_name = tool_call["function"]["name"]
-            .as_str()
-            .unwrap_or("unknown")
-            .to_string();
+        let tool_name = tool_call["function"]["name"].as_str().unwrap_or("unknown").to_string();
 
         let start = Instant::now();
 

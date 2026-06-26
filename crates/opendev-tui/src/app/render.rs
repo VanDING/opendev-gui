@@ -35,9 +35,7 @@ impl App {
             )
             .turn_info(
                 self.state.turn_token_count,
-                self.state
-                    .turn_started_at
-                    .map_or(0, |t| t.elapsed().as_secs()),
+                self.state.turn_started_at.map_or(0, |t| t.elapsed().as_secs()),
             )
             .last_tool_context(self.state.last_tool_context.as_deref());
         widget
@@ -45,11 +43,7 @@ impl App {
             .iter()
             .map(|line| {
                 let w = line.width();
-                if w == 0 || content_width == 0 {
-                    1
-                } else {
-                    w.div_ceil(content_width as usize)
-                }
+                if w == 0 || content_width == 0 { 1 } else { w.div_ceil(content_width as usize) }
             })
             .sum()
     }
@@ -117,9 +111,7 @@ impl App {
                     )
                     .turn_info(
                         self.state.turn_token_count,
-                        self.state
-                            .turn_started_at
-                            .map_or(0, |t| t.elapsed().as_secs()),
+                        self.state.turn_started_at.map_or(0, |t| t.elapsed().as_secs()),
                     );
             if !self.state.cached_lines.is_empty() {
                 conversation = conversation.cached_lines(&self.state.cached_lines);
@@ -249,10 +241,7 @@ impl App {
             None
         })
         .last_completion(
-            self.state
-                .last_task_completion
-                .as_ref()
-                .map(|(id, _)| format!("[{id}] completed")),
+            self.state.last_task_completion.as_ref().map(|(id, _)| format!("[{id}] completed")),
         );
         frame.render_widget(status, chunks[3]);
 
@@ -270,9 +259,7 @@ impl App {
 
             let indicator = Paragraph::new(Line::from(Span::styled(
                 " C-x ",
-                Style::default()
-                    .fg(Self::PANEL_CYAN)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(Self::PANEL_CYAN).add_modifier(Modifier::BOLD),
             )));
             let indicator_area = layout::Rect {
                 x: area.width.saturating_sub(8),
@@ -354,12 +341,8 @@ impl App {
         let content_height = conv_height.saturating_sub(reserved);
         let content_width = self.state.terminal_width.saturating_sub(1);
 
-        let content_area = ratatui::layout::Rect {
-            x: 0,
-            y: 0,
-            width: content_width,
-            height: content_height,
-        };
+        let content_area =
+            ratatui::layout::Rect { x: 0, y: 0, width: content_width, height: content_height };
 
         let spinner_lines = self.spinner_wrapped_line_count(content_width);
         let total_lines: usize = self
@@ -368,11 +351,7 @@ impl App {
             .iter()
             .map(|line| {
                 let w = line.width();
-                if w == 0 || content_width == 0 {
-                    1
-                } else {
-                    w.div_ceil(content_width as usize)
-                }
+                if w == 0 || content_width == 0 { 1 } else { w.div_ceil(content_width as usize) }
             })
             .sum::<usize>()
             + spinner_lines
@@ -403,11 +382,7 @@ impl App {
                 continue;
             }
 
-            let col_start = if line_idx == start.line_index {
-                start.char_offset as u16
-            } else {
-                0
-            };
+            let col_start = if line_idx == start.line_index { start.char_offset as u16 } else { 0 };
             let col_end = if line_idx == end.line_index {
                 end.char_offset as u16
             } else {

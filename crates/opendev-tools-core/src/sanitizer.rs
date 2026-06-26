@@ -31,24 +31,15 @@ pub struct TruncationRule {
 
 impl TruncationRule {
     pub fn head(max_chars: usize) -> Self {
-        Self {
-            max_chars,
-            strategy: TruncationStrategy::Head,
-        }
+        Self { max_chars, strategy: TruncationStrategy::Head }
     }
 
     pub fn tail(max_chars: usize) -> Self {
-        Self {
-            max_chars,
-            strategy: TruncationStrategy::Tail,
-        }
+        Self { max_chars, strategy: TruncationStrategy::Tail }
     }
 
     pub fn head_tail(max_chars: usize, head_ratio: f64) -> Self {
-        Self {
-            max_chars,
-            strategy: TruncationStrategy::HeadTail { head_ratio },
-        }
+        Self { max_chars, strategy: TruncationStrategy::HeadTail { head_ratio } }
     }
 }
 
@@ -103,10 +94,7 @@ pub struct ToolResultSanitizer {
 impl ToolResultSanitizer {
     /// Create with default rules and no overflow storage.
     pub fn new() -> Self {
-        Self {
-            rules: default_rules(),
-            overflow_dir: None,
-        }
+        Self { rules: default_rules(), overflow_dir: None }
     }
 
     /// Create with overflow storage enabled.
@@ -126,19 +114,13 @@ impl ToolResultSanitizer {
             if let Some(existing) = rules.get(&tool_name) {
                 rules.insert(
                     tool_name,
-                    TruncationRule {
-                        max_chars,
-                        strategy: existing.strategy.clone(),
-                    },
+                    TruncationRule { max_chars, strategy: existing.strategy.clone() },
                 );
             } else {
                 rules.insert(tool_name, TruncationRule::head(max_chars));
             }
         }
-        Self {
-            rules,
-            overflow_dir: None,
-        }
+        Self { rules, overflow_dir: None }
     }
 
     /// Sanitize a tool result, truncating output if needed.
@@ -541,10 +523,7 @@ fn truncate_head_tail(text: &str, max_chars: usize, head_ratio: f64) -> String {
     let char_count = text.chars().count();
 
     let head: String = text.chars().take(head_size).collect();
-    let tail: String = text
-        .chars()
-        .skip(char_count.saturating_sub(tail_size))
-        .collect();
+    let tail: String = text.chars().skip(char_count.saturating_sub(tail_size)).collect();
     format!("{head}\n\n... [middle truncated] ...\n\n{tail}")
 }
 

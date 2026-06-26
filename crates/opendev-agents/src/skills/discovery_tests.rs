@@ -1,4 +1,4 @@
-use super::super::metadata::SkillMetadata;
+use super::super::metadata::{SkillMetadata, SkillStatus};
 use super::*;
 
 // ---- URL fetching ----
@@ -25,18 +25,50 @@ fn test_skill_source_url_display() {
 
 // ---- Cache invalidation via mtime ----
 
+fn base_meta(name: &str, desc: &str) -> SkillMetadata {
+    SkillMetadata {
+        name: name.to_string(),
+        description: desc.to_string(),
+        namespace: "default".to_string(),
+        path: None,
+        source: SkillSource::Builtin,
+        model: None,
+        agent: None,
+        pinned: false,
+        status: SkillStatus::Active,
+        requires_tools: None,
+        fallback_for_tools: None,
+        allowed_tools: None,
+        usage_count: 0,
+        last_used: None,
+        tags: vec![],
+    }
+}
+
+fn project_meta(name: &str, desc: &str, file: std::path::PathBuf) -> SkillMetadata {
+    SkillMetadata {
+        name: name.to_string(),
+        description: desc.to_string(),
+        namespace: "default".to_string(),
+        path: Some(file),
+        source: SkillSource::Project,
+        model: None,
+        agent: None,
+        pinned: false,
+        status: SkillStatus::Active,
+        requires_tools: None,
+        fallback_for_tools: None,
+        allowed_tools: None,
+        usage_count: 0,
+        last_used: None,
+        tags: vec![],
+    }
+}
+
 #[test]
 fn test_is_cache_stale_builtin_never_stale() {
     let skill = LoadedSkill {
-        metadata: SkillMetadata {
-            name: "commit".to_string(),
-            description: "Builtin commit".to_string(),
-            namespace: "default".to_string(),
-            path: None,
-            source: SkillSource::Builtin,
-            model: None,
-            agent: None,
-        },
+        metadata: base_meta("commit", "Builtin commit"),
         content: "content".to_string(),
         companion_files: vec![],
         cached_mtime: None,
@@ -51,15 +83,7 @@ fn test_is_cache_stale_no_mtime_not_stale() {
     std::fs::write(&file, "---\nname: test\ndescription: t\n---\ncontent").unwrap();
 
     let skill = LoadedSkill {
-        metadata: SkillMetadata {
-            name: "test".to_string(),
-            description: "t".to_string(),
-            namespace: "default".to_string(),
-            path: Some(file),
-            source: SkillSource::Project,
-            model: None,
-            agent: None,
-        },
+        metadata: project_meta("test", "t", file),
         content: "content".to_string(),
         companion_files: vec![],
         cached_mtime: None, // No mtime recorded
@@ -76,15 +100,7 @@ fn test_is_cache_stale_unmodified_file() {
     let mtime = std::fs::metadata(&file).unwrap().modified().unwrap();
 
     let skill = LoadedSkill {
-        metadata: SkillMetadata {
-            name: "test".to_string(),
-            description: "t".to_string(),
-            namespace: "default".to_string(),
-            path: Some(file),
-            source: SkillSource::Project,
-            model: None,
-            agent: None,
-        },
+        metadata: project_meta("test", "t", file),
         content: "content".to_string(),
         companion_files: vec![],
         cached_mtime: Some(mtime),
@@ -102,15 +118,7 @@ fn test_is_cache_stale_modified_file() {
     let old_mtime = std::time::SystemTime::now() - std::time::Duration::from_secs(2);
 
     let skill = LoadedSkill {
-        metadata: SkillMetadata {
-            name: "test".to_string(),
-            description: "t".to_string(),
-            namespace: "default".to_string(),
-            path: Some(file),
-            source: SkillSource::Project,
-            model: None,
-            agent: None,
-        },
+        metadata: project_meta("test", "t", file),
         content: "original".to_string(),
         companion_files: vec![],
         cached_mtime: Some(old_mtime),
@@ -123,15 +131,7 @@ fn test_is_cache_stale_modified_file() {
 #[test]
 fn test_is_cache_stale_deleted_file() {
     let skill = LoadedSkill {
-        metadata: SkillMetadata {
-            name: "gone".to_string(),
-            description: "t".to_string(),
-            namespace: "default".to_string(),
-            path: Some(std::path::PathBuf::from("/nonexistent/skill.md")),
-            source: SkillSource::Project,
-            model: None,
-            agent: None,
-        },
+        metadata: project_meta("gone", "t", std::path::PathBuf::from("/nonexistent/skill.md")),
         content: "content".to_string(),
         companion_files: vec![],
         cached_mtime: Some(std::time::SystemTime::now()),

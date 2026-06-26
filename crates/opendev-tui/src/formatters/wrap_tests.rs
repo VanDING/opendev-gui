@@ -72,10 +72,7 @@ fn test_thinking_cont_prefix() {
         Line::from(vec![Span::raw("Second line of thinking")]),
     ];
     let first = vec![Span::styled("⟡ ", Style::default().fg(THINKING_BG))];
-    let cont = vec![Span::styled(
-        Indent::THINKING_CONT,
-        Style::default().fg(THINKING_BG),
-    )];
+    let cont = vec![Span::styled(Indent::THINKING_CONT, Style::default().fg(THINKING_BG))];
 
     let result = wrap_spans_to_lines(md_lines, first, cont, 80);
     assert_eq!(result.len(), 2);
@@ -100,11 +97,7 @@ fn test_reasoning_with_render_muted() {
     let result = wrap_spans_to_lines(md_lines, first_prefix, cont_prefix, 120);
 
     // Should produce lines (3 content lines)
-    assert!(
-        result.len() >= 3,
-        "expected at least 3 lines, got {}",
-        result.len()
-    );
+    assert!(result.len() >= 3, "expected at least 3 lines, got {}", result.len());
 
     // First line should have ⟡ prefix
     assert!(
@@ -123,19 +116,10 @@ fn test_reasoning_with_render_muted() {
     }
 
     // Content text should be preserved
-    let all_text: String = result
-        .iter()
-        .flat_map(|l| l.spans.iter())
-        .map(|s| s.content.as_ref())
-        .collect();
-    assert!(
-        all_text.contains("think about this problem"),
-        "content lost: {all_text}"
-    );
-    assert!(
-        all_text.contains("understand the requirements"),
-        "content lost: {all_text}"
-    );
+    let all_text: String =
+        result.iter().flat_map(|l| l.spans.iter()).map(|s| s.content.as_ref()).collect();
+    assert!(all_text.contains("think about this problem"), "content lost: {all_text}");
+    assert!(all_text.contains("understand the requirements"), "content lost: {all_text}");
 
     // Muted style should be preserved on content spans (not just prefix)
     for line in &result {
@@ -187,11 +171,7 @@ fn test_bullet_wrap_alignment() {
 
     let result = wrap_spans_to_lines(md_lines, first, cont, 40);
     // Header + at least 2 bullet lines (first + wrap)
-    assert!(
-        result.len() >= 3,
-        "should have wrapped, got {} lines",
-        result.len()
-    );
+    assert!(result.len() >= 3, "should have wrapped, got {} lines", result.len());
 
     // Second line (first bullet line): cont_prefix + "- " + content
     let bullet_text: String = result[1].spans.iter().map(|s| s.content.as_ref()).collect();
@@ -230,11 +210,7 @@ fn test_nested_bullet_alignment() {
     let cont = vec![Span::raw("  ")];
 
     let result = wrap_spans_to_lines(md_lines, first, cont, 40);
-    assert!(
-        result.len() >= 3,
-        "should have wrapped, got {} lines",
-        result.len()
-    );
+    assert!(result.len() >= 3, "should have wrapped, got {} lines", result.len());
 
     // Second line: cont_prefix "  " + stripped "  - " = "    - " + content
     let bullet_text: String = result[1].spans.iter().map(|s| s.content.as_ref()).collect();

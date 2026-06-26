@@ -24,9 +24,7 @@ static FILE_LOCKS: LazyLock<Mutex<HashMap<PathBuf, Arc<Mutex<()>>>>> =
 
 fn get_file_lock(path: &Path) -> Arc<Mutex<()>> {
     let mut map = FILE_LOCKS.lock().unwrap();
-    map.entry(path.to_path_buf())
-        .or_insert_with(|| Arc::new(Mutex::new(())))
-        .clone()
+    map.entry(path.to_path_buf()).or_insert_with(|| Arc::new(Mutex::new(()))).clone()
 }
 
 // ---------------------------------------------------------------------------
@@ -135,20 +133,14 @@ impl BaseTool for MultiEditTool {
                     return ToolResult::fail(format!("edit[{i}]: new_string is required"));
                 }
             };
-            let replace_all = edit_val
-                .get("replace_all")
-                .and_then(|v| v.as_bool())
-                .unwrap_or(false);
+            let replace_all =
+                edit_val.get("replace_all").and_then(|v| v.as_bool()).unwrap_or(false);
 
             if old_string == new_string {
                 continue;
             }
 
-            edits.push(EditOp {
-                old_string,
-                new_string,
-                replace_all,
-            });
+            edits.push(EditOp { old_string, new_string, replace_all });
         }
 
         // --- Resolve path and check existence ---
@@ -263,10 +255,7 @@ impl BaseTool for MultiEditTool {
 
             // --- Build result ---
             let mut metadata = HashMap::new();
-            metadata.insert(
-                "total_replacements".into(),
-                serde_json::json!(total_replacements),
-            );
+            metadata.insert("total_replacements".into(), serde_json::json!(total_replacements));
             metadata.insert("total_additions".into(), serde_json::json!(total_additions));
             metadata.insert("total_removals".into(), serde_json::json!(total_removals));
             metadata.insert("edits_applied".into(), serde_json::json!(edits.len()));

@@ -41,9 +41,7 @@ async fn test_no_provider_returns_none() {
 
 #[tokio::test]
 async fn test_no_diagnostics_returns_none() {
-    let provider = Arc::new(MockDiagnosticProvider {
-        diagnostics: vec![],
-    });
+    let provider = Arc::new(MockDiagnosticProvider { diagnostics: vec![] });
     let ctx = ToolContext::new("/tmp").with_diagnostic_provider(provider);
     let result = collect_post_edit_diagnostics(&ctx, Path::new("/tmp/test.rs")).await;
     assert!(result.is_none());
@@ -150,9 +148,7 @@ async fn test_multi_file_diagnostics() {
 
 #[tokio::test]
 async fn test_multi_file_no_diagnostics() {
-    let provider = Arc::new(MockDiagnosticProvider {
-        diagnostics: vec![],
-    });
+    let provider = Arc::new(MockDiagnosticProvider { diagnostics: vec![] });
     let ctx = ToolContext::new("/tmp").with_diagnostic_provider(provider);
 
     let file = PathBuf::from("/tmp/test.rs");
@@ -163,35 +159,16 @@ async fn test_multi_file_no_diagnostics() {
 
 #[tokio::test]
 async fn test_diagnostic_pretty_formatting() {
-    let d = FileDiagnostic {
-        line: 42,
-        column: 15,
-        severity: 1,
-        message: "type mismatch".to_string(),
-    };
+    let d =
+        FileDiagnostic { line: 42, column: 15, severity: 1, message: "type mismatch".to_string() };
     assert_eq!(d.pretty(), "ERROR [42:15] type mismatch");
 
-    let d2 = FileDiagnostic {
-        line: 1,
-        column: 1,
-        severity: 2,
-        message: "unused".to_string(),
-    };
+    let d2 = FileDiagnostic { line: 1, column: 1, severity: 2, message: "unused".to_string() };
     assert_eq!(d2.pretty(), "WARN [1:1] unused");
 
-    let d3 = FileDiagnostic {
-        line: 1,
-        column: 1,
-        severity: 3,
-        message: "info".to_string(),
-    };
+    let d3 = FileDiagnostic { line: 1, column: 1, severity: 3, message: "info".to_string() };
     assert_eq!(d3.pretty(), "INFO [1:1] info");
 
-    let d4 = FileDiagnostic {
-        line: 1,
-        column: 1,
-        severity: 4,
-        message: "hint".to_string(),
-    };
+    let d4 = FileDiagnostic { line: 1, column: 1, severity: 4, message: "hint".to_string() };
     assert_eq!(d4.pretty(), "HINT [1:1] hint");
 }

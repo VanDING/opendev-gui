@@ -151,12 +151,7 @@ fn apply_single_edit(lines: &mut Vec<String>, edit: &TextEdit) -> Result<(), Sym
         let line = &lines[start_line];
         let safe_start = start_char.min(line.len());
         let safe_end = end_char.min(line.len());
-        let new_line = format!(
-            "{}{}{}",
-            &line[..safe_start],
-            edit.new_text,
-            &line[safe_end..]
-        );
+        let new_line = format!("{}{}{}", &line[..safe_start], edit.new_text, &line[safe_end..]);
         lines[start_line] = new_line;
     } else {
         // Multi-line edit
@@ -165,12 +160,7 @@ fn apply_single_edit(lines: &mut Vec<String>, edit: &TextEdit) -> Result<(), Sym
         let safe_start = start_char.min(first.len());
         let safe_end = end_char.min(last.len());
 
-        let new_line = format!(
-            "{}{}{}",
-            &first[..safe_start],
-            edit.new_text,
-            &last[safe_end..]
-        );
+        let new_line = format!("{}{}{}", &first[..safe_start], edit.new_text, &last[safe_end..]);
 
         // Remove lines from start_line to end_line and insert new_line
         lines.drain(start_line..=end_line);

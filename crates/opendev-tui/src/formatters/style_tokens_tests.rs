@@ -35,10 +35,7 @@ fn test_dracula_theme() {
 fn test_theme_name_from_str() {
     assert_eq!(ThemeName::from_str_loose("dark"), Some(ThemeName::Dark));
     assert_eq!(ThemeName::from_str_loose("LIGHT"), Some(ThemeName::Light));
-    assert_eq!(
-        ThemeName::from_str_loose("Dracula"),
-        Some(ThemeName::Dracula)
-    );
+    assert_eq!(ThemeName::from_str_loose("Dracula"), Some(ThemeName::Dracula));
     assert_eq!(ThemeName::from_str_loose("nonexistent"), None);
 }
 

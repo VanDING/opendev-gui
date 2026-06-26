@@ -15,11 +15,7 @@ pub struct SpinnerService {
 impl SpinnerService {
     /// Create a new inactive spinner service.
     pub fn new() -> Self {
-        Self {
-            active: false,
-            message: String::new(),
-            start_time: None,
-        }
+        Self { active: false, message: String::new(), start_time: None }
     }
 
     /// Whether the spinner is currently active.
@@ -48,9 +44,7 @@ impl SpinnerService {
     ///
     /// Returns `Duration::ZERO` if the spinner was never started.
     pub fn elapsed(&self) -> Duration {
-        self.start_time
-            .map(|t| t.elapsed())
-            .unwrap_or(Duration::ZERO)
+        self.start_time.map(|t| t.elapsed()).unwrap_or(Duration::ZERO)
     }
 }
 

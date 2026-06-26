@@ -13,12 +13,11 @@ fn as_u64_lenient(v: &serde_json::Value) -> Option<u64> {
 /// Parse a JSON value as bool, accepting both booleans and string representations.
 /// LLMs sometimes pass `"true"` instead of `true`.
 fn as_bool_lenient(v: &serde_json::Value) -> Option<bool> {
-    v.as_bool()
-        .or_else(|| match v.as_str()?.trim().to_lowercase().as_str() {
-            "true" => Some(true),
-            "false" => Some(false),
-            _ => None,
-        })
+    v.as_bool().or_else(|| match v.as_str()?.trim().to_lowercase().as_str() {
+        "true" => Some(true),
+        "false" => Some(false),
+        _ => None,
+    })
 }
 
 /// Parsed arguments for the grep (ripgrep) tool.
@@ -66,11 +65,7 @@ impl GrepArgs {
             .ok_or_else(|| "pattern is required and cannot be empty".to_string())?
             .to_string();
 
-        let output_mode = match args
-            .get("output_mode")
-            .and_then(|v| v.as_str())
-            .map(|s| s.trim())
-        {
+        let output_mode = match args.get("output_mode").and_then(|v| v.as_str()).map(|s| s.trim()) {
             Some("files_with_matches") => OutputMode::FilesWithMatches,
             Some("count") => OutputMode::Count,
             Some("content") | None => OutputMode::Content,
@@ -106,14 +101,8 @@ impl GrepArgs {
                 .filter(|s| !s.is_empty())
                 .map(String::from),
             case_insensitive: args.get("-i").and_then(as_bool_lenient).unwrap_or(false),
-            multiline: args
-                .get("multiline")
-                .and_then(as_bool_lenient)
-                .unwrap_or(false),
-            fixed_string: args
-                .get("fixed_string")
-                .and_then(as_bool_lenient)
-                .unwrap_or(false),
+            multiline: args.get("multiline").and_then(as_bool_lenient).unwrap_or(false),
+            fixed_string: args.get("fixed_string").and_then(as_bool_lenient).unwrap_or(false),
             output_mode,
             context: args
                 .get("context")

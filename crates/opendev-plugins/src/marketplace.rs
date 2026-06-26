@@ -18,9 +18,7 @@ impl PluginManager {
         name: Option<&str>,
         branch: &str,
     ) -> Result<MarketplaceInfo> {
-        let name = name
-            .map(String::from)
-            .unwrap_or_else(|| Self::extract_name_from_url(url));
+        let name = name.map(String::from).unwrap_or_else(|| Self::extract_name_from_url(url));
 
         // Check if marketplace already exists
         let mut marketplaces = self.load_known_marketplaces()?;
@@ -324,24 +322,13 @@ impl PluginManager {
             }
         }
 
-        MarketplaceCatalog {
-            plugins: plugin_names,
-            auto_discovered: true,
-        }
+        MarketplaceCatalog { plugins: plugin_names, auto_discovered: true }
     }
 
     /// Run `git clone --depth 1` into a target directory.
     fn git_clone(&self, url: &str, branch: &str, target_dir: &Path) -> Result<()> {
         let output = std::process::Command::new("git")
-            .args([
-                "clone",
-                "--depth",
-                "1",
-                "--branch",
-                branch,
-                url,
-                &target_dir.to_string_lossy(),
-            ])
+            .args(["clone", "--depth", "1", "--branch", branch, url, &target_dir.to_string_lossy()])
             .output()
             .map_err(|e| PluginError::Git(format!("Failed to run git: {}", e)))?;
 

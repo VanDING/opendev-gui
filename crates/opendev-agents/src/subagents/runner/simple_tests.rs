@@ -76,10 +76,7 @@ fn test_simple_runner_extract_tool_info() {
     let (id, name, args) = SimpleReactRunner::extract_tool_info(&tc);
     assert_eq!(id, "call_abc");
     assert_eq!(name, "read_file");
-    assert_eq!(
-        args.get("file_path").and_then(|v| v.as_str()),
-        Some("/src/main.rs")
-    );
+    assert_eq!(args.get("file_path").and_then(|v| v.as_str()), Some("/src/main.rs"));
 }
 
 #[test]

@@ -114,9 +114,5 @@ where
         &mut state.consecutive_no_tool_calls,
     )?;
 
-    Ok(ProcessedResponse {
-        response,
-        turn,
-        iter_metrics,
-    })
+    Ok(ProcessedResponse { response, turn, iter_metrics })
 }

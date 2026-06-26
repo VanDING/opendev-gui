@@ -14,14 +14,8 @@ use regex::Regex;
 
 /// Env var name suffixes that indicate API keys, tokens, or secrets.
 /// These are removed from child process environments to prevent leakage.
-const SENSITIVE_ENV_SUFFIXES: &[&str] = &[
-    "_API_KEY",
-    "_SECRET_KEY",
-    "_SECRET",
-    "_TOKEN",
-    "_PASSWORD",
-    "_CREDENTIALS",
-];
+const SENSITIVE_ENV_SUFFIXES: &[&str] =
+    &["_API_KEY", "_SECRET_KEY", "_SECRET", "_TOKEN", "_PASSWORD", "_CREDENTIALS"];
 
 /// Specific env var names to always strip (case-sensitive).
 const SENSITIVE_ENV_EXACT: &[&str] = &[
@@ -46,16 +40,12 @@ pub(crate) fn is_sensitive_env(name: &str) -> bool {
     if SENSITIVE_ENV_EXACT.iter().any(|&e| upper == e) {
         return true;
     }
-    SENSITIVE_ENV_SUFFIXES
-        .iter()
-        .any(|suffix| upper.ends_with(suffix))
+    SENSITIVE_ENV_SUFFIXES.iter().any(|suffix| upper.ends_with(suffix))
 }
 
 /// Build a filtered environment map: inherits all env vars except sensitive ones.
 pub(crate) fn filtered_env() -> HashMap<String, String> {
-    std::env::vars()
-        .filter(|(key, _)| !is_sensitive_env(key))
-        .collect()
+    std::env::vars().filter(|(key, _)| !is_sensitive_env(key)).collect()
 }
 
 // ---------------------------------------------------------------------------
@@ -157,9 +147,7 @@ struct CompiledPatterns {
 
 impl CompiledPatterns {
     fn new(patterns: &[&str]) -> Self {
-        Self {
-            regexes: patterns.iter().filter_map(|p| Regex::new(p).ok()).collect(),
-        }
+        Self { regexes: patterns.iter().filter_map(|p| Regex::new(p).ok()).collect() }
     }
 
     fn matches(&self, text: &str) -> bool {

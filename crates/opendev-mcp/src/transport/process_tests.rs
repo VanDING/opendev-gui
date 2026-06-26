@@ -8,10 +8,7 @@ fn test_collect_descendant_pids_self_process() {
     let descendants = collect_descendant_pids(my_pid);
     // We can't assert exact count (test runner may have threads),
     // but the function should not panic or hang.
-    assert!(
-        descendants.len() < 100,
-        "Unreasonable number of descendants"
-    );
+    assert!(descendants.len() < 100, "Unreasonable number of descendants");
 }
 
 #[cfg(unix)]

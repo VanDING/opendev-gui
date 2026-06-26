@@ -74,11 +74,7 @@ pub enum AppEvent {
     /// A tool execution completed.
     ToolFinished { tool_id: String, success: bool },
     /// Tool requires user approval (legacy, no channel — kept for recording compatibility).
-    ToolApprovalRequired {
-        tool_id: String,
-        tool_name: String,
-        description: String,
-    },
+    ToolApprovalRequired { tool_id: String, tool_name: String, description: String },
 
     /// Tool approval request with bidirectional channel.
     ToolApprovalRequested {
@@ -153,11 +149,7 @@ pub enum AppEvent {
 
     // -- File change events --
     /// File change summary after a query completes.
-    FileChangeSummary {
-        files: usize,
-        additions: u64,
-        deletions: u64,
-    },
+    FileChangeSummary { files: usize, additions: u64, deletions: u64 },
 
     // -- Context events --
     /// Context window usage percentage updated (0.0–100.0).
@@ -193,10 +185,7 @@ pub enum AppEvent {
 
     // -- Background agent events --
     /// An agent was moved to the background via Ctrl+B.
-    AgentBackgrounded {
-        task_id: String,
-        query_summary: String,
-    },
+    AgentBackgrounded { task_id: String, query_summary: String },
     /// A background agent completed its work.
     BackgroundAgentCompleted {
         task_id: String,
@@ -207,11 +196,7 @@ pub enum AppEvent {
         tool_call_count: usize,
     },
     /// Progress update from a background agent.
-    BackgroundAgentProgress {
-        task_id: String,
-        tool_name: String,
-        tool_count: usize,
-    },
+    BackgroundAgentProgress { task_id: String, tool_name: String, tool_count: usize },
     /// A background agent was killed.
     BackgroundAgentKilled { task_id: String },
     /// LLM-generated nudge message after backgrounding agents.
@@ -228,17 +213,9 @@ pub enum AppEvent {
 
     // -- Team events --
     /// A team was created.
-    TeamCreated {
-        team_id: String,
-        leader_name: String,
-        member_names: Vec<String>,
-    },
+    TeamCreated { team_id: String, leader_name: String, member_names: Vec<String> },
     /// An inter-agent message was sent.
-    TeamMessageSent {
-        from: String,
-        to: String,
-        content_preview: String,
-    },
+    TeamMessageSent { from: String, to: String, content_preview: String },
     /// A team was deleted.
     TeamDeleted { team_id: String },
 

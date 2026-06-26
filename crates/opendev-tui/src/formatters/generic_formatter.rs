@@ -19,14 +19,8 @@ const MAX_LINES: usize = 60;
 impl ToolFormatter for GenericFormatter {
     fn format<'a>(&self, tool_name: &str, output: &str) -> FormattedOutput<'a> {
         let header = Line::from(vec![
-            Span::styled(
-                "  ⚙ ".to_string(),
-                Style::default().fg(style_tokens::PRIMARY),
-            ),
-            Span::styled(
-                tool_name.to_string(),
-                Style::default().fg(style_tokens::PRIMARY),
-            ),
+            Span::styled("  ⚙ ".to_string(), Style::default().fg(style_tokens::PRIMARY)),
+            Span::styled(tool_name.to_string(), Style::default().fg(style_tokens::PRIMARY)),
         ]);
 
         // Try to pretty-print as JSON
@@ -42,10 +36,8 @@ impl ToolFormatter for GenericFormatter {
         let truncated = truncate_lines(&display_text, MAX_LINES);
         let total = display_text.lines().count();
 
-        let body: Vec<Line<'a>> = truncated
-            .lines()
-            .map(|line| Line::from(Span::raw(format!("    {line}"))))
-            .collect();
+        let body: Vec<Line<'a>> =
+            truncated.lines().map(|line| Line::from(Span::raw(format!("    {line}")))).collect();
 
         let footer = if total > MAX_LINES {
             Some(Line::from(Span::styled(
@@ -56,11 +48,7 @@ impl ToolFormatter for GenericFormatter {
             None
         };
 
-        FormattedOutput {
-            header,
-            body,
-            footer,
-        }
+        FormattedOutput { header, body, footer }
     }
 
     fn handles(&self, _tool_name: &str) -> bool {

@@ -43,13 +43,7 @@ pub fn truncate_lines(text: &str, max_lines: usize) -> String {
 pub fn indent(text: &str, spaces: usize) -> String {
     let prefix = " ".repeat(spaces);
     text.lines()
-        .map(|line| {
-            if line.is_empty() {
-                String::new()
-            } else {
-                format!("{prefix}{line}")
-            }
-        })
+        .map(|line| if line.is_empty() { String::new() } else { format!("{prefix}{line}") })
         .collect::<Vec<_>>()
         .join("\n")
 }

@@ -158,11 +158,8 @@ impl Session {
 
     /// Number of unique files changed.
     pub fn summary_files(&self) -> usize {
-        let unique: std::collections::HashSet<&str> = self
-            .file_changes
-            .iter()
-            .map(|fc| fc.file_path.as_str())
-            .collect();
+        let unique: std::collections::HashSet<&str> =
+            self.file_changes.iter().map(|fc| fc.file_path.as_str()).collect();
         unique.len()
     }
 
@@ -185,9 +182,8 @@ impl Session {
 
     /// Generate URL-friendly slug from title.
     pub fn generate_slug(&self, title: Option<&str>) -> String {
-        let text = title
-            .or_else(|| self.metadata.get("title").and_then(|v| v.as_str()))
-            .unwrap_or("");
+        let text =
+            title.or_else(|| self.metadata.get("title").and_then(|v| v.as_str())).unwrap_or("");
 
         if text.is_empty() {
             return self.id[..self.id.len().min(8)].to_string();
@@ -203,11 +199,7 @@ impl Session {
             slug
         };
 
-        if slug.is_empty() {
-            self.id[..self.id.len().min(8)].to_string()
-        } else {
-            slug.to_string()
-        }
+        if slug.is_empty() { self.id[..self.id.len().min(8)].to_string() } else { slug.to_string() }
     }
 
     /// Add a file change to the session.
@@ -227,8 +219,7 @@ impl Session {
         }
 
         // Remove any previous change for the same file (for non-modifications)
-        self.file_changes
-            .retain(|fc| fc.file_path != file_change.file_path);
+        self.file_changes.retain(|fc| fc.file_path != file_change.file_path);
 
         let mut fc = file_change;
         fc.session_id = Some(self.id.clone());
@@ -238,26 +229,17 @@ impl Session {
 
     /// Get a summary of file changes in this session.
     pub fn get_file_changes_summary(&self) -> FileChangesSummary {
-        let created = self
-            .file_changes
-            .iter()
-            .filter(|fc| fc.change_type == FileChangeType::Created)
-            .count();
+        let created =
+            self.file_changes.iter().filter(|fc| fc.change_type == FileChangeType::Created).count();
         let modified = self
             .file_changes
             .iter()
             .filter(|fc| fc.change_type == FileChangeType::Modified)
             .count();
-        let deleted = self
-            .file_changes
-            .iter()
-            .filter(|fc| fc.change_type == FileChangeType::Deleted)
-            .count();
-        let renamed = self
-            .file_changes
-            .iter()
-            .filter(|fc| fc.change_type == FileChangeType::Renamed)
-            .count();
+        let deleted =
+            self.file_changes.iter().filter(|fc| fc.change_type == FileChangeType::Deleted).count();
+        let renamed =
+            self.file_changes.iter().filter(|fc| fc.change_type == FileChangeType::Renamed).count();
         let total_lines_added: u64 = self.file_changes.iter().map(|fc| fc.lines_added).sum();
         let total_lines_removed: u64 = self.file_changes.iter().map(|fc| fc.lines_removed).sum();
 
@@ -286,16 +268,8 @@ impl Session {
             updated_at: self.updated_at,
             message_count: self.messages.len(),
             total_tokens: self.total_tokens(),
-            title: self
-                .metadata
-                .get("title")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            summary: self
-                .metadata
-                .get("summary")
-                .and_then(|v| v.as_str())
-                .map(String::from),
+            title: self.metadata.get("title").and_then(|v| v.as_str()).map(String::from),
+            summary: self.metadata.get("summary").and_then(|v| v.as_str()).map(String::from),
             tags: self
                 .metadata
                 .get("tags")

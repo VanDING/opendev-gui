@@ -141,11 +141,7 @@ pub fn api_values_to_chatmessages(values: &[Value]) -> Vec<ChatMessage> {
         match role_str {
             "user" => {
                 // Skip thinking markers
-                if val
-                    .get("_thinking")
-                    .and_then(|v| v.as_bool())
-                    .unwrap_or(false)
-                {
+                if val.get("_thinking").and_then(|v| v.as_bool()).unwrap_or(false) {
                     // Attach thinking trace to the last assistant message if possible
                     if let Some(content) = val["content"].as_str()
                         && let Some(last) = result.last_mut()
@@ -202,24 +198,17 @@ pub fn api_values_to_chatmessages(values: &[Value]) -> Vec<ChatMessage> {
                     other => other.to_string(),
                 };
 
-                let thinking_trace = val
-                    .get("_thinking_trace")
-                    .and_then(|v| v.as_str())
-                    .map(String::from);
-                let reasoning_content = val
-                    .get("reasoning_content")
-                    .and_then(|v| v.as_str())
-                    .map(String::from);
+                let thinking_trace =
+                    val.get("_thinking_trace").and_then(|v| v.as_str()).map(String::from);
+                let reasoning_content =
+                    val.get("reasoning_content").and_then(|v| v.as_str()).map(String::from);
 
                 // Parse tool_calls array
                 let mut tool_calls = Vec::new();
                 if let Some(tcs) = val.get("tool_calls").and_then(|v| v.as_array()) {
                     for tc_val in tcs {
                         let id = tc_val["id"].as_str().unwrap_or("").to_string();
-                        let name = tc_val["function"]["name"]
-                            .as_str()
-                            .unwrap_or("")
-                            .to_string();
+                        let name = tc_val["function"]["name"].as_str().unwrap_or("").to_string();
                         let args_str = tc_val["function"]["arguments"].as_str().unwrap_or("{}");
                         let parameters: HashMap<String, Value> =
                             serde_json::from_str(args_str).unwrap_or_default();

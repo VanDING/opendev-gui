@@ -39,12 +39,7 @@ impl AzureOpenAiAdapter {
         let deployment = deployment.into();
         let api_version = DEFAULT_API_VERSION.to_string();
         let api_url = build_azure_url(&base_url, &deployment, &api_version);
-        Self {
-            base_url,
-            deployment,
-            api_version,
-            api_url,
-        }
+        Self { base_url, deployment, api_version, api_url }
     }
 
     /// Set a custom API version.
@@ -78,9 +73,7 @@ impl super::base::ProviderAdapter for AzureOpenAiAdapter {
     fn convert_request(&self, mut payload: Value) -> Value {
         Self::strip_model(&mut payload);
         // Strip internal reasoning effort field
-        payload
-            .as_object_mut()
-            .map(|obj| obj.remove("_reasoning_effort"));
+        payload.as_object_mut().map(|obj| obj.remove("_reasoning_effort"));
         payload
     }
 

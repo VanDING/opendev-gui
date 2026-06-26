@@ -51,10 +51,7 @@ fn test_artifact_index_file_roundtrip() {
     idx.save_to_file(&path).unwrap();
     let loaded = ArtifactIndex::load_from_file(&path).unwrap();
     assert_eq!(loaded.len(), 2);
-    assert_eq!(
-        loaded.entries.get("src/main.rs").unwrap().last_operation,
-        "created"
-    );
+    assert_eq!(loaded.entries.get("src/main.rs").unwrap().last_operation, "created");
 }
 
 #[test]
@@ -77,10 +74,7 @@ fn test_artifact_index_merge_newer_wins() {
     }
 
     old.merge(&newer);
-    assert_eq!(
-        old.entries.get("file.rs").unwrap().last_operation,
-        "modified"
-    );
+    assert_eq!(old.entries.get("file.rs").unwrap().last_operation, "modified");
 }
 
 #[test]

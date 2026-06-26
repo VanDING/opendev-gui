@@ -5,11 +5,7 @@ fn test_detect_anthropic_key() {
     let text = "key=sk-ant-api03-abcdefghijklmnopqrstuvwxyz1234567890";
     let matches = detect_secrets(text);
     assert!(!matches.is_empty());
-    assert!(
-        matches
-            .iter()
-            .any(|m| m.kind == SecretKind::AnthropicApiKey)
-    );
+    assert!(matches.iter().any(|m| m.kind == SecretKind::AnthropicApiKey));
 }
 
 #[test]
@@ -51,22 +47,14 @@ fn test_detect_bearer_token() {
 fn test_detect_password_assignment() {
     let text = "password=mysupersecretpassword123";
     let matches = detect_secrets(text);
-    assert!(
-        matches
-            .iter()
-            .any(|m| m.kind == SecretKind::PasswordAssignment)
-    );
+    assert!(matches.iter().any(|m| m.kind == SecretKind::PasswordAssignment));
 }
 
 #[test]
 fn test_detect_password_case_insensitive() {
     let text = "PASSWORD = hunter2";
     let matches = detect_secrets(text);
-    assert!(
-        matches
-            .iter()
-            .any(|m| m.kind == SecretKind::PasswordAssignment)
-    );
+    assert!(matches.iter().any(|m| m.kind == SecretKind::PasswordAssignment));
 }
 
 #[test]
@@ -121,11 +109,7 @@ fn test_redact_preserves_surrounding_text() {
 fn test_detect_passwd_variant() {
     let text = "passwd=supersecret";
     let matches = detect_secrets(text);
-    assert!(
-        matches
-            .iter()
-            .any(|m| m.kind == SecretKind::PasswordAssignment)
-    );
+    assert!(matches.iter().any(|m| m.kind == SecretKind::PasswordAssignment));
 }
 
 #[test]

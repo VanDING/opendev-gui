@@ -93,13 +93,7 @@ impl WelcomePanelState {
             let trail_len = 4 + (pseudo_rand(&mut self.rng_seed) * 6.0) as u8;
             let char_offset = (pseudo_rand(&mut self.rng_seed) * SPINNER_FRAMES.len() as f32) as u8;
             let hue_offset = pseudo_rand(&mut self.rng_seed) * 30.0 - 15.0; // -15..+15
-            self.rain_columns.push(RainColumn {
-                y,
-                speed,
-                trail_len,
-                char_offset,
-                hue_offset,
-            });
+            self.rain_columns.push(RainColumn { y, speed, trail_len, char_offset, hue_offset });
         }
     }
 

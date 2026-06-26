@@ -68,19 +68,13 @@ impl ContextCompactor {
         let mut masked_count = 0u32;
 
         for &i in &old_indices {
-            let content = messages[i]
-                .get("content")
-                .and_then(|v| v.as_str())
-                .unwrap_or("")
-                .to_string();
+            let content =
+                messages[i].get("content").and_then(|v| v.as_str()).unwrap_or("").to_string();
             if content.starts_with("[ref:") {
                 continue;
             }
-            let tool_call_id = messages[i]
-                .get("tool_call_id")
-                .and_then(|v| v.as_str())
-                .unwrap_or("?")
-                .to_string();
+            let tool_call_id =
+                messages[i].get("tool_call_id").and_then(|v| v.as_str()).unwrap_or("?").to_string();
             let tool_name = tc_map.get(&tool_call_id).map(|s| s.as_str()).unwrap_or("");
             if PROTECTED_TOOL_TYPES.contains(&tool_name) {
                 continue;
@@ -123,20 +117,15 @@ impl ContextCompactor {
         let mut protected_indices: HashSet<usize> = HashSet::new();
 
         for &idx in &tool_indices {
-            let content = messages[idx]
-                .get("content")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let content = messages[idx].get("content").and_then(|v| v.as_str()).unwrap_or("");
             if content.starts_with("[ref:")
                 || content == "[pruned]"
                 || content.starts_with("[summary:")
             {
                 continue;
             }
-            let tool_call_id = messages[idx]
-                .get("tool_call_id")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let tool_call_id =
+                messages[idx].get("tool_call_id").and_then(|v| v.as_str()).unwrap_or("");
             let tool_name = tc_map.get(tool_call_id).map(|s| s.as_str()).unwrap_or("");
             if PROTECTED_TOOL_TYPES.contains(&tool_name) {
                 protected_indices.insert(idx);
@@ -159,10 +148,7 @@ impl ContextCompactor {
             if protected_indices.contains(&idx) {
                 continue;
             }
-            let content = messages[idx]
-                .get("content")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let content = messages[idx].get("content").and_then(|v| v.as_str()).unwrap_or("");
             if content.starts_with("[ref:")
                 || content == "[pruned]"
                 || content.starts_with("[summary:")
@@ -173,10 +159,7 @@ impl ContextCompactor {
             if content.len() < PRUNE_MIN_LENGTH {
                 continue;
             }
-            messages[idx].insert(
-                "content".into(),
-                serde_json::Value::String("[pruned]".into()),
-            );
+            messages[idx].insert("content".into(), serde_json::Value::String("[pruned]".into()));
             pruned_count += 1;
         }
 
@@ -203,11 +186,7 @@ impl ContextCompactor {
             if msg.get("role").and_then(|v| v.as_str()) != Some("tool") {
                 continue;
             }
-            let content = msg
-                .get("content")
-                .and_then(|v| v.as_str())
-                .unwrap_or("")
-                .to_string();
+            let content = msg.get("content").and_then(|v| v.as_str()).unwrap_or("").to_string();
 
             if content.len() <= TOOL_OUTPUT_SUMMARIZE_THRESHOLD {
                 continue;
@@ -219,15 +198,9 @@ impl ContextCompactor {
                 continue;
             }
 
-            let tool_call_id = msg
-                .get("tool_call_id")
-                .and_then(|v| v.as_str())
-                .unwrap_or("")
-                .to_string();
-            let tool_name = tc_map
-                .get(&tool_call_id)
-                .map(|s| s.as_str())
-                .unwrap_or("tool");
+            let tool_call_id =
+                msg.get("tool_call_id").and_then(|v| v.as_str()).unwrap_or("").to_string();
+            let tool_name = tc_map.get(&tool_call_id).map(|s| s.as_str()).unwrap_or("tool");
 
             if PROTECTED_TOOL_TYPES.contains(&tool_name) {
                 continue;

@@ -10,11 +10,8 @@ use super::OpenAiAdapter;
 impl OpenAiAdapter {
     /// Convert a Responses API output back to Chat Completions format.
     pub(super) fn build_chat_completion(responses_data: &Value) -> Value {
-        let output_items = responses_data
-            .get("output")
-            .and_then(|o| o.as_array())
-            .cloned()
-            .unwrap_or_default();
+        let output_items =
+            responses_data.get("output").and_then(|o| o.as_array()).cloned().unwrap_or_default();
 
         let mut text_parts: Vec<String> = Vec::new();
         let mut tool_calls: Vec<Value> = Vec::new();
@@ -73,11 +70,8 @@ impl OpenAiAdapter {
             }
         }
 
-        let content = if text_parts.is_empty() {
-            Value::Null
-        } else {
-            Value::String(text_parts.join("\n"))
-        };
+        let content =
+            if text_parts.is_empty() { Value::Null } else { Value::String(text_parts.join("\n")) };
 
         let mut message = json!({
             "role": "assistant",
@@ -103,14 +97,8 @@ impl OpenAiAdapter {
 
         // Usage conversion
         let usage_raw = responses_data.get("usage").cloned().unwrap_or(json!({}));
-        let input_tokens = usage_raw
-            .get("input_tokens")
-            .and_then(|t| t.as_u64())
-            .unwrap_or(0);
-        let output_tokens = usage_raw
-            .get("output_tokens")
-            .and_then(|t| t.as_u64())
-            .unwrap_or(0);
+        let input_tokens = usage_raw.get("input_tokens").and_then(|t| t.as_u64()).unwrap_or(0);
+        let output_tokens = usage_raw.get("output_tokens").and_then(|t| t.as_u64()).unwrap_or(0);
 
         json!({
             "id": responses_data.get("id").and_then(|i| i.as_str()).unwrap_or(""),

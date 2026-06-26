@@ -44,9 +44,5 @@ fn test_no_match_returns_false() {
 #[test]
 fn test_managed_never_excluded() {
     let path = std::path::Path::new("/etc/opendev/AGENTS.md");
-    assert!(!is_excluded(
-        path,
-        std::path::Path::new("/tmp"),
-        &["*.md".to_string()]
-    ));
+    assert!(!is_excluded(path, std::path::Path::new("/tmp"), &["*.md".to_string()]));
 }

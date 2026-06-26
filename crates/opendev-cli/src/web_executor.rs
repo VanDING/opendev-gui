@@ -23,11 +23,7 @@ impl WebEventCallback {
         session_id: String,
         todo_manager: Option<std::sync::Arc<std::sync::Mutex<opendev_runtime::TodoManager>>>,
     ) -> Self {
-        Self {
-            state,
-            session_id,
-            todo_manager,
-        }
+        Self { state, session_id, todo_manager }
     }
 
     fn broadcast(&self, msg_type: &str, data: serde_json::Value) {
@@ -183,12 +179,7 @@ pub fn spawn_channel_bridges(receivers: crate::runtime::ToolChannelReceivers, st
             use opendev_tools_impl::SubagentEvent;
             while let Some(evt) = subagent_rx.recv().await {
                 let (msg_type, data) = match evt {
-                    SubagentEvent::Started {
-                        subagent_id,
-                        subagent_name,
-                        task,
-                        ..
-                    } => (
+                    SubagentEvent::Started { subagent_id, subagent_name, task, .. } => (
                         "subagent_start",
                         serde_json::json!({
                             "subagent_id": subagent_id,
@@ -265,10 +256,7 @@ pub fn spawn_channel_bridges(receivers: crate::runtime::ToolChannelReceivers, st
                         }),
                     ),
                     SubagentEvent::BackgroundSpawned {
-                        task_id,
-                        agent_type,
-                        description,
-                        ..
+                        task_id, agent_type, description, ..
                     } => (
                         "background_agent_spawned",
                         serde_json::json!({
@@ -292,11 +280,7 @@ pub fn spawn_channel_bridges(receivers: crate::runtime::ToolChannelReceivers, st
                             "tool_call_count": tool_call_count,
                         }),
                     ),
-                    SubagentEvent::BackgroundProgress {
-                        task_id,
-                        tool_name,
-                        tool_count,
-                    } => (
+                    SubagentEvent::BackgroundProgress { task_id, tool_name, tool_count } => (
                         "background_agent_progress",
                         serde_json::json!({
                             "task_id": task_id,
@@ -311,9 +295,7 @@ pub fn spawn_channel_bridges(receivers: crate::runtime::ToolChannelReceivers, st
                             "line": line,
                         }),
                     ),
-                    SubagentEvent::TeamCreated {
-                        team_id, members, ..
-                    } => (
+                    SubagentEvent::TeamCreated { team_id, members, .. } => (
                         "team_created",
                         serde_json::json!({
                             "team_id": team_id,
@@ -418,11 +400,7 @@ pub fn spawn_channel_bridges(receivers: crate::runtime::ToolChannelReceivers, st
                 match rx.await {
                     Ok(result) => {
                         let choice = if result.approved {
-                            if result.auto_approve {
-                                "yes_remember"
-                            } else {
-                                "yes"
-                            }
+                            if result.auto_approve { "yes_remember" } else { "yes" }
                         } else {
                             "no"
                         };
@@ -495,9 +473,7 @@ pub struct WebAgentExecutor {
 
 impl WebAgentExecutor {
     pub fn new(runtime: crate::runtime::AgentRuntime) -> Self {
-        Self {
-            runtime: Arc::new(tokio::sync::Mutex::new(runtime)),
-        }
+        Self { runtime: Arc::new(tokio::sync::Mutex::new(runtime)) }
     }
 }
 
@@ -521,10 +497,8 @@ impl opendev_web::state::AgentExecutor for WebAgentExecutor {
         // are saved under the web session's ID.
         {
             let mut rt = self.runtime.lock().await;
-            let needs_load = rt
-                .session_manager
-                .current_session()
-                .is_none_or(|s| s.id != session_id);
+            let needs_load =
+                rt.session_manager.current_session().is_none_or(|s| s.id != session_id);
             if needs_load && rt.session_manager.resume_session(&session_id).is_err() {
                 // Session not on disk yet — create one with matching ID
                 let mut session = opendev_models::Session::new();
@@ -630,8 +604,6 @@ impl opendev_web::state::AgentExecutor for WebAgentExecutor {
             }),
         ));
 
-        result
-            .map(|_| ())
-            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)
+        result.map(|_| ()).map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)
     }
 }

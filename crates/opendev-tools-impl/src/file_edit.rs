@@ -20,10 +20,8 @@ static FILE_LOCKS: LazyLock<Mutex<HashMap<PathBuf, Arc<Mutex<()>>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
 fn get_file_lock(path: &Path) -> Arc<Mutex<()>> {
-    let mut map = FILE_LOCKS.lock().unwrap();
-    map.entry(path.to_path_buf())
-        .or_insert_with(|| Arc::new(Mutex::new(())))
-        .clone()
+    let mut map = FILE_LOCKS.lock().unwrap_or_else(|e| e.into_inner());
+    map.entry(path.to_path_buf()).or_insert_with(|| Arc::new(Mutex::new(()))).clone()
 }
 
 // ---------------------------------------------------------------------------
@@ -96,10 +94,7 @@ impl BaseTool for FileEditTool {
             Some(s) => s,
             None => return ToolResult::fail("new_string is required"),
         };
-        let replace_all = args
-            .get("replace_all")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
+        let replace_all = args.get("replace_all").and_then(|v| v.as_bool()).unwrap_or(false);
 
         if old_string == new_string {
             return ToolResult::fail("old_string and new_string are identical");
@@ -120,103 +115,124 @@ impl BaseTool for FileEditTool {
             ));
         }
 
-        // Acquire per-file lock — scoped so the guard drops before async diagnostics
+        // Acquire per-file lock — scoped so the guard drops before async diagnostics.
+        // The entire read-edit-write sequence runs on a blocking thread via
+        // spawn_blocking to avoid blocking the async runtime AND to keep the
+        // per-file std::sync::Mutex held (its guard is !Send so no .await
+        // is allowed while holding it).
         let (output_text, metadata) = {
-            let lock = get_file_lock(&path);
-            let _guard = lock.lock().unwrap();
+            let path = path.clone();
+            let file_path = file_path.to_string();
+            let old_string = old_string.to_string();
+            let new_string = new_string.to_string();
+            let ctx = ctx.clone();
 
-            let content = match std::fs::read_to_string(&path) {
-                Ok(c) => c,
-                Err(e) => return ToolResult::fail(format!("Failed to read file: {e}")),
-            };
+            let result = tokio::task::spawn_blocking(move || {
+                let lock = get_file_lock(&path);
+                let _guard = lock.lock().unwrap_or_else(|e| e.into_inner());
 
-            // --- Fuzzy match ---
-            let (actual_old, pass_name) = match edit_replacers::find_match(&content, old_string) {
-                Some(m) => (m.actual, m.pass_name),
-                None => {
-                    return ToolResult::fail(format!(
-                        "old_string not found in {file_path}. Make sure the string matches \
-                         the file content (tried 9 fuzzy matching passes)."
+                let content = std::fs::read_to_string(&path)
+                    .map_err(|e| format!("Failed to read file: {e}"))?;
+
+                // --- Fuzzy match ---
+                let (actual_old, pass_name) =
+                    match edit_replacers::find_match(&content, &old_string) {
+                        Some(m) => (m.actual, m.pass_name),
+                        None => {
+                            return Err(format!(
+                                "old_string not found in {file_path}. Make sure the string \
+                                 matches the file content (tried 9 fuzzy matching passes)."
+                            ));
+                        }
+                    };
+
+                // --- Uniqueness check ---
+                let count = content.matches(&actual_old as &str).count();
+
+                if count > 1 && !replace_all {
+                    let positions =
+                        edit_replacers::find_occurrence_positions(&content, &actual_old);
+                    let locations: String =
+                        positions.iter().map(|n| format!("line {n}")).collect::<Vec<_>>().join(", ");
+                    return Err(format!(
+                        "old_string found {count} times at {locations} in {file_path}. \
+                         Provide more surrounding context to make the match unique, \
+                         or use replace_all=true."
                     ));
                 }
-            };
 
-            // --- Uniqueness check ---
-            let count = content.matches(&actual_old as &str).count();
+                // --- Perform replacement ---
+                let new_content = if replace_all {
+                    content.replace(&actual_old, &new_string)
+                } else {
+                    content.replacen(&actual_old, &new_string, 1)
+                };
 
-            if count > 1 && !replace_all {
-                let positions = edit_replacers::find_occurrence_positions(&content, &actual_old);
-                let locations: String = positions
-                    .iter()
-                    .map(|n| format!("line {n}"))
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                return ToolResult::fail(format!(
-                    "old_string found {count} times at {locations} in {file_path}. \
-                     Provide more surrounding context to make the match unique, \
-                     or use replace_all=true."
-                ));
+                // --- Diff stats ---
+                let old_line_parts: Vec<&str> = actual_old.split('\n').collect();
+                let new_line_parts: Vec<&str> = new_string.split('\n').collect();
+                let removals = old_line_parts.len();
+                let additions = new_line_parts.len();
+
+                // --- Generate unified diff preview ---
+                let diff_text =
+                    edit_replacers::unified_diff(&file_path, &content, &new_content, 3);
+
+                // --- Atomic write ---
+                let dir = path.parent().unwrap_or(Path::new("."));
+                let tmp_path = dir.join(format!(".{}.tmp", uuid::Uuid::new_v4()));
+
+                if let Err(e) = std::fs::write(&tmp_path, &new_content) {
+                    return Err(format!("Failed to write temp file: {e}"));
+                }
+                if let Err(e) = std::fs::rename(&tmp_path, &path) {
+                    let _ = std::fs::remove_file(&tmp_path);
+                    return Err(format!("Failed to rename temp file: {e}"));
+                }
+
+                // Auto-format if a formatter is available
+                let formatted = formatter::format_file(
+                    path.to_str().unwrap_or(&file_path),
+                    &ctx.working_dir,
+                );
+
+                let replacements = if replace_all { count } else { 1 };
+
+                let mut metadata = HashMap::new();
+                metadata.insert("replacements".into(), serde_json::json!(replacements));
+                metadata.insert("additions".into(), serde_json::json!(additions));
+                metadata.insert("removals".into(), serde_json::json!(removals));
+                metadata.insert("diff".into(), serde_json::json!(diff_text));
+                if pass_name != "simple" {
+                    metadata.insert("match_pass".into(), serde_json::json!(pass_name));
+                }
+                if formatted {
+                    metadata.insert("formatted".into(), serde_json::json!(true));
+                }
+
+                let fmt_note = if formatted { " (formatted)" } else { "" };
+                let summary = format!(
+                    "Edited {file_path}: {replacements} replacement(s), \
+                     {additions} addition(s) and {removals} removal(s){fmt_note}"
+                );
+                let output_text = if diff_text.is_empty() {
+                    summary
+                } else {
+                    format!("{summary}\n{diff_text}")
+                };
+
+                Ok::<_, String>((output_text, metadata))
+            })
+            .await;
+
+            match result {
+                Ok(Ok(data)) => data,
+                Ok(Err(e)) => return ToolResult::fail(e),
+                Err(join_err) => {
+                    return ToolResult::fail(format!("Task join error: {join_err}"))
+                }
             }
-
-            // --- Perform replacement ---
-            let new_content = if replace_all {
-                content.replace(&actual_old, new_string)
-            } else {
-                content.replacen(&actual_old, new_string, 1)
-            };
-
-            // --- Diff stats ---
-            let old_line_parts: Vec<&str> = actual_old.split('\n').collect();
-            let new_line_parts: Vec<&str> = new_string.split('\n').collect();
-            let removals = old_line_parts.len();
-            let additions = new_line_parts.len();
-
-            // --- Generate unified diff preview ---
-            let diff_text = edit_replacers::unified_diff(file_path, &content, &new_content, 3);
-
-            // --- Atomic write ---
-            let dir = path.parent().unwrap_or(Path::new("."));
-            let tmp_path = dir.join(format!(".{}.tmp", uuid::Uuid::new_v4()));
-
-            if let Err(e) = std::fs::write(&tmp_path, &new_content) {
-                return ToolResult::fail(format!("Failed to write temp file: {e}"));
-            }
-            if let Err(e) = std::fs::rename(&tmp_path, &path) {
-                let _ = std::fs::remove_file(&tmp_path);
-                return ToolResult::fail(format!("Failed to rename temp file: {e}"));
-            }
-
-            // Auto-format if a formatter is available
-            let formatted =
-                formatter::format_file(path.to_str().unwrap_or(file_path), &ctx.working_dir);
-
-            let replacements = if replace_all { count } else { 1 };
-
-            let mut metadata = HashMap::new();
-            metadata.insert("replacements".into(), serde_json::json!(replacements));
-            metadata.insert("additions".into(), serde_json::json!(additions));
-            metadata.insert("removals".into(), serde_json::json!(removals));
-            metadata.insert("diff".into(), serde_json::json!(diff_text));
-            if pass_name != "simple" {
-                metadata.insert("match_pass".into(), serde_json::json!(pass_name));
-            }
-            if formatted {
-                metadata.insert("formatted".into(), serde_json::json!(true));
-            }
-
-            let fmt_note = if formatted { " (formatted)" } else { "" };
-            let summary = format!(
-                "Edited {file_path}: {replacements} replacement(s), \
-                 {additions} addition(s) and {removals} removal(s){fmt_note}"
-            );
-            let output_text = if diff_text.is_empty() {
-                summary
-            } else {
-                format!("{summary}\n{diff_text}")
-            };
-
-            (output_text, metadata)
-        }; // lock guard dropped here
+        };
 
         // Collect LSP diagnostics after edit (requires no lock held)
         let mut output_text = output_text;

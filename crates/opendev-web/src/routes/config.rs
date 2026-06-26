@@ -75,11 +75,8 @@ async fn get_config(State(state): State<AppState>) -> Result<Json<serde_json::Va
         } else {
             Some(&compact_model)
         };
-    let compact_provider_opt = if compact_model_opt.is_none() {
-        None
-    } else {
-        Some(&compact_provider)
-    };
+    let compact_provider_opt =
+        if compact_model_opt.is_none() { None } else { Some(&compact_provider) };
 
     Ok(Json(serde_json::json!({
         "model_provider": config.model_provider,

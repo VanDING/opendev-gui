@@ -146,11 +146,7 @@ pub struct ProactiveReminderScheduler {
 impl ProactiveReminderScheduler {
     pub fn new(configs: Vec<ProactiveReminderConfig>) -> Self {
         let len = configs.len();
-        Self {
-            configs,
-            turns_since_reset: vec![0; len],
-            turns_since_fired: vec![0; len],
-        }
+        Self { configs, turns_since_reset: vec![0; len], turns_since_fired: vec![0; len] }
     }
 
     pub fn tick(&mut self) {

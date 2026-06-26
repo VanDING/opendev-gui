@@ -37,11 +37,7 @@ pub fn detect_lang(path: &Path) -> LangCategory {
 
 /// Truncate a string to max chars, appending "..." if truncated.
 pub fn truncate(s: &str, max: usize) -> String {
-    if s.len() <= max {
-        s.to_string()
-    } else {
-        format!("{}...", &s[..max])
-    }
+    if s.len() <= max { s.to_string() } else { format!("{}...", &s[..max]) }
 }
 
 /// Make a path relative to a base, falling back to absolute.

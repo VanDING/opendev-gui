@@ -33,14 +33,8 @@ fn test_event_recorder_roundtrip() {
     assert_eq!(events[4].variant, "Quit");
 
     // Verify reconstruction
-    assert!(matches!(
-        events[0].to_app_event().unwrap(),
-        AppEvent::AgentStarted
-    ));
-    assert!(matches!(
-        events[1].to_app_event().unwrap(),
-        AppEvent::AgentChunk(_)
-    ));
+    assert!(matches!(events[0].to_app_event().unwrap(), AppEvent::AgentStarted));
+    assert!(matches!(events[1].to_app_event().unwrap(), AppEvent::AgentChunk(_)));
     assert!(matches!(events[4].to_app_event().unwrap(), AppEvent::Quit));
 }
 

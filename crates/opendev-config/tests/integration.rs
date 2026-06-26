@@ -328,16 +328,9 @@ fn model_info_format_pricing() {
         supports_temperature: true,
         api_type: "chat".to_string(),
     };
-    assert_eq!(
-        model.format_pricing(),
-        "$2.50 in / $10.00 out per million tokens"
-    );
+    assert_eq!(model.format_pricing(), "$2.50 in / $10.00 out per million tokens");
 
-    let free = ModelInfo {
-        pricing_input: 0.0,
-        pricing_output: 0.0,
-        ..model
-    };
+    let free = ModelInfo { pricing_input: 0.0, pricing_output: 0.0, ..model };
     assert_eq!(free.format_pricing(), "N/A");
 }
 
@@ -424,27 +417,15 @@ fn config_instructions_merge_concat_dedup() {
     let global = tmp.path().join("global.json");
     let project = tmp.path().join("project.json");
 
-    std::fs::write(
-        &global,
-        r#"{"instructions": ["CONTRIBUTING.md", "docs/rules.md"]}"#,
-    )
-    .unwrap();
-    std::fs::write(
-        &project,
-        r#"{"instructions": ["docs/rules.md", "project-rules.md"]}"#,
-    )
-    .unwrap();
+    std::fs::write(&global, r#"{"instructions": ["CONTRIBUTING.md", "docs/rules.md"]}"#).unwrap();
+    std::fs::write(&project, r#"{"instructions": ["docs/rules.md", "project-rules.md"]}"#).unwrap();
 
     let config = ConfigLoader::load(&global, &project).unwrap();
     // Should have all unique entries: CONTRIBUTING.md, docs/rules.md, project-rules.md
     assert_eq!(config.instructions.len(), 3);
     assert!(config.instructions.contains(&"CONTRIBUTING.md".to_string()));
     assert!(config.instructions.contains(&"docs/rules.md".to_string()));
-    assert!(
-        config
-            .instructions
-            .contains(&"project-rules.md".to_string())
-    );
+    assert!(config.instructions.contains(&"project-rules.md".to_string()));
 }
 
 /// When only one layer has instructions, they're preserved as-is.
@@ -482,16 +463,8 @@ fn config_skill_paths_merge_concat_dedup() {
     let global = tmp.path().join("global.json");
     let project = tmp.path().join("project.json");
 
-    std::fs::write(
-        &global,
-        r#"{"skill_paths": ["~/.custom/skills", "/opt/skills"]}"#,
-    )
-    .unwrap();
-    std::fs::write(
-        &project,
-        r#"{"skill_paths": ["/opt/skills", "project-skills"]}"#,
-    )
-    .unwrap();
+    std::fs::write(&global, r#"{"skill_paths": ["~/.custom/skills", "/opt/skills"]}"#).unwrap();
+    std::fs::write(&project, r#"{"skill_paths": ["/opt/skills", "project-skills"]}"#).unwrap();
 
     let config = ConfigLoader::load(&global, &project).unwrap();
     assert_eq!(config.skill_paths.len(), 3);

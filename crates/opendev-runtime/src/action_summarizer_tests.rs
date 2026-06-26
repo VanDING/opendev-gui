@@ -53,10 +53,7 @@ fn test_capitalize_first() {
 
 #[test]
 fn test_first_sentence() {
-    assert_eq!(
-        first_sentence("Hello world. More text.").as_ref(),
-        "Hello world"
-    );
+    assert_eq!(first_sentence("Hello world. More text.").as_ref(), "Hello world");
     assert_eq!(first_sentence("No period").as_ref(), "No period");
 }
 

@@ -37,12 +37,7 @@ impl SessionManager {
     pub fn new(session_dir: PathBuf) -> std::io::Result<Self> {
         std::fs::create_dir_all(&session_dir)?;
         let index = SessionIndex::new(session_dir.clone());
-        Ok(Self {
-            session_dir,
-            index,
-            current_session: None,
-            event_store: None,
-        })
+        Ok(Self { session_dir, index, current_session: None, event_store: None })
     }
 
     /// Builder method: attach an event store for audit logging.
@@ -104,9 +99,7 @@ impl SessionManager {
 
         self.current_session = Some(session);
         // SAFETY: we just set current_session to Some on the line above
-        self.current_session
-            .as_ref()
-            .expect("current_session was just set to Some")
+        self.current_session.as_ref().expect("current_session was just set to Some")
     }
 
     /// Add a validated message to the current session.
@@ -124,18 +117,15 @@ impl SessionManager {
 
         // Build the event before pushing `msg` (which moves it), but only
         // if the event store is configured to avoid cloning on the hot path.
-        let event = self
-            .event_store
-            .as_ref()
-            .map(|_| SessionEvent::MessageAdded {
-                role: msg.role.to_string(),
-                content: msg.content.clone(),
-                timestamp: msg.timestamp,
-                tool_calls: msg.tool_calls.clone(),
-                tokens: msg.tokens,
-                thinking_trace: msg.thinking_trace.clone(),
-                reasoning_content: msg.reasoning_content.clone(),
-            });
+        let event = self.event_store.as_ref().map(|_| SessionEvent::MessageAdded {
+            role: msg.role.to_string(),
+            content: msg.content.clone(),
+            timestamp: msg.timestamp,
+            tool_calls: msg.tool_calls.clone(),
+            tokens: msg.tokens,
+            thinking_trace: msg.thinking_trace.clone(),
+            reasoning_content: msg.reasoning_content.clone(),
+        });
         let session_id = session.id.clone();
 
         session.messages.push(msg);
@@ -164,9 +154,7 @@ impl SessionManager {
         if !session_for_json.metadata.contains_key("title")
             && let Some(title) = generate_title_from_messages(&session.messages)
         {
-            session_for_json
-                .metadata
-                .insert("title".to_string(), serde_json::Value::String(title));
+            session_for_json.metadata.insert("title".to_string(), serde_json::Value::String(title));
         }
         session_for_json.messages.clear();
 
@@ -175,9 +163,7 @@ impl SessionManager {
 
         // Atomic write for metadata with TOCTOU prevention
         let temp_suffix = uuid::Uuid::new_v4();
-        let tmp_json = self
-            .session_dir
-            .join(format!(".{}.{}.json.tmp", session.id, temp_suffix));
+        let tmp_json = self.session_dir.join(format!(".{}.{}.json.tmp", session.id, temp_suffix));
         #[cfg(unix)]
         {
             use std::os::unix::fs::OpenOptionsExt;
@@ -188,10 +174,7 @@ impl SessionManager {
         #[cfg(not(unix))]
         {
             std::io::Write::write_all(
-                &mut std::fs::OpenOptions::new()
-                    .write(true)
-                    .create_new(true)
-                    .open(&tmp_json)?,
+                &mut std::fs::OpenOptions::new().write(true).create_new(true).open(&tmp_json)?,
                 json_content.as_bytes(),
             )?;
         }
@@ -201,10 +184,7 @@ impl SessionManager {
         let mut valid_messages = session.messages.clone();
         let (dropped, repaired) = filter_and_repair_messages(&mut valid_messages);
         if dropped > 0 || repaired > 0 {
-            info!(
-                "Session {}: dropped {} messages, repaired {}",
-                session.id, dropped, repaired
-            );
+            info!("Session {}: dropped {} messages, repaired {}", session.id, dropped, repaired);
         }
 
         // Write validated messages as JSONL
@@ -215,9 +195,7 @@ impl SessionManager {
             jsonl_content.push('\n');
         }
 
-        let tmp_jsonl = self
-            .session_dir
-            .join(format!(".{}.{}.jsonl.tmp", session.id, temp_suffix));
+        let tmp_jsonl = self.session_dir.join(format!(".{}.{}.jsonl.tmp", session.id, temp_suffix));
         #[cfg(unix)]
         {
             use std::os::unix::fs::OpenOptionsExt;
@@ -228,10 +206,7 @@ impl SessionManager {
         #[cfg(not(unix))]
         {
             std::io::Write::write_all(
-                &mut std::fs::OpenOptions::new()
-                    .write(true)
-                    .create_new(true)
-                    .open(&tmp_jsonl)?,
+                &mut std::fs::OpenOptions::new().write(true).create_new(true).open(&tmp_jsonl)?,
                 jsonl_content.as_bytes(),
             )?;
         }
@@ -253,11 +228,7 @@ impl SessionManager {
 
     /// Save the current session.
     pub fn save_current(&self) -> std::io::Result<()> {
-        if let Some(session) = &self.current_session {
-            self.save_session(session)
-        } else {
-            Ok(())
-        }
+        if let Some(session) = &self.current_session { self.save_session(session) } else { Ok(()) }
     }
 
     /// Load a session from disk.
@@ -294,21 +265,14 @@ impl SessionManager {
             if !messages.is_empty() {
                 let (dropped, repaired) = filter_and_repair_messages(&mut messages);
                 if dropped > 0 || repaired > 0 {
-                    info!(
-                        "Loaded session: repaired {} messages, dropped {}",
-                        repaired, dropped
-                    );
+                    info!("Loaded session: repaired {} messages, dropped {}", repaired, dropped);
                 }
                 session.messages = messages;
             }
         }
         // If no JSONL file, messages from the JSON file are used (legacy format)
 
-        debug!(
-            "Loaded session {} ({} messages)",
-            session.id,
-            session.messages.len()
-        );
+        debug!("Loaded session {} ({} messages)", session.id, session.messages.len());
         Ok(session)
     }
 
@@ -317,10 +281,7 @@ impl SessionManager {
         let session = self.load_session(session_id)?;
         self.current_session = Some(session);
         // SAFETY: we just set current_session to Some on the line above
-        Ok(self
-            .current_session
-            .as_ref()
-            .expect("current_session was just set to Some"))
+        Ok(self.current_session.as_ref().expect("current_session was just set to Some"))
     }
 
     /// Get the session index.
@@ -342,10 +303,7 @@ impl SessionManager {
 
         self.emit_event(
             &session_id,
-            SessionEvent::MetadataUpdated {
-                key: key.to_string(),
-                value: json_value,
-            },
+            SessionEvent::MetadataUpdated { key: key.to_string(), value: json_value },
         );
     }
 

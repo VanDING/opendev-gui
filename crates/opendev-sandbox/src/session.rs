@@ -35,12 +35,7 @@ impl<'a> SandboxSession<'a> {
         config: &'a SandboxConfig,
         model: impl Into<String>,
     ) -> Self {
-        Self {
-            sandbox,
-            callback,
-            config,
-            model: model.into(),
-        }
+        Self { sandbox, callback, config, model: model.into() }
     }
 
     /// Run the sandbox loop for the given request.
@@ -58,11 +53,8 @@ impl<'a> SandboxSession<'a> {
                     let content = tokio::fs::read_to_string(path)
                         .await
                         .map_err(|e| SandboxError::Other(format!("Failed to read file: {e}")))?;
-                    let name = path
-                        .file_stem()
-                        .and_then(|s| s.to_str())
-                        .unwrap_or("context")
-                        .to_string();
+                    let name =
+                        path.file_stem().and_then(|s| s.to_str()).unwrap_or("context").to_string();
                     self.sandbox.inject_variable(&name, &content).await?;
                     context_vars.push((name, content.len()));
                 }
@@ -76,14 +68,8 @@ impl<'a> SandboxSession<'a> {
         // 3. Build initial messages.
         let system_prompt = prompts::build_system_prompt(&context_vars, self.config.max_iterations);
         let mut messages = vec![
-            Message {
-                role: "system".to_string(),
-                content: system_prompt,
-            },
-            Message {
-                role: "user".to_string(),
-                content: request.query.clone(),
-            },
+            Message { role: "system".to_string(), content: system_prompt },
+            Message { role: "user".to_string(), content: request.query.clone() },
         ];
 
         // 4. Sandbox loop.
@@ -135,10 +121,7 @@ impl<'a> SandboxSession<'a> {
             };
 
             // Append to conversation history.
-            messages.push(Message {
-                role: "assistant".to_string(),
-                content: response,
-            });
+            messages.push(Message { role: "assistant".to_string(), content: response });
             messages.push(Message {
                 role: "user".to_string(),
                 content: if exec_result.is_empty() {
@@ -149,9 +132,7 @@ impl<'a> SandboxSession<'a> {
             });
         }
 
-        Err(SandboxError::MaxIterations {
-            max_iterations: self.config.max_iterations,
-        })
+        Err(SandboxError::MaxIterations { max_iterations: self.config.max_iterations })
     }
 
     /// Call the LLM with the current conversation messages.

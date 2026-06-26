@@ -121,9 +121,7 @@ impl MarkdownRenderer {
                         let hint: Cow<'static, str> = Cow::Owned(format!("--- {lang} ---"));
                         lines.push(Line::from(Span::styled(
                             hint,
-                            Style::default()
-                                .fg(style_tokens::GREY)
-                                .add_modifier(base_mod),
+                            Style::default().fg(style_tokens::GREY).add_modifier(base_mod),
                         )));
                     }
                 }
@@ -153,9 +151,7 @@ impl MarkdownRenderer {
             {
                 let mut spans = vec![Span::styled(
                     Cow::<'static, str>::Owned(format!("  {} ", style_tokens::BLOCKQUOTE_BAR)),
-                    Style::default()
-                        .fg(style_tokens::GREY)
-                        .add_modifier(base_mod),
+                    Style::default().fg(style_tokens::GREY).add_modifier(base_mod),
                 )];
                 spans.extend(parse_inline_spans_with_palette(quote_content, palette));
                 lines.push(Line::from(spans));
@@ -168,9 +164,7 @@ impl MarkdownRenderer {
                 let h: Cow<'static, str> = Cow::Owned(header.to_string());
                 lines.push(Line::from(Span::styled(
                     h,
-                    Style::default()
-                        .fg(palette.heading_3)
-                        .add_modifier(Modifier::BOLD | base_mod),
+                    Style::default().fg(palette.heading_3).add_modifier(Modifier::BOLD | base_mod),
                 )));
                 push_blank_if_needed(&mut lines);
             } else if let Some(header) = raw_line.strip_prefix("## ") {
@@ -178,9 +172,7 @@ impl MarkdownRenderer {
                 let h: Cow<'static, str> = Cow::Owned(header.to_string());
                 lines.push(Line::from(Span::styled(
                     h,
-                    Style::default()
-                        .fg(palette.heading_2)
-                        .add_modifier(Modifier::BOLD | base_mod),
+                    Style::default().fg(palette.heading_2).add_modifier(Modifier::BOLD | base_mod),
                 )));
                 push_blank_if_needed(&mut lines);
             } else if let Some(header) = raw_line.strip_prefix("# ") {
@@ -331,11 +323,8 @@ fn parse_inline_spans_with_palette(text: &str, palette: &MdPalette) -> Vec<Span<
             find_markdown_link(&text[pos..]).map(|(s, t, u, e)| (s + pos, t, u, e + pos));
 
         // Pick the earliest marker
-        let candidates: [Option<usize>; 3] = [
-            next_star,
-            next_backtick,
-            next_link.as_ref().map(|(s, _, _, _)| *s),
-        ];
+        let candidates: [Option<usize>; 3] =
+            [next_star, next_backtick, next_link.as_ref().map(|(s, _, _, _)| *s)];
         let earliest = candidates.into_iter().flatten().min();
 
         let Some(marker_pos) = earliest else {
@@ -346,10 +335,7 @@ fn parse_inline_spans_with_palette(text: &str, palette: &MdPalette) -> Vec<Span<
         // Which marker is at this position? Handle star runs by counting consecutive stars.
         if next_star == Some(marker_pos) {
             // Count consecutive stars
-            let star_count = bytes[marker_pos..]
-                .iter()
-                .take_while(|&&b| b == b'*')
-                .count();
+            let star_count = bytes[marker_pos..].iter().take_while(|&&b| b == b'*').count();
 
             // Flush plain text before the marker
             if marker_pos > plain_start {
@@ -393,10 +379,7 @@ fn parse_inline_spans_with_palette(text: &str, palette: &MdPalette) -> Vec<Span<
                 spans.push(Span::styled(chunk, text_style(in_bold, in_italic)));
             }
             // Count consecutive backticks to support multi-backtick code spans (`` `code` ``)
-            let bt_count = bytes[marker_pos..]
-                .iter()
-                .take_while(|&&b| b == b'`')
-                .count();
+            let bt_count = bytes[marker_pos..].iter().take_while(|&&b| b == b'`').count();
             let after = marker_pos + bt_count;
             let closing_pattern = &text[marker_pos..marker_pos + bt_count]; // e.g. "``"
             if let Some(close_rel) = text[after..].find(closing_pattern) {
@@ -474,10 +457,8 @@ fn parse_inline_spans_with_palette(text: &str, palette: &MdPalette) -> Vec<Span<
     let _ = (in_italic, italic_open_pos);
 
     if spans.is_empty() {
-        spans.push(Span::styled(
-            Cow::Owned(String::new()),
-            Style::default().add_modifier(base_mod),
-        ));
+        spans
+            .push(Span::styled(Cow::Owned(String::new()), Style::default().add_modifier(base_mod)));
     }
 
     spans
@@ -485,17 +466,12 @@ fn parse_inline_spans_with_palette(text: &str, palette: &MdPalette) -> Vec<Span<
 
 /// Find a single byte in a byte slice starting from `from`.
 fn find_byte(haystack: &[u8], needle: u8, from: usize) -> Option<usize> {
-    haystack[from..]
-        .iter()
-        .position(|&b| b == needle)
-        .map(|p| p + from)
+    haystack[from..].iter().position(|&b| b == needle).map(|p| p + from)
 }
 
 /// Push a blank line only if the last line isn't already blank.
 fn push_blank_if_needed(lines: &mut Vec<Line<'static>>) {
-    let last_blank = lines
-        .last()
-        .is_none_or(|l| l.spans.iter().all(|s| s.content.is_empty()));
+    let last_blank = lines.last().is_none_or(|l| l.spans.iter().all(|s| s.content.is_empty()));
     if !last_blank {
         lines.push(Line::from(""));
     }

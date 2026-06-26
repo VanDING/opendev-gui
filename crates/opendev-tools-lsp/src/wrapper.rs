@@ -36,11 +36,7 @@ impl LspWrapper {
             }
         }
 
-        Self {
-            extension_map,
-            handlers: HashMap::new(),
-            cache: SymbolCache::new(cache_dir, None),
-        }
+        Self { extension_map, handlers: HashMap::new(), cache: SymbolCache::new(cache_dir, None) }
     }
 
     /// Register a custom server configuration.
@@ -59,11 +55,8 @@ impl LspWrapper {
         let ext = PathUtils::extension(file_path)
             .ok_or_else(|| LspError::NoServer("no file extension".to_string()))?;
 
-        let config = self
-            .extension_map
-            .get(&ext)
-            .ok_or_else(|| LspError::NoServer(ext.clone()))?
-            .clone();
+        let config =
+            self.extension_map.get(&ext).ok_or_else(|| LspError::NoServer(ext.clone()))?.clone();
 
         let key = (config.language_id.clone(), workspace_root.to_path_buf());
 
@@ -131,9 +124,7 @@ impl LspWrapper {
             "context": { "includeDeclaration": true }
         });
 
-        let result = handler
-            .send_request("textDocument/references", params)
-            .await?;
+        let result = handler.send_request("textDocument/references", params).await?;
 
         Ok(parse_locations(&result))
     }
@@ -157,9 +148,7 @@ impl LspWrapper {
             "position": { "line": line, "character": character }
         });
 
-        let result = handler
-            .send_request("textDocument/definition", params)
-            .await?;
+        let result = handler.send_request("textDocument/definition", params).await?;
 
         // Can be a single Location or an array
         let locations = if result.is_array() {
@@ -220,9 +209,7 @@ impl LspWrapper {
             "textDocument": { "uri": uri }
         });
 
-        let result = handler
-            .send_request("textDocument/documentSymbol", params)
-            .await?;
+        let result = handler.send_request("textDocument/documentSymbol", params).await?;
 
         let symbols = parse_document_symbols(&result, file_path);
         Ok(symbols)
@@ -259,9 +246,7 @@ impl LspWrapper {
             Some(serde_json::Value::String(s)) => Some(s.clone()),
             Some(serde_json::Value::Object(obj)) => {
                 // MarkedString or MarkupContent
-                obj.get("value")
-                    .and_then(|v| v.as_str())
-                    .map(|s| s.to_string())
+                obj.get("value").and_then(|v| v.as_str()).map(|s| s.to_string())
             }
             Some(serde_json::Value::Array(arr)) => {
                 // Array of MarkedString
@@ -269,18 +254,13 @@ impl LspWrapper {
                     .iter()
                     .filter_map(|item| match item {
                         serde_json::Value::String(s) => Some(s.clone()),
-                        serde_json::Value::Object(obj) => obj
-                            .get("value")
-                            .and_then(|v| v.as_str())
-                            .map(|s| s.to_string()),
+                        serde_json::Value::Object(obj) => {
+                            obj.get("value").and_then(|v| v.as_str()).map(|s| s.to_string())
+                        }
                         _ => None,
                     })
                     .collect();
-                if parts.is_empty() {
-                    None
-                } else {
-                    Some(parts.join("\n\n"))
-                }
+                if parts.is_empty() { None } else { Some(parts.join("\n\n")) }
             }
             _ => None,
         };
@@ -359,10 +339,7 @@ fn parse_symbol_info(value: &serde_json::Value) -> Option<UnifiedSymbolInfo> {
     let file_path = protocol::uri_string_to_path(uri_str)?;
     let range = protocol::parse_range_json(location.get("range")?)?;
 
-    let container_name = value
-        .get("containerName")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string());
+    let container_name = value.get("containerName").and_then(|v| v.as_str()).map(|s| s.to_string());
 
     Some(UnifiedSymbolInfo {
         name,
@@ -406,13 +383,8 @@ fn parse_document_symbol(
     let kind_num = value.get("kind")?.as_i64()? as i32;
     let kind = protocol::SymbolKind::from_lsp(kind_num);
     let range = protocol::parse_range_json(value.get("range")?)?;
-    let selection_range = value
-        .get("selectionRange")
-        .and_then(protocol::parse_range_json);
-    let detail = value
-        .get("detail")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string());
+    let selection_range = value.get("selectionRange").and_then(protocol::parse_range_json);
+    let detail = value.get("detail").and_then(|v| v.as_str()).map(|s| s.to_string());
 
     Some(UnifiedSymbolInfo {
         name,

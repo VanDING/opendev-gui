@@ -31,9 +31,7 @@ pub struct FrecencyTracker {
 impl FrecencyTracker {
     /// Create an empty tracker.
     pub fn new() -> Self {
-        Self {
-            entries: HashMap::new(),
-        }
+        Self { entries: HashMap::new() }
     }
 
     /// Record an access for `key`.
@@ -41,10 +39,7 @@ impl FrecencyTracker {
         let entry = self
             .entries
             .entry(key.to_string())
-            .or_insert(FrecencyEntry {
-                count: 0,
-                last_access: Instant::now(),
-            });
+            .or_insert(FrecencyEntry { count: 0, last_access: Instant::now() });
         entry.count += 1;
         entry.last_access = Instant::now();
     }
@@ -94,10 +89,7 @@ pub fn fuzzy_score(pattern: &str, text: &str) -> f64 {
         if pi < pattern_lower.len() && tc == pattern_lower[pi] {
             // Bonus for matching at the start of the string or after a separator
             if ti == 0
-                || matches!(
-                    text_lower.get(ti.wrapping_sub(1)),
-                    Some(&'/' | &'_' | &'-' | &'.')
-                )
+                || matches!(text_lower.get(ti.wrapping_sub(1)), Some(&'/' | &'_' | &'-' | &'.'))
             {
                 total_bonus += 0.15;
             }
@@ -144,11 +136,7 @@ pub struct CompletionStrategy {
 impl CompletionStrategy {
     /// Create a strategy with the given mode.
     pub fn new(mode: MatchMode) -> Self {
-        Self {
-            mode,
-            frecency: FrecencyTracker::new(),
-            frecency_weight: 5.0,
-        }
+        Self { mode, frecency: FrecencyTracker::new(), frecency_weight: 5.0 }
     }
 
     /// Record a frecency access.
@@ -178,11 +166,7 @@ impl CompletionStrategy {
             };
             item.score = match_score + frecency;
         }
-        items.sort_by(|a, b| {
-            b.score
-                .partial_cmp(&a.score)
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
+        items.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
     }
 
     /// Return the current match mode.

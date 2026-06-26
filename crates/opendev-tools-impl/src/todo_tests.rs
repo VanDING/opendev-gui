@@ -11,19 +11,14 @@ fn make_tool() -> (TodoTool, Arc<Mutex<opendev_runtime::TodoManager>>) {
 }
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 #[tokio::test]
 async fn test_list() {
     let (tool, _mgr) = make_tool();
     let ctx = ToolContext::new("/tmp");
-    let result = tool
-        .execute(make_args(&[("action", serde_json::json!("list"))]), &ctx)
-        .await;
+    let result = tool.execute(make_args(&[("action", serde_json::json!("list"))]), &ctx).await;
     assert!(result.success);
     let output = result.output.unwrap();
     assert!(output.contains("0/3 done"));
@@ -35,9 +30,7 @@ async fn test_list_empty() {
     let mgr = Arc::new(Mutex::new(opendev_runtime::TodoManager::new()));
     let tool = TodoTool::new(mgr);
     let ctx = ToolContext::new("/tmp");
-    let result = tool
-        .execute(make_args(&[("action", serde_json::json!("list"))]), &ctx)
-        .await;
+    let result = tool.execute(make_args(&[("action", serde_json::json!("list"))]), &ctx).await;
     assert!(result.success);
     assert!(result.output.unwrap().contains("No todos"));
 }
@@ -48,10 +41,7 @@ async fn test_start() {
     let ctx = ToolContext::new("/tmp");
     let result = tool
         .execute(
-            make_args(&[
-                ("action", serde_json::json!("start")),
-                ("id", serde_json::json!(1)),
-            ]),
+            make_args(&[("action", serde_json::json!("start")), ("id", serde_json::json!(1))]),
             &ctx,
         )
         .await;
@@ -65,10 +55,7 @@ async fn test_complete() {
     let ctx = ToolContext::new("/tmp");
     let result = tool
         .execute(
-            make_args(&[
-                ("action", serde_json::json!("complete")),
-                ("id", serde_json::json!(1)),
-            ]),
+            make_args(&[("action", serde_json::json!("complete")), ("id", serde_json::json!(1))]),
             &ctx,
         )
         .await;
@@ -82,17 +69,12 @@ async fn test_complete_all() {
     let ctx = ToolContext::new("/tmp");
     for id in 1..=3 {
         tool.execute(
-            make_args(&[
-                ("action", serde_json::json!("complete")),
-                ("id", serde_json::json!(id)),
-            ]),
+            make_args(&[("action", serde_json::json!("complete")), ("id", serde_json::json!(id))]),
             &ctx,
         )
         .await;
     }
-    let result = tool
-        .execute(make_args(&[("action", serde_json::json!("list"))]), &ctx)
-        .await;
+    let result = tool.execute(make_args(&[("action", serde_json::json!("list"))]), &ctx).await;
     assert!(result.output.unwrap().contains("3/3 done"));
 }
 
@@ -125,9 +107,7 @@ async fn test_missing_action() {
 async fn test_unknown_action() {
     let (tool, _mgr) = make_tool();
     let ctx = ToolContext::new("/tmp");
-    let result = tool
-        .execute(make_args(&[("action", serde_json::json!("unknown"))]), &ctx)
-        .await;
+    let result = tool.execute(make_args(&[("action", serde_json::json!("unknown"))]), &ctx).await;
     assert!(!result.success);
 }
 
@@ -137,10 +117,7 @@ async fn test_start_nonexistent() {
     let ctx = ToolContext::new("/tmp");
     let result = tool
         .execute(
-            make_args(&[
-                ("action", serde_json::json!("start")),
-                ("id", serde_json::json!(999)),
-            ]),
+            make_args(&[("action", serde_json::json!("start")), ("id", serde_json::json!(999))]),
             &ctx,
         )
         .await;

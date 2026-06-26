@@ -23,6 +23,7 @@ pub mod response;
 pub mod skills;
 pub mod subagents;
 pub mod traits;
+pub mod workflow_spawner;
 
 pub use agent_types::{AgentDefinition, AgentRole, HandoffMessage, PartialResult, can_parallelize};
 pub use doom_loop::{DoomLoopAction, DoomLoopDetector, RecoveryAction};
@@ -52,9 +53,5 @@ pub fn git_root(working_dir: &std::path::Path) -> Option<std::path::PathBuf> {
         .output()
         .ok()
         .filter(|o| o.status.success())
-        .and_then(|o| {
-            String::from_utf8(o.stdout)
-                .ok()
-                .map(|s| std::path::PathBuf::from(s.trim()))
-        })
+        .and_then(|o| String::from_utf8(o.stdout).ok().map(|s| std::path::PathBuf::from(s.trim())))
 }

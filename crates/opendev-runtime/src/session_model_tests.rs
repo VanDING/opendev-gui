@@ -25,9 +25,7 @@ fn test_apply_overlay() {
         &overlay,
         |key| config.borrow().get(key).cloned(),
         |key, value| {
-            config
-                .borrow_mut()
-                .insert(key.to_string(), value.to_string());
+            config.borrow_mut().insert(key.to_string(), value.to_string());
         },
     );
 
@@ -48,18 +46,14 @@ fn test_restore_overlay() {
         &overlay,
         |key| config.borrow().get(key).cloned(),
         |key, value| {
-            config
-                .borrow_mut()
-                .insert(key.to_string(), value.to_string());
+            config.borrow_mut().insert(key.to_string(), value.to_string());
         },
     );
 
     assert_eq!(config.borrow().get("model").unwrap(), "claude-3-opus");
 
     mgr.restore(|key, value| {
-        config
-            .borrow_mut()
-            .insert(key.to_string(), value.to_string());
+        config.borrow_mut().insert(key.to_string(), value.to_string());
     });
 
     assert!(!mgr.is_active());
@@ -84,9 +78,7 @@ fn test_apply_ignores_invalid_fields() {
         &overlay,
         |key| config.borrow().get(key).cloned(),
         |key, value| {
-            config
-                .borrow_mut()
-                .insert(key.to_string(), value.to_string());
+            config.borrow_mut().insert(key.to_string(), value.to_string());
         },
     );
 

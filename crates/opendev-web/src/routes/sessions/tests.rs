@@ -13,13 +13,7 @@ fn make_state_with_dir(tmp: &std::path::Path) -> AppState {
     let config = AppConfig::default();
     let user_store = UserStore::new(tmp.to_path_buf()).unwrap();
     let model_registry = ModelRegistry::new();
-    AppState::new(
-        session_manager,
-        config,
-        "/tmp/test".to_string(),
-        user_store,
-        model_registry,
-    )
+    AppState::new(session_manager, config, "/tmp/test".to_string(), user_store, model_registry)
 }
 
 #[tokio::test]
@@ -62,9 +56,7 @@ async fn test_session_reuse_empty_session() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["status"], "reused");
     assert_eq!(json["id"], first_session_id);
@@ -82,9 +74,7 @@ async fn test_session_create_new_when_no_empty_match() {
                 .method("POST")
                 .uri("/api/sessions")
                 .header("content-type", "application/json")
-                .body(Body::from(
-                    r#"{"working_directory":"/workspace/new-project"}"#,
-                ))
+                .body(Body::from(r#"{"working_directory":"/workspace/new-project"}"#))
                 .unwrap(),
         )
         .await
@@ -92,9 +82,7 @@ async fn test_session_create_new_when_no_empty_match() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["status"], "created");
 }
@@ -127,9 +115,7 @@ async fn test_delete_session() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["status"], "success");
 }
@@ -161,19 +147,12 @@ async fn test_bridge_info() {
 
     let app = crate::server::build_app(state, None);
     let response = app
-        .oneshot(
-            Request::builder()
-                .uri("/api/sessions/bridge-info")
-                .body(Body::empty())
-                .unwrap(),
-        )
+        .oneshot(Request::builder().uri("/api/sessions/bridge-info").body(Body::empty()).unwrap())
         .await
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["bridge_mode"], false);
 }
@@ -197,9 +176,7 @@ async fn test_verify_path_empty() {
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["exists"], false);
 }
@@ -217,19 +194,14 @@ async fn test_verify_path_valid_dir() {
                 .method("POST")
                 .uri("/api/sessions/verify-path")
                 .header("content-type", "application/json")
-                .body(Body::from(format!(
-                    r#"{{"path":"{}"}}"#,
-                    tmp.path().to_string_lossy()
-                )))
+                .body(Body::from(format!(r#"{{"path":"{}"}}"#, tmp.path().to_string_lossy())))
                 .unwrap(),
         )
         .await
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["exists"], true);
     assert_eq!(json["is_directory"], true);
@@ -261,9 +233,7 @@ async fn test_browse_directory() {
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert!(json["error"].is_null());
     let dirs = json["directories"].as_array().unwrap();
@@ -324,9 +294,7 @@ async fn test_session_model_lifecycle() {
         .await
         .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["model_provider"], "openai");
 
@@ -352,19 +320,12 @@ async fn test_list_files_no_session() {
 
     let app = crate::server::build_app(state, None);
     let response = app
-        .oneshot(
-            Request::builder()
-                .uri("/api/sessions/files")
-                .body(Body::empty())
-                .unwrap(),
-        )
+        .oneshot(Request::builder().uri("/api/sessions/files").body(Body::empty()).unwrap())
         .await
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
-    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["files"].as_array().unwrap().len(), 0);
 }

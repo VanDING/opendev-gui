@@ -101,12 +101,7 @@ async fn test_call_llm_no_http_client() {
     let resp = agent.call_llm(&messages, None).await;
     // No HTTP client configured → returns failure
     assert!(!resp.success);
-    assert!(
-        resp.error
-            .as_deref()
-            .unwrap_or("")
-            .contains("HTTP client not configured")
-    );
+    assert!(resp.error.as_deref().unwrap_or("").contains("HTTP client not configured"));
 }
 
 #[tokio::test]

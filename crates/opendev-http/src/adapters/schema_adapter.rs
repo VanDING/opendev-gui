@@ -64,10 +64,7 @@ fn adapt_gemini(schemas: &mut [Value]) -> bool {
 fn adapt_xai(schemas: &mut Vec<Value>) -> bool {
     let before = schemas.len();
     schemas.retain(|schema| {
-        let name = schema
-            .pointer("/function/name")
-            .and_then(|v| v.as_str())
-            .unwrap_or("");
+        let name = schema.pointer("/function/name").and_then(|v| v.as_str()).unwrap_or("");
         name != "web_search"
     });
     let removed = before != schemas.len();
@@ -102,10 +99,7 @@ fn general_cleanup(schemas: &mut [Value]) -> bool {
                 changed = true;
             }
             if !obj.contains_key("properties") {
-                obj.insert(
-                    "properties".to_string(),
-                    Value::Object(serde_json::Map::new()),
-                );
+                obj.insert("properties".to_string(), Value::Object(serde_json::Map::new()));
                 changed = true;
             }
         }
@@ -118,11 +112,8 @@ fn strip_keys_recursive(obj: &mut Value, keys: &[&str]) -> bool {
     match obj {
         Value::Object(map) => {
             let mut changed = false;
-            let keys_present: Vec<String> = map
-                .keys()
-                .filter(|k| keys.contains(&k.as_str()))
-                .cloned()
-                .collect();
+            let keys_present: Vec<String> =
+                map.keys().filter(|k| keys.contains(&k.as_str())).cloned().collect();
             for key in keys_present {
                 map.remove(&key);
                 changed = true;

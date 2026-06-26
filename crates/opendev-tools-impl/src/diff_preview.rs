@@ -71,10 +71,8 @@ impl BaseTool for DiffPreviewTool {
             None => return ToolResult::fail("modified content is required"),
         };
 
-        let context_lines = args
-            .get("context_lines")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(3) as usize;
+        let context_lines =
+            args.get("context_lines").and_then(|v| v.as_u64()).unwrap_or(3) as usize;
 
         let original_lines: Vec<&str> = original.split('\n').collect();
         let modified_lines: Vec<&str> = modified.split('\n').collect();

@@ -16,9 +16,7 @@ pub struct DisplayLedger {
 impl DisplayLedger {
     /// Create a new empty ledger.
     pub fn new() -> Self {
-        Self {
-            rendered: HashSet::new(),
-        }
+        Self { rendered: HashSet::new() }
     }
 
     /// Mark a message ID as rendered.

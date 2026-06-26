@@ -46,9 +46,7 @@ impl<'a> ConversationWidget<'a> {
         if let Some(s) = self.shortener {
             std::borrow::Cow::Borrowed(s)
         } else {
-            std::borrow::Cow::Owned(crate::formatters::PathShortener::new(Some(
-                self.working_dir,
-            )))
+            std::borrow::Cow::Owned(crate::formatters::PathShortener::new(Some(self.working_dir)))
         }
     }
 
@@ -57,11 +55,8 @@ impl<'a> ConversationWidget<'a> {
         let mut lines: Vec<Line> = Vec::new();
         let shortener = self.get_shortener();
 
-        let active_unfinished: Vec<_> = self
-            .active_tools
-            .iter()
-            .filter(|t| !t.is_finished())
-            .collect();
+        let active_unfinished: Vec<_> =
+            self.active_tools.iter().filter(|t| !t.is_finished()).collect();
 
         if self.compaction_active {
             // Compaction spinner: ✻ Compacting conversation…
@@ -74,9 +69,7 @@ impl<'a> ConversationWidget<'a> {
                 ),
                 Span::styled(
                     "Compacting conversation\u{2026}",
-                    Style::default()
-                        .fg(style_tokens::SUBTLE)
-                        .add_modifier(Modifier::ITALIC),
+                    Style::default().fg(style_tokens::SUBTLE).add_modifier(Modifier::ITALIC),
                 ),
             ]));
         } else if self.backgrounding_pending
@@ -94,9 +87,7 @@ impl<'a> ConversationWidget<'a> {
                 ),
                 Span::styled(
                     "Sending to background\u{2026}",
-                    Style::default()
-                        .fg(style_tokens::SUBTLE)
-                        .add_modifier(Modifier::ITALIC),
+                    Style::default().fg(style_tokens::SUBTLE).add_modifier(Modifier::ITALIC),
                 ),
             ]));
         } else if !active_unfinished.is_empty() {
@@ -117,11 +108,8 @@ impl<'a> ConversationWidget<'a> {
                     let (agent_name, task_desc) = if let Some(sa) = subagent {
                         (sa.name.clone(), sa.display_label().to_string())
                     } else {
-                        let name = tool
-                            .args
-                            .get("agent_type")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("Agent");
+                        let name =
+                            tool.args.get("agent_type").and_then(|v| v.as_str()).unwrap_or("Agent");
                         let desc = tool
                             .args
                             .get("description")
@@ -146,9 +134,7 @@ impl<'a> ConversationWidget<'a> {
                         ),
                         Span::styled(
                             agent_name,
-                            Style::default()
-                                .fg(style_tokens::PRIMARY)
-                                .add_modifier(Modifier::BOLD),
+                            Style::default().fg(style_tokens::PRIMARY).add_modifier(Modifier::BOLD),
                         ),
                         Span::styled(
                             format!(" {task_short}"),
@@ -223,10 +209,7 @@ impl<'a> ConversationWidget<'a> {
                 // Show token count after 30s of turn execution
                 if self.turn_elapsed_secs >= 30 && self.turn_token_count > 0 {
                     progress_spans.push(Span::styled(
-                        format!(
-                            " \u{00b7} {} tokens",
-                            format_token_count(self.turn_token_count)
-                        ),
+                        format!(" \u{00b7} {} tokens", format_token_count(self.turn_token_count)),
                         Style::default().fg(style_tokens::SUBTLE),
                     ));
                 }
@@ -236,11 +219,7 @@ impl<'a> ConversationWidget<'a> {
                 ));
                 lines.push(Line::from(progress_spans));
             }
-        } else if self
-            .active_subagents
-            .iter()
-            .any(|s| !s.finished && !s.backgrounded)
-        {
+        } else if self.active_subagents.iter().any(|s| !s.finished && !s.backgrounded) {
             // Leader is idle while subagents are still working
             lines.push(Line::from(vec![
                 Span::styled(
@@ -249,9 +228,7 @@ impl<'a> ConversationWidget<'a> {
                 ),
                 Span::styled(
                     "Idle \u{00b7} teammates running",
-                    Style::default()
-                        .fg(style_tokens::SUBTLE)
-                        .add_modifier(Modifier::ITALIC),
+                    Style::default().fg(style_tokens::SUBTLE).add_modifier(Modifier::ITALIC),
                 ),
             ]));
         }
@@ -276,9 +253,7 @@ impl<'a> ConversationWidget<'a> {
                 ),
                 Span::styled(
                     "Sending to background\u{2026}",
-                    Style::default()
-                        .fg(style_tokens::SUBTLE)
-                        .add_modifier(Modifier::ITALIC),
+                    Style::default().fg(style_tokens::SUBTLE).add_modifier(Modifier::ITALIC),
                 ),
             ]));
             return;
@@ -287,11 +262,8 @@ impl<'a> ConversationWidget<'a> {
         if sa.finished {
             // Subagent finished but tool not yet — show Done summary
             let tool_count = sa.tool_call_count;
-            let count_str = if tool_count > 0 {
-                format!(" · {tool_count} tool uses")
-            } else {
-                String::new()
-            };
+            let count_str =
+                if tool_count > 0 { format!(" · {tool_count} tool uses") } else { String::new() };
             lines.push(Line::from(vec![
                 Span::styled(
                     format!("  {CONTINUATION_CHAR}  "),
@@ -304,9 +276,7 @@ impl<'a> ConversationWidget<'a> {
                 Span::styled("Done", Style::default().fg(style_tokens::SUBTLE)),
                 Span::styled(
                     count_str,
-                    Style::default()
-                        .fg(style_tokens::GREY)
-                        .add_modifier(Modifier::ITALIC),
+                    Style::default().fg(style_tokens::GREY).add_modifier(Modifier::ITALIC),
                 ),
             ]));
             return;
@@ -357,9 +327,7 @@ impl<'a> ConversationWidget<'a> {
                 ),
                 Span::styled(
                     "Initializing\u{2026}",
-                    Style::default()
-                        .fg(style_tokens::SUBTLE)
-                        .add_modifier(Modifier::ITALIC),
+                    Style::default().fg(style_tokens::SUBTLE).add_modifier(Modifier::ITALIC),
                 ),
             ]));
         }
@@ -371,9 +339,7 @@ impl<'a> ConversationWidget<'a> {
         if hidden > 0 {
             lines.push(Line::from(Span::styled(
                 format!("      +{hidden} more tool uses (Ctrl+B to run in background)"),
-                Style::default()
-                    .fg(style_tokens::GREY)
-                    .add_modifier(Modifier::ITALIC),
+                Style::default().fg(style_tokens::GREY).add_modifier(Modifier::ITALIC),
             )));
         }
     }

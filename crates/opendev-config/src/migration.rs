@@ -59,10 +59,7 @@ pub fn migrate_config(mut value: serde_json::Value) -> (serde_json::Value, bool)
             }
             _ => {
                 // Unknown version — skip remaining migrations
-                debug!(
-                    "Unknown config version {}, skipping further migrations",
-                    version
-                );
+                debug!("Unknown config version {}, skipping further migrations", version);
                 break;
             }
         }
@@ -90,12 +87,9 @@ fn migrate_v0_to_v1(mut value: serde_json::Value) -> serde_json::Value {
 fn migrate_v1_to_v2(mut value: serde_json::Value) -> serde_json::Value {
     if let Some(obj) = value.as_object_mut() {
         // Extract compact fields before removing them
-        let compact_model = obj
-            .remove("model_compact")
-            .and_then(|v| v.as_str().map(String::from));
-        let compact_provider = obj
-            .remove("model_compact_provider")
-            .and_then(|v| v.as_str().map(String::from));
+        let compact_model = obj.remove("model_compact").and_then(|v| v.as_str().map(String::from));
+        let compact_provider =
+            obj.remove("model_compact_provider").and_then(|v| v.as_str().map(String::from));
 
         // Remove critique fields (dead code)
         obj.remove("model_critique");
@@ -113,10 +107,7 @@ fn migrate_v1_to_v2(mut value: serde_json::Value) -> serde_json::Value {
                     compact_entry
                         .insert("provider".to_string(), serde_json::Value::String(provider));
                 }
-                agents_obj.insert(
-                    "compact".to_string(),
-                    serde_json::Value::Object(compact_entry),
-                );
+                agents_obj.insert("compact".to_string(), serde_json::Value::Object(compact_entry));
             }
         }
 

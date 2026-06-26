@@ -43,9 +43,8 @@ pub fn router() -> Router<AppState> {
 /// Get messages for the current session.
 async fn get_messages(State(state): State<AppState>) -> Result<Json<serde_json::Value>, WebError> {
     let mgr = state.session_manager().await;
-    let session = mgr
-        .current_session()
-        .ok_or_else(|| WebError::NotFound("No active session".to_string()))?;
+    let session =
+        mgr.current_session().ok_or_else(|| WebError::NotFound("No active session".to_string()))?;
 
     let messages: Vec<serde_json::Value> = session
         .messages
@@ -146,17 +145,11 @@ async fn send_query(
     // Load session (try from session manager, fall back to current).
     let mgr = state.session_manager().await;
     let session_exists = mgr.load_session(&session_id).is_ok()
-        || mgr
-            .current_session()
-            .map(|s| s.id == session_id)
-            .unwrap_or(false);
+        || mgr.current_session().map(|s| s.id == session_id).unwrap_or(false);
     drop(mgr);
 
     if !session_exists {
-        return Err(WebError::NotFound(format!(
-            "Session '{}' not found.",
-            session_id
-        )));
+        return Err(WebError::NotFound(format!("Session '{}' not found.", session_id)));
     }
 
     // Broadcast user message to WebSocket clients.
@@ -180,10 +173,7 @@ async fn send_query(
             }
         });
     } else {
-        info!(
-            "Query accepted for session {} but no agent executor is wired",
-            session_id
-        );
+        info!("Query accepted for session {} but no agent executor is wired", session_id);
     }
 
     Ok(Json(serde_json::json!({

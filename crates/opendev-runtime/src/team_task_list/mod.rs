@@ -13,6 +13,10 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::RwLock;
 
+// SAFETY INVARIANT: `std::sync::RwLock` is correct here because all public
+// methods are synchronous.  If a method becomes async, migrate to
+// `tokio::sync::RwLock`.
+
 use serde::{Deserialize, Serialize};
 
 use crate::now_ms;
@@ -82,9 +86,7 @@ impl TeamTask {
             return false;
         }
         self.dependencies.iter().all(|dep_id| {
-            all_tasks
-                .iter()
-                .any(|t| &t.id == dep_id && t.status == TeamTaskStatus::Completed)
+            all_tasks.iter().any(|t| &t.id == dep_id && t.status == TeamTaskStatus::Completed)
         })
     }
 }
@@ -103,15 +105,12 @@ impl TeamTaskList {
     ///
     /// `tasks_dir` is typically `~/.opendev/tasks/`.
     pub fn new(tasks_dir: PathBuf) -> Self {
-        Self {
-            tasks_dir,
-            cache: RwLock::new(HashMap::new()),
-        }
+        Self { tasks_dir, cache: RwLock::new(HashMap::new()) }
     }
 
     /// Add a new task to a team's list. Returns the created task.
     pub fn add_task(&self, team_name: &str, task: TeamTask) -> std::io::Result<TeamTask> {
-        let mut cache = self.cache.write().expect("TeamTaskList lock poisoned");
+        let mut cache = self.cache.write().unwrap_or_else(|e| e.into_inner());
         self.ensure_loaded(team_name, &mut cache)?;
 
         let tasks = cache.entry(team_name.to_string()).or_default();
@@ -123,7 +122,7 @@ impl TeamTaskList {
 
     /// List all tasks for a team, loading from disk if necessary.
     pub fn list_tasks(&self, team_name: &str) -> std::io::Result<Vec<TeamTask>> {
-        let mut cache = self.cache.write().expect("TeamTaskList lock poisoned");
+        let mut cache = self.cache.write().unwrap_or_else(|e| e.into_inner());
         self.ensure_loaded(team_name, &mut cache)?;
         Ok(cache.get(team_name).cloned().unwrap_or_default())
     }
@@ -138,7 +137,7 @@ impl TeamTaskList {
         task_id: &str,
         assignee: &str,
     ) -> std::io::Result<Option<TeamTask>> {
-        let mut cache = self.cache.write().expect("TeamTaskList lock poisoned");
+        let mut cache = self.cache.write().unwrap_or_else(|e| e.into_inner());
         self.ensure_loaded(team_name, &mut cache)?;
 
         let tasks = cache.entry(team_name.to_string()).or_default();
@@ -167,16 +166,12 @@ impl TeamTaskList {
         task_id: &str,
         success: bool,
     ) -> std::io::Result<Option<TeamTask>> {
-        let mut cache = self.cache.write().expect("TeamTaskList lock poisoned");
+        let mut cache = self.cache.write().unwrap_or_else(|e| e.into_inner());
         self.ensure_loaded(team_name, &mut cache)?;
 
         let tasks = cache.entry(team_name.to_string()).or_default();
         if let Some(task) = tasks.iter_mut().find(|t| t.id == task_id) {
-            task.status = if success {
-                TeamTaskStatus::Completed
-            } else {
-                TeamTaskStatus::Failed
-            };
+            task.status = if success { TeamTaskStatus::Completed } else { TeamTaskStatus::Failed };
             task.completed_at_ms = Some(now_ms());
             let result = task.clone();
             self.persist(team_name, tasks)?;
@@ -191,7 +186,7 @@ impl TeamTaskList {
         if path.exists() {
             fs::remove_file(&path)?;
         }
-        let mut cache = self.cache.write().expect("TeamTaskList lock poisoned");
+        let mut cache = self.cache.write().unwrap_or_else(|e| e.into_inner());
         cache.remove(team_name);
         Ok(())
     }
@@ -237,9 +232,7 @@ impl TeamTaskList {
 
 impl std::fmt::Debug for TeamTaskList {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TeamTaskList")
-            .field("tasks_dir", &self.tasks_dir)
-            .finish()
+        f.debug_struct("TeamTaskList").field("tasks_dir", &self.tasks_dir).finish()
     }
 }
 

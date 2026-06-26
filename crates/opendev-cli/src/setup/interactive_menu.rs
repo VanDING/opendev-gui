@@ -12,21 +12,9 @@ use super::SetupError;
 
 // ── Style constants ────────────────────────────────────────────────────────
 
-const ACCENT: Color = Color::Rgb {
-    r: 130,
-    g: 160,
-    b: 255,
-};
-const SELECTED_BG: Color = Color::Rgb {
-    r: 31,
-    g: 45,
-    b: 58,
-};
-const DIM: Color = Color::Rgb {
-    r: 100,
-    g: 110,
-    b: 120,
-};
+const ACCENT: Color = Color::Rgb { r: 130, g: 160, b: 255 };
+const SELECTED_BG: Color = Color::Rgb { r: 31, g: 45, b: 58 };
+const DIM: Color = Color::Rgb { r: 100, g: 110, b: 120 };
 
 // ── RawModeGuard ───────────────────────────────────────────────────────────
 

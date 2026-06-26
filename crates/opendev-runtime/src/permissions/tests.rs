@@ -16,10 +16,7 @@ fn test_ruleset_basic_allow() {
         priority: 10,
         directory_scope: None,
     });
-    assert_eq!(
-        rs.evaluate_simple("bash", "ls -la"),
-        Some(PermissionAction::Allow)
-    );
+    assert_eq!(rs.evaluate_simple("bash", "ls -la"), Some(PermissionAction::Allow));
     assert_eq!(rs.evaluate_simple("edit", "foo.rs"), None);
 }
 
@@ -39,15 +36,9 @@ fn test_ruleset_priority_ordering() {
         directory_scope: None,
     });
     // "rm -rf /" matches the Deny rule with higher priority
-    assert_eq!(
-        rs.evaluate_simple("bash", "rm -rf /"),
-        Some(PermissionAction::Deny)
-    );
+    assert_eq!(rs.evaluate_simple("bash", "rm -rf /"), Some(PermissionAction::Deny));
     // "ls" only matches the Allow rule
-    assert_eq!(
-        rs.evaluate_simple("bash", "ls"),
-        Some(PermissionAction::Allow)
-    );
+    assert_eq!(rs.evaluate_simple("bash", "ls"), Some(PermissionAction::Allow));
 }
 
 #[test]
@@ -69,14 +60,8 @@ fn test_ruleset_directory_scope() {
     let src_dir = PathBuf::from("src/components/button.rs");
     let vendor_dir = PathBuf::from("vendor/lib/foo.rs");
 
-    assert_eq!(
-        rs.evaluate("edit", "foo.rs", Some(&src_dir)),
-        Some(PermissionAction::Allow)
-    );
-    assert_eq!(
-        rs.evaluate("edit", "foo.rs", Some(&vendor_dir)),
-        Some(PermissionAction::Deny)
-    );
+    assert_eq!(rs.evaluate("edit", "foo.rs", Some(&src_dir)), Some(PermissionAction::Allow));
+    assert_eq!(rs.evaluate("edit", "foo.rs", Some(&vendor_dir)), Some(PermissionAction::Deny));
     // No directory => scoped rules don't match
     assert_eq!(rs.evaluate("edit", "foo.rs", None), None);
 }
@@ -103,15 +88,9 @@ fn test_ruleset_scoped_and_unscoped_mix() {
     let src = PathBuf::from("src/main.rs");
 
     // vendor => Deny wins
-    assert_eq!(
-        rs.evaluate("edit", "x", Some(&vendor)),
-        Some(PermissionAction::Deny)
-    );
+    assert_eq!(rs.evaluate("edit", "x", Some(&vendor)), Some(PermissionAction::Deny));
     // src => scoped Deny doesn't match, blanket Allow applies
-    assert_eq!(
-        rs.evaluate("edit", "x", Some(&src)),
-        Some(PermissionAction::Allow)
-    );
+    assert_eq!(rs.evaluate("edit", "x", Some(&src)), Some(PermissionAction::Allow));
 }
 
 #[test]
@@ -123,10 +102,7 @@ fn test_ruleset_prompt_action() {
         priority: 50,
         directory_scope: None,
     });
-    assert_eq!(
-        rs.evaluate_simple("bash", "sudo rm -rf /"),
-        Some(PermissionAction::Prompt)
-    );
+    assert_eq!(rs.evaluate_simple("bash", "sudo rm -rf /"), Some(PermissionAction::Prompt));
 }
 
 #[test]
@@ -162,32 +138,17 @@ fn test_defaults_deny_env_files() {
     let rs = PermissionRuleSet::with_defaults();
 
     // .env denied
-    assert_eq!(
-        rs.evaluate_simple("read_file", "/app/.env"),
-        Some(PermissionAction::Deny)
-    );
-    assert_eq!(
-        rs.evaluate_simple("read_file", "/app/.env.local"),
-        Some(PermissionAction::Deny)
-    );
-    assert_eq!(
-        rs.evaluate_simple("edit_file", ".env"),
-        Some(PermissionAction::Deny)
-    );
+    assert_eq!(rs.evaluate_simple("read_file", "/app/.env"), Some(PermissionAction::Deny));
+    assert_eq!(rs.evaluate_simple("read_file", "/app/.env.local"), Some(PermissionAction::Deny));
+    assert_eq!(rs.evaluate_simple("edit_file", ".env"), Some(PermissionAction::Deny));
     assert_eq!(
         rs.evaluate_simple("write_file", "/app/.env.production"),
         Some(PermissionAction::Deny)
     );
 
     // .env.example allowed
-    assert_eq!(
-        rs.evaluate_simple("read_file", "/app/.env.example"),
-        Some(PermissionAction::Allow)
-    );
-    assert_eq!(
-        rs.evaluate_simple("read_file", ".env.sample"),
-        Some(PermissionAction::Allow)
-    );
+    assert_eq!(rs.evaluate_simple("read_file", "/app/.env.example"), Some(PermissionAction::Allow));
+    assert_eq!(rs.evaluate_simple("read_file", ".env.sample"), Some(PermissionAction::Allow));
 
     // Normal files unaffected
     assert_eq!(rs.evaluate_simple("read_file", "main.rs"), None);

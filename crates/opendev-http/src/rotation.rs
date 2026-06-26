@@ -83,11 +83,7 @@ impl AuthProfile {
             None => 0.0,
             Some(until) => {
                 let now = Instant::now();
-                if now >= until {
-                    0.0
-                } else {
-                    (until - now).as_secs_f64()
-                }
+                if now >= until { 0.0 } else { (until - now).as_secs_f64() }
             }
         }
     }
@@ -117,11 +113,7 @@ impl AuthProfileManager {
             warn!("No API keys configured for provider '{}'", provider);
         }
 
-        Self {
-            provider,
-            profiles,
-            current_index: 0,
-        }
+        Self { provider, profiles, current_index: 0 }
     }
 
     /// Create from environment variables.
@@ -154,9 +146,7 @@ impl AuthProfileManager {
     /// Accepts `{"api_keys": [...]}` or `{"api_key": "..."}`.
     pub fn from_config(provider: &str, config: &HashMap<String, serde_json::Value>) -> Self {
         let keys = if let Some(serde_json::Value::Array(arr)) = config.get("api_keys") {
-            arr.iter()
-                .filter_map(|v| v.as_str().map(String::from))
-                .collect()
+            arr.iter().filter_map(|v| v.as_str().map(String::from)).collect()
         } else if let Some(serde_json::Value::String(single)) = config.get("api_key") {
             vec![single.clone()]
         } else {
@@ -195,11 +185,7 @@ impl AuthProfileManager {
         }
 
         // All keys in cooldown
-        let soonest = self
-            .profiles
-            .iter()
-            .map(|p| p.cooldown_remaining())
-            .fold(f64::MAX, f64::min);
+        let soonest = self.profiles.iter().map(|p| p.cooldown_remaining()).fold(f64::MAX, f64::min);
         warn!(
             total = self.profiles.len(),
             provider = %self.provider,

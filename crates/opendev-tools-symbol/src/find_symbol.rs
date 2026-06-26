@@ -30,10 +30,7 @@ pub fn handle_find_symbol(arguments: &Value, workspace_root: &Path) -> ToolResul
         _ => return ToolResult::err("Missing required argument: symbol_name"),
     };
 
-    let file_path = arguments
-        .get("file_path")
-        .and_then(|v| v.as_str())
-        .map(PathBuf::from);
+    let file_path = arguments.get("file_path").and_then(|v| v.as_str()).map(PathBuf::from);
 
     // In a full implementation, this would call the LSP SymbolRetriever.
     // For now, we provide the handler structure that formats results.

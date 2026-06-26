@@ -5,10 +5,14 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
+use opendev_memory::MemoryFacade;
+use tokio::sync::Mutex as AsyncMutex;
+
 use crate::attachments::CollectorRunner;
 use crate::attachments::collectors::{
-    CompactionCollector, DateChangeCollector, GitStatusCollector, PlanModeCollector,
-    SemanticMemoryCollector, SessionMemoryCollector, TodoStateCollector,
+    CabinetMemoryReader, CabinetMemoryWriter, CompactionCollector, DateChangeCollector,
+    GitStatusCollector, PlanModeCollector, SemanticMemoryCollector, SessionMemoryCollector,
+    TodoStateCollector,
 };
 use crate::doom_loop::DoomLoopDetector;
 use crate::prompts::reminders::{
@@ -64,7 +68,10 @@ pub(super) struct LoopState {
 
 impl LoopState {
     /// Create a new `LoopState` for a fresh react loop execution.
-    pub fn new(working_dir: &std::path::Path) -> Self {
+    pub fn new(
+        working_dir: &std::path::Path,
+        memory_facade: Option<Arc<AsyncMutex<MemoryFacade>>>,
+    ) -> Self {
         let startup_paths: Vec<PathBuf> =
             opendev_context::discover_instruction_files(working_dir, &[], &[])
                 .into_iter()
@@ -77,15 +84,23 @@ impl LoopState {
 
         // Build compaction flag shared between collector and LoopState
         let compaction_flag = Arc::new(AtomicBool::new(false));
-        let collectors: Vec<Box<dyn crate::attachments::ContextCollector>> = vec![
+
+        let mut collectors: Vec<Box<dyn crate::attachments::ContextCollector>> = vec![
             Box::new(TodoStateCollector::new(10)),
             Box::new(PlanModeCollector::new(5)),
             Box::new(DateChangeCollector::new()),
             Box::new(GitStatusCollector::new(5)),
             Box::new(CompactionCollector::new(Arc::clone(&compaction_flag))),
-            Box::new(SemanticMemoryCollector::new(15)),
-            Box::new(SessionMemoryCollector::new()),
         ];
+
+        if let Some(facade) = memory_facade {
+            collectors.push(Box::new(CabinetMemoryReader::new(Arc::clone(&facade), 15)));
+            collectors.push(Box::new(CabinetMemoryWriter::new(facade)));
+        } else {
+            // Fallback to file-based memory collectors
+            collectors.push(Box::new(SemanticMemoryCollector::new(15)));
+            collectors.push(Box::new(SessionMemoryCollector::new()));
+        }
 
         Self {
             iteration: 0,

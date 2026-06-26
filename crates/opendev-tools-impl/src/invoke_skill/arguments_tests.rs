@@ -45,10 +45,7 @@ fn test_expand_more_placeholders_than_args() {
 
 #[test]
 fn test_parse_positional_args_basic() {
-    assert_eq!(
-        parse_positional_args("foo bar baz"),
-        vec!["foo", "bar", "baz"]
-    );
+    assert_eq!(parse_positional_args("foo bar baz"), vec!["foo", "bar", "baz"]);
 }
 
 #[test]

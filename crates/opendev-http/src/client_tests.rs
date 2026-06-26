@@ -36,15 +36,9 @@ fn test_get_retry_delay_fallback() {
     let client = HttpClient::new("https://example.com", HeaderMap::new(), None).unwrap();
     // Delays include ±25% jitter
     let d0 = client.get_retry_delay(None, None, 0).as_millis() as u64;
-    assert!(
-        d0 >= 1500 && d0 <= 2500,
-        "attempt 0: {d0}ms not in [1500, 2500]"
-    );
+    assert!(d0 >= 1500 && d0 <= 2500, "attempt 0: {d0}ms not in [1500, 2500]");
     let d1 = client.get_retry_delay(Some("invalid"), None, 1).as_millis() as u64;
-    assert!(
-        d1 >= 3000 && d1 <= 5000,
-        "attempt 1: {d1}ms not in [3000, 5000]"
-    );
+    assert!(d1 >= 3000 && d1 <= 5000, "attempt 1: {d1}ms not in [3000, 5000]");
 }
 
 #[test]
@@ -52,10 +46,7 @@ fn test_get_retry_delay_capped() {
     let client = HttpClient::new("https://example.com", HeaderMap::new(), None).unwrap();
     // Attempt 10: 2000 * 2^10 capped at 30,000ms, then ±25% jitter
     let d = client.get_retry_delay(None, None, 10).as_millis() as u64;
-    assert!(
-        d >= 22500 && d <= 37500,
-        "attempt 10: {d}ms not in [22500, 37500]"
-    );
+    assert!(d >= 22500 && d <= 37500, "attempt 10: {d}ms not in [22500, 37500]");
 }
 
 #[tokio::test]
@@ -64,10 +55,7 @@ async fn test_cancellation_before_request() {
     let token = CancellationToken::new();
     token.cancel();
 
-    let result = client
-        .post_json(&serde_json::json!({}), Some(&token))
-        .await
-        .unwrap();
+    let result = client.post_json(&serde_json::json!({}), Some(&token)).await.unwrap();
     assert!(result.interrupted);
     assert!(!result.success);
 }
@@ -78,18 +66,14 @@ async fn test_interruptible_sleep_cancel() {
     let token = CancellationToken::new();
     token.cancel();
 
-    let err = client
-        .interruptible_sleep(Duration::from_secs(60), Some(&token))
-        .await;
+    let err = client.interruptible_sleep(Duration::from_secs(60), Some(&token)).await;
     assert!(matches!(err, Err(HttpError::Interrupted)));
 }
 
 #[tokio::test]
 async fn test_interruptible_sleep_completes() {
     let client = HttpClient::new("https://example.com", HeaderMap::new(), None).unwrap();
-    let result = client
-        .interruptible_sleep(Duration::from_millis(10), None)
-        .await;
+    let result = client.interruptible_sleep(Duration::from_millis(10), None).await;
     assert!(result.is_ok());
 }
 
@@ -143,9 +127,7 @@ fn test_http_result_default_no_request_id() {
 
 #[test]
 fn test_http_client_debug_with_circuit_breaker() {
-    let cb = std::sync::Arc::new(crate::circuit_breaker::CircuitBreaker::with_defaults(
-        "openai",
-    ));
+    let cb = std::sync::Arc::new(crate::circuit_breaker::CircuitBreaker::with_defaults("openai"));
     let client = HttpClient::new("https://api.example.com/v1/chat", HeaderMap::new(), None)
         .unwrap()
         .with_circuit_breaker(cb);

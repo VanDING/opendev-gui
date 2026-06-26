@@ -72,10 +72,8 @@ impl AgentRuntime {
             );
 
             // Re-register invoke_skill with MCP prompt support.
-            tool_registry.register(Arc::new(InvokeSkillTool::with_mcp(
-                skill_loader,
-                Arc::clone(&manager),
-            )));
+            tool_registry
+                .register(Arc::new(InvokeSkillTool::with_mcp(skill_loader, Arc::clone(&manager))));
         });
     }
 
@@ -91,10 +89,7 @@ impl AgentRuntime {
         interrupt_token: Option<&opendev_runtime::InterruptToken>,
         plan_requested: bool,
     ) -> Result<AgentResult, AgentError> {
-        info!(
-            query_len = query.len(),
-            plan_requested, "Running query through agent pipeline"
-        );
+        info!(query_len = query.len(), plan_requested, "Running query through agent pipeline");
 
         // Step 1: Save user message to session
         if let Some(session) = self.session_manager.current_session_mut() {
@@ -172,8 +167,7 @@ impl AgentRuntime {
                 .as_ref()
                 .and_then(|s| s.lock().ok())
                 .and_then(|s| {
-                    s.get("plan_file_path")
-                        .and_then(|v| v.as_str().map(|s| s.to_string()))
+                    s.get("plan_file_path").and_then(|v| v.as_str().map(|s| s.to_string()))
                 })
                 .unwrap_or_default();
             let reminder = opendev_agents::prompts::reminders::get_reminder(
@@ -362,11 +356,8 @@ impl AgentRuntime {
                     let has_title = s.metadata.contains_key("title");
                     let user_msg_count = s.messages.iter().filter(|m| m.role == Role::User).count();
                     let should = !has_title || (user_msg_count > 1 && user_msg_count % 5 == 0);
-                    let title = s
-                        .metadata
-                        .get("title")
-                        .and_then(|v| v.as_str())
-                        .map(|t| t.to_string());
+                    let title =
+                        s.metadata.get("title").and_then(|v| v.as_str()).map(|t| t.to_string());
                     (should, title)
                 })
                 .unwrap_or((false, None));
@@ -392,19 +383,14 @@ impl AgentRuntime {
                                 } else {
                                     m.content.clone()
                                 };
-                                Some(SimpleMessage {
-                                    role: role.to_string(),
-                                    content: truncated,
-                                })
+                                Some(SimpleMessage { role: role.to_string(), content: truncated })
                             })
                             .collect()
                     })
                     .unwrap_or_default();
 
-                if let Some(title) = self
-                    .topic_detector
-                    .detect_title(&simple_msgs, current_title.as_deref())
-                    .await
+                if let Some(title) =
+                    self.topic_detector.detect_title(&simple_msgs, current_title.as_deref()).await
                 {
                     // Skip no-op updates
                     let is_same = current_title.as_deref().is_some_and(|ct| ct == title);
@@ -433,11 +419,7 @@ impl AgentRuntime {
             );
         }
 
-        info!(
-            success = result.success,
-            content_len = result.content.len(),
-            "Query completed"
-        );
+        info!(success = result.success, content_len = result.content.len(), "Query completed");
 
         Ok(result)
     }
@@ -464,10 +446,7 @@ impl AgentRuntime {
         event_callback: Option<&dyn AgentEventCallback>,
         interrupt_token: Option<&opendev_runtime::InterruptToken>,
     ) -> Result<AgentResult, AgentError> {
-        info!(
-            task_id,
-            tool_call_count, "Injecting background result as tool-result pair"
-        );
+        info!(task_id, tool_call_count, "Injecting background result as tool-result pair");
 
         // Synthetic tool_call_id linking the assistant call to its result
         let synthetic_id = format!("bg_{task_id}");
@@ -609,22 +588,11 @@ impl AgentRuntime {
         event_callback: Option<&dyn AgentEventCallback>,
         interrupt_token: Option<&opendev_runtime::InterruptToken>,
     ) -> Result<AgentResult, AgentError> {
-        info!(
-            message_count = messages.len(),
-            "Resuming agent from existing message history"
-        );
+        info!(message_count = messages.len(), "Resuming agent from existing message history");
 
         // Prepend system prompt if not already present
-        if messages
-            .first()
-            .and_then(|m| m.get("role"))
-            .and_then(|r| r.as_str())
-            != Some("system")
-        {
-            messages.insert(
-                0,
-                serde_json::json!({"role": "system", "content": system_prompt}),
-            );
+        if messages.first().and_then(|m| m.get("role")).and_then(|r| r.as_str()) != Some("system") {
+            messages.insert(0, serde_json::json!({"role": "system", "content": system_prompt}));
         }
 
         let tool_schemas = self.tool_registry.get_schemas();
@@ -684,10 +652,8 @@ impl AgentRuntime {
             return Err("Not enough messages to compact (need at least 5).".to_string());
         }
 
-        let api_msgs: Vec<serde_json::Map<String, serde_json::Value>> = session_messages
-            .iter()
-            .filter_map(|v| v.as_object().cloned())
-            .collect();
+        let api_msgs: Vec<serde_json::Map<String, serde_json::Value>> =
+            session_messages.iter().filter_map(|v| v.as_object().cloned()).collect();
 
         let compact_model = &self.llm_caller.config.model;
         let original_count = api_msgs.len();
@@ -749,10 +715,8 @@ impl AgentRuntime {
         let compacted_count = compacted.len();
 
         // Convert compacted API messages back to ChatMessages and replace session
-        let compacted_values: Vec<serde_json::Value> = compacted
-            .into_iter()
-            .map(serde_json::Value::Object)
-            .collect();
+        let compacted_values: Vec<serde_json::Value> =
+            compacted.into_iter().map(serde_json::Value::Object).collect();
         let new_chat_messages =
             opendev_history::message_convert::api_values_to_chatmessages(&compacted_values);
 

@@ -18,11 +18,7 @@ pub use opendev_tools_core::path::{
 /// Matches patterns from `.gitignore` for Node.js (`.env` family) plus
 /// common credential/key files. Returns a human-readable reason if sensitive.
 pub fn is_sensitive_file(path: &Path) -> Option<&'static str> {
-    let name = path
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or("")
-        .to_lowercase();
+    let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("").to_lowercase();
 
     // .env files (matches .env, .env.local, .env.production, etc.)
     // but NOT .env.example or .env.sample

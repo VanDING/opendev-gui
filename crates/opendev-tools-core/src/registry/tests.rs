@@ -33,10 +33,7 @@ impl BaseTool for EchoTool {
         args: HashMap<String, serde_json::Value>,
         _ctx: &ToolContext,
     ) -> ToolResult {
-        let message = args
-            .get("message")
-            .and_then(|v| v.as_str())
-            .unwrap_or("(no message)");
+        let message = args.get("message").and_then(|v| v.as_str()).unwrap_or("(no message)");
         ToolResult::ok(format!("Echo: {message}"))
     }
 }
@@ -355,10 +352,7 @@ fn test_set_tool_timeout() {
     let reg = ToolRegistry::new();
     reg.set_tool_timeout(
         "bash",
-        ToolTimeoutConfig {
-            idle_timeout_secs: 30,
-            max_timeout_secs: 120,
-        },
+        ToolTimeoutConfig { idle_timeout_secs: 30, max_timeout_secs: 120 },
     );
     let config = reg.get_tool_timeout("bash");
     assert!(config.is_some());
@@ -371,19 +365,11 @@ fn test_set_tool_timeout() {
 fn test_set_tool_timeouts_bulk() {
     let reg = ToolRegistry::new();
     let mut timeouts = HashMap::new();
-    timeouts.insert(
-        "bash".into(),
-        ToolTimeoutConfig {
-            idle_timeout_secs: 30,
-            max_timeout_secs: 120,
-        },
-    );
+    timeouts
+        .insert("bash".into(), ToolTimeoutConfig { idle_timeout_secs: 30, max_timeout_secs: 120 });
     timeouts.insert(
         "run_command".into(),
-        ToolTimeoutConfig {
-            idle_timeout_secs: 10,
-            max_timeout_secs: 60,
-        },
+        ToolTimeoutConfig { idle_timeout_secs: 10, max_timeout_secs: 60 },
     );
     reg.set_tool_timeouts(timeouts);
     assert!(reg.get_tool_timeout("bash").is_some());
@@ -414,10 +400,7 @@ async fn test_per_tool_timeout_applied() {
             ctx: &ToolContext,
         ) -> ToolResult {
             if let Some(tc) = &ctx.timeout_config {
-                ToolResult::ok(format!(
-                    "idle={},max={}",
-                    tc.idle_timeout_secs, tc.max_timeout_secs
-                ))
+                ToolResult::ok(format!("idle={},max={}", tc.idle_timeout_secs, tc.max_timeout_secs))
             } else {
                 ToolResult::ok("no timeout config")
             }
@@ -428,10 +411,7 @@ async fn test_per_tool_timeout_applied() {
     reg.register(Arc::new(TimeoutCaptureTool));
     reg.set_tool_timeout(
         "timeout_capture",
-        ToolTimeoutConfig {
-            idle_timeout_secs: 15,
-            max_timeout_secs: 45,
-        },
+        ToolTimeoutConfig { idle_timeout_secs: 15, max_timeout_secs: 45 },
     );
 
     let ctx = ToolContext::new("/tmp/test");
@@ -462,10 +442,7 @@ async fn test_no_per_tool_timeout_uses_context() {
             ctx: &ToolContext,
         ) -> ToolResult {
             if let Some(tc) = &ctx.timeout_config {
-                ToolResult::ok(format!(
-                    "idle={},max={}",
-                    tc.idle_timeout_secs, tc.max_timeout_secs
-                ))
+                ToolResult::ok(format!("idle={},max={}", tc.idle_timeout_secs, tc.max_timeout_secs))
             } else {
                 ToolResult::ok("no timeout config")
             }
@@ -475,10 +452,8 @@ async fn test_no_per_tool_timeout_uses_context() {
     let reg = ToolRegistry::new();
     reg.register(Arc::new(TimeoutCaptureTool2));
     // No per-tool timeout set, context has a global one
-    let ctx = ToolContext::new("/tmp/test").with_timeout_config(ToolTimeoutConfig {
-        idle_timeout_secs: 60,
-        max_timeout_secs: 600,
-    });
+    let ctx = ToolContext::new("/tmp/test")
+        .with_timeout_config(ToolTimeoutConfig { idle_timeout_secs: 60, max_timeout_secs: 600 });
     let result = reg.execute("timeout_capture2", HashMap::new(), &ctx).await;
     assert!(result.success);
     assert_eq!(result.output.as_deref(), Some("idle=60,max=600"));
@@ -490,9 +465,7 @@ async fn test_no_per_tool_timeout_uses_context() {
 async fn test_dedup_same_call_returns_cached() {
     let call_count = Arc::new(AtomicUsize::new(0));
     let reg = ToolRegistry::new();
-    reg.register(Arc::new(CounterTool {
-        call_count: Arc::clone(&call_count),
-    }));
+    reg.register(Arc::new(CounterTool { call_count: Arc::clone(&call_count) }));
 
     let ctx = ToolContext::new("/tmp/test");
 
@@ -514,9 +487,7 @@ async fn test_dedup_same_call_returns_cached() {
 async fn test_dedup_different_args_not_cached() {
     let call_count = Arc::new(AtomicUsize::new(0));
     let reg = ToolRegistry::new();
-    reg.register(Arc::new(CounterTool {
-        call_count: Arc::clone(&call_count),
-    }));
+    reg.register(Arc::new(CounterTool { call_count: Arc::clone(&call_count) }));
 
     let ctx = ToolContext::new("/tmp/test");
 
@@ -538,9 +509,7 @@ async fn test_dedup_different_args_not_cached() {
 async fn test_dedup_clear_between_turns() {
     let call_count = Arc::new(AtomicUsize::new(0));
     let reg = ToolRegistry::new();
-    reg.register(Arc::new(CounterTool {
-        call_count: Arc::clone(&call_count),
-    }));
+    reg.register(Arc::new(CounterTool { call_count: Arc::clone(&call_count) }));
 
     let ctx = ToolContext::new("/tmp/test");
 
@@ -608,11 +577,7 @@ async fn test_execute_strips_functions_prefix() {
 
     let ctx = ToolContext::new("/tmp/test");
     let result = reg.execute("functions.echo", args, &ctx).await;
-    assert!(
-        result.success,
-        "functions. prefix should be stripped: {:?}",
-        result.error
-    );
+    assert!(result.success, "functions. prefix should be stripped: {:?}", result.error);
     assert_eq!(result.output.as_deref(), Some("Echo: hello"));
 }
 
@@ -629,11 +594,7 @@ async fn test_execute_case_insensitive_match() {
     let ctx = ToolContext::new("/tmp/test");
     // "Echo" should match "echo" case-insensitively
     let result = reg.execute("Echo", args, &ctx).await;
-    assert!(
-        result.success,
-        "Case-insensitive match should work: {:?}",
-        result.error
-    );
+    assert!(result.success, "Case-insensitive match should work: {:?}", result.error);
     assert_eq!(result.output.as_deref(), Some("Echo: hello"));
 }
 
@@ -661,10 +622,7 @@ async fn test_execute_unknown_suggests_similar() {
     let result = reg.execute("ech", HashMap::new(), &ctx).await;
     assert!(!result.success);
     let err = result.error.unwrap();
-    assert!(
-        err.contains("Unknown tool: ech"),
-        "Error should mention unknown tool"
-    );
+    assert!(err.contains("Unknown tool: ech"), "Error should mention unknown tool");
     assert!(err.contains("echo"), "Error should suggest 'echo': {}", err);
 }
 

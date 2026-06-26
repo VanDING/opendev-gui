@@ -108,10 +108,7 @@ pub async fn run_non_interactive(
     agent_runtime.resolve_mcp_instructions().await;
     let system_prompt = agent_runtime.compose_system_prompt();
 
-    match agent_runtime
-        .run_query(prompt, &system_prompt, None, None, false)
-        .await
-    {
+    match agent_runtime.run_query(prompt, &system_prompt, None, None, false).await {
         Ok(result) => {
             println!("{}", result.content);
             if !result.success {
@@ -226,11 +223,7 @@ pub async fn run_interactive(
                             title.to_string()
                         };
                         let relative = format_relative_time(meta.updated_at);
-                        let short_id = if meta.id.len() > 10 {
-                            &meta.id[..10]
-                        } else {
-                            &meta.id
-                        };
+                        let short_id = if meta.id.len() > 10 { &meta.id[..10] } else { &meta.id };
                         println!(
                             "  {:<3} {:<40} {:<12} {:<12} {:>4}",
                             i + 1,
@@ -300,10 +293,7 @@ pub async fn run_interactive(
         .unwrap_or_else(opendev_tui::auto_detect_theme);
 
     // Extract session ID for TUI display
-    let session_id = agent_runtime
-        .session_manager
-        .current_session()
-        .map(|s| s.id.clone());
+    let session_id = agent_runtime.session_manager.current_session().map(|s| s.id.clone());
 
     // Populate initial TUI state from config
     let wd_str = working_dir.display().to_string();
@@ -339,12 +329,10 @@ pub async fn run_interactive(
                     if opendev_models::message::is_system_injected_content(&msg.content) {
                         continue;
                     }
-                    app_state
-                        .messages
-                        .push(opendev_tui::app::DisplayMessage::new(
-                            opendev_tui::app::DisplayRole::User,
-                            msg.content.clone(),
-                        ));
+                    app_state.messages.push(opendev_tui::app::DisplayMessage::new(
+                        opendev_tui::app::DisplayRole::User,
+                        msg.content.clone(),
+                    ));
                 }
                 opendev_models::Role::Assistant => {
                     // Add reasoning/thinking trace if present
@@ -368,12 +356,10 @@ pub async fn run_interactive(
                     }
                     // Add assistant text
                     if !msg.content.is_empty() {
-                        app_state
-                            .messages
-                            .push(opendev_tui::app::DisplayMessage::new(
-                                opendev_tui::app::DisplayRole::Assistant,
-                                msg.content.clone(),
-                            ));
+                        app_state.messages.push(opendev_tui::app::DisplayMessage::new(
+                            opendev_tui::app::DisplayRole::Assistant,
+                            msg.content.clone(),
+                        ));
                     }
                     // Add tool calls (skip task_complete — it's an internal control tool)
                     for tc in &msg.tool_calls {
@@ -398,12 +384,10 @@ pub async fn run_interactive(
 
     // Inject initial message as first user submission (handled by the agent task)
     if let Some(ref msg) = initial_message {
-        app_state
-            .messages
-            .push(opendev_tui::app::DisplayMessage::new(
-                opendev_tui::app::DisplayRole::User,
-                msg.clone(),
-            ));
+        app_state.messages.push(opendev_tui::app::DisplayMessage::new(
+            opendev_tui::app::DisplayRole::User,
+            msg.clone(),
+        ));
     }
 
     // Telegram remote-control is only enabled via `opendev remote`, not in
@@ -463,11 +447,8 @@ pub async fn run_replay(path: &std::path::Path) {
             println!("Replaying {} events from {}", events.len(), path.display());
             println!("{}", "-".repeat(60));
             for event in &events {
-                let reconstructable = if event.to_app_event().is_some() {
-                    ""
-                } else {
-                    " [not reconstructable]"
-                };
+                let reconstructable =
+                    if event.to_app_event().is_some() { "" } else { " [not reconstructable]" };
                 println!(
                     "[seq={:>5} t={:>8}ms] {}{}: {}",
                     event.seq,

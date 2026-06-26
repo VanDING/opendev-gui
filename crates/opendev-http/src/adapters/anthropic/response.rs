@@ -11,11 +11,8 @@ use super::AnthropicAdapter;
 impl AnthropicAdapter {
     /// Convert Anthropic response to Chat Completions format.
     pub(super) fn response_to_chat_completions(response: Value) -> Value {
-        let blocks = response
-            .get("content")
-            .and_then(|c| c.as_array())
-            .cloned()
-            .unwrap_or_default();
+        let blocks =
+            response.get("content").and_then(|c| c.as_array()).cloned().unwrap_or_default();
 
         // Extract text content
         let content: String = blocks
@@ -40,11 +37,8 @@ impl AnthropicAdapter {
             .iter()
             .filter_map(|b| b.get("thinking").and_then(|t| t.as_str()).map(String::from))
             .collect();
-        let reasoning_content = if thinking_parts.is_empty() {
-            None
-        } else {
-            Some(thinking_parts.join("\n\n"))
-        };
+        let reasoning_content =
+            if thinking_parts.is_empty() { None } else { Some(thinking_parts.join("\n\n")) };
 
         // Extract tool_use blocks -> Chat Completions tool_calls
         let tool_calls: Vec<Value> = blocks
@@ -68,16 +62,10 @@ impl AnthropicAdapter {
             })
             .collect();
 
-        let model = response
-            .get("model")
-            .and_then(|m| m.as_str())
-            .unwrap_or("unknown");
+        let model = response.get("model").and_then(|m| m.as_str()).unwrap_or("unknown");
 
         let usage = response.get("usage").cloned().unwrap_or(json!({}));
-        let stop_reason = response
-            .get("stop_reason")
-            .and_then(|r| r.as_str())
-            .unwrap_or("stop");
+        let stop_reason = response.get("stop_reason").and_then(|r| r.as_str()).unwrap_or("stop");
 
         let finish_reason = match stop_reason {
             "end_turn" => "stop",
@@ -150,10 +138,7 @@ impl AnthropicAdapter {
                             .and_then(|p| p.as_str())
                             .unwrap_or("")
                             .to_string();
-                        Some(StreamEvent::FunctionCallDelta {
-                            index,
-                            delta: partial,
-                        })
+                        Some(StreamEvent::FunctionCallDelta { index, delta: partial })
                     }
                     _ => None,
                 }
@@ -182,16 +167,10 @@ impl AnthropicAdapter {
                     "tool_use" => {
                         let index =
                             data.get("index").and_then(|i| i.as_u64()).unwrap_or(0) as usize;
-                        let call_id = cb
-                            .get("id")
-                            .and_then(|i| i.as_str())
-                            .unwrap_or("")
-                            .to_string();
-                        let name = cb
-                            .get("name")
-                            .and_then(|n| n.as_str())
-                            .unwrap_or("")
-                            .to_string();
+                        let call_id =
+                            cb.get("id").and_then(|i| i.as_str()).unwrap_or("").to_string();
+                        let name =
+                            cb.get("name").and_then(|n| n.as_str()).unwrap_or("").to_string();
                         Some(StreamEvent::FunctionCallStart {
                             index,
                             call_id,

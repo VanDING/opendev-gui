@@ -28,25 +28,14 @@ fn test_count_session_files_mixed() {
     let dir = TempDir::new().unwrap();
 
     // Session file (by name prefix)
-    std::fs::write(
-        dir.path().join("session-2026-01-01-abc.md"),
-        "---\ntype: session\n---\nnotes",
-    )
-    .unwrap();
+    std::fs::write(dir.path().join("session-2026-01-01-abc.md"), "---\ntype: session\n---\nnotes")
+        .unwrap();
 
     // Non-session file
-    std::fs::write(
-        dir.path().join("patterns.md"),
-        "---\ntype: project\n---\npatterns",
-    )
-    .unwrap();
+    std::fs::write(dir.path().join("patterns.md"), "---\ntype: project\n---\npatterns").unwrap();
 
     // Session file (by type, not name prefix)
-    std::fs::write(
-        dir.path().join("notes.md"),
-        "---\ntype: session\n---\nmore notes",
-    )
-    .unwrap();
+    std::fs::write(dir.path().join("notes.md"), "---\ntype: session\n---\nmore notes").unwrap();
 
     // MEMORY.md should be excluded
     std::fs::write(dir.path().join("MEMORY.md"), "# Index").unwrap();
@@ -58,31 +47,15 @@ fn test_count_session_files_mixed() {
 fn test_scan_all_memory_files() {
     let dir = TempDir::new().unwrap();
 
-    std::fs::write(
-        dir.path().join("file1.md"),
-        "---\ntype: session\n---\ncontent1",
-    )
-    .unwrap();
-    std::fs::write(
-        dir.path().join("file2.md"),
-        "---\ntype: project\n---\ncontent2",
-    )
-    .unwrap();
+    std::fs::write(dir.path().join("file1.md"), "---\ntype: session\n---\ncontent1").unwrap();
+    std::fs::write(dir.path().join("file2.md"), "---\ntype: project\n---\ncontent2").unwrap();
     std::fs::write(dir.path().join("MEMORY.md"), "# Index").unwrap();
     std::fs::write(dir.path().join("not-md.txt"), "text").unwrap();
 
     let files = scan_all_memory_files(dir.path());
     assert_eq!(files.len(), 2);
-    assert!(
-        files
-            .iter()
-            .any(|f| f.filename == "file1.md" && f.file_type == "session")
-    );
-    assert!(
-        files
-            .iter()
-            .any(|f| f.filename == "file2.md" && f.file_type == "project")
-    );
+    assert!(files.iter().any(|f| f.filename == "file1.md" && f.file_type == "session"));
+    assert!(files.iter().any(|f| f.filename == "file2.md" && f.file_type == "project"));
 }
 
 #[test]
@@ -110,16 +83,10 @@ fn test_load_save_meta() {
 fn test_regenerate_index() {
     let dir = TempDir::new().unwrap();
 
-    std::fs::write(
-        dir.path().join("alpha.md"),
-        "---\ndescription: Alpha file\n---\ncontent",
-    )
-    .unwrap();
-    std::fs::write(
-        dir.path().join("beta.md"),
-        "---\ndescription: Beta file\n---\ncontent",
-    )
-    .unwrap();
+    std::fs::write(dir.path().join("alpha.md"), "---\ndescription: Alpha file\n---\ncontent")
+        .unwrap();
+    std::fs::write(dir.path().join("beta.md"), "---\ndescription: Beta file\n---\ncontent")
+        .unwrap();
 
     regenerate_index(dir.path()).unwrap();
 
@@ -140,9 +107,6 @@ fn test_should_consolidate_no_dir() {
 
 #[test]
 fn test_extract_desc() {
-    assert_eq!(
-        extract_desc("---\ndescription: \"Hello world\"\n---\nbody"),
-        "Hello world"
-    );
+    assert_eq!(extract_desc("---\ndescription: \"Hello world\"\n---\nbody"), "Hello world");
     assert_eq!(extract_desc("no frontmatter"), "");
 }

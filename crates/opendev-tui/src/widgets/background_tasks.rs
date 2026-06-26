@@ -197,9 +197,7 @@ impl Widget for TaskWatcherPanel<'_> {
             .border_style(Style::default().fg(style_tokens::ACCENT))
             .title(Span::styled(
                 title_str,
-                Style::default()
-                    .fg(style_tokens::ACCENT)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(style_tokens::ACCENT).add_modifier(Modifier::BOLD),
             ))
             .title_bottom(Line::from(Span::styled(
                 help_text,
@@ -292,9 +290,7 @@ impl Widget for TaskWatcherPanel<'_> {
                 hint_x,
                 hint_y,
                 &hint,
-                Style::default()
-                    .fg(style_tokens::SUBTLE)
-                    .add_modifier(Modifier::ITALIC),
+                Style::default().fg(style_tokens::SUBTLE).add_modifier(Modifier::ITALIC),
             );
         }
     }
@@ -307,15 +303,11 @@ fn cell_rect(col: usize, row: usize, inner: Rect, cols: usize, rows: usize) -> R
     let base_h = inner.height / rows as u16;
     let extra_h = inner.height % rows as u16;
 
-    let x = inner.x
-        + (0..col as u16)
-            .map(|c| base_w + if c < extra_w { 1 } else { 0 })
-            .sum::<u16>();
+    let x =
+        inner.x + (0..col as u16).map(|c| base_w + if c < extra_w { 1 } else { 0 }).sum::<u16>();
     let w = base_w + if (col as u16) < extra_w { 1 } else { 0 };
-    let y = inner.y
-        + (0..row as u16)
-            .map(|r| base_h + if r < extra_h { 1 } else { 0 })
-            .sum::<u16>();
+    let y =
+        inner.y + (0..row as u16).map(|r| base_h + if r < extra_h { 1 } else { 0 }).sum::<u16>();
     let h = base_h + if (row as u16) < extra_h { 1 } else { 0 };
 
     Rect::new(x, y, w, h)
@@ -336,34 +328,22 @@ fn render_cell(data: &TaskCellData, area: Rect, buf: &mut Buffer) {
         (style_tokens::DIM_GREY, BorderType::Plain)
     };
 
-    let title_mod = if data.is_focused {
-        Modifier::BOLD
-    } else {
-        Modifier::empty()
-    };
+    let title_mod = if data.is_focused { Modifier::BOLD } else { Modifier::empty() };
 
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(border_type)
         .border_style(Style::default().fg(border_color))
         .title(Line::from(vec![
-            Span::styled(
-                format!(" {} ", data.icon),
-                Style::default().fg(data.icon_color),
-            ),
+            Span::styled(format!(" {} ", data.icon), Style::default().fg(data.icon_color)),
             Span::styled(
                 truncate_str(&data.title, area.width.saturating_sub(8) as usize),
-                Style::default()
-                    .fg(style_tokens::PRIMARY)
-                    .add_modifier(title_mod),
+                Style::default().fg(style_tokens::PRIMARY).add_modifier(title_mod),
             ),
             Span::raw(" "),
         ]))
         .title_bottom(Line::from(Span::styled(
-            format!(
-                " {} ",
-                truncate_str(&data.footer, area.width.saturating_sub(4) as usize)
-            ),
+            format!(" {} ", truncate_str(&data.footer, area.width.saturating_sub(4) as usize)),
             Style::default().fg(data.footer_color),
         )));
 
@@ -390,9 +370,7 @@ fn render_cell(data: &TaskCellData, area: Rect, buf: &mut Buffer) {
     let total_lines = data.activity.len();
 
     // Compute visible window (default: auto-scroll to bottom, scroll_offset scrolls up)
-    let scroll_up = data
-        .scroll_offset
-        .min(total_lines.saturating_sub(visible_h));
+    let scroll_up = data.scroll_offset.min(total_lines.saturating_sub(visible_h));
     let end = total_lines.saturating_sub(scroll_up);
     let start = end.saturating_sub(visible_h);
 
@@ -403,9 +381,7 @@ fn render_cell(data: &TaskCellData, area: Rect, buf: &mut Buffer) {
             padded.x,
             padded.y,
             truncate_str(&indicator, padded.width as usize),
-            Style::default()
-                .fg(style_tokens::SUBTLE)
-                .add_modifier(Modifier::ITALIC),
+            Style::default().fg(style_tokens::SUBTLE).add_modifier(Modifier::ITALIC),
         );
         (padded.y + 1, visible_h.saturating_sub(1))
     } else {
@@ -413,11 +389,7 @@ fn render_cell(data: &TaskCellData, area: Rect, buf: &mut Buffer) {
     };
 
     // Render visible activity lines: colored icon + bold verb + subtle args
-    for (i, line) in data.activity[start..end]
-        .iter()
-        .take(render_count)
-        .enumerate()
-    {
+    for (i, line) in data.activity[start..end].iter().take(render_count).enumerate() {
         let y = render_start_y + i as u16;
         let max_w = padded.width as usize;
         let mut x = padded.x;
@@ -440,9 +412,7 @@ fn render_cell(data: &TaskCellData, area: Rect, buf: &mut Buffer) {
                 x,
                 y,
                 &verb[..verb_w],
-                Style::default()
-                    .fg(style_tokens::PRIMARY)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(style_tokens::PRIMARY).add_modifier(Modifier::BOLD),
             );
             x += verb_w as u16;
             remaining -= verb_w;
@@ -453,12 +423,7 @@ fn render_cell(data: &TaskCellData, area: Rect, buf: &mut Buffer) {
             let args = line.args.replace('\n', " ");
             let args_display = format!(" {args}");
             let args_truncated = truncate_str(&args_display, remaining);
-            buf.set_string(
-                x,
-                y,
-                &args_truncated,
-                Style::default().fg(style_tokens::SUBTLE),
-            );
+            buf.set_string(x, y, &args_truncated, Style::default().fg(style_tokens::SUBTLE));
         }
     }
 }
@@ -475,19 +440,11 @@ fn parse_activity_line(line: &str) -> ActivityLine {
         let icon_end = after.find(' ').unwrap_or(after.len());
         let spinner_part = &after[..icon_end];
         let text_part = after[icon_end..].trim_start();
-        (
-            format!("{spinner_part} "),
-            style_tokens::BLUE_BRIGHT,
-            text_part,
-        )
+        (format!("{spinner_part} "), style_tokens::BLUE_BRIGHT, text_part)
     } else if trimmed.starts_with(SUCCESS_CHAR) || trimmed.starts_with(COMPLETED_CHAR) {
         let ch = trimmed.chars().next().unwrap();
         let rest = trimmed[ch.len_utf8()..].trim_start();
-        (
-            format!("{COMPLETED_CHAR} "),
-            style_tokens::GREEN_BRIGHT,
-            rest,
-        )
+        (format!("{COMPLETED_CHAR} "), style_tokens::GREEN_BRIGHT, rest)
     } else if trimmed.starts_with(FAILURE_CHAR) {
         let rest = trimmed[FAILURE_CHAR.len_utf8()..].trim_start();
         (format!("{COMPLETED_CHAR} "), style_tokens::ERROR, rest)
@@ -509,12 +466,7 @@ fn parse_activity_line(line: &str) -> ActivityLine {
         None => (rest.to_string(), String::new()),
     };
 
-    ActivityLine {
-        icon: icon_str,
-        icon_color,
-        verb,
-        args,
-    }
+    ActivityLine { icon: icon_str, icon_color, verb, args }
 }
 
 /// Build cell data from a SubagentDisplayState.
@@ -546,11 +498,7 @@ fn build_subagent_cell(
     for completed in &sa.completed_tools {
         let (verb, arg) =
             format_tool_call_parts_short(&completed.tool_name, &completed.args, shortener);
-        let ic = if completed.success {
-            style_tokens::GREEN_BRIGHT
-        } else {
-            style_tokens::ERROR
-        };
+        let ic = if completed.success { style_tokens::GREEN_BRIGHT } else { style_tokens::ERROR };
         activity.push(ActivityLine {
             icon: format!("{COMPLETED_CHAR} "),
             icon_color: ic,
@@ -566,11 +514,7 @@ fn build_subagent_cell(
         let spinner_idx = slow_tick % SPINNER_FRAMES.len();
         let spinner_ch = SPINNER_FRAMES[spinner_idx];
         let elapsed = tool_state.started_at.elapsed().as_secs();
-        let elapsed_str = if elapsed > 0 {
-            format!(" {elapsed}s")
-        } else {
-            String::new()
-        };
+        let elapsed_str = if elapsed > 0 { format!(" {elapsed}s") } else { String::new() };
         activity.push(ActivityLine {
             icon: format!("{spinner_ch} "),
             icon_color: style_tokens::BLUE_BRIGHT,
@@ -587,21 +531,12 @@ fn build_subagent_cell(
         format!("{elapsed}s")
     };
     let tool_count = sa.completed_tools.len() + sa.active_tools.len();
-    let status_str = if sa.finished {
-        if sa.success { "Done" } else { "Failed" }
-    } else {
-        "Working\u{2026}"
-    };
-    let mut footer_parts = vec![
-        status_str.to_string(),
-        elapsed_str,
-        format!("{tool_count} tools"),
-    ];
+    let status_str =
+        if sa.finished { if sa.success { "Done" } else { "Failed" } } else { "Working\u{2026}" };
+    let mut footer_parts = vec![status_str.to_string(), elapsed_str, format!("{tool_count} tools")];
     let effective_tokens = sa.effective_token_count();
     if effective_tokens > 0 {
-        footer_parts.push(crate::formatters::tool_line::format_token_count(
-            effective_tokens,
-        ));
+        footer_parts.push(crate::formatters::tool_line::format_token_count(effective_tokens));
     }
     if sa.cost_usd > 0.001 {
         footer_parts.push(format!("${:.3}", sa.cost_usd));
@@ -653,11 +588,8 @@ fn build_bg_agent_cell(
     };
 
     let title = format!("A: {}", task.query);
-    let mut activity: Vec<ActivityLine> = task
-        .activity_log
-        .iter()
-        .map(|line| parse_activity_line(line))
-        .collect();
+    let mut activity: Vec<ActivityLine> =
+        task.activity_log.iter().map(|line| parse_activity_line(line)).collect();
 
     // Append cleaned error summary for failed/killed tasks
     if matches!(
@@ -692,11 +624,8 @@ fn build_bg_agent_cell(
         crate::managers::background_agents::BackgroundAgentState::Failed => "Failed",
         crate::managers::background_agents::BackgroundAgentState::Killed => "Killed",
     };
-    let mut footer_parts = vec![
-        status_str.to_string(),
-        elapsed_str,
-        format!("{} tools", task.tool_call_count),
-    ];
+    let mut footer_parts =
+        vec![status_str.to_string(), elapsed_str, format!("{} tools", task.tool_call_count)];
     if task.cost_usd > 0.001 {
         footer_parts.push(format!("${:.3}", task.cost_usd));
     }

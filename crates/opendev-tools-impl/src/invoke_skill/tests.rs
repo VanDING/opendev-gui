@@ -58,10 +58,7 @@ async fn test_skill_not_found() {
     let tool = InvokeSkillTool::new(loader);
     let ctx = ToolContext::new("/tmp/test");
     let mut args = HashMap::new();
-    args.insert(
-        "skill_name".to_string(),
-        serde_json::json!("nonexistent-skill-xyz"),
-    );
+    args.insert("skill_name".to_string(), serde_json::json!("nonexistent-skill-xyz"));
     let result = tool.execute(args, &ctx).await;
     assert!(!result.success);
     let error = result.error.unwrap();
@@ -74,13 +71,7 @@ async fn test_subagent_type_redirects_to_spawn_subagent() {
     let loader = create_test_loader(None);
     let tool = InvokeSkillTool::new(loader);
     let ctx = ToolContext::new("/tmp/test");
-    for name in &[
-        "explore",
-        "code-explorer",
-        "code_explorer",
-        "planner",
-        "ask_user",
-    ] {
+    for name in &["explore", "code-explorer", "code_explorer", "planner", "ask_user"] {
         let mut args = HashMap::new();
         args.insert("skill_name".to_string(), serde_json::json!(name));
         let result = tool.execute(args, &ctx).await;
@@ -176,12 +167,7 @@ async fn test_invoke_skill_with_arguments() {
     args.insert("arguments".to_string(), serde_json::json!("Alice OpenDev"));
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
-    assert!(
-        result
-            .output
-            .unwrap()
-            .contains("Hello Alice, welcome to OpenDev!")
-    );
+    assert!(result.output.unwrap().contains("Hello Alice, welcome to OpenDev!"));
 }
 
 #[tokio::test]

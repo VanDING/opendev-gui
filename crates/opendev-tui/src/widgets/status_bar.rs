@@ -155,14 +155,9 @@ impl Widget for StatusBarWidget<'_> {
         // Model name (first item)
         spans.push(Span::styled(
             format!("\u{25C6} {}", self.model),
-            Style::default()
-                .fg(style_tokens::CYAN)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(style_tokens::CYAN).add_modifier(Modifier::BOLD),
         ));
-        spans.push(Span::styled(
-            "  \u{2502}  ",
-            Style::default().fg(style_tokens::GREY),
-        ));
+        spans.push(Span::styled("  \u{2502}  ", Style::default().fg(style_tokens::GREY)));
 
         // Autonomy level
         let autonomy_color = match self.autonomy {
@@ -170,31 +165,17 @@ impl Widget for StatusBarWidget<'_> {
             AutonomyLevel::SemiAuto => style_tokens::CYAN,
             AutonomyLevel::Auto => style_tokens::GREEN_BRIGHT,
         };
-        spans.push(Span::styled(
-            "Autonomy: ",
-            Style::default().fg(style_tokens::GREY),
-        ));
+        spans.push(Span::styled("Autonomy: ", Style::default().fg(style_tokens::GREY)));
         spans.push(Span::styled(
             self.autonomy.to_string(),
-            Style::default()
-                .fg(autonomy_color)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(autonomy_color).add_modifier(Modifier::BOLD),
         ));
-        spans.push(Span::styled(
-            " (Ctrl+Shift+A)",
-            Style::default().fg(style_tokens::GREY),
-        ));
+        spans.push(Span::styled(" (Ctrl+Shift+A)", Style::default().fg(style_tokens::GREY)));
 
         // Reasoning effort level
         if let Some(level) = self.reasoning_level {
-            spans.push(Span::styled(
-                "  \u{2502}  ",
-                Style::default().fg(style_tokens::GREY),
-            ));
-            spans.push(Span::styled(
-                "Thinking: ",
-                Style::default().fg(style_tokens::GREY),
-            ));
+            spans.push(Span::styled("  \u{2502}  ", Style::default().fg(style_tokens::GREY)));
+            spans.push(Span::styled("Thinking: ", Style::default().fg(style_tokens::GREY)));
             let thinking_color = match level {
                 ReasoningLevel::Off => style_tokens::GREY,
                 ReasoningLevel::Low => style_tokens::CYAN,
@@ -203,35 +184,21 @@ impl Widget for StatusBarWidget<'_> {
             };
             spans.push(Span::styled(
                 level.to_string(),
-                Style::default()
-                    .fg(thinking_color)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(thinking_color).add_modifier(Modifier::BOLD),
             ));
-            spans.push(Span::styled(
-                " (Ctrl+Shift+T)",
-                Style::default().fg(style_tokens::GREY),
-            ));
+            spans.push(Span::styled(" (Ctrl+Shift+T)", Style::default().fg(style_tokens::GREY)));
         }
 
         // Repo info (path + git branch)
         let repo_display = self.build_repo_display();
         if !repo_display.is_empty() {
-            spans.push(Span::styled(
-                "  \u{2502}  ",
-                Style::default().fg(style_tokens::GREY),
-            ));
-            spans.push(Span::styled(
-                repo_display,
-                Style::default().fg(style_tokens::BLUE_PATH),
-            ));
+            spans.push(Span::styled("  \u{2502}  ", Style::default().fg(style_tokens::GREY)));
+            spans.push(Span::styled(repo_display, Style::default().fg(style_tokens::BLUE_PATH)));
         }
 
         // MCP status (only when servers configured)
         if let Some((connected, total)) = self.mcp_status {
-            spans.push(Span::styled(
-                "  \u{2502}  ",
-                Style::default().fg(style_tokens::GREY),
-            ));
+            spans.push(Span::styled("  \u{2502}  ", Style::default().fg(style_tokens::GREY)));
             let mcp_label = format!("MCP: {connected}/{total}");
             let mcp_color = if self.mcp_has_errors {
                 style_tokens::ORANGE
@@ -248,68 +215,45 @@ impl Widget for StatusBarWidget<'_> {
 
         // Background tasks
         if self.background_tasks > 0 {
-            spans.push(Span::styled(
-                "  \u{2502}  ",
-                Style::default().fg(style_tokens::GREY),
-            ));
+            spans.push(Span::styled("  \u{2502}  ", Style::default().fg(style_tokens::GREY)));
             // Prepend spinner when tasks are running
             if let Some(ch) = self.spinner_char {
                 spans.push(Span::styled(
                     format!("{ch} "),
-                    Style::default()
-                        .fg(style_tokens::CYAN)
-                        .add_modifier(Modifier::BOLD),
+                    Style::default().fg(style_tokens::CYAN).add_modifier(Modifier::BOLD),
                 ));
             }
             spans.push(Span::styled(
                 format!("\u{2699} {}", self.background_tasks),
                 Style::default().fg(style_tokens::BLUE_TASK),
             ));
-            spans.push(Span::styled(
-                " (Ctrl+P)",
-                Style::default().fg(style_tokens::GREY),
-            ));
+            spans.push(Span::styled(" (Ctrl+P)", Style::default().fg(style_tokens::GREY)));
         }
 
         // Team status
         if let Some((busy, total)) = self.team_status {
-            spans.push(Span::styled(
-                "  \u{2502}  ",
-                Style::default().fg(style_tokens::GREY),
-            ));
+            spans.push(Span::styled("  \u{2502}  ", Style::default().fg(style_tokens::GREY)));
             spans.push(Span::styled(
                 format!("Team:{busy}/{total}"),
-                Style::default()
-                    .fg(style_tokens::CYAN)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(style_tokens::CYAN).add_modifier(Modifier::BOLD),
             ));
         }
 
         // Completion flash
         if let Some(ref info) = self.last_completion {
-            spans.push(Span::styled(
-                "  \u{2502}  ",
-                Style::default().fg(style_tokens::GREY),
-            ));
+            spans.push(Span::styled("  \u{2502}  ", Style::default().fg(style_tokens::GREY)));
             spans.push(Span::styled(
                 info.clone(),
-                Style::default()
-                    .fg(style_tokens::GREEN_BRIGHT)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(style_tokens::GREEN_BRIGHT).add_modifier(Modifier::BOLD),
             ));
         }
 
         // File changes summary
         if let Some((files, additions, deletions)) = self.file_changes {
-            spans.push(Span::styled(
-                "  \u{2502}  ",
-                Style::default().fg(style_tokens::GREY),
-            ));
+            spans.push(Span::styled("  \u{2502}  ", Style::default().fg(style_tokens::GREY)));
             spans.push(Span::styled(
                 format!("{files} file{}", if files == 1 { "" } else { "s" }),
-                Style::default()
-                    .fg(style_tokens::BLUE_PATH)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(style_tokens::BLUE_PATH).add_modifier(Modifier::BOLD),
             ));
             if additions > 0 || deletions > 0 {
                 spans.push(Span::styled(" ", Style::default()));
@@ -327,9 +271,7 @@ impl Widget for StatusBarWidget<'_> {
                 if deletions > 0 {
                     spans.push(Span::styled(
                         format!("-{deletions}"),
-                        Style::default()
-                            .fg(style_tokens::ORANGE)
-                            .add_modifier(Modifier::BOLD),
+                        Style::default().fg(style_tokens::ORANGE).add_modifier(Modifier::BOLD),
                     ));
                 }
             }
@@ -361,31 +303,18 @@ impl Widget for StatusBarWidget<'_> {
 
         // Session ID (right-aligned, subtle)
         if let Some(sid) = self.session_id {
-            right_spans.push(Span::styled(
-                format!("#{sid}"),
-                Style::default().fg(style_tokens::GREY),
-            ));
-            right_spans.push(Span::styled(
-                "  \u{2502}  ",
-                Style::default().fg(style_tokens::GREY),
-            ));
+            right_spans
+                .push(Span::styled(format!("#{sid}"), Style::default().fg(style_tokens::GREY)));
+            right_spans.push(Span::styled("  \u{2502}  ", Style::default().fg(style_tokens::GREY)));
         }
 
         if !cost_str.is_empty() {
-            right_spans.push(Span::styled(
-                "Cost ",
-                Style::default().fg(style_tokens::GREY),
-            ));
+            right_spans.push(Span::styled("Cost ", Style::default().fg(style_tokens::GREY)));
             right_spans.push(Span::styled(
                 cost_str,
-                Style::default()
-                    .fg(style_tokens::CYAN)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().fg(style_tokens::CYAN).add_modifier(Modifier::BOLD),
             ));
-            right_spans.push(Span::styled(
-                "  \u{2502}  ",
-                Style::default().fg(style_tokens::GREY),
-            ));
+            right_spans.push(Span::styled("  \u{2502}  ", Style::default().fg(style_tokens::GREY)));
         }
         right_spans.push(Span::styled(
             format!("Context left {pct_str}%"),

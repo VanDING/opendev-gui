@@ -14,10 +14,7 @@ fn test_help_command() {
     let cmds = BuiltinCommands::new();
     let mut state = ReplState::default();
 
-    assert_eq!(
-        cmds.dispatch("/help", "", &mut state),
-        CommandOutcome::Handled
-    );
+    assert_eq!(cmds.dispatch("/help", "", &mut state), CommandOutcome::Handled);
 }
 
 #[test]
@@ -43,10 +40,7 @@ fn test_unknown_command() {
     let cmds = BuiltinCommands::new();
     let mut state = ReplState::default();
 
-    assert_eq!(
-        cmds.dispatch("/foobar", "", &mut state),
-        CommandOutcome::Unknown
-    );
+    assert_eq!(cmds.dispatch("/foobar", "", &mut state), CommandOutcome::Unknown);
 }
 
 #[test]
@@ -54,10 +48,7 @@ fn test_clear_command() {
     let cmds = BuiltinCommands::new();
     let mut state = ReplState::default();
 
-    assert_eq!(
-        cmds.dispatch("/clear", "", &mut state),
-        CommandOutcome::Handled
-    );
+    assert_eq!(cmds.dispatch("/clear", "", &mut state), CommandOutcome::Handled);
 }
 
 #[test]
@@ -85,20 +76,14 @@ fn test_status_command() {
     let cmds = BuiltinCommands::new();
     let mut state = ReplState::default();
 
-    assert_eq!(
-        cmds.dispatch("/status", "", &mut state),
-        CommandOutcome::Handled
-    );
+    assert_eq!(cmds.dispatch("/status", "", &mut state), CommandOutcome::Handled);
 }
 
 #[test]
 fn test_models_command_dispatches() {
     let cmds = BuiltinCommands::new();
     let mut state = ReplState::default();
-    assert_eq!(
-        cmds.dispatch("/models", "", &mut state),
-        CommandOutcome::Handled
-    );
+    assert_eq!(cmds.dispatch("/models", "", &mut state), CommandOutcome::Handled);
 }
 
 #[test]

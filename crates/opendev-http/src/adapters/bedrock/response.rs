@@ -6,11 +6,7 @@ use serde_json::{Value, json};
 
 /// Convert Bedrock's Anthropic-style response to Chat Completions format.
 pub(super) fn response_to_chat_completions(response: Value, model_id: &str) -> Value {
-    let blocks = response
-        .get("content")
-        .and_then(|c| c.as_array())
-        .cloned()
-        .unwrap_or_default();
+    let blocks = response.get("content").and_then(|c| c.as_array()).cloned().unwrap_or_default();
 
     // Extract text content
     let content: String = blocks
@@ -47,10 +43,7 @@ pub(super) fn response_to_chat_completions(response: Value, model_id: &str) -> V
         })
         .collect();
 
-    let stop_reason = response
-        .get("stop_reason")
-        .and_then(|r| r.as_str())
-        .unwrap_or("stop");
+    let stop_reason = response.get("stop_reason").and_then(|r| r.as_str()).unwrap_or("stop");
 
     let finish_reason = match stop_reason {
         "end_turn" => "stop",

@@ -19,8 +19,5 @@ pub fn list_available_dirs(dir: &Path) -> String {
         .filter(|name| !name.starts_with('.') && !DEFAULT_SEARCH_EXCLUDES.contains(&name.as_str()))
         .collect();
     dirs.sort();
-    dirs.iter()
-        .map(|d| format!("  {d}/"))
-        .collect::<Vec<_>>()
-        .join("\n")
+    dirs.iter().map(|d| format!("  {d}/")).collect::<Vec<_>>().join("\n")
 }

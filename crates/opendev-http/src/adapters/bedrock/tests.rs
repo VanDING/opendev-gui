@@ -27,10 +27,7 @@ fn test_api_url_default_region() {
 #[test]
 fn test_model_id() {
     let adapter = BedrockAdapter::new("anthropic.claude-3-sonnet-20240229-v1:0");
-    assert_eq!(
-        adapter.model_id(),
-        "anthropic.claude-3-sonnet-20240229-v1:0"
-    );
+    assert_eq!(adapter.model_id(), "anthropic.claude-3-sonnet-20240229-v1:0");
 }
 
 #[test]
@@ -98,16 +95,8 @@ fn test_convert_request_converts_max_completion_tokens() {
 fn test_extra_headers() {
     let adapter = BedrockAdapter::with_region("model-id", "us-east-1");
     let headers = adapter.extra_headers();
-    assert!(
-        headers
-            .iter()
-            .any(|(k, v)| k == "Content-Type" && v == "application/json")
-    );
-    assert!(
-        headers
-            .iter()
-            .any(|(k, v)| k == "Accept" && v == "application/json")
-    );
+    assert!(headers.iter().any(|(k, v)| k == "Content-Type" && v == "application/json"));
+    assert!(headers.iter().any(|(k, v)| k == "Accept" && v == "application/json"));
 }
 
 #[test]

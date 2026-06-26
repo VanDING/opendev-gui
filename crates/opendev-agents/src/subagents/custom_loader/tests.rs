@@ -25,11 +25,8 @@ fn test_load_disabled_agent() {
     let tmp = tempfile::tempdir().unwrap();
     let agent_dir = tmp.path().join("agents");
     std::fs::create_dir_all(&agent_dir).unwrap();
-    std::fs::write(
-        agent_dir.join("disabled.md"),
-        "---\ndisabled: true\n---\nShould not load.",
-    )
-    .unwrap();
+    std::fs::write(agent_dir.join("disabled.md"), "---\ndisabled: true\n---\nShould not load.")
+        .unwrap();
 
     let specs = load_custom_agents(&[agent_dir]);
     assert!(specs.is_empty());
@@ -75,11 +72,7 @@ fn test_load_with_model_override() {
     let tmp = tempfile::tempdir().unwrap();
     let agent_dir = tmp.path().join("agents");
     std::fs::create_dir_all(&agent_dir).unwrap();
-    std::fs::write(
-        agent_dir.join("fast.md"),
-        "---\nmodel: gpt-4o-mini\n---\nFast agent.",
-    )
-    .unwrap();
+    std::fs::write(agent_dir.join("fast.md"), "---\nmodel: gpt-4o-mini\n---\nFast agent.").unwrap();
 
     let specs = load_custom_agents(&[agent_dir]);
     assert_eq!(specs.len(), 1);
@@ -173,11 +166,8 @@ fn test_load_with_max_tokens_camel_case() {
     let tmp = tempfile::tempdir().unwrap();
     let agent_dir = tmp.path().join("agents");
     std::fs::create_dir_all(&agent_dir).unwrap();
-    std::fs::write(
-        agent_dir.join("verbose2.md"),
-        "---\nmaxTokens: 16384\n---\nVerbose agent.",
-    )
-    .unwrap();
+    std::fs::write(agent_dir.join("verbose2.md"), "---\nmaxTokens: 16384\n---\nVerbose agent.")
+        .unwrap();
 
     let specs = load_custom_agents(&[agent_dir]);
     assert_eq!(specs.len(), 1);
@@ -189,11 +179,7 @@ fn test_load_with_max_steps_alias() {
     let tmp = tempfile::tempdir().unwrap();
     let agent_dir = tmp.path().join("agents");
     std::fs::create_dir_all(&agent_dir).unwrap();
-    std::fs::write(
-        agent_dir.join("agent.md"),
-        "---\nmaxSteps: 100\n---\nAgent body.",
-    )
-    .unwrap();
+    std::fs::write(agent_dir.join("agent.md"), "---\nmaxSteps: 100\n---\nAgent body.").unwrap();
 
     let specs = load_custom_agents(&[agent_dir]);
     assert_eq!(specs.len(), 1);
@@ -208,18 +194,12 @@ fn test_load_recursive_nested_directories() {
     std::fs::create_dir_all(&nested).unwrap();
 
     // Top-level agent
-    std::fs::write(
-        agent_dir.join("top.md"),
-        "---\ndescription: Top agent\n---\nTop agent prompt.",
-    )
-    .unwrap();
+    std::fs::write(agent_dir.join("top.md"), "---\ndescription: Top agent\n---\nTop agent prompt.")
+        .unwrap();
 
     // Nested agent
-    std::fs::write(
-        nested.join("deep.md"),
-        "---\ndescription: Deep agent\n---\nDeep agent prompt.",
-    )
-    .unwrap();
+    std::fs::write(nested.join("deep.md"), "---\ndescription: Deep agent\n---\nDeep agent prompt.")
+        .unwrap();
 
     let specs = load_custom_agents(&[agent_dir]);
     assert_eq!(specs.len(), 2);
@@ -241,14 +221,8 @@ fn test_load_agent_with_permission() {
 
     let specs = load_custom_agents(&[agent_dir]);
     assert_eq!(specs.len(), 1);
-    assert_eq!(
-        specs[0].evaluate_permission("edit", "any_file"),
-        Some(PermissionAction::Deny)
-    );
-    assert_eq!(
-        specs[0].evaluate_permission("bash", "any_command"),
-        Some(PermissionAction::Ask)
-    );
+    assert_eq!(specs[0].evaluate_permission("edit", "any_file"), Some(PermissionAction::Deny));
+    assert_eq!(specs[0].evaluate_permission("bash", "any_command"), Some(PermissionAction::Ask));
 }
 
 #[test]
@@ -258,11 +232,7 @@ fn test_load_recursive_skips_non_md() {
     let nested = agent_dir.join("sub");
     std::fs::create_dir_all(&nested).unwrap();
 
-    std::fs::write(
-        agent_dir.join("valid.md"),
-        "---\ndescription: Valid\n---\nValid.",
-    )
-    .unwrap();
+    std::fs::write(agent_dir.join("valid.md"), "---\ndescription: Valid\n---\nValid.").unwrap();
     std::fs::write(nested.join("config.json"), r#"{"key": "val"}"#).unwrap();
     std::fs::write(nested.join("notes.txt"), "not an agent").unwrap();
 

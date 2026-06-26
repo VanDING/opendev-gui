@@ -44,10 +44,7 @@ pub fn compact_preview(messages: &[ApiMessage]) -> CompactionPreview {
     if messages.len() >= SLIDING_WINDOW_THRESHOLD {
         let summarized_count = messages.len().saturating_sub(SLIDING_WINDOW_RECENT + 1);
         if summarized_count > 0 {
-            let tokens: usize = messages[1..=summarized_count]
-                .iter()
-                .map(msg_token_count)
-                .sum();
+            let tokens: usize = messages[1..=summarized_count].iter().map(msg_token_count).sum();
             preview.sliding_window = Some(StagePreview {
                 message_count: summarized_count,
                 estimated_token_savings: tokens,
@@ -70,17 +67,12 @@ pub fn compact_preview(messages: &[ApiMessage]) -> CompactionPreview {
             let mut maskable = 0usize;
             let mut token_savings = 0usize;
             for &i in &tool_indices[..old_count] {
-                let content = messages[i]
-                    .get("content")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("");
+                let content = messages[i].get("content").and_then(|v| v.as_str()).unwrap_or("");
                 if content.starts_with("[ref:") {
                     continue;
                 }
-                let tool_call_id = messages[i]
-                    .get("tool_call_id")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("");
+                let tool_call_id =
+                    messages[i].get("tool_call_id").and_then(|v| v.as_str()).unwrap_or("");
                 let tool_name = tc_map.get(tool_call_id).map(|s| s.as_str()).unwrap_or("");
                 if PROTECTED_TOOL_TYPES.contains(&tool_name) {
                     continue;
@@ -137,20 +129,15 @@ pub fn compact_preview(messages: &[ApiMessage]) -> CompactionPreview {
         let mut protected_tokens: u64 = 0;
         let mut protected_indices: HashSet<usize> = HashSet::new();
         for &idx in &tool_indices {
-            let content = messages[idx]
-                .get("content")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let content = messages[idx].get("content").and_then(|v| v.as_str()).unwrap_or("");
             if content.starts_with("[ref:")
                 || content == "[pruned]"
                 || content.starts_with("[summary:")
             {
                 continue;
             }
-            let tool_call_id = messages[idx]
-                .get("tool_call_id")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let tool_call_id =
+                messages[idx].get("tool_call_id").and_then(|v| v.as_str()).unwrap_or("");
             let tool_name = tc_map.get(tool_call_id).map(|s| s.as_str()).unwrap_or("");
             if PROTECTED_TOOL_TYPES.contains(&tool_name) {
                 protected_indices.insert(idx);
@@ -168,10 +155,7 @@ pub fn compact_preview(messages: &[ApiMessage]) -> CompactionPreview {
             if protected_indices.contains(&idx) {
                 continue;
             }
-            let content = messages[idx]
-                .get("content")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let content = messages[idx].get("content").and_then(|v| v.as_str()).unwrap_or("");
             if content.starts_with("[ref:")
                 || content == "[pruned]"
                 || content.starts_with("[summary:")
@@ -196,10 +180,8 @@ pub fn compact_preview(messages: &[ApiMessage]) -> CompactionPreview {
         let middle_count = split_point.saturating_sub(1);
         if middle_count > 0 {
             let tokens: usize = messages[1..split_point].iter().map(msg_token_count).sum();
-            preview.compact = Some(StagePreview {
-                message_count: middle_count,
-                estimated_token_savings: tokens,
-            });
+            preview.compact =
+                Some(StagePreview { message_count: middle_count, estimated_token_savings: tokens });
         }
     }
 
@@ -255,19 +237,10 @@ pub(super) fn summarize_tool_output(tool_name: &str, content: &str) -> String {
     match tool_name {
         "Bash" | "run_command" | "bash" => {
             // For command outputs: keep exit code hint + last few lines
-            let _ = write!(
-                buf,
-                "[summary: {tool_name} {status}, {} lines]",
-                lines.len(),
-            );
+            let _ = write!(buf, "[summary: {tool_name} {status}, {} lines]", lines.len(),);
             // Show last 3 meaningful lines (often contain the result/error)
-            let tail: Vec<&str> = lines
-                .iter()
-                .rev()
-                .filter(|l| !l.trim().is_empty())
-                .take(3)
-                .copied()
-                .collect();
+            let tail: Vec<&str> =
+                lines.iter().rev().filter(|l| !l.trim().is_empty()).take(3).copied().collect();
             for line in tail.into_iter().rev() {
                 let snippet: String = line.chars().take(150).collect();
                 let _ = write!(buf, "\n{snippet}");
@@ -276,10 +249,7 @@ pub(super) fn summarize_tool_output(tool_name: &str, content: &str) -> String {
         "Grep" | "Glob" | "search" | "list_files" | "glob" | "grep" | "file_search" => {
             // For search results: keep count + first few results
             let result_count = lines.len();
-            let _ = write!(
-                buf,
-                "[summary: {tool_name} {status}, {result_count} results]",
-            );
+            let _ = write!(buf, "[summary: {tool_name} {status}, {result_count} results]",);
             for line in lines.iter().take(5) {
                 let snippet: String = line.chars().take(150).collect();
                 let _ = write!(buf, "\n{snippet}");
@@ -291,11 +261,8 @@ pub(super) fn summarize_tool_output(tool_name: &str, content: &str) -> String {
         _ => {
             // Generic: first + last lines
             let first_line = lines.first().map(|l| l.trim()).unwrap_or("");
-            let last_line = if lines.len() > 1 {
-                lines.last().map(|l| l.trim()).unwrap_or("")
-            } else {
-                ""
-            };
+            let last_line =
+                if lines.len() > 1 { lines.last().map(|l| l.trim()).unwrap_or("") } else { "" };
             let first_snippet: String = first_line.chars().take(120).collect();
             let last_snippet: String = last_line.chars().take(120).collect();
             let _ = write!(

@@ -130,10 +130,7 @@ fn test_validation_error_display() {
     let e = ValidationError::HttpError("timeout".into());
     assert!(e.to_string().contains("timeout"));
 
-    let e = ValidationError::ApiError {
-        status: 401,
-        body: "invalid key".into(),
-    };
+    let e = ValidationError::ApiError { status: 401, body: "invalid key".into() };
     assert!(e.to_string().contains("401"));
 
     let e = ValidationError::Unexpected("weird".into());

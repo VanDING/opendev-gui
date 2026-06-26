@@ -58,9 +58,8 @@ impl PluginPaths {
     /// Build plugin paths from an optional working directory.
     pub fn new(working_dir: Option<&Path>) -> Self {
         let paths = opendev_config::Paths::new(working_dir.map(PathBuf::from));
-        let project_base = working_dir
-            .map(|d| d.join(".opendev"))
-            .unwrap_or_else(|| PathBuf::from(".opendev"));
+        let project_base =
+            working_dir.map(|d| d.join(".opendev")).unwrap_or_else(|| PathBuf::from(".opendev"));
 
         Self {
             global_plugins_dir: paths.global_plugins_dir(),
@@ -178,9 +177,7 @@ impl PluginManager {
         // Check marketplace exists
         let marketplaces = self.load_known_marketplaces()?;
         if !marketplaces.marketplaces.contains_key(marketplace_name) {
-            return Err(PluginError::MarketplaceNotFound(
-                marketplace_name.to_string(),
-            ));
+            return Err(PluginError::MarketplaceNotFound(marketplace_name.to_string()));
         }
 
         // Check not already installed
@@ -210,10 +207,7 @@ impl PluginManager {
             PluginScope::Project => self.paths.project_plugins_dir.join("cache"),
             PluginScope::User => self.paths.global_plugin_cache_dir.clone(),
         };
-        let target_dir = cache_dir
-            .join(marketplace_name)
-            .join(plugin_name)
-            .join(&manifest.version);
+        let target_dir = cache_dir.join(marketplace_name).join(plugin_name).join(&manifest.version);
 
         // Copy plugin to cache
         if target_dir.exists() {
@@ -225,9 +219,7 @@ impl PluginManager {
         let config = PluginConfig {
             name: plugin_name.to_string(),
             version: manifest.version.clone(),
-            source: PluginSource::Marketplace {
-                marketplace: marketplace_name.to_string(),
-            },
+            source: PluginSource::Marketplace { marketplace: marketplace_name.to_string() },
             status: PluginStatus::Installed,
             scope,
             enabled: true,
@@ -240,11 +232,7 @@ impl PluginManager {
         installed.add(config.clone());
         self.save_installed_plugins(&installed, scope)?;
 
-        info!(
-            plugin = plugin_name,
-            marketplace = marketplace_name,
-            "Plugin installed"
-        );
+        info!(plugin = plugin_name, marketplace = marketplace_name, "Plugin installed");
         Ok(config)
     }
 
@@ -256,14 +244,12 @@ impl PluginManager {
         scope: PluginScope,
     ) -> Result<()> {
         let mut installed = self.load_installed_plugins(scope)?;
-        let plugin = installed
-            .remove(marketplace_name, plugin_name)
-            .ok_or_else(|| {
-                PluginError::NotFound(format!(
-                    "Plugin '{}:{}' not installed in {:?} scope",
-                    marketplace_name, plugin_name, scope
-                ))
-            })?;
+        let plugin = installed.remove(marketplace_name, plugin_name).ok_or_else(|| {
+            PluginError::NotFound(format!(
+                "Plugin '{}:{}' not installed in {:?} scope",
+                marketplace_name, plugin_name, scope
+            ))
+        })?;
 
         // Remove from filesystem
         if plugin.path.exists() {
@@ -285,14 +271,12 @@ impl PluginManager {
         scope: PluginScope,
     ) -> Result<()> {
         let mut installed = self.load_installed_plugins(scope)?;
-        let plugin = installed
-            .get_mut(marketplace_name, plugin_name)
-            .ok_or_else(|| {
-                PluginError::NotFound(format!(
-                    "Plugin '{}:{}' not installed in {:?} scope",
-                    marketplace_name, plugin_name, scope
-                ))
-            })?;
+        let plugin = installed.get_mut(marketplace_name, plugin_name).ok_or_else(|| {
+            PluginError::NotFound(format!(
+                "Plugin '{}:{}' not installed in {:?} scope",
+                marketplace_name, plugin_name, scope
+            ))
+        })?;
 
         plugin.enabled = true;
         plugin.status = PluginStatus::Installed;
@@ -309,14 +293,12 @@ impl PluginManager {
         scope: PluginScope,
     ) -> Result<()> {
         let mut installed = self.load_installed_plugins(scope)?;
-        let plugin = installed
-            .get_mut(marketplace_name, plugin_name)
-            .ok_or_else(|| {
-                PluginError::NotFound(format!(
-                    "Plugin '{}:{}' not installed in {:?} scope",
-                    marketplace_name, plugin_name, scope
-                ))
-            })?;
+        let plugin = installed.get_mut(marketplace_name, plugin_name).ok_or_else(|| {
+            PluginError::NotFound(format!(
+                "Plugin '{}:{}' not installed in {:?} scope",
+                marketplace_name, plugin_name, scope
+            ))
+        })?;
 
         plugin.enabled = false;
         plugin.status = PluginStatus::Disabled;
@@ -413,10 +395,8 @@ impl PluginManager {
 
     /// Load plugin metadata from a plugin.json file in the given directory.
     pub fn load_plugin_metadata(&self, plugin_dir: &Path) -> Result<PluginMetadata> {
-        let possible_paths = [
-            plugin_dir.join(".opendev").join("plugin.json"),
-            plugin_dir.join("plugin.json"),
-        ];
+        let possible_paths =
+            [plugin_dir.join(".opendev").join("plugin.json"), plugin_dir.join("plugin.json")];
 
         for path in &possible_paths {
             if path.exists() {
@@ -426,10 +406,7 @@ impl PluginManager {
             }
         }
 
-        Err(PluginError::InvalidPlugin(format!(
-            "No plugin.json found in {}",
-            plugin_dir.display()
-        )))
+        Err(PluginError::InvalidPlugin(format!("No plugin.json found in {}", plugin_dir.display())))
     }
 
     /// Parse SKILL.md frontmatter for name and description.
@@ -448,15 +425,10 @@ impl PluginManager {
                 for line in parts[1].trim().lines() {
                     let line = line.trim();
                     if let Some(val) = line.strip_prefix("name:") {
-                        name = val
-                            .trim()
-                            .trim_matches(|c| c == '"' || c == '\'')
-                            .to_string();
+                        name = val.trim().trim_matches(|c| c == '"' || c == '\'').to_string();
                     } else if let Some(val) = line.strip_prefix("description:") {
-                        description = val
-                            .trim()
-                            .trim_matches(|c| c == '"' || c == '\'')
-                            .to_string();
+                        description =
+                            val.trim().trim_matches(|c| c == '"' || c == '\'').to_string();
                     }
                 }
             }
@@ -489,24 +461,16 @@ impl PluginManager {
     /// Extract a name from a git URL.
     pub fn extract_name_from_url(url: &str) -> String {
         // Remove .git suffix
-        let cleaned = regex::Regex::new(r"\.git$")
-            .unwrap()
-            .replace(url, "")
-            .to_string();
+        let cleaned = regex::Regex::new(r"\.git$").unwrap().replace(url, "").to_string();
 
         // Try to parse as URL
         if let Ok(parsed) = url::Url::parse(&cleaned) {
             let path = parsed.path().trim_matches('/');
             if let Some(last) = path.split('/').next_back() {
                 let name = last.to_string();
-                let name = regex::Regex::new(r"^swecli-")
-                    .unwrap()
-                    .replace(&name, "")
-                    .to_string();
-                let name = regex::Regex::new(r"-marketplace$")
-                    .unwrap()
-                    .replace(&name, "")
-                    .to_string();
+                let name = regex::Regex::new(r"^swecli-").unwrap().replace(&name, "").to_string();
+                let name =
+                    regex::Regex::new(r"-marketplace$").unwrap().replace(&name, "").to_string();
                 if !name.is_empty() {
                     return name;
                 }
@@ -520,14 +484,8 @@ impl PluginManager {
             && let Some(last) = path_part.trim_matches('/').split('/').next_back()
         {
             let name = last.to_string();
-            let name = regex::Regex::new(r"^swecli-")
-                .unwrap()
-                .replace(&name, "")
-                .to_string();
-            let name = regex::Regex::new(r"-marketplace$")
-                .unwrap()
-                .replace(&name, "")
-                .to_string();
+            let name = regex::Regex::new(r"^swecli-").unwrap().replace(&name, "").to_string();
+            let name = regex::Regex::new(r"-marketplace$").unwrap().replace(&name, "").to_string();
             if !name.is_empty() {
                 return name;
             }

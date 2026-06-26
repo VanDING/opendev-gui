@@ -61,10 +61,7 @@ fn test_validate_missing_description() {
     let mut ctrl = SkillCreatorController::new();
     ctrl.set_name("skill");
     let err = ctrl.validate().unwrap_err();
-    assert!(
-        err.contains("description"),
-        "Error should mention description: {err}"
-    );
+    assert!(err.contains("description"), "Error should mention description: {err}");
 }
 
 #[test]
@@ -73,10 +70,7 @@ fn test_validate_missing_content() {
     ctrl.set_name("skill");
     ctrl.set_description("desc");
     let err = ctrl.validate().unwrap_err();
-    assert!(
-        err.contains("content"),
-        "Error should mention content: {err}"
-    );
+    assert!(err.contains("content"), "Error should mention content: {err}");
 }
 
 #[test]

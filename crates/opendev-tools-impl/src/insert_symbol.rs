@@ -160,10 +160,8 @@ fn find_symbol_range(lines: &[&str], symbol_name: &str) -> Option<SymbolRange> {
             if let Some(rest) = trimmed.strip_prefix(kw) {
                 // The symbol name should appear at the start of what follows the keyword.
                 // Handle cases like `fn foo(`, `fn foo {`, `fn foo:`, `fn foo<`, `fn foo `
-                let name_part = rest
-                    .split(|c: char| !c.is_alphanumeric() && c != '_')
-                    .next()
-                    .unwrap_or("");
+                let name_part =
+                    rest.split(|c: char| !c.is_alphanumeric() && c != '_').next().unwrap_or("");
                 name_part == symbol_name
             } else {
                 false
@@ -181,10 +179,7 @@ fn find_symbol_range(lines: &[&str], symbol_name: &str) -> Option<SymbolRange> {
     // Find the end of the symbol by tracking brace/indent depth.
     let end = find_symbol_end(lines, start);
 
-    Some(SymbolRange {
-        start_line: start,
-        end_line: end,
-    })
+    Some(SymbolRange { start_line: start, end_line: end })
 }
 
 /// Find the end line of a symbol starting at `start_line`.

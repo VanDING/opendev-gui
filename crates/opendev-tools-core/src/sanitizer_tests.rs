@@ -162,19 +162,15 @@ fn test_cleanup_overflow_removes_old_files() {
     std::fs::create_dir_all(&overflow_dir).unwrap();
 
     // Create an "old" file with a timestamp 8 days ago.
-    let old_ts = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs()
-        - 8 * 24 * 60 * 60;
+    let old_ts =
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs()
+            - 8 * 24 * 60 * 60;
     let old_file = overflow_dir.join(format!("tool_{old_ts}_read_file.txt"));
     std::fs::write(&old_file, "old content").unwrap();
 
     // Create a "recent" file.
-    let recent_ts = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
+    let recent_ts =
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
     let recent_file = overflow_dir.join(format!("tool_{recent_ts}_search.txt"));
     std::fs::write(&recent_file, "recent content").unwrap();
 

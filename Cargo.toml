@@ -22,6 +22,9 @@ members = [
     "crates/opendev-hooks",
     "crates/opendev-plugins",
     "crates/opendev-sandbox",
+    "crates/opendev-memory",
+    "crates/opendev-observability",
+    "crates/opendev-workflow",
 ]
 
 [workspace.package]
@@ -111,4 +114,15 @@ opendev-runtime = { version = "0.1.6", path = "crates/opendev-runtime" }
 opendev-hooks = { version = "0.1.6", path = "crates/opendev-hooks" }
 opendev-plugins = { version = "0.1.6", path = "crates/opendev-plugins" }
 opendev-sandbox = { version = "0.1.6", path = "crates/opendev-sandbox" }
+opendev-memory = { version = "0.1.6", path = "crates/opendev-memory" }
+opendev-observability = { version = "0.1.6", path = "crates/opendev-observability" }
+opendev-workflow = { version = "0.1.6", path = "crates/opendev-workflow" }
 url = "2"
+
+# Database
+sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio", "chrono"] }
+sha2 = "0.10"
+hex = "0.4"
+
+# Observability
+tracing-appender = "0.2"

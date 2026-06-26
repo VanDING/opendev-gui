@@ -35,11 +35,7 @@ impl WsBroadcast {
     /// Create a new broadcast message. The `seq` field starts at 0 and is
     /// overwritten by [`AppState::broadcast`] before sending.
     pub fn new(msg_type: impl Into<String>, data: serde_json::Value) -> Self {
-        Self {
-            msg_type: msg_type.into(),
-            data,
-            seq: 0,
-        }
+        Self { msg_type: msg_type.into(), data, seq: 0 }
     }
 }
 
@@ -242,12 +238,7 @@ impl AppState {
 
     /// Get the current session ID (if a session is loaded).
     pub async fn current_session_id(&self) -> Option<String> {
-        self.inner
-            .session_manager
-            .read()
-            .await
-            .current_session()
-            .map(|s| s.id.clone())
+        self.inner.session_manager.read().await.current_session().map(|s| s.id.clone())
     }
 
     /// Get a read guard for the app config.
@@ -372,10 +363,7 @@ impl AppState {
             let mut approvals = self.inner.pending_approvals.lock().await;
             for (_id, slot) in approvals.iter_mut() {
                 if let Some(tx) = slot.tx.take() {
-                    let _ = tx.send(ApprovalResult {
-                        approved: false,
-                        auto_approve: false,
-                    });
+                    let _ = tx.send(ApprovalResult { approved: false, auto_approve: false });
                 }
             }
             approvals.clear();
@@ -386,10 +374,7 @@ impl AppState {
             let mut ask_users = self.inner.pending_ask_users.lock().await;
             for (_id, slot) in ask_users.iter_mut() {
                 if let Some(tx) = slot.tx.take() {
-                    let _ = tx.send(AskUserResult {
-                        answers: None,
-                        cancelled: true,
-                    });
+                    let _ = tx.send(AskUserResult { answers: None, cancelled: true });
                 }
             }
             ask_users.clear();
@@ -424,11 +409,7 @@ impl AppState {
 
     /// Mark a session as running.
     pub async fn set_session_running(&self, session_id: String) {
-        self.inner
-            .running_sessions
-            .lock()
-            .await
-            .insert(session_id, "running".to_string());
+        self.inner.running_sessions.lock().await.insert(session_id, "running".to_string());
     }
 
     /// Mark a session as idle.
@@ -438,11 +419,7 @@ impl AppState {
 
     /// Check if a session is running.
     pub async fn is_session_running(&self, session_id: &str) -> bool {
-        self.inner
-            .running_sessions
-            .lock()
-            .await
-            .contains_key(session_id)
+        self.inner.running_sessions.lock().await.contains_key(session_id)
     }
 
     // --- Git branch ---

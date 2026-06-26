@@ -108,24 +108,16 @@ pub struct GitIgnoreParser {
 impl GitIgnoreParser {
     /// Create a new parser rooted at the given directory.
     pub fn new(root_dir: &Path) -> Self {
-        let root_dir = root_dir
-            .canonicalize()
-            .unwrap_or_else(|_| root_dir.to_path_buf());
-        let mut parser = Self {
-            root_dir,
-            specs: Vec::new(),
-        };
+        let root_dir = root_dir.canonicalize().unwrap_or_else(|_| root_dir.to_path_buf());
+        let mut parser = Self { root_dir, specs: Vec::new() };
         parser.load_gitignore_files();
         parser
     }
 
     /// Check whether a path should be ignored.
     pub fn is_ignored(&self, path: &Path) -> bool {
-        let abs_path = if path.is_absolute() {
-            path.to_path_buf()
-        } else {
-            self.root_dir.join(path)
-        };
+        let abs_path =
+            if path.is_absolute() { path.to_path_buf() } else { self.root_dir.join(path) };
 
         let rel = match abs_path.strip_prefix(&self.root_dir) {
             Ok(r) => r,
@@ -196,10 +188,8 @@ impl GitIgnoreParser {
                 continue;
             }
 
-            let name = path
-                .file_name()
-                .map(|n| n.to_string_lossy().to_string())
-                .unwrap_or_default();
+            let name =
+                path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
 
             if ALWAYS_IGNORE_DIRS.contains(&name.as_str()) {
                 continue;
@@ -233,17 +223,10 @@ impl GitIgnoreParser {
             };
 
             let dir_only = pattern.ends_with('/');
-            let pattern = if dir_only {
-                pattern.trim_end_matches('/').to_string()
-            } else {
-                pattern
-            };
+            let pattern =
+                if dir_only { pattern.trim_end_matches('/').to_string() } else { pattern };
 
-            patterns.push(GitIgnorePattern {
-                pattern,
-                negated,
-                dir_only,
-            });
+            patterns.push(GitIgnorePattern { pattern, negated, dir_only });
         }
 
         if patterns.is_empty() {
@@ -251,10 +234,7 @@ impl GitIgnoreParser {
             return None;
         }
 
-        Some(GitIgnoreSpec {
-            base_dir: base_dir.to_path_buf(),
-            patterns,
-        })
+        Some(GitIgnoreSpec { base_dir: base_dir.to_path_buf(), patterns })
     }
 }
 

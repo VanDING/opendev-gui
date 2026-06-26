@@ -65,12 +65,8 @@ impl App {
                 .map(|t| t.task_id.clone())
             {
                 // Route to background task
-                self.state
-                    .bg_subagent_map
-                    .insert(subagent_id.clone(), bg_task_id.clone());
-                self.state
-                    .bg_agent_manager
-                    .decrement_pending_spawn(&bg_task_id);
+                self.state.bg_subagent_map.insert(subagent_id.clone(), bg_task_id.clone());
+                self.state.bg_agent_manager.decrement_pending_spawn(&bg_task_id);
                 self.state
                     .bg_agent_manager
                     .push_activity(&bg_task_id, format!("\u{25b8} {subagent_name}: {task}"));
@@ -97,11 +93,8 @@ impl App {
         tool_id: String,
         args: HashMap<String, Value>,
     ) {
-        if let Some(subagent) = self
-            .state
-            .active_subagents
-            .iter_mut()
-            .find(|s| s.subagent_id == subagent_id)
+        if let Some(subagent) =
+            self.state.active_subagents.iter_mut().find(|s| s.subagent_id == subagent_id)
         {
             let is_bg = subagent.backgrounded;
             subagent.add_tool_call(tool_name.clone(), tool_id, args);
@@ -114,9 +107,7 @@ impl App {
                     .get_task(&bg_task_id)
                     .map(|t| t.tool_call_count + 1)
                     .unwrap_or(1);
-                self.state
-                    .bg_agent_manager
-                    .update_progress(&bg_task_id, tool_name, count);
+                self.state.bg_agent_manager.update_progress(&bg_task_id, tool_name, count);
             }
         } else if let Some(bg_task_id) = self.state.bg_subagent_map.get(&subagent_id).cloned() {
             let count = self
@@ -125,9 +116,7 @@ impl App {
                 .get_task(&bg_task_id)
                 .map(|t| t.tool_call_count + 1)
                 .unwrap_or(1);
-            self.state
-                .bg_agent_manager
-                .update_progress(&bg_task_id, tool_name, count);
+            self.state.bg_agent_manager.update_progress(&bg_task_id, tool_name, count);
         }
         self.state.dirty = true;
     }
@@ -139,11 +128,8 @@ impl App {
         tool_id: String,
         success: bool,
     ) {
-        if let Some(subagent) = self
-            .state
-            .active_subagents
-            .iter_mut()
-            .find(|s| s.subagent_id == subagent_id)
+        if let Some(subagent) =
+            self.state.active_subagents.iter_mut().find(|s| s.subagent_id == subagent_id)
         {
             let is_bg = subagent.backgrounded;
             subagent.complete_tool_call(&tool_id, success);
@@ -156,9 +142,7 @@ impl App {
             }
         } else if let Some(bg_task_id) = self.state.bg_subagent_map.get(&subagent_id).cloned() {
             let icon = if success { "\u{2713}" } else { "\u{2717}" };
-            self.state
-                .bg_agent_manager
-                .push_activity(&bg_task_id, format!("  {icon} {tool_name}"));
+            self.state.bg_agent_manager.push_activity(&bg_task_id, format!("  {icon} {tool_name}"));
         }
         self.state.dirty = true;
     }
@@ -171,19 +155,11 @@ impl App {
         tool_call_count: usize,
         shallow_warning: Option<String>,
     ) {
-        if let Some(subagent) = self
-            .state
-            .active_subagents
-            .iter_mut()
-            .find(|s| s.subagent_id == subagent_id)
+        if let Some(subagent) =
+            self.state.active_subagents.iter_mut().find(|s| s.subagent_id == subagent_id)
         {
             let is_bg = subagent.backgrounded;
-            subagent.finish(
-                success,
-                result_summary.clone(),
-                tool_call_count,
-                shallow_warning,
-            );
+            subagent.finish(success, result_summary.clone(), tool_call_count, shallow_warning);
             if is_bg && let Some(bg_task_id) = self.state.bg_subagent_map.get(&subagent_id).cloned()
             {
                 let status = if success { "completed" } else { "failed" };
@@ -205,13 +181,7 @@ impl App {
         // (keep them for one more render so the user sees the result)
         // Clamp focus after potential visibility change
         let total_visible = self.state.active_subagents.len()
-            + self
-                .state
-                .bg_agent_manager
-                .all_tasks()
-                .iter()
-                .filter(|t| !t.hidden)
-                .count();
+            + self.state.bg_agent_manager.all_tasks().iter().filter(|t| !t.hidden).count();
         if total_visible > 0 {
             self.state.task_watcher_focus = self.state.task_watcher_focus.min(total_visible - 1);
         } else {
@@ -226,11 +196,8 @@ impl App {
         input_tokens: u64,
         output_tokens: u64,
     ) {
-        if let Some(subagent) = self
-            .state
-            .active_subagents
-            .iter_mut()
-            .find(|s| s.subagent_id == subagent_id)
+        if let Some(subagent) =
+            self.state.active_subagents.iter_mut().find(|s| s.subagent_id == subagent_id)
         {
             subagent.add_tokens(input_tokens, output_tokens);
         }

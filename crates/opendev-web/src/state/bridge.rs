@@ -17,11 +17,7 @@ impl AppState {
     /// Get the bridge session ID, if bridge mode is active.
     pub async fn bridge_session_id(&self) -> Option<String> {
         let bridge = self.inner.bridge.read().await;
-        if bridge.active {
-            bridge.session_id.clone()
-        } else {
-            None
-        }
+        if bridge.active { bridge.session_id.clone() } else { None }
     }
 
     /// Activate bridge mode for a given session.
@@ -82,8 +78,7 @@ impl AppState {
     ) -> Result<(), String> {
         let queues = self.inner.injection_queues.lock().await;
         if let Some(tx) = queues.get(session_id) {
-            tx.try_send(message)
-                .map_err(|e| format!("Injection queue full or closed: {}", e))
+            tx.try_send(message).map_err(|e| format!("Injection queue full or closed: {}", e))
         } else {
             Err("No injection queue for session".to_string())
         }

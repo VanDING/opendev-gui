@@ -2,27 +2,15 @@ use super::*;
 
 #[test]
 fn test_subagent_type_from_name() {
-    assert_eq!(
-        SubagentType::from_name("Explore"),
-        SubagentType::CodeExplorer
-    );
-    assert_eq!(
-        SubagentType::from_name("Code-Explorer"),
-        SubagentType::CodeExplorer
-    );
+    assert_eq!(SubagentType::from_name("Explore"), SubagentType::CodeExplorer);
+    assert_eq!(SubagentType::from_name("Code-Explorer"), SubagentType::CodeExplorer);
     assert_eq!(SubagentType::from_name("Planner"), SubagentType::Planner);
     assert_eq!(SubagentType::from_name("General"), SubagentType::General);
     assert_eq!(SubagentType::from_name("general"), SubagentType::General);
     assert_eq!(SubagentType::from_name("Build"), SubagentType::Build);
     assert_eq!(SubagentType::from_name("build"), SubagentType::Build);
-    assert_eq!(
-        SubagentType::from_name("Verification"),
-        SubagentType::Verification
-    );
-    assert_eq!(
-        SubagentType::from_name("verification"),
-        SubagentType::Verification
-    );
+    assert_eq!(SubagentType::from_name("Verification"), SubagentType::Verification);
+    assert_eq!(SubagentType::from_name("verification"), SubagentType::Verification);
     assert_eq!(SubagentType::from_name("unknown"), SubagentType::Custom);
 }
 
@@ -43,9 +31,7 @@ struct RecordingProgressCallback {
 
 impl RecordingProgressCallback {
     fn new() -> Self {
-        Self {
-            events: std::sync::Mutex::new(Vec::new()),
-        }
+        Self { events: std::sync::Mutex::new(Vec::new()) }
     }
     fn events(&self) -> Vec<String> {
         self.events.lock().unwrap().clone()
@@ -54,10 +40,7 @@ impl RecordingProgressCallback {
 
 impl SubagentProgressCallback for RecordingProgressCallback {
     fn on_started(&self, name: &str, task: &str) {
-        self.events
-            .lock()
-            .unwrap()
-            .push(format!("started:{name}:{task}"));
+        self.events.lock().unwrap().push(format!("started:{name}:{task}"));
     }
     fn on_tool_call(
         &self,
@@ -66,28 +49,16 @@ impl SubagentProgressCallback for RecordingProgressCallback {
         id: &str,
         _args: &HashMap<String, serde_json::Value>,
     ) {
-        self.events
-            .lock()
-            .unwrap()
-            .push(format!("tool_call:{name}:{tool}:{id}"));
+        self.events.lock().unwrap().push(format!("tool_call:{name}:{tool}:{id}"));
     }
     fn on_tool_complete(&self, name: &str, _tool: &str, id: &str, success: bool) {
-        self.events
-            .lock()
-            .unwrap()
-            .push(format!("tool_complete:{name}:{id}:{success}"));
+        self.events.lock().unwrap().push(format!("tool_complete:{name}:{id}:{success}"));
     }
     fn on_finished(&self, name: &str, success: bool, _summary: &str) {
-        self.events
-            .lock()
-            .unwrap()
-            .push(format!("finished:{name}:{success}"));
+        self.events.lock().unwrap().push(format!("finished:{name}:{success}"));
     }
     fn on_token_usage(&self, name: &str, input: u64, output: u64) {
-        self.events
-            .lock()
-            .unwrap()
-            .push(format!("tokens:{name}:{input}:{output}"));
+        self.events.lock().unwrap().push(format!("tokens:{name}:{input}:{output}"));
     }
 }
 

@@ -72,10 +72,7 @@ pub fn create_token(user_id: &str) -> String {
     use hmac::{Hmac, Mac};
     use sha2::Sha256;
 
-    let payload = TokenPayload {
-        sub: user_id.to_string(),
-        iat: chrono::Utc::now().timestamp(),
-    };
+    let payload = TokenPayload { sub: user_id.to_string(), iat: chrono::Utc::now().timestamp() };
     let payload_json = serde_json::to_string(&payload).expect("serialize token payload");
     let payload_b64 =
         base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(payload_json.as_bytes());
@@ -153,9 +150,7 @@ fn verify_password(password: &str, hash: &str) -> bool {
     let Ok(parsed) = PasswordHash::new(hash) else {
         return false;
     };
-    Argon2::default()
-        .verify_password(password.as_bytes(), &parsed)
-        .is_ok()
+    Argon2::default().verify_password(password.as_bytes(), &parsed).is_ok()
 }
 
 /// Build a cookie for the session token.
@@ -193,23 +188,14 @@ async fn login(
         .ok_or_else(|| WebError::BadRequest("Incorrect username or password".to_string()))?;
 
     if !verify_password(&payload.password, &user.password_hash) {
-        return Err(WebError::BadRequest(
-            "Incorrect username or password".to_string(),
-        ));
+        return Err(WebError::BadRequest("Incorrect username or password".to_string()));
     }
 
     let token = create_token(&user.id.to_string());
     let cookie = build_session_cookie(&token);
     let jar = jar.add(cookie);
 
-    Ok((
-        jar,
-        Json(AuthResponse {
-            username: user.username,
-            email: user.email,
-            role: user.role,
-        }),
-    ))
+    Ok((jar, Json(AuthResponse { username: user.username, email: user.email, role: user.role })))
 }
 
 /// Register handler.
@@ -236,14 +222,7 @@ async fn register(
     let cookie = build_session_cookie(&token);
     let jar = jar.add(cookie);
 
-    Ok((
-        jar,
-        Json(AuthResponse {
-            username: user.username,
-            email: user.email,
-            role: user.role,
-        }),
-    ))
+    Ok((jar, Json(AuthResponse { username: user.username, email: user.email, role: user.role })))
 }
 
 /// Logout handler.
@@ -273,11 +252,7 @@ async fn get_me(
         .get_by_id(user_id)
         .ok_or_else(|| WebError::Unauthorized("User not found".to_string()))?;
 
-    Ok(Json(AuthResponse {
-        username: user.username,
-        email: user.email,
-        role: user.role,
-    }))
+    Ok(Json(AuthResponse { username: user.username, email: user.email, role: user.role }))
 }
 
 #[cfg(test)]

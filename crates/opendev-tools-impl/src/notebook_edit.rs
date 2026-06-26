@@ -82,18 +82,12 @@ impl BaseTool for NotebookEditTool {
             None => return ToolResult::fail("notebook_path is required"),
         };
 
-        let new_source = args
-            .get("new_source")
-            .and_then(|v| v.as_str())
-            .unwrap_or("");
+        let new_source = args.get("new_source").and_then(|v| v.as_str()).unwrap_or("");
 
         let cell_id = args.get("cell_id").and_then(|v| v.as_str());
         let cell_number = args.get("cell_number").and_then(|v| v.as_i64());
         let cell_type = args.get("cell_type").and_then(|v| v.as_str());
-        let edit_mode = args
-            .get("edit_mode")
-            .and_then(|v| v.as_str())
-            .unwrap_or("replace");
+        let edit_mode = args.get("edit_mode").and_then(|v| v.as_str()).unwrap_or("replace");
 
         // Resolve path
         let path = resolve_file_path(notebook_path, &ctx.working_dir);
@@ -195,11 +189,7 @@ fn source_to_lines(source: &str) -> serde_json::Value {
 fn save_notebook(path: &PathBuf, notebook: &serde_json::Value) -> Result<(), String> {
     let json = serde_json::to_string_pretty(notebook)
         .map_err(|e| format!("Failed to serialize notebook: {e}"))?;
-    let json = if json.ends_with('\n') {
-        json
-    } else {
-        format!("{json}\n")
-    };
+    let json = if json.ends_with('\n') { json } else { format!("{json}\n") };
     std::fs::write(path, &json).map_err(|e| format!("Failed to write notebook: {e}"))
 }
 
@@ -218,19 +208,11 @@ fn replace_cell(
     let old_source_len = cells[index]
         .get("source")
         .and_then(|v| v.as_array())
-        .map(|arr| {
-            arr.iter()
-                .filter_map(|v| v.as_str())
-                .map(|s| s.len())
-                .sum::<usize>()
-        })
+        .map(|arr| arr.iter().filter_map(|v| v.as_str()).map(|s| s.len()).sum::<usize>())
         .unwrap_or(0);
 
-    let result_cell_id = cells[index]
-        .get("id")
-        .and_then(|v| v.as_str())
-        .unwrap_or("unknown")
-        .to_string();
+    let result_cell_id =
+        cells[index].get("id").and_then(|v| v.as_str()).unwrap_or("unknown").to_string();
 
     // Update source
     cells[index]["source"] = source_to_lines(new_source);
@@ -322,11 +304,8 @@ fn delete_cell(
     let index = find_cell_index(&cells, cell_id, cell_number).map_err(ToolResult::fail)?;
 
     let deleted = cells.remove(index);
-    let deleted_cell_id = deleted
-        .get("id")
-        .and_then(|v| v.as_str())
-        .unwrap_or("unknown")
-        .to_string();
+    let deleted_cell_id =
+        deleted.get("id").and_then(|v| v.as_str()).unwrap_or("unknown").to_string();
 
     let mut metadata = HashMap::new();
     metadata.insert("cell_id".into(), serde_json::json!(deleted_cell_id));
@@ -345,10 +324,9 @@ fn delete_cell(
 /// Simple pseudo-random u32 (not crypto-secure, just for cell IDs).
 fn rand_u32() -> u32 {
     use std::time::SystemTime;
-    let seed = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_nanos() as u32;
+    let seed =
+        SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap_or_default().as_nanos()
+            as u32;
     let mut x = seed;
     x ^= x << 13;
     x ^= x >> 17;

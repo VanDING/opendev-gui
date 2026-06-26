@@ -32,32 +32,19 @@ fn test_session_event_serialization_roundtrip() {
             thinking_trace: None,
             reasoning_content: None,
         },
-        SessionEvent::MessageEdited {
-            seq: 0,
-            content: "updated".into(),
-        },
-        SessionEvent::TitleChanged {
-            title: "New title".into(),
-        },
-        SessionEvent::SessionArchived {
-            time_archived: Utc::now(),
-        },
+        SessionEvent::MessageEdited { seq: 0, content: "updated".into() },
+        SessionEvent::TitleChanged { title: "New title".into() },
+        SessionEvent::SessionArchived { time_archived: Utc::now() },
         SessionEvent::SessionUnarchived,
         SessionEvent::FileChangeRecorded {
             file_change: FileChange::new(FileChangeType::Created, "foo.rs".into()),
         },
-        SessionEvent::MetadataUpdated {
-            key: "key".into(),
-            value: serde_json::json!("value"),
-        },
+        SessionEvent::MetadataUpdated { key: "key".into(), value: serde_json::json!("value") },
         SessionEvent::SessionForked {
             source_session_id: "src-session".into(),
             fork_point: Some(3),
         },
-        SessionEvent::Tombstone {
-            undo_to_seq: 5,
-            reason: "Undo last 2 events".into(),
-        },
+        SessionEvent::Tombstone { undo_to_seq: 5, reason: "Undo last 2 events".into() },
     ];
 
     for event in &events {
@@ -73,9 +60,7 @@ fn test_session_event_serialization_roundtrip() {
 
 #[test]
 fn test_event_envelope_new() {
-    let event = SessionEvent::TitleChanged {
-        title: "Hello".into(),
-    };
+    let event = SessionEvent::TitleChanged { title: "Hello".into() };
     let envelope = EventEnvelope::new("session-1", 5, &event);
 
     assert_eq!(envelope.aggregate_id, "session-1");
@@ -119,25 +104,9 @@ fn test_event_type_names() {
             },
             "MessageAdded",
         ),
-        (
-            SessionEvent::MessageEdited {
-                seq: 0,
-                content: String::new(),
-            },
-            "MessageEdited",
-        ),
-        (
-            SessionEvent::TitleChanged {
-                title: String::new(),
-            },
-            "TitleChanged",
-        ),
-        (
-            SessionEvent::SessionArchived {
-                time_archived: Utc::now(),
-            },
-            "SessionArchived",
-        ),
+        (SessionEvent::MessageEdited { seq: 0, content: String::new() }, "MessageEdited"),
+        (SessionEvent::TitleChanged { title: String::new() }, "TitleChanged"),
+        (SessionEvent::SessionArchived { time_archived: Utc::now() }, "SessionArchived"),
         (SessionEvent::SessionUnarchived, "SessionUnarchived"),
         (
             SessionEvent::FileChangeRecorded {
@@ -146,26 +115,14 @@ fn test_event_type_names() {
             "FileChangeRecorded",
         ),
         (
-            SessionEvent::MetadataUpdated {
-                key: String::new(),
-                value: serde_json::Value::Null,
-            },
+            SessionEvent::MetadataUpdated { key: String::new(), value: serde_json::Value::Null },
             "MetadataUpdated",
         ),
         (
-            SessionEvent::SessionForked {
-                source_session_id: String::new(),
-                fork_point: None,
-            },
+            SessionEvent::SessionForked { source_session_id: String::new(), fork_point: None },
             "SessionForked",
         ),
-        (
-            SessionEvent::Tombstone {
-                undo_to_seq: 0,
-                reason: String::new(),
-            },
-            "Tombstone",
-        ),
+        (SessionEvent::Tombstone { undo_to_seq: 0, reason: String::new() }, "Tombstone"),
     ];
 
     for (event, expected_name) in cases {
@@ -202,9 +159,7 @@ fn make_session(archived: bool, message_count: usize) -> Session {
 #[test]
 fn test_validate_archive_already_archived() {
     let session = make_session(true, 0);
-    let event = SessionEvent::SessionArchived {
-        time_archived: Utc::now(),
-    };
+    let event = SessionEvent::SessionArchived { time_archived: Utc::now() };
     let err = session.validate_transition(&event).unwrap_err();
     assert!(err.to_string().contains("already archived"));
 }
@@ -236,9 +191,7 @@ fn test_validate_add_message_when_archived() {
 #[test]
 fn test_validate_title_change_empty() {
     let session = make_session(false, 0);
-    let event = SessionEvent::TitleChanged {
-        title: "   ".into(),
-    };
+    let event = SessionEvent::TitleChanged { title: "   ".into() };
     let err = session.validate_transition(&event).unwrap_err();
     assert!(err.to_string().contains("empty"));
 }
@@ -246,10 +199,8 @@ fn test_validate_title_change_empty() {
 #[test]
 fn test_validate_fork_point_out_of_range() {
     let session = make_session(false, 3);
-    let event = SessionEvent::SessionForked {
-        source_session_id: "src".into(),
-        fork_point: Some(10),
-    };
+    let event =
+        SessionEvent::SessionForked { source_session_id: "src".into(), fork_point: Some(10) };
     let err = session.validate_transition(&event).unwrap_err();
     assert!(err.to_string().contains("out of range"));
 }
@@ -269,26 +220,17 @@ fn test_validate_valid_transitions() {
     };
     assert!(session.validate_transition(&event).is_ok());
 
-    let event = SessionEvent::TitleChanged {
-        title: "Good title".into(),
-    };
+    let event = SessionEvent::TitleChanged { title: "Good title".into() };
     assert!(session.validate_transition(&event).is_ok());
 
-    let event = SessionEvent::SessionArchived {
-        time_archived: Utc::now(),
-    };
+    let event = SessionEvent::SessionArchived { time_archived: Utc::now() };
     assert!(session.validate_transition(&event).is_ok());
 
-    let event = SessionEvent::SessionForked {
-        source_session_id: "src".into(),
-        fork_point: Some(5),
-    };
+    let event =
+        SessionEvent::SessionForked { source_session_id: "src".into(), fork_point: Some(5) };
     assert!(session.validate_transition(&event).is_ok());
 
-    let event = SessionEvent::SessionForked {
-        source_session_id: "src".into(),
-        fork_point: None,
-    };
+    let event = SessionEvent::SessionForked { source_session_id: "src".into(), fork_point: None };
     assert!(session.validate_transition(&event).is_ok());
 
     let archived_session = make_session(true, 0);
@@ -318,11 +260,7 @@ fn make_temp_store() -> (TempDir, EventStore) {
 }
 
 fn sample_events(n: usize) -> Vec<SessionEvent> {
-    (0..n)
-        .map(|i| SessionEvent::TitleChanged {
-            title: format!("title-{i}"),
-        })
-        .collect()
+    (0..n).map(|i| SessionEvent::TitleChanged { title: format!("title-{i}") }).collect()
 }
 
 #[test]
@@ -423,12 +361,8 @@ fn test_append_validated_success() {
     let session = make_session(false, 0);
 
     let events = vec![
-        SessionEvent::TitleChanged {
-            title: "New title".into(),
-        },
-        SessionEvent::SessionArchived {
-            time_archived: Utc::now(),
-        },
+        SessionEvent::TitleChanged { title: "New title".into() },
+        SessionEvent::SessionArchived { time_archived: Utc::now() },
     ];
 
     let envelopes = store.append_validated(&session, "sess-v1", events).unwrap();
@@ -445,13 +379,9 @@ fn test_append_validated_rejects_invalid() {
     let (_dir, store) = make_temp_store();
     let session = make_session(true, 0); // already archived
 
-    let events = vec![SessionEvent::SessionArchived {
-        time_archived: Utc::now(),
-    }];
+    let events = vec![SessionEvent::SessionArchived { time_archived: Utc::now() }];
 
-    let err = store
-        .append_validated(&session, "sess-v2", events)
-        .unwrap_err();
+    let err = store.append_validated(&session, "sess-v2", events).unwrap_err();
     assert!(err.contains("already archived"));
 }
 
@@ -462,9 +392,7 @@ fn test_append_validated_sequential_validation() {
 
     // archive + unarchive in sequence should pass
     let events = vec![
-        SessionEvent::SessionArchived {
-            time_archived: Utc::now(),
-        },
+        SessionEvent::SessionArchived { time_archived: Utc::now() },
         SessionEvent::SessionUnarchived,
     ];
     let envelopes = store.append_validated(&session, "sess-v3", events).unwrap();
@@ -473,16 +401,10 @@ fn test_append_validated_sequential_validation() {
     // archive + archive should fail on second event
     let session2 = make_session(false, 0);
     let events = vec![
-        SessionEvent::SessionArchived {
-            time_archived: Utc::now(),
-        },
-        SessionEvent::SessionArchived {
-            time_archived: Utc::now(),
-        },
+        SessionEvent::SessionArchived { time_archived: Utc::now() },
+        SessionEvent::SessionArchived { time_archived: Utc::now() },
     ];
-    let err = store
-        .append_validated(&session2, "sess-v4", events)
-        .unwrap_err();
+    let err = store.append_validated(&session2, "sess-v4", events).unwrap_err();
     assert!(err.contains("already archived"));
 }
 
@@ -492,20 +414,13 @@ fn test_append_validated_sequential_validation() {
 
 #[test]
 fn test_tombstone_event_serialization() {
-    let event = SessionEvent::Tombstone {
-        undo_to_seq: 5,
-        reason: "Undo last 2 events".into(),
-    };
+    let event = SessionEvent::Tombstone { undo_to_seq: 5, reason: "Undo last 2 events".into() };
     assert_eq!(event.event_type(), "Tombstone");
 
     let json = serde_json::to_string(&event).expect("serialize");
     let roundtripped: SessionEvent = serde_json::from_str(&json).expect("deserialize");
     assert_eq!(roundtripped.event_type(), "Tombstone");
-    if let SessionEvent::Tombstone {
-        undo_to_seq,
-        reason,
-    } = roundtripped
-    {
+    if let SessionEvent::Tombstone { undo_to_seq, reason } = roundtripped {
         assert_eq!(undo_to_seq, 5);
         assert_eq!(reason, "Undo last 2 events");
     } else {
@@ -579,13 +494,7 @@ fn test_effective_events_with_tombstone() {
     // Manually append a tombstone with undo_to_seq=3 (keep seqs <= 3).
     // Events with seq 4 and 5 (between undo_to_seq and tombstone) are undone.
     store
-        .append(
-            "sess-e1",
-            vec![SessionEvent::Tombstone {
-                undo_to_seq: 3,
-                reason: "test".into(),
-            }],
-        )
+        .append("sess-e1", vec![SessionEvent::Tombstone { undo_to_seq: 3, reason: "test".into() }])
         .unwrap();
 
     let all = store.load("sess-e1").unwrap();
@@ -605,20 +514,12 @@ fn test_append_validated_no_persist_on_failure() {
 
     // First event valid, second invalid — nothing should be persisted.
     let events = vec![
-        SessionEvent::TitleChanged {
-            title: "Good title".into(),
-        },
-        SessionEvent::SessionArchived {
-            time_archived: Utc::now(),
-        },
-        SessionEvent::SessionArchived {
-            time_archived: Utc::now(),
-        },
+        SessionEvent::TitleChanged { title: "Good title".into() },
+        SessionEvent::SessionArchived { time_archived: Utc::now() },
+        SessionEvent::SessionArchived { time_archived: Utc::now() },
     ];
 
-    let err = store
-        .append_validated(&session, "sess-v5", events)
-        .unwrap_err();
+    let err = store.append_validated(&session, "sess-v5", events).unwrap_err();
     assert!(err.contains("already archived"));
 
     // Verify nothing was persisted.

@@ -81,10 +81,7 @@ fn test_token_estimate() {
     assert_eq!(msg.token_estimate(), 100);
 
     // With explicit tokens set
-    let msg2 = ChatMessage {
-        tokens: Some(42),
-        ..msg
-    };
+    let msg2 = ChatMessage { tokens: Some(42), ..msg };
     assert_eq!(msg2.token_estimate(), 42);
 }
 

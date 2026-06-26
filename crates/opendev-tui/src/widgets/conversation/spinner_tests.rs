@@ -4,26 +4,15 @@ use crate::widgets::nested_tool::SubagentDisplayState;
 
 #[test]
 fn test_25_subagents_all_rendered_individually() {
-    let msgs: Vec<DisplayMessage> = vec![DisplayMessage::new(
-        DisplayRole::Assistant,
-        "Spawning 25 agents.",
-    )];
+    let msgs: Vec<DisplayMessage> =
+        vec![DisplayMessage::new(DisplayRole::Assistant, "Spawning 25 agents.")];
 
     let tools: Vec<ToolExecution> = (0..25)
         .map(|i| {
             let mut args = std::collections::HashMap::new();
-            args.insert(
-                "task".into(),
-                serde_json::Value::String(format!("Task_{i}")),
-            );
-            args.insert(
-                "description".into(),
-                serde_json::Value::String(format!("Task_{i}")),
-            );
-            args.insert(
-                "agent_type".into(),
-                serde_json::Value::String(format!("agent_{i}")),
-            );
+            args.insert("task".into(), serde_json::Value::String(format!("Task_{i}")));
+            args.insert("description".into(), serde_json::Value::String(format!("Task_{i}")));
+            args.insert("agent_type".into(), serde_json::Value::String(format!("agent_{i}")));
             ToolExecution {
                 id: format!("t{i}"),
                 name: "spawn_subagent".into(),
@@ -51,16 +40,12 @@ fn test_25_subagents_all_rendered_individually() {
         })
         .collect();
 
-    let widget = ConversationWidget::new(&msgs, 0)
-        .active_tools(&tools)
-        .active_subagents(&subagents);
+    let widget =
+        ConversationWidget::new(&msgs, 0).active_tools(&tools).active_subagents(&subagents);
 
     let lines = widget.build_spinner_lines();
-    let all_text: String = lines
-        .iter()
-        .flat_map(|l| l.spans.iter())
-        .map(|s| s.content.to_string())
-        .collect();
+    let all_text: String =
+        lines.iter().flat_map(|l| l.spans.iter()).map(|s| s.content.to_string()).collect();
 
     // No grouping header
     assert!(

@@ -14,9 +14,7 @@ fn test_runtime_creation() {
     // Should have tools registered
     assert!(rt.tool_registry.tool_names().len() > 10);
     assert!(
-        !rt.tool_registry
-            .tool_names()
-            .contains(&"batch_tool".to_string()),
+        !rt.tool_registry.tool_names().contains(&"batch_tool".to_string()),
         "batch_tool should not be registered"
     );
     assert!(
@@ -49,8 +47,5 @@ fn test_build_system_prompt() {
     let prompt = build_system_prompt(tmp.path(), &config);
     // Should produce a non-trivial prompt from embedded templates
     assert!(!prompt.is_empty());
-    assert!(
-        !prompt.contains("batch_tool"),
-        "system prompt should not advertise batch_tool"
-    );
+    assert!(!prompt.contains("batch_tool"), "system prompt should not advertise batch_tool");
 }

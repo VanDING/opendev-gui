@@ -56,10 +56,7 @@ impl SubdirInstructionTracker {
                 injected.insert(canonical);
             }
         }
-        Self {
-            injected,
-            project_root,
-        }
+        Self { injected, project_root }
     }
 
     /// Check if a file path triggers any new subdirectory instruction injection.
@@ -77,10 +74,8 @@ impl SubdirInstructionTracker {
             }
         };
 
-        let canonical_root = self
-            .project_root
-            .canonicalize()
-            .unwrap_or_else(|_| self.project_root.clone());
+        let canonical_root =
+            self.project_root.canonicalize().unwrap_or_else(|_| self.project_root.clone());
         let mut results = Vec::new();
         let mut current = dir;
 
@@ -158,11 +153,8 @@ impl SubdirInstructionTracker {
         // Strip HTML comments
         let content = strip_html_comments(&content);
 
-        let relative = canonical
-            .strip_prefix(canonical_root)
-            .unwrap_or(&canonical)
-            .display()
-            .to_string();
+        let relative =
+            canonical.strip_prefix(canonical_root).unwrap_or(&canonical).display().to_string();
 
         debug!(path = %relative, "Injecting subdirectory instruction file");
 
@@ -231,11 +223,8 @@ impl SubdirInstructionTracker {
 
             let cleaned = strip_html_comments(&remaining);
 
-            let relative = canonical
-                .strip_prefix(canonical_root)
-                .unwrap_or(&canonical)
-                .display()
-                .to_string();
+            let relative =
+                canonical.strip_prefix(canonical_root).unwrap_or(&canonical).display().to_string();
 
             debug!(path = %relative, "Injecting subdirectory rule file");
 

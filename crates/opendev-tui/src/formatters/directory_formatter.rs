@@ -29,10 +29,7 @@ impl ToolFormatter for DirectoryFormatter {
 
         let header = Line::from(vec![
             Span::styled("  🔍 ".to_string(), Style::default().fg(style_tokens::CYAN)),
-            Span::styled(
-                format!("{total} {label}"),
-                Style::default().fg(style_tokens::CYAN),
-            ),
+            Span::styled(format!("{total} {label}"), Style::default().fg(style_tokens::CYAN)),
         ]);
 
         let display_count = total.min(MAX_RESULTS);
@@ -56,11 +53,7 @@ impl ToolFormatter for DirectoryFormatter {
             None
         };
 
-        FormattedOutput {
-            header,
-            body,
-            footer,
-        }
+        FormattedOutput { header, body, footer }
     }
 
     fn handles(&self, tool_name: &str) -> bool {

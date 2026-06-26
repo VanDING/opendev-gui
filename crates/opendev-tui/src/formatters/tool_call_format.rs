@@ -37,11 +37,7 @@ pub fn format_tool_call_display(
     args: &HashMap<String, serde_json::Value>,
 ) -> String {
     let (verb, arg) = format_tool_call_parts(tool_name, args);
-    if arg.is_empty() {
-        verb
-    } else {
-        format!("{verb} {arg}")
-    }
+    if arg.is_empty() { verb } else { format!("{verb} {arg}") }
 }
 
 /// Format a tool call into separate verb and arg parts.
@@ -116,17 +112,11 @@ fn format_parts_inner(
 
     // Special case: past_sessions shows action-specific verbs
     if tool_name == "past_sessions" {
-        let action = args
-            .get("action")
-            .and_then(|v| v.as_str())
-            .unwrap_or("list");
+        let action = args.get("action").and_then(|v| v.as_str()).unwrap_or("list");
         return match action {
             "list" => ("List Sessions".to_string(), String::new()),
             "read" => {
-                let id = args
-                    .get("session_id")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("...");
+                let id = args.get("session_id").and_then(|v| v.as_str()).unwrap_or("...");
                 ("Read Session".to_string(), id.to_string())
             }
             "search" => {
@@ -134,10 +124,7 @@ fn format_parts_inner(
                 ("Search Sessions".to_string(), format!("\"{q}\""))
             }
             "info" => {
-                let id = args
-                    .get("session_id")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("...");
+                let id = args.get("session_id").and_then(|v| v.as_str()).unwrap_or("...");
                 ("Session Info".to_string(), id.to_string())
             }
             other => ("Sessions".to_string(), other.to_string()),
@@ -165,20 +152,14 @@ fn format_parts_inner(
 
     // Special case: ast_grep tools show "pattern" [lang]
     if matches!(tool_name, "ast_grep" | "AstGrep") {
-        let pattern = args
-            .get("pattern")
-            .and_then(|v| v.as_str())
-            .unwrap_or("...");
+        let pattern = args.get("pattern").and_then(|v| v.as_str()).unwrap_or("...");
         let pattern_display = if pattern.len() > 40 {
             format!("\"{}...\"", &pattern[..pattern.floor_char_boundary(37)])
         } else {
             format!("\"{pattern}\"")
         };
         if let Some(lang) = args.get("lang").and_then(|v| v.as_str()) {
-            return (
-                "AST-Grep".to_string(),
-                format!("{pattern_display} [{lang}]"),
-            );
+            return ("AST-Grep".to_string(), format!("{pattern_display} [{lang}]"));
         }
         return ("AST-Grep".to_string(), pattern_display);
     }
@@ -228,15 +209,9 @@ fn format_parts_inner(
     // Try to extract a meaningful summary from args
     if let Some(summary) = extract_arg_from_keys(entry.primary_arg_keys, args) {
         // Strip working dir prefix from file path args
-        let is_path_arg = entry
-            .primary_arg_keys
-            .first()
-            .is_some_and(|k| *k == "file_path" || *k == "path");
-        let summary = if is_path_arg {
-            shortener.shorten(&summary)
-        } else {
-            summary
-        };
+        let is_path_arg =
+            entry.primary_arg_keys.first().is_some_and(|k| *k == "file_path" || *k == "path");
+        let summary = if is_path_arg { shortener.shorten(&summary) } else { summary };
         return (entry.verb.to_string(), summary);
     }
 

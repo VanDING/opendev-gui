@@ -43,13 +43,7 @@ fn test_session_mutation_serialization() {
     let deserialized: RuntimeEvent = serde_json::from_str(&json).unwrap();
     assert_eq!(deserialized.topic(), EventTopic::Session);
     assert_eq!(deserialized.timestamp_ms(), 55555);
-    if let RuntimeEvent::SessionMutation {
-        session_id,
-        event_type,
-        seq,
-        ..
-    } = deserialized
-    {
+    if let RuntimeEvent::SessionMutation { session_id, event_type, seq, .. } = deserialized {
         assert_eq!(session_id, "s1");
         assert_eq!(event_type, "MessageAdded");
         assert_eq!(seq, 7);
@@ -87,12 +81,8 @@ fn test_post_append_callback_invoked() {
     let store = EventStore::new(dir.path().to_path_buf()).with_post_append(callback);
 
     let events = vec![
-        SessionEvent::TitleChanged {
-            title: "Test1".into(),
-        },
-        SessionEvent::TitleChanged {
-            title: "Test2".into(),
-        },
+        SessionEvent::TitleChanged { title: "Test1".into() },
+        SessionEvent::TitleChanged { title: "Test2".into() },
     ];
 
     store.append("session-1", events).unwrap();
@@ -121,13 +111,7 @@ async fn test_event_bus_bridge_publishes_mutations() {
     bridge("sess-42", &envelopes);
 
     let received = rx.recv().await.unwrap();
-    if let RuntimeEvent::SessionMutation {
-        session_id,
-        event_type,
-        seq,
-        ..
-    } = received
-    {
+    if let RuntimeEvent::SessionMutation { session_id, event_type, seq, .. } = received {
         assert_eq!(session_id, "sess-42");
         assert_eq!(event_type, "MessageAdded");
         assert_eq!(seq, 1);
@@ -146,20 +130,12 @@ async fn test_event_store_with_bridge_end_to_end() {
     let dir = tempfile::tempdir().unwrap();
     let store = EventStore::new(dir.path().to_path_buf()).with_post_append(bridge);
 
-    let events = vec![SessionEvent::TitleChanged {
-        title: "New Title".into(),
-    }];
+    let events = vec![SessionEvent::TitleChanged { title: "New Title".into() }];
 
     store.append("sess-1", events).unwrap();
 
     let received = rx.recv().await.unwrap();
-    if let RuntimeEvent::SessionMutation {
-        session_id,
-        event_type,
-        seq,
-        ..
-    } = received
-    {
+    if let RuntimeEvent::SessionMutation { session_id, event_type, seq, .. } = received {
         assert_eq!(session_id, "sess-1");
         assert_eq!(event_type, "TitleChanged");
         assert_eq!(seq, 1);

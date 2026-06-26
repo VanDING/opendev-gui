@@ -93,11 +93,7 @@ impl MessagePairValidator {
         let mut prev_role: Option<String> = None;
 
         for (i, msg) in messages.iter().enumerate() {
-            let role = msg
-                .get("role")
-                .and_then(|v| v.as_str())
-                .unwrap_or("")
-                .to_string();
+            let role = msg.get("role").and_then(|v| v.as_str()).unwrap_or("").to_string();
 
             // Check consecutive same role (warning only, skip tool role)
             if let Some(ref prev) = prev_role
@@ -121,10 +117,7 @@ impl MessagePairValidator {
                     }
                 }
             } else if role == "tool" {
-                let tc_id = msg
-                    .get("tool_call_id")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("");
+                let tc_id = msg.get("tool_call_id").and_then(|v| v.as_str()).unwrap_or("");
                 if expected_tool_results.remove(tc_id).is_none() && !tc_id.is_empty() {
                     result.violations.push(Violation {
                         violation_type: ViolationType::OrphanedToolResult,
@@ -213,10 +206,7 @@ impl MessagePairValidator {
                 // Insert synthetic results for missing IDs
                 for tc_id in &missing_by_assistant[&i] {
                     let mut msg = ApiMessage::new();
-                    msg.insert(
-                        "role".to_string(),
-                        serde_json::Value::String("tool".to_string()),
-                    );
+                    msg.insert("role".to_string(), serde_json::Value::String("tool".to_string()));
                     msg.insert(
                         "tool_call_id".to_string(),
                         serde_json::Value::String(tc_id.clone()),

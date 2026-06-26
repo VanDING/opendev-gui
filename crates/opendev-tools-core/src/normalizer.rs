@@ -11,13 +11,8 @@ use std::path::Path;
 use tracing::{debug, warn};
 
 /// Parameters that contain file paths and should be resolved via `resolve_file_path`.
-const FILE_PATH_PARAMS: &[&str] = &[
-    "file_path",
-    "notebook_path",
-    "output_path",
-    "plan_file_path",
-    "image_path",
-];
+const FILE_PATH_PARAMS: &[&str] =
+    &["file_path", "notebook_path", "output_path", "plan_file_path", "image_path"];
 
 /// Parameters that contain directory paths and should be resolved via `resolve_dir_path`.
 const DIR_PATH_PARAMS: &[&str] = &["path", "working_dir", "workdir"];
@@ -119,13 +114,9 @@ pub fn normalize_params(
             {
                 let wd_path = Path::new(wd);
                 let resolved = if is_dir {
-                    crate::path::resolve_dir_path(s, wd_path)
-                        .to_string_lossy()
-                        .to_string()
+                    crate::path::resolve_dir_path(s, wd_path).to_string_lossy().to_string()
                 } else {
-                    crate::path::resolve_file_path(s, wd_path)
-                        .to_string_lossy()
-                        .to_string()
+                    crate::path::resolve_file_path(s, wd_path).to_string_lossy().to_string()
                 };
                 if resolved != s {
                     debug!(
@@ -165,9 +156,7 @@ fn resolve_path(path_str: &str, working_dir: Option<&str>) -> String {
 
         // Workspace guard: warn for paths outside workspace and home
         let in_workspace = resolved.starts_with(wd);
-        let in_home = dirs::home_dir()
-            .map(|h| resolved.starts_with(&h))
-            .unwrap_or(false);
+        let in_home = dirs::home_dir().map(|h| resolved.starts_with(&h)).unwrap_or(false);
         if !in_workspace && !in_home {
             warn!(
                 path = %resolved_str,
@@ -183,13 +172,9 @@ fn resolve_path(path_str: &str, working_dir: Option<&str>) -> String {
         let path = Path::new(&expanded);
 
         if path.is_absolute() {
-            crate::path::normalize_path(path)
-                .to_string_lossy()
-                .to_string()
+            crate::path::normalize_path(path).to_string_lossy().to_string()
         } else if let Ok(cwd) = std::env::current_dir() {
-            crate::path::normalize_path(&cwd.join(path))
-                .to_string_lossy()
-                .to_string()
+            crate::path::normalize_path(&cwd.join(path)).to_string_lossy().to_string()
         } else {
             expanded
         }

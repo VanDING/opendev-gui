@@ -77,11 +77,7 @@ fn collect_md_files_recursive(dir: &Path) -> Vec<PathBuf> {
 fn load_agent_file(path: &Path) -> Result<Option<SubAgentSpec>, String> {
     let content = std::fs::read_to_string(path).map_err(|e| format!("Failed to read file: {e}"))?;
 
-    let name = path
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("unknown")
-        .to_string();
+    let name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("unknown").to_string();
 
     let (frontmatter_str, body) = parse_frontmatter(&content);
 
@@ -102,9 +98,7 @@ fn load_agent_file(path: &Path) -> Result<Option<SubAgentSpec>, String> {
         return Ok(None);
     }
 
-    let description = meta
-        .description
-        .unwrap_or_else(|| format!("Custom agent: {name}"));
+    let description = meta.description.unwrap_or_else(|| format!("Custom agent: {name}"));
 
     let mut spec = SubAgentSpec::new(name, description, body.trim());
 

@@ -155,44 +155,24 @@ impl StructuredError {
     pub fn recovery_strategy(&self) -> RecoveryStrategy {
         match self.category {
             ErrorCategory::RateLimit => {
-                let delay = self
-                    .retry_after
-                    .map(|s| (s * 1000.0) as u64)
-                    .unwrap_or(5000);
-                RecoveryStrategy::Retry {
-                    delay_ms: delay,
-                    max_attempts: 3,
-                }
+                let delay = self.retry_after.map(|s| (s * 1000.0) as u64).unwrap_or(5000);
+                RecoveryStrategy::Retry { delay_ms: delay, max_attempts: 3 }
             }
-            ErrorCategory::Timeout => RecoveryStrategy::Retry {
-                delay_ms: 2000,
-                max_attempts: 2,
-            },
+            ErrorCategory::Timeout => RecoveryStrategy::Retry { delay_ms: 2000, max_attempts: 2 },
             ErrorCategory::ContextOverflow => RecoveryStrategy::ReduceContext,
-            ErrorCategory::OutputLength => RecoveryStrategy::Retry {
-                delay_ms: 0,
-                max_attempts: 1,
-            },
+            ErrorCategory::OutputLength => RecoveryStrategy::Retry { delay_ms: 0, max_attempts: 1 },
             ErrorCategory::Auth => RecoveryStrategy::UserIntervention {
                 message: "Check your API key and authentication settings.".into(),
             },
             ErrorCategory::Permission => RecoveryStrategy::UserIntervention {
                 message: "Insufficient permissions. Check your access rights.".into(),
             },
-            ErrorCategory::Gateway => RecoveryStrategy::Retry {
-                delay_ms: 3000,
-                max_attempts: 3,
-            },
+            ErrorCategory::Gateway => RecoveryStrategy::Retry { delay_ms: 3000, max_attempts: 3 },
             ErrorCategory::Api => {
                 if self.is_retryable {
-                    RecoveryStrategy::Retry {
-                        delay_ms: 2000,
-                        max_attempts: 3,
-                    }
+                    RecoveryStrategy::Retry { delay_ms: 2000, max_attempts: 3 }
                 } else {
-                    RecoveryStrategy::FallbackModel {
-                        model: "default".into(),
-                    }
+                    RecoveryStrategy::FallbackModel { model: "default".into() }
                 }
             }
             ErrorCategory::EditMismatch => RecoveryStrategy::UserIntervention {
@@ -211,11 +191,7 @@ impl StructuredError {
     pub fn api(message: impl Into<String>, status_code: Option<u16>) -> Self {
         let code = status_code;
         Self {
-            category: if code.is_some() {
-                ErrorCategory::Api
-            } else {
-                ErrorCategory::Unknown
-            },
+            category: if code.is_some() { ErrorCategory::Api } else { ErrorCategory::Unknown },
             message: message.into(),
             is_retryable: matches!(code, Some(500 | 502 | 503 | 504)),
             status_code: code,
@@ -345,10 +321,7 @@ struct PatternSet {
 }
 
 fn compile_patterns(patterns: &[&str]) -> Vec<Regex> {
-    patterns
-        .iter()
-        .filter_map(|p| Regex::new(&format!("(?i){}", p)).ok())
-        .collect()
+    patterns.iter().filter_map(|p| Regex::new(&format!("(?i){}", p)).ok()).collect()
 }
 
 static PATTERNS: LazyLock<PatternSet> = LazyLock::new(|| {
@@ -478,11 +451,7 @@ pub fn classify_api_error(
 
     // Generic API error
     StructuredError {
-        category: if status_code.is_some() {
-            ErrorCategory::Api
-        } else {
-            ErrorCategory::Unknown
-        },
+        category: if status_code.is_some() { ErrorCategory::Api } else { ErrorCategory::Unknown },
         message: error_message.to_string(),
         is_retryable: matches!(status_code, Some(500 | 502 | 503 | 504)),
         status_code,

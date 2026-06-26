@@ -1,10 +1,7 @@
 use super::*;
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 #[tokio::test]
@@ -15,10 +12,7 @@ async fn test_ask_user_basic() {
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
     assert!(result.output.unwrap().contains("What language?"));
-    assert_eq!(
-        result.metadata.get("requires_input"),
-        Some(&serde_json::json!(true))
-    );
+    assert_eq!(result.metadata.get("requires_input"), Some(&serde_json::json!(true)));
 }
 
 #[tokio::test]

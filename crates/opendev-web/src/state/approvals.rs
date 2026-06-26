@@ -20,13 +20,11 @@ impl AppState {
         approval: PendingApproval,
     ) -> oneshot::Receiver<ApprovalResult> {
         let (tx, rx) = oneshot::channel();
-        self.inner.pending_approvals.lock().await.insert(
-            id,
-            PendingApprovalSlot {
-                meta: approval,
-                tx: Some(tx),
-            },
-        );
+        self.inner
+            .pending_approvals
+            .lock()
+            .await
+            .insert(id, PendingApprovalSlot { meta: approval, tx: Some(tx) });
         rx
     }
 
@@ -42,10 +40,7 @@ impl AppState {
         let mut approvals = self.inner.pending_approvals.lock().await;
         if let Some(mut slot) = approvals.remove(id) {
             if let Some(tx) = slot.tx.take() {
-                let _ = tx.send(ApprovalResult {
-                    approved,
-                    auto_approve,
-                });
+                let _ = tx.send(ApprovalResult { approved, auto_approve });
             }
             Some(slot.meta)
         } else {
@@ -55,12 +50,7 @@ impl AppState {
 
     /// Get metadata for a pending approval (without resolving it).
     pub async fn get_pending_approval(&self, id: &str) -> Option<PendingApproval> {
-        self.inner
-            .pending_approvals
-            .lock()
-            .await
-            .get(id)
-            .map(|slot| slot.meta.clone())
+        self.inner.pending_approvals.lock().await.get(id).map(|slot| slot.meta.clone())
     }
 
     /// Clear all pending approvals for a session (e.g. when session ends).
@@ -79,10 +69,7 @@ impl AppState {
             if let Some(mut slot) = approvals.remove(&id)
                 && let Some(tx) = slot.tx.take()
             {
-                let _ = tx.send(ApprovalResult {
-                    approved: false,
-                    auto_approve: false,
-                });
+                let _ = tx.send(ApprovalResult { approved: false, auto_approve: false });
             }
         }
     }
@@ -98,13 +85,11 @@ impl AppState {
         ask_user: PendingAskUser,
     ) -> oneshot::Receiver<AskUserResult> {
         let (tx, rx) = oneshot::channel();
-        self.inner.pending_ask_users.lock().await.insert(
-            id,
-            PendingAskUserSlot {
-                meta: ask_user,
-                tx: Some(tx),
-            },
-        );
+        self.inner
+            .pending_ask_users
+            .lock()
+            .await
+            .insert(id, PendingAskUserSlot { meta: ask_user, tx: Some(tx) });
         rx
     }
 
@@ -128,12 +113,7 @@ impl AppState {
 
     /// Get metadata for a pending ask-user request.
     pub async fn get_pending_ask_user(&self, id: &str) -> Option<PendingAskUser> {
-        self.inner
-            .pending_ask_users
-            .lock()
-            .await
-            .get(id)
-            .map(|slot| slot.meta.clone())
+        self.inner.pending_ask_users.lock().await.get(id).map(|slot| slot.meta.clone())
     }
 
     // --- Plan approval (oneshot-based) ---
@@ -148,13 +128,11 @@ impl AppState {
         plan_approval: PendingPlanApproval,
     ) -> oneshot::Receiver<PlanApprovalResult> {
         let (tx, rx) = oneshot::channel();
-        self.inner.pending_plan_approvals.lock().await.insert(
-            id,
-            PendingPlanApprovalSlot {
-                meta: plan_approval,
-                tx: Some(tx),
-            },
-        );
+        self.inner
+            .pending_plan_approvals
+            .lock()
+            .await
+            .insert(id, PendingPlanApprovalSlot { meta: plan_approval, tx: Some(tx) });
         rx
     }
 
@@ -183,12 +161,7 @@ impl AppState {
 
     /// Get metadata for a pending plan approval.
     pub async fn get_pending_plan_approval(&self, id: &str) -> Option<PendingPlanApproval> {
-        self.inner
-            .pending_plan_approvals
-            .lock()
-            .await
-            .get(id)
-            .map(|slot| slot.meta.clone())
+        self.inner.pending_plan_approvals.lock().await.get(id).map(|slot| slot.meta.clone())
     }
 
     /// Clear all pending plan approvals for a session.

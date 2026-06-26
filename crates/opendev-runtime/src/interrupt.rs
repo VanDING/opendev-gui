@@ -98,11 +98,7 @@ impl InterruptToken {
 
     /// Return an error if cancellation was requested.
     pub fn throw_if_requested(&self) -> Result<(), InterruptedError> {
-        if self.is_requested() {
-            Err(InterruptedError)
-        } else {
-            Ok(())
-        }
+        if self.is_requested() { Err(InterruptedError) } else { Ok(()) }
     }
 
     /// Wait until cancellation is requested.
@@ -157,9 +153,7 @@ impl Default for InterruptToken {
 
 impl std::fmt::Debug for InterruptToken {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("InterruptToken")
-            .field("requested", &self.is_requested())
-            .finish()
+        f.debug_struct("InterruptToken").field("requested", &self.is_requested()).finish()
     }
 }
 

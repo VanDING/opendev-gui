@@ -176,42 +176,27 @@ fn test_format_tool_result_failure() {
 
 #[test]
 fn test_classify_error_permission() {
-    assert_eq!(
-        ReactLoop::classify_error("Permission denied: /etc"),
-        "permission_error"
-    );
+    assert_eq!(ReactLoop::classify_error("Permission denied: /etc"), "permission_error");
 }
 
 #[test]
 fn test_classify_error_edit_mismatch() {
-    assert_eq!(
-        ReactLoop::classify_error("old_content not found in file"),
-        "edit_mismatch"
-    );
+    assert_eq!(ReactLoop::classify_error("old_content not found in file"), "edit_mismatch");
 }
 
 #[test]
 fn test_classify_error_file_not_found() {
-    assert_eq!(
-        ReactLoop::classify_error("No such file or directory"),
-        "file_not_found"
-    );
+    assert_eq!(ReactLoop::classify_error("No such file or directory"), "file_not_found");
 }
 
 #[test]
 fn test_classify_error_syntax() {
-    assert_eq!(
-        ReactLoop::classify_error("SyntaxError: unexpected token"),
-        "syntax_error"
-    );
+    assert_eq!(ReactLoop::classify_error("SyntaxError: unexpected token"), "syntax_error");
 }
 
 #[test]
 fn test_classify_error_rate_limit() {
-    assert_eq!(
-        ReactLoop::classify_error("429 Too Many Requests"),
-        "rate_limit"
-    );
+    assert_eq!(ReactLoop::classify_error("429 Too Many Requests"), "rate_limit");
 }
 
 #[test]
@@ -226,10 +211,7 @@ fn test_classify_error_generic() {
 
 #[test]
 fn test_check_iteration_limit_unlimited() {
-    let rl = ReactLoop::new(ReactLoopConfig {
-        max_iterations: None,
-        ..Default::default()
-    });
+    let rl = ReactLoop::new(ReactLoopConfig { max_iterations: None, ..Default::default() });
     assert!(!rl.check_iteration_limit(1));
     assert!(!rl.check_iteration_limit(1000));
 }
@@ -405,11 +387,8 @@ fn test_iteration_metrics_default() {
 
 #[test]
 fn test_tool_call_metric() {
-    let metric = ToolCallMetric {
-        tool_name: "read_file".to_string(),
-        duration_ms: 42,
-        success: true,
-    };
+    let metric =
+        ToolCallMetric { tool_name: "read_file".to_string(), duration_ms: 42, success: true };
     assert_eq!(metric.tool_name, "read_file");
     assert_eq!(metric.duration_ms, 42);
     assert!(metric.success);
@@ -447,10 +426,7 @@ fn test_metrics_accumulation() {
 #[test]
 fn test_metrics_clear() {
     let rl = make_loop();
-    rl.push_metrics(IterationMetrics {
-        iteration: 1,
-        ..Default::default()
-    });
+    rl.push_metrics(IterationMetrics { iteration: 1, ..Default::default() });
     assert_eq!(rl.iteration_metrics().len(), 1);
 
     rl.clear_metrics();
@@ -487,63 +463,39 @@ fn test_evaluate_permission_empty_rules() {
 #[test]
 fn test_evaluate_permission_blanket_deny() {
     let mut config = ReactLoopConfig::default();
-    config.permission.insert(
-        "run_command".to_string(),
-        PermissionRule::Action(PermissionAction::Deny),
-    );
-    assert_eq!(
-        config.evaluate_permission("run_command", "ls"),
-        Some(PermissionAction::Deny)
-    );
+    config
+        .permission
+        .insert("run_command".to_string(), PermissionRule::Action(PermissionAction::Deny));
+    assert_eq!(config.evaluate_permission("run_command", "ls"), Some(PermissionAction::Deny));
 }
 
 #[test]
 fn test_evaluate_permission_blanket_allow() {
     let mut config = ReactLoopConfig::default();
-    config.permission.insert(
-        "read_file".to_string(),
-        PermissionRule::Action(PermissionAction::Allow),
-    );
-    assert_eq!(
-        config.evaluate_permission("read_file", ""),
-        Some(PermissionAction::Allow)
-    );
+    config
+        .permission
+        .insert("read_file".to_string(), PermissionRule::Action(PermissionAction::Allow));
+    assert_eq!(config.evaluate_permission("read_file", ""), Some(PermissionAction::Allow));
 }
 
 #[test]
 fn test_evaluate_permission_wildcard_tool_pattern() {
     let mut config = ReactLoopConfig::default();
-    config.permission.insert(
-        "*".to_string(),
-        PermissionRule::Action(PermissionAction::Ask),
-    );
-    assert_eq!(
-        config.evaluate_permission("write_file", ""),
-        Some(PermissionAction::Ask)
-    );
+    config.permission.insert("*".to_string(), PermissionRule::Action(PermissionAction::Ask));
+    assert_eq!(config.evaluate_permission("write_file", ""), Some(PermissionAction::Ask));
 }
 
 #[test]
 fn test_evaluate_permission_specific_overrides_wildcard() {
     let mut config = ReactLoopConfig::default();
-    config.permission.insert(
-        "*".to_string(),
-        PermissionRule::Action(PermissionAction::Ask),
-    );
-    config.permission.insert(
-        "read_file".to_string(),
-        PermissionRule::Action(PermissionAction::Allow),
-    );
+    config.permission.insert("*".to_string(), PermissionRule::Action(PermissionAction::Ask));
+    config
+        .permission
+        .insert("read_file".to_string(), PermissionRule::Action(PermissionAction::Allow));
     // Specific "read_file" should override wildcard "*"
-    assert_eq!(
-        config.evaluate_permission("read_file", ""),
-        Some(PermissionAction::Allow)
-    );
+    assert_eq!(config.evaluate_permission("read_file", ""), Some(PermissionAction::Allow));
     // Wildcard still applies to other tools
-    assert_eq!(
-        config.evaluate_permission("write_file", ""),
-        Some(PermissionAction::Ask)
-    );
+    assert_eq!(config.evaluate_permission("write_file", ""), Some(PermissionAction::Ask));
 }
 
 #[test]
@@ -554,32 +506,22 @@ fn test_evaluate_permission_pattern_rules() {
     patterns.insert("rm -rf *".to_string(), PermissionAction::Deny);
 
     let mut config = ReactLoopConfig::default();
-    config.permission.insert(
-        "run_command".to_string(),
-        PermissionRule::Patterns(patterns),
-    );
+    config.permission.insert("run_command".to_string(), PermissionRule::Patterns(patterns));
 
     assert_eq!(
         config.evaluate_permission("run_command", "git status"),
         Some(PermissionAction::Allow)
     );
-    assert_eq!(
-        config.evaluate_permission("run_command", "rm -rf /"),
-        Some(PermissionAction::Deny)
-    );
-    assert_eq!(
-        config.evaluate_permission("run_command", "ls -la"),
-        Some(PermissionAction::Ask)
-    );
+    assert_eq!(config.evaluate_permission("run_command", "rm -rf /"), Some(PermissionAction::Deny));
+    assert_eq!(config.evaluate_permission("run_command", "ls -la"), Some(PermissionAction::Ask));
 }
 
 #[test]
 fn test_evaluate_permission_no_match() {
     let mut config = ReactLoopConfig::default();
-    config.permission.insert(
-        "run_command".to_string(),
-        PermissionRule::Action(PermissionAction::Deny),
-    );
+    config
+        .permission
+        .insert("run_command".to_string(), PermissionRule::Action(PermissionAction::Deny));
     // Different tool should not match
     assert!(config.evaluate_permission("read_file", "").is_none());
 }
@@ -607,15 +549,9 @@ fn test_mcp_tool_needs_approval_gate() {
 #[test]
 fn test_mcp_permission_rule_matches() {
     let mut config = ReactLoopConfig::default();
-    config.permission.insert(
-        "mcp__*".to_string(),
-        PermissionRule::Action(PermissionAction::Ask),
-    );
+    config.permission.insert("mcp__*".to_string(), PermissionRule::Action(PermissionAction::Ask));
     // MCP tool should match the glob
-    assert_eq!(
-        config.evaluate_permission("mcp__sqlite__query", ""),
-        Some(PermissionAction::Ask)
-    );
+    assert_eq!(config.evaluate_permission("mcp__sqlite__query", ""), Some(PermissionAction::Ask));
     // Non-MCP tool should not match
     assert!(config.evaluate_permission("read_file", "").is_none());
 }
@@ -624,23 +560,13 @@ fn test_mcp_permission_rule_matches() {
 fn test_mcp_permission_allow_specific() {
     let mut config = ReactLoopConfig::default();
     // Deny all MCP by default
-    config.permission.insert(
-        "mcp__*".to_string(),
-        PermissionRule::Action(PermissionAction::Deny),
-    );
+    config.permission.insert("mcp__*".to_string(), PermissionRule::Action(PermissionAction::Deny));
     // But allow a specific MCP tool
-    config.permission.insert(
-        "mcp__sqlite__query".to_string(),
-        PermissionRule::Action(PermissionAction::Allow),
-    );
+    config
+        .permission
+        .insert("mcp__sqlite__query".to_string(), PermissionRule::Action(PermissionAction::Allow));
     // Specific rule should win (higher specificity)
-    assert_eq!(
-        config.evaluate_permission("mcp__sqlite__query", ""),
-        Some(PermissionAction::Allow)
-    );
+    assert_eq!(config.evaluate_permission("mcp__sqlite__query", ""), Some(PermissionAction::Allow));
     // Other MCP tools should be denied
-    assert_eq!(
-        config.evaluate_permission("mcp__github__push", ""),
-        Some(PermissionAction::Deny)
-    );
+    assert_eq!(config.evaluate_permission("mcp__github__push", ""), Some(PermissionAction::Deny));
 }

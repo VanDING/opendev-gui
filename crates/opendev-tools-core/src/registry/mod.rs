@@ -91,7 +91,7 @@ impl ToolRegistry {
 
     /// Register an alias mapping an old tool name to a canonical new name.
     pub fn register_alias(&self, old_name: impl Into<String>, new_name: impl Into<String>) {
-        let mut aliases = self.aliases.write().expect("ToolRegistry lock poisoned");
+        let mut aliases = self.aliases.write().unwrap_or_else(|e| e.into_inner());
         aliases.insert(old_name.into(), new_name.into());
     }
 
@@ -104,26 +104,26 @@ impl ToolRegistry {
 
     /// Resolve a name through the alias table. Returns the canonical name.
     pub fn resolve_alias(&self, name: &str) -> Option<String> {
-        let aliases = self.aliases.read().expect("ToolRegistry lock poisoned");
+        let aliases = self.aliases.read().unwrap_or_else(|e| e.into_inner());
         aliases.get(name).cloned()
     }
 
     /// Register a tool. If a tool with the same name exists, it's replaced.
     pub fn register(&self, tool: Arc<dyn BaseTool>) {
         let name = tool.name().to_string();
-        let mut tools = self.tools.write().expect("ToolRegistry lock poisoned");
+        let mut tools = self.tools.write().unwrap_or_else(|e| e.into_inner());
         tools.insert(name, tool);
     }
 
     /// Remove a tool by name and return it, if found.
     pub fn unregister(&self, name: &str) -> Option<Arc<dyn BaseTool>> {
-        let mut tools = self.tools.write().expect("ToolRegistry lock poisoned");
+        let mut tools = self.tools.write().unwrap_or_else(|e| e.into_inner());
         tools.remove(name)
     }
 
     /// Get a tool by exact name.
     pub fn get(&self, name: &str) -> Option<Arc<dyn BaseTool>> {
-        let tools = self.tools.read().expect("ToolRegistry lock poisoned");
+        let tools = self.tools.read().unwrap_or_else(|e| e.into_inner());
         if let Some(t) = tools.get(name) {
             return Some(t.clone());
         }
@@ -135,7 +135,7 @@ impl ToolRegistry {
 
     /// Check if a tool is registered.
     pub fn contains(&self, name: &str) -> bool {
-        let tools = self.tools.read().expect("ToolRegistry lock poisoned");
+        let tools = self.tools.read().unwrap_or_else(|e| e.into_inner());
         let name = name.strip_prefix("functions.").unwrap_or(name);
         if tools.contains_key(name) {
             return true;
@@ -148,7 +148,7 @@ impl ToolRegistry {
 
     /// Get sorted list of all registered tool names.
     pub fn tool_names(&self) -> Vec<String> {
-        let tools = self.tools.read().expect("ToolRegistry lock poisoned");
+        let tools = self.tools.read().unwrap_or_else(|e| e.into_inner());
         let mut names: Vec<String> = tools.keys().cloned().collect();
         names.sort();
         names
@@ -156,56 +156,40 @@ impl ToolRegistry {
 
     /// Number of registered tools.
     pub fn len(&self) -> usize {
-        self.tools.read().expect("ToolRegistry lock poisoned").len()
+        self.tools.read().unwrap_or_else(|e| e.into_inner()).len()
     }
 
     /// Whether no tools are registered.
     pub fn is_empty(&self) -> bool {
-        self.tools
-            .read()
-            .expect("ToolRegistry lock poisoned")
-            .is_empty()
+        self.tools.read().unwrap_or_else(|e| e.into_inner()).is_empty()
     }
 
     /// Add a middleware to the pipeline.
     pub fn add_middleware(&self, mw: Box<dyn ToolMiddleware>) {
-        let mut middleware = self.middleware.write().expect("ToolRegistry lock poisoned");
+        let mut middleware = self.middleware.write().unwrap_or_else(|e| e.into_inner());
         middleware.push(Arc::from(mw));
     }
 
     /// Number of registered middleware.
     pub fn middleware_count(&self) -> usize {
-        self.middleware
-            .read()
-            .expect("ToolRegistry lock poisoned")
-            .len()
+        self.middleware.read().unwrap_or_else(|e| e.into_inner()).len()
     }
 
     /// Set a per-tool timeout override.
     pub fn set_tool_timeout(&self, tool_name: impl Into<String>, config: ToolTimeoutConfig) {
-        let mut timeouts = self
-            .tool_timeouts
-            .write()
-            .expect("ToolRegistry lock poisoned");
+        let mut timeouts = self.tool_timeouts.write().unwrap_or_else(|e| e.into_inner());
         timeouts.insert(tool_name.into(), config);
     }
 
     /// Set multiple per-tool timeouts at once (bulk).
     pub fn set_tool_timeouts(&self, timeouts: HashMap<String, ToolTimeoutConfig>) {
-        let mut current = self
-            .tool_timeouts
-            .write()
-            .expect("ToolRegistry lock poisoned");
+        let mut current = self.tool_timeouts.write().unwrap_or_else(|e| e.into_inner());
         current.extend(timeouts);
     }
 
     /// Get the timeout config for a specific tool, if set.
     pub fn get_tool_timeout(&self, tool_name: &str) -> Option<ToolTimeoutConfig> {
-        self.tool_timeouts
-            .read()
-            .expect("ToolRegistry lock poisoned")
-            .get(tool_name)
-            .cloned()
+        self.tool_timeouts.read().unwrap_or_else(|e| e.into_inner()).get(tool_name).cloned()
     }
 
     /// Clear the dedup cache (call at each turn boundary).
@@ -223,7 +207,7 @@ impl ToolRegistry {
     /// Build a map of tool name → display metadata from all registered tools
     /// that implement `display_meta()`.
     pub fn build_display_map(&self) -> HashMap<String, ToolDisplayMeta> {
-        let tools = self.tools.read().expect("ToolRegistry lock poisoned");
+        let tools = self.tools.read().unwrap_or_else(|e| e.into_inner());
         let mut map = HashMap::new();
         for (name, tool) in tools.iter() {
             if let Some(meta) = tool.display_meta() {
@@ -235,13 +219,13 @@ impl ToolRegistry {
 
     /// Mark a tool as "core" — always included in LLM API calls.
     pub fn mark_as_core(&self, name: &str) {
-        let mut core = self.core_tools.write().expect("ToolRegistry lock poisoned");
+        let mut core = self.core_tools.write().unwrap_or_else(|e| e.into_inner());
         core.insert(name.to_string());
     }
 
     /// Mark multiple tools as core.
     pub fn mark_core_tools(&self, names: &[&str]) {
-        let mut core = self.core_tools.write().expect("ToolRegistry lock poisoned");
+        let mut core = self.core_tools.write().unwrap_or_else(|e| e.into_inner());
         for name in names {
             core.insert((*name).to_string());
         }
@@ -249,27 +233,24 @@ impl ToolRegistry {
 
     /// Check if a tool is marked as core.
     pub fn is_core(&self, name: &str) -> bool {
-        let core = self.core_tools.read().expect("ToolRegistry lock poisoned");
+        let core = self.core_tools.read().unwrap_or_else(|e| e.into_inner());
         core.contains(name)
     }
 
     /// Get the set of core tool names.
     pub fn core_tool_names(&self) -> HashSet<String> {
-        self.core_tools
-            .read()
-            .expect("ToolRegistry lock poisoned")
-            .clone()
+        self.core_tools.read().unwrap_or_else(|e| e.into_inner()).clone()
     }
 
     /// Whether tool deferral is active (any core tools are marked).
     pub fn has_deferred_tools(&self) -> bool {
-        let core = self.core_tools.read().expect("ToolRegistry lock poisoned");
+        let core = self.core_tools.read().unwrap_or_else(|e| e.into_inner());
         !core.is_empty()
     }
 
     /// Get schemas only for the given tool names (core + activated).
     pub fn get_schemas_for(&self, names: &HashSet<String>) -> Vec<serde_json::Value> {
-        let tools = self.tools.read().expect("ToolRegistry lock poisoned");
+        let tools = self.tools.read().unwrap_or_else(|e| e.into_inner());
         tools
             .values()
             .filter(|tool| names.contains(tool.name()))
@@ -288,8 +269,8 @@ impl ToolRegistry {
 
     /// Get compact summaries of deferred (non-core) tools: `(name, description)`.
     pub fn get_deferred_summaries(&self) -> Vec<(String, String)> {
-        let tools = self.tools.read().expect("ToolRegistry lock poisoned");
-        let core = self.core_tools.read().expect("ToolRegistry lock poisoned");
+        let tools = self.tools.read().unwrap_or_else(|e| e.into_inner());
+        let core = self.core_tools.read().unwrap_or_else(|e| e.into_inner());
         tools
             .values()
             .filter(|tool| !core.contains(tool.name()))
@@ -302,7 +283,7 @@ impl ToolRegistry {
     /// Used by `ToolPolicy::resolve_from_registry()` to dynamically derive
     /// groups from `BaseTool::category()` instead of hardcoded lists.
     pub fn build_category_map(&self) -> HashMap<crate::traits::ToolCategory, Vec<String>> {
-        let tools = self.tools.read().expect("ToolRegistry lock poisoned");
+        let tools = self.tools.read().unwrap_or_else(|e| e.into_inner());
         let mut map: HashMap<crate::traits::ToolCategory, Vec<String>> = HashMap::new();
         for (name, tool) in tools.iter() {
             map.entry(tool.category()).or_default().push(name.clone());
@@ -312,7 +293,7 @@ impl ToolRegistry {
 
     /// Get OpenAI-compatible function schemas for all registered tools.
     pub fn get_schemas(&self) -> Vec<serde_json::Value> {
-        let tools = self.tools.read().expect("ToolRegistry lock poisoned");
+        let tools = self.tools.read().unwrap_or_else(|e| e.into_inner());
         tools
             .values()
             .map(|tool| {

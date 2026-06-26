@@ -144,10 +144,7 @@ pub struct ContextRetriever {
 impl ContextRetriever {
     /// Create a new context retriever rooted at the given directory.
     pub fn new(working_dir: &Path) -> Self {
-        Self {
-            working_dir: working_dir.to_path_buf(),
-            extractor: EntityExtractor::new(),
-        }
+        Self { working_dir: working_dir.to_path_buf(), extractor: EntityExtractor::new() }
     }
 
     /// Retrieve context relevant to the user's input.
@@ -174,11 +171,8 @@ impl ContextRetriever {
         }
 
         // Search for functions and classes
-        let search_terms: Vec<&String> = entities
-            .functions
-            .iter()
-            .chain(entities.classes.iter())
-            .collect();
+        let search_terms: Vec<&String> =
+            entities.functions.iter().chain(entities.classes.iter()).collect();
 
         for term in search_terms {
             let matches = self.grep_pattern(term, 5);
@@ -198,14 +192,12 @@ impl ContextRetriever {
         if entities.actions.contains(&"fix".to_string())
             || entities.actions.contains(&"debug".to_string())
         {
-            ctx.suggestions
-                .push("Consider checking test files and error logs".to_string());
+            ctx.suggestions.push("Consider checking test files and error logs".to_string());
         }
         if entities.actions.contains(&"implement".to_string())
             || entities.actions.contains(&"create".to_string())
         {
-            ctx.suggestions
-                .push("Consider checking similar implementations".to_string());
+            ctx.suggestions.push("Consider checking similar implementations".to_string());
         }
 
         ctx.files_found.truncate(max_files);
@@ -230,10 +222,7 @@ impl ContextRetriever {
     /// Search for a pattern using `rg` (ripgrep), falling back to `grep`.
     pub fn grep_pattern(&self, pattern: &str, limit: usize) -> Vec<String> {
         // Try ripgrep first
-        let result = Command::new("rg")
-            .args(["-l", pattern])
-            .arg(&self.working_dir)
-            .output();
+        let result = Command::new("rg").args(["-l", pattern]).arg(&self.working_dir).output();
 
         let output = match result {
             Ok(output) if output.status.success() => output,

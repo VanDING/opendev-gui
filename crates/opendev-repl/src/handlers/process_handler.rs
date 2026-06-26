@@ -52,14 +52,8 @@ pub struct ProcessHandler {
 impl ProcessHandler {
     /// Create a new process handler.
     pub fn new(approval_manager: Option<ApprovalRulesManager>) -> Self {
-        let server_re = SERVER_PATTERNS
-            .iter()
-            .filter_map(|p| Regex::new(p).ok())
-            .collect();
-        Self {
-            approval_manager,
-            server_re,
-        }
+        let server_re = SERVER_PATTERNS.iter().filter_map(|p| Regex::new(p).ok()).collect();
+        Self { approval_manager, server_re }
     }
 
     /// Check if a command looks like a server/long-running process.
@@ -116,10 +110,7 @@ impl ToolHandler for ProcessHandler {
         }
 
         // Auto-promote server commands to background.
-        let background = args
-            .get("background")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
+        let background = args.get("background").and_then(|v| v.as_bool()).unwrap_or(false);
         if !background && self.is_server_command(command) {
             debug!(command, "Auto-promoting server command to background");
             let mut new_args = args.clone();
@@ -138,10 +129,7 @@ impl ToolHandler for ProcessHandler {
         error: Option<&str>,
         success: bool,
     ) -> HandlerResult {
-        let is_background = args
-            .get("background")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
+        let is_background = args.get("background").and_then(|v| v.as_bool()).unwrap_or(false);
 
         let truncated_output = output.map(Self::truncate_output);
 

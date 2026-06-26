@@ -21,10 +21,7 @@ use opendev_mcp::{McpError, McpManager, McpServerConfig, TransportType};
 fn jsonrpc_request_serialization() {
     let mut params = HashMap::new();
     params.insert("name".to_string(), serde_json::json!("greet"));
-    params.insert(
-        "arguments".to_string(),
-        serde_json::json!({"name": "world"}),
-    );
+    params.insert("arguments".to_string(), serde_json::json!({"name": "world"}));
 
     let req = JsonRpcRequest {
         jsonrpc: "2.0".to_string(),
@@ -140,17 +137,13 @@ fn mcp_tool_roundtrip() {
 /// McpContent text and image variants serialize with correct type tags.
 #[test]
 fn mcp_content_type_tags() {
-    let text = McpContent::Text {
-        text: "Hello world".to_string(),
-    };
+    let text = McpContent::Text { text: "Hello world".to_string() };
     let json = serde_json::to_string(&text).unwrap();
     assert!(json.contains(r#""type":"text""#));
     assert!(json.contains("Hello world"));
 
-    let image = McpContent::Image {
-        data: "aGVsbG8=".to_string(),
-        mime_type: "image/png".to_string(),
-    };
+    let image =
+        McpContent::Image { data: "aGVsbG8=".to_string(), mime_type: "image/png".to_string() };
     let json = serde_json::to_string(&image).unwrap();
     assert!(json.contains(r#""type":"image""#));
     assert!(json.contains("image/png"));
@@ -160,18 +153,14 @@ fn mcp_content_type_tags() {
 #[test]
 fn mcp_tool_result_success_and_error() {
     let success = McpToolResult {
-        content: vec![McpContent::Text {
-            text: "result data".to_string(),
-        }],
+        content: vec![McpContent::Text { text: "result data".to_string() }],
         is_error: false,
     };
     assert!(!success.is_error);
     assert_eq!(success.content.len(), 1);
 
     let error = McpToolResult {
-        content: vec![McpContent::Text {
-            text: "Something went wrong".to_string(),
-        }],
+        content: vec![McpContent::Text { text: "Something went wrong".to_string() }],
         is_error: true,
     };
     assert!(error.is_error);
@@ -217,11 +206,7 @@ async fn connect_nonexistent_server_returns_error() {
     manager
         .add_server(
             "other".to_string(),
-            McpServerConfig {
-                command: "echo".to_string(),
-                args: vec![],
-                ..Default::default()
-            },
+            McpServerConfig { command: "echo".to_string(), args: vec![], ..Default::default() },
         )
         .await
         .unwrap();
@@ -282,9 +267,7 @@ async fn is_connected_false_for_unknown() {
 #[tokio::test]
 async fn full_lifecycle_mock_server_initialize_discover_call_disconnect() {
     // Check if python3 is available
-    let python_check = std::process::Command::new("python3")
-        .arg("--version")
-        .output();
+    let python_check = std::process::Command::new("python3").arg("--version").output();
     if python_check.is_err() || !python_check.unwrap().status.success() {
         // Skip test if python3 is not available
         return;
@@ -424,18 +407,14 @@ while True:
     assert_eq!(add_schema.name, "mock__add");
 
     // 3. Call the echo tool
-    let result = manager
-        .call_tool("mock", "echo", serde_json::json!({"message": "hello"}))
-        .await
-        .unwrap();
+    let result =
+        manager.call_tool("mock", "echo", serde_json::json!({"message": "hello"})).await.unwrap();
     assert!(!result.is_error);
     assert_eq!(result.content.len(), 1);
 
     // 4. Call the add tool
-    let result = manager
-        .call_tool("mock", "add", serde_json::json!({"a": 3, "b": 7}))
-        .await
-        .unwrap();
+    let result =
+        manager.call_tool("mock", "add", serde_json::json!({"a": 3, "b": 7})).await.unwrap();
     assert!(!result.is_error);
 
     // 5. List servers
@@ -455,8 +434,6 @@ while True:
 #[tokio::test]
 async fn call_tool_on_disconnected_server_errors() {
     let manager = McpManager::new(None);
-    let result = manager
-        .call_tool("nonexistent", "tool", serde_json::json!({}))
-        .await;
+    let result = manager.call_tool("nonexistent", "tool", serde_json::json!({})).await;
     assert!(matches!(result, Err(McpError::ServerNotFound(_))));
 }

@@ -43,10 +43,7 @@ pub struct TruncateResult {
 
 /// Get the directory for storing truncated tool output.
 pub fn output_dir() -> PathBuf {
-    dirs::home_dir()
-        .unwrap_or_else(|| PathBuf::from("/tmp"))
-        .join(".opendev")
-        .join("tool-output")
+    dirs::home_dir().unwrap_or_else(|| PathBuf::from("/tmp")).join(".opendev").join("tool-output")
 }
 
 /// Truncate tool output if it exceeds size limits.
@@ -67,11 +64,7 @@ pub fn truncate_output(
 
     // No truncation needed.
     if lines.len() <= max_lines && total_bytes <= max_bytes {
-        return TruncateResult {
-            content: text.to_string(),
-            truncated: false,
-            output_path: None,
-        };
+        return TruncateResult { content: text.to_string(), truncated: false, output_path: None };
     }
 
     // Collect lines within limits.
@@ -112,11 +105,7 @@ pub fn truncate_output(
         }
     }
 
-    let removed = if hit_bytes {
-        total_bytes - bytes
-    } else {
-        lines.len() - kept.len()
-    };
+    let removed = if hit_bytes { total_bytes - bytes } else { lines.len() - kept.len() };
     let unit = if hit_bytes { "bytes" } else { "lines" };
     let preview = kept.join("\n");
 
@@ -149,11 +138,7 @@ pub fn truncate_output(
         }
     };
 
-    TruncateResult {
-        content,
-        truncated: true,
-        output_path,
-    }
+    TruncateResult { content, truncated: true, output_path }
 }
 
 /// Save full output to a uniquely-named file in the overflow directory.
@@ -175,14 +160,8 @@ fn save_overflow(dir: &Path, text: &str) -> std::io::Result<PathBuf> {
         let head_size = MAX_OVERFLOW_BYTES * 3 / 4;
         let tail_size = MAX_OVERFLOW_BYTES - head_size;
         let head: String = text.chars().take(head_size).collect();
-        let tail: String = text
-            .chars()
-            .rev()
-            .take(tail_size)
-            .collect::<Vec<_>>()
-            .into_iter()
-            .rev()
-            .collect();
+        let tail: String =
+            text.chars().rev().take(tail_size).collect::<Vec<_>>().into_iter().rev().collect();
         let omitted = text.len() - head_size - tail_size;
         format!("{head}\n\n[... {omitted} bytes omitted from overflow file ...]\n\n{tail}")
     } else {

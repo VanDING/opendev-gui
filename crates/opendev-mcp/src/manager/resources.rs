@@ -86,10 +86,7 @@ impl McpManager {
             .ok_or_else(|| McpError::ServerNotFound(server_name.to_string()))?;
 
         let mut params = HashMap::new();
-        params.insert(
-            "name".to_string(),
-            serde_json::Value::String(prompt_name.to_string()),
-        );
+        params.insert("name".to_string(), serde_json::Value::String(prompt_name.to_string()));
         if let Some(args) = arguments {
             params.insert("arguments".to_string(), serde_json::to_value(args).unwrap());
         }
@@ -104,10 +101,7 @@ impl McpManager {
         let response = conn.transport.send_request(&request).await?;
 
         if let Some(error) = response.error {
-            return Err(McpError::Protocol(format!(
-                "prompts/get failed: {}",
-                error.message
-            )));
+            return Err(McpError::Protocol(format!("prompts/get failed: {}", error.message)));
         }
 
         let result = response
@@ -171,10 +165,7 @@ impl McpManager {
             .ok_or_else(|| McpError::ServerNotFound(server_name.to_string()))?;
 
         let mut params = HashMap::new();
-        params.insert(
-            "uri".to_string(),
-            serde_json::Value::String(resource_uri.to_string()),
-        );
+        params.insert("uri".to_string(), serde_json::Value::String(resource_uri.to_string()));
 
         let request = JsonRpcRequest {
             jsonrpc: "2.0".to_string(),
@@ -186,10 +177,7 @@ impl McpManager {
         let response = conn.transport.send_request(&request).await?;
 
         if let Some(error) = response.error {
-            return Err(McpError::Protocol(format!(
-                "resources/read failed: {}",
-                error.message
-            )));
+            return Err(McpError::Protocol(format!("resources/read failed: {}", error.message)));
         }
 
         let result = response
@@ -206,9 +194,7 @@ impl McpManager {
                         // MCP resources return {uri, text?, blob?, mimeType?}
                         let text = v.get("text").and_then(|t| t.as_str());
                         if let Some(text) = text {
-                            Some(McpContent::Text {
-                                text: text.to_string(),
-                            })
+                            Some(McpContent::Text { text: text.to_string() })
                         } else {
                             let blob = v.get("blob").and_then(|b| b.as_str());
                             let mime = v

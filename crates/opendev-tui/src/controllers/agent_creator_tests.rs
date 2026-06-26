@@ -21,10 +21,7 @@ fn test_set_fields() {
     assert_eq!(ctrl.name(), "my-agent");
     assert_eq!(ctrl.description(), "A helpful agent");
     assert_eq!(ctrl.model(), Some("gpt-4"));
-    assert_eq!(
-        ctrl.instructions(),
-        "You are a coding assistant.\nBe concise."
-    );
+    assert_eq!(ctrl.instructions(), "You are a coding assistant.\nBe concise.");
 }
 
 #[test]
@@ -81,10 +78,7 @@ fn test_validate_missing_description() {
     let mut ctrl = AgentCreatorController::new();
     ctrl.set_name("agent");
     let err = ctrl.validate().unwrap_err();
-    assert!(
-        err.contains("description"),
-        "Error should mention description: {err}"
-    );
+    assert!(err.contains("description"), "Error should mention description: {err}");
 }
 
 #[test]
@@ -93,10 +87,7 @@ fn test_validate_missing_instructions() {
     ctrl.set_name("agent");
     ctrl.set_description("desc");
     let err = ctrl.validate().unwrap_err();
-    assert!(
-        err.contains("instructions"),
-        "Error should mention instructions: {err}"
-    );
+    assert!(err.contains("instructions"), "Error should mention instructions: {err}");
 }
 
 #[test]

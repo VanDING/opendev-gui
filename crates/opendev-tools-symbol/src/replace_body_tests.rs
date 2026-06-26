@@ -19,11 +19,7 @@ fn test_find_body_start_python_simple() {
 
 #[test]
 fn test_find_body_start_python_with_docstring() {
-    let lines = vec![
-        "def my_func():",
-        "    \"\"\"A docstring.\"\"\"",
-        "    return 42",
-    ];
+    let lines = vec!["def my_func():", "    \"\"\"A docstring.\"\"\"", "    return 42"];
     let result = find_body_start(&lines, 0, 0, LangCategory::Python);
     assert!(result.is_some());
     let (line, _) = result.unwrap();

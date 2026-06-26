@@ -12,8 +12,5 @@ fn test_app_state_default() {
 #[test]
 fn test_dirty_flag_default() {
     let state = AppState::default();
-    assert!(
-        state.dirty,
-        "AppState should start dirty for initial render"
-    );
+    assert!(state.dirty, "AppState should start dirty for initial render");
 }

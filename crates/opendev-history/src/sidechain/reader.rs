@@ -78,10 +78,7 @@ impl SidechainReader {
 
         for entry in entries {
             match entry.entry {
-                EntryKind::AssistantMsg {
-                    ref content,
-                    ref tool_calls,
-                } => {
+                EntryKind::AssistantMsg { ref content, ref tool_calls } => {
                     // Skip whitespace-only assistant messages
                     if content.trim().is_empty() && tool_calls.is_none() {
                         continue;
@@ -103,12 +100,7 @@ impl SidechainReader {
                     }
                     messages.push(msg);
                 }
-                EntryKind::ToolResult {
-                    ref call_id,
-                    ref name,
-                    ref output,
-                    ok,
-                } => {
+                EntryKind::ToolResult { ref call_id, ref name, ref output, ok } => {
                     // Remove from pending (matched)
                     pending_tool_call_ids.retain(|id| id != call_id);
 
@@ -160,8 +152,6 @@ impl SidechainReader {
 
 impl std::fmt::Debug for SidechainReader {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SidechainReader")
-            .field("path", &self.path)
-            .finish()
+        f.debug_struct("SidechainReader").field("path", &self.path).finish()
     }
 }

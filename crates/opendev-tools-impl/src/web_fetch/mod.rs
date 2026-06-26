@@ -6,6 +6,7 @@
 mod html_converter;
 
 use std::collections::HashMap;
+use std::net::{IpAddr, ToSocketAddrs};
 
 use opendev_tools_core::{BaseTool, ToolContext, ToolResult};
 
@@ -19,6 +20,43 @@ const MAX_TIMEOUT_SECS: u64 = 120;
 
 /// Default timeout (30 seconds).
 const DEFAULT_TIMEOUT_SECS: u64 = 30;
+
+/// Check whether a hostname resolves to a private / internal IP address.
+///
+/// Blocks loopback (127.0.0.0/8, ::1), private (10.0.0.0/8, 172.16.0.0/12,
+/// 192.168.0.0/16, fc00::/7), link-local (169.254.0.0/16, fe80::/10),
+/// multicast, and unspecified addresses.
+///
+/// If the host is a raw IP literal it is checked directly (zero cost).
+/// Otherwise DNS resolution is attempted; if resolution fails we fail
+/// closed (treat as private).
+fn is_private_url(host: &str) -> bool {
+    // Fast path: raw IP literal — no DNS needed.
+    if let Ok(ip) = host.parse::<IpAddr>() {
+        return ip.is_loopback()
+            || ip.is_unspecified()
+            || ip.is_multicast()
+            || match ip {
+                IpAddr::V4(v4) => v4.is_private() || v4.is_link_local(),
+                IpAddr::V6(v6) => v6.is_loopback(),
+            };
+    }
+
+    // Slow path: DNS resolution guard.
+    if let Ok(mut addrs) = (host, 0u16).to_socket_addrs() {
+        return addrs.any(|addr| {
+            let ip = addr.ip();
+            ip.is_loopback()
+                || match ip {
+                    IpAddr::V4(v4) => v4.is_private() || v4.is_link_local(),
+                    IpAddr::V6(v6) => v6.is_loopback(),
+                }
+        });
+    }
+
+    // Fail closed: cannot resolve → treat as potentially private.
+    true
+}
 
 /// Tool for fetching web page content.
 #[derive(Debug)]
@@ -99,6 +137,19 @@ impl BaseTool for WebFetchTool {
             return ToolResult::fail("URL must start with http:// or https://");
         }
 
+        // SSRF protection — reject internal / private hosts.
+        {
+            let host = url
+                .strip_prefix("https://")
+                .or_else(|| url.strip_prefix("http://"))
+                .and_then(|rest| rest.split('/').next())
+                .and_then(|h| h.split(':').next()) // strip port
+                .unwrap_or("");
+            if host.is_empty() || is_private_url(host) {
+                return ToolResult::fail("URL resolves to a private or internal address");
+            }
+        }
+
         // Parse timeout (capped at MAX_TIMEOUT_SECS).
         let timeout_secs = args
             .get("timeout")
@@ -107,10 +158,7 @@ impl BaseTool for WebFetchTool {
             .unwrap_or(DEFAULT_TIMEOUT_SECS);
 
         // Parse format parameter.
-        let format = args
-            .get("format")
-            .and_then(|v| v.as_str())
-            .unwrap_or("markdown");
+        let format = args.get("format").and_then(|v| v.as_str()).unwrap_or("markdown");
 
         let client = reqwest::Client::builder()
             .connect_timeout(std::time::Duration::from_secs(10))
@@ -234,10 +282,7 @@ impl BaseTool for WebFetchTool {
         metadata.insert("status".into(), serde_json::json!(status));
         metadata.insert("content_type".into(), serde_json::json!(content_type));
         metadata.insert("truncated".into(), serde_json::json!(truncated));
-        metadata.insert(
-            "extracted_markdown".into(),
-            serde_json::json!(extract_markdown),
-        );
+        metadata.insert("extracted_markdown".into(), serde_json::json!(extract_markdown));
 
         if status >= 400 {
             return ToolResult {

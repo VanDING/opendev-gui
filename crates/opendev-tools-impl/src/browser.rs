@@ -100,10 +100,7 @@ impl BaseTool for BrowserTool {
 
         let target = args.get("target").and_then(|v| v.as_str());
         let value = args.get("value").and_then(|v| v.as_str());
-        let _timeout = args
-            .get("timeout")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(DEFAULT_TIMEOUT_MS);
+        let _timeout = args.get("timeout").and_then(|v| v.as_u64()).unwrap_or(DEFAULT_TIMEOUT_MS);
 
         match action {
             "navigate" => self.navigate(target, ctx).await,
@@ -217,11 +214,8 @@ impl BrowserTool {
         let text = extract_visible_text(&body);
 
         let truncated = text.len() > MAX_TEXT_LENGTH;
-        let text = if truncated {
-            format!("{}...\n[truncated]", &text[..MAX_TEXT_LENGTH])
-        } else {
-            text
-        };
+        let text =
+            if truncated { format!("{}...\n[truncated]", &text[..MAX_TEXT_LENGTH]) } else { text };
 
         ToolResult::ok(text)
     }
@@ -281,10 +275,8 @@ impl BrowserTool {
         match write_result {
             Ok(_) => {
                 let mut metadata = HashMap::new();
-                metadata.insert(
-                    "screenshot_path".into(),
-                    serde_json::json!(path.to_string_lossy()),
-                );
+                metadata
+                    .insert("screenshot_path".into(), serde_json::json!(path.to_string_lossy()));
                 metadata.insert("format".into(), serde_json::json!("html"));
                 metadata.insert(
                     "note".into(),
@@ -441,11 +433,7 @@ fn extract_title(html: &str) -> Option<String> {
     let after_tag = &rest[tag_end + 1..];
     let end = after_tag.find('<')?;
     let title = after_tag[..end].trim().to_string();
-    if title.is_empty() {
-        None
-    } else {
-        Some(html_decode(&title))
-    }
+    if title.is_empty() { None } else { Some(html_decode(&title)) }
 }
 
 /// Extract visible text from HTML, stripping tags, scripts, and styles.
@@ -487,11 +475,7 @@ fn extract_visible_text(html: &str) -> String {
 
     // Decode HTML entities and collapse whitespace
     let decoded = html_decode(&result);
-    let lines: Vec<&str> = decoded
-        .lines()
-        .map(|l| l.trim())
-        .filter(|l| !l.is_empty())
-        .collect();
+    let lines: Vec<&str> = decoded.lines().map(|l| l.trim()).filter(|l| !l.is_empty()).collect();
     lines.join("\n")
 }
 

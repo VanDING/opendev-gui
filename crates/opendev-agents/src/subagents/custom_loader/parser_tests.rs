@@ -45,14 +45,8 @@ fn test_parse_permission_blanket_action() {
     let yaml = "permission:\n  bash: deny\n  edit: allow";
     let meta = parse_simple_yaml(yaml);
     assert_eq!(meta.permission.len(), 2);
-    assert!(matches!(
-        meta.permission["bash"],
-        PermissionRule::Action(PermissionAction::Deny)
-    ));
-    assert!(matches!(
-        meta.permission["edit"],
-        PermissionRule::Action(PermissionAction::Allow)
-    ));
+    assert!(matches!(meta.permission["bash"], PermissionRule::Action(PermissionAction::Deny)));
+    assert!(matches!(meta.permission["edit"], PermissionRule::Action(PermissionAction::Allow)));
 }
 
 #[test]
@@ -75,12 +69,6 @@ fn test_parse_permission_mixed() {
     let yaml = "permission:\n  edit: deny\n  bash:\n    \"*\": ask\n    \"git *\": allow";
     let meta = parse_simple_yaml(yaml);
     assert_eq!(meta.permission.len(), 2);
-    assert!(matches!(
-        meta.permission["edit"],
-        PermissionRule::Action(PermissionAction::Deny)
-    ));
-    assert!(matches!(
-        meta.permission["bash"],
-        PermissionRule::Patterns(_)
-    ));
+    assert!(matches!(meta.permission["edit"], PermissionRule::Action(PermissionAction::Deny)));
+    assert!(matches!(meta.permission["bash"], PermissionRule::Patterns(_)));
 }

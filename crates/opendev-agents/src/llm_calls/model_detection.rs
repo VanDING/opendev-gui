@@ -15,17 +15,13 @@ const NO_TEMPERATURE_PREFIXES: &[&str] = &["o1", "o3", "o4", "codex", "gpt-5"];
 /// Check if a model is a reasoning model (o1, o3, o4, codex families).
 pub fn is_reasoning_model(model: &str) -> bool {
     let lower = model.to_lowercase();
-    NO_TEMPERATURE_PREFIXES
-        .iter()
-        .any(|prefix| lower.starts_with(prefix))
+    NO_TEMPERATURE_PREFIXES.iter().any(|prefix| lower.starts_with(prefix))
 }
 
 /// Check if a model uses `max_completion_tokens` instead of `max_tokens`.
 pub fn uses_max_completion_tokens(model: &str) -> bool {
     let lower = model.to_lowercase();
-    MAX_COMPLETION_TOKENS_PREFIXES
-        .iter()
-        .any(|prefix| lower.starts_with(prefix))
+    MAX_COMPLETION_TOKENS_PREFIXES.iter().any(|prefix| lower.starts_with(prefix))
 }
 
 /// Check if a model supports the `temperature` parameter.

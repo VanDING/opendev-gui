@@ -87,15 +87,7 @@ impl DiagnosticsDebouncer {
             debounce_duration,
         ));
 
-        (
-            Self {
-                pending,
-                input_tx,
-                task_handle: Some(handle),
-                debounce_duration,
-            },
-            output_rx,
-        )
+        (Self { pending, input_tx, task_handle: Some(handle), debounce_duration }, output_rx)
     }
 
     /// Push a diagnostic update into the debouncer.
@@ -182,10 +174,7 @@ impl DiagnosticsDebouncer {
                 let mut p = pending.lock().await;
                 let batches: Vec<_> = p
                     .drain()
-                    .map(|(file_path, diagnostics)| DiagnosticsBatch {
-                        file_path,
-                        diagnostics,
-                    })
+                    .map(|(file_path, diagnostics)| DiagnosticsBatch { file_path, diagnostics })
                     .collect();
                 batches
             };

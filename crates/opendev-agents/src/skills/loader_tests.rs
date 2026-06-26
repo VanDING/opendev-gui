@@ -299,11 +299,8 @@ fn test_companion_files_discovered_for_directory_skill() {
     let skill = loader.load_skill("testing").unwrap();
     assert_eq!(skill.companion_files.len(), 2);
 
-    let relative_paths: Vec<&str> = skill
-        .companion_files
-        .iter()
-        .map(|f| f.relative_path.as_str())
-        .collect();
+    let relative_paths: Vec<&str> =
+        skill.companion_files.iter().map(|f| f.relative_path.as_str()).collect();
     assert!(relative_paths.contains(&"helpers.sh"));
     assert!(relative_paths.contains(&"fixtures.json"));
 }
@@ -343,11 +340,7 @@ fn test_companion_files_max_limit() {
 
     // Create 15 companion files — should be capped at MAX_COMPANION_FILES (10).
     for i in 0..15 {
-        fs::write(
-            sub_dir.join(format!("file_{i}.txt")),
-            format!("content {i}"),
-        )
-        .unwrap();
+        fs::write(sub_dir.join(format!("file_{i}.txt")), format!("content {i}")).unwrap();
     }
 
     let mut loader = SkillLoader::new(vec![skill_dir]);
@@ -379,11 +372,8 @@ fn test_companion_files_nested_subdirs() {
     let skill = loader.load_skill("complex").unwrap();
     assert_eq!(skill.companion_files.len(), 2);
 
-    let relative_paths: Vec<&str> = skill
-        .companion_files
-        .iter()
-        .map(|f| f.relative_path.as_str())
-        .collect();
+    let relative_paths: Vec<&str> =
+        skill.companion_files.iter().map(|f| f.relative_path.as_str()).collect();
     assert!(relative_paths.contains(&"README.md"));
     assert!(
         relative_paths.contains(&"scripts/run.sh")
@@ -553,11 +543,8 @@ fn test_load_skill_reloads_after_file_change() {
     let skills_dir = dir.path().join("skills");
     std::fs::create_dir(&skills_dir).unwrap();
     let file = skills_dir.join("hot-reload.md");
-    std::fs::write(
-        &file,
-        "---\nname: hot-reload\ndescription: Hot reload test\n---\n\nVersion 1",
-    )
-    .unwrap();
+    std::fs::write(&file, "---\nname: hot-reload\ndescription: Hot reload test\n---\n\nVersion 1")
+        .unwrap();
 
     let mut loader = SkillLoader::new(vec![skills_dir]);
 
@@ -567,11 +554,8 @@ fn test_load_skill_reloads_after_file_change() {
 
     // Modify the file (with a brief sleep to ensure mtime changes).
     std::thread::sleep(std::time::Duration::from_millis(50));
-    std::fs::write(
-        &file,
-        "---\nname: hot-reload\ndescription: Hot reload test\n---\n\nVersion 2",
-    )
-    .unwrap();
+    std::fs::write(&file, "---\nname: hot-reload\ndescription: Hot reload test\n---\n\nVersion 2")
+        .unwrap();
 
     // Second load should pick up the change.
     let skill2 = loader.load_skill("hot-reload").unwrap();

@@ -25,11 +25,7 @@ impl TelegramApi {
             .build()
             .expect("failed to build reqwest client");
         let base_url = format!("https://api.telegram.org/bot{}", token);
-        Self {
-            token,
-            client,
-            base_url,
-        }
+        Self { token, client, base_url }
     }
 
     /// Validate the bot token and retrieve bot info.
@@ -41,10 +37,7 @@ impl TelegramApi {
             resp.result
                 .ok_or_else(|| TelegramError::Api("getMe returned ok but no result".to_string()))
         } else {
-            Err(TelegramError::Api(
-                resp.description
-                    .unwrap_or_else(|| "unknown error".to_string()),
-            ))
+            Err(TelegramError::Api(resp.description.unwrap_or_else(|| "unknown error".to_string())))
         }
     }
 
@@ -57,34 +50,22 @@ impl TelegramApi {
         if resp.ok {
             Ok(resp.result.unwrap_or_default())
         } else {
-            Err(TelegramError::Api(
-                resp.description
-                    .unwrap_or_else(|| "unknown error".to_string()),
-            ))
+            Err(TelegramError::Api(resp.description.unwrap_or_else(|| "unknown error".to_string())))
         }
     }
 
     /// Send a text message.
     pub async fn send_message(&self, req: SendMessageRequest) -> Result<Message, TelegramError> {
         let url = format!("{}/sendMessage", self.base_url);
-        let resp: TelegramResponse<Message> = self
-            .client
-            .post(&url)
-            .json(&req)
-            .send()
-            .await?
-            .json()
-            .await?;
+        let resp: TelegramResponse<Message> =
+            self.client.post(&url).json(&req).send().await?.json().await?;
 
         if resp.ok {
             resp.result.ok_or_else(|| {
                 TelegramError::Api("sendMessage returned ok but no result".to_string())
             })
         } else {
-            Err(TelegramError::Api(
-                resp.description
-                    .unwrap_or_else(|| "unknown error".to_string()),
-            ))
+            Err(TelegramError::Api(resp.description.unwrap_or_else(|| "unknown error".to_string())))
         }
     }
 
@@ -99,22 +80,13 @@ impl TelegramApi {
             "chat_id": chat_id,
             "action": action,
         });
-        let resp: TelegramResponse<bool> = self
-            .client
-            .post(&url)
-            .json(&body)
-            .send()
-            .await?
-            .json()
-            .await?;
+        let resp: TelegramResponse<bool> =
+            self.client.post(&url).json(&body).send().await?.json().await?;
 
         if resp.ok {
             Ok(resp.result.unwrap_or(true))
         } else {
-            Err(TelegramError::Api(
-                resp.description
-                    .unwrap_or_else(|| "unknown error".to_string()),
-            ))
+            Err(TelegramError::Api(resp.description.unwrap_or_else(|| "unknown error".to_string())))
         }
     }
 
@@ -124,24 +96,15 @@ impl TelegramApi {
         req: EditMessageTextRequest,
     ) -> Result<Message, TelegramError> {
         let url = format!("{}/editMessageText", self.base_url);
-        let resp: TelegramResponse<Message> = self
-            .client
-            .post(&url)
-            .json(&req)
-            .send()
-            .await?
-            .json()
-            .await?;
+        let resp: TelegramResponse<Message> =
+            self.client.post(&url).json(&req).send().await?.json().await?;
 
         if resp.ok {
             resp.result.ok_or_else(|| {
                 TelegramError::Api("editMessageText returned ok but no result".to_string())
             })
         } else {
-            Err(TelegramError::Api(
-                resp.description
-                    .unwrap_or_else(|| "unknown error".to_string()),
-            ))
+            Err(TelegramError::Api(resp.description.unwrap_or_else(|| "unknown error".to_string())))
         }
     }
 
@@ -151,24 +114,15 @@ impl TelegramApi {
         req: SendMessageWithMarkupRequest,
     ) -> Result<Message, TelegramError> {
         let url = format!("{}/sendMessage", self.base_url);
-        let resp: TelegramResponse<Message> = self
-            .client
-            .post(&url)
-            .json(&req)
-            .send()
-            .await?
-            .json()
-            .await?;
+        let resp: TelegramResponse<Message> =
+            self.client.post(&url).json(&req).send().await?.json().await?;
 
         if resp.ok {
             resp.result.ok_or_else(|| {
                 TelegramError::Api("sendMessage returned ok but no result".to_string())
             })
         } else {
-            Err(TelegramError::Api(
-                resp.description
-                    .unwrap_or_else(|| "unknown error".to_string()),
-            ))
+            Err(TelegramError::Api(resp.description.unwrap_or_else(|| "unknown error".to_string())))
         }
     }
 
@@ -185,22 +139,13 @@ impl TelegramApi {
         if let Some(t) = text {
             body["text"] = serde_json::json!(t);
         }
-        let resp: TelegramResponse<bool> = self
-            .client
-            .post(&url)
-            .json(&body)
-            .send()
-            .await?
-            .json()
-            .await?;
+        let resp: TelegramResponse<bool> =
+            self.client.post(&url).json(&body).send().await?.json().await?;
 
         if resp.ok {
             Ok(resp.result.unwrap_or(true))
         } else {
-            Err(TelegramError::Api(
-                resp.description
-                    .unwrap_or_else(|| "unknown error".to_string()),
-            ))
+            Err(TelegramError::Api(resp.description.unwrap_or_else(|| "unknown error".to_string())))
         }
     }
 
@@ -217,22 +162,13 @@ impl TelegramApi {
             })
             .collect();
         let body = serde_json::json!({ "commands": cmds });
-        let resp: TelegramResponse<bool> = self
-            .client
-            .post(&url)
-            .json(&body)
-            .send()
-            .await?
-            .json()
-            .await?;
+        let resp: TelegramResponse<bool> =
+            self.client.post(&url).json(&body).send().await?.json().await?;
 
         if resp.ok {
             Ok(resp.result.unwrap_or(true))
         } else {
-            Err(TelegramError::Api(
-                resp.description
-                    .unwrap_or_else(|| "unknown error".to_string()),
-            ))
+            Err(TelegramError::Api(resp.description.unwrap_or_else(|| "unknown error".to_string())))
         }
     }
 

@@ -1,10 +1,7 @@
 use super::*;
 
 fn make_args(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.clone()))
-        .collect()
+    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
 }
 
 #[test]
@@ -35,10 +32,8 @@ async fn test_web_screenshot_missing_url() {
 async fn test_web_screenshot_list() {
     let tool = WebScreenshotTool;
     let ctx = ToolContext::new("/tmp");
-    let args = make_args(&[
-        ("action", serde_json::json!("list")),
-        ("url", serde_json::json!("unused")),
-    ]);
+    let args =
+        make_args(&[("action", serde_json::json!("list")), ("url", serde_json::json!("unused"))]);
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
 }
@@ -47,10 +42,8 @@ async fn test_web_screenshot_list() {
 async fn test_web_screenshot_clear() {
     let tool = WebScreenshotTool;
     let ctx = ToolContext::new("/tmp");
-    let args = make_args(&[
-        ("action", serde_json::json!("clear")),
-        ("url", serde_json::json!("unused")),
-    ]);
+    let args =
+        make_args(&[("action", serde_json::json!("clear")), ("url", serde_json::json!("unused"))]);
     let result = tool.execute(args, &ctx).await;
     assert!(result.success);
 }

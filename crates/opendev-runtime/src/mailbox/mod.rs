@@ -68,11 +68,7 @@ impl Mailbox {
             fs::create_dir_all(parent)?;
         }
         // Use atomic open to prevent TOCTOU between exists() and write()
-        match OpenOptions::new()
-            .create_new(true)
-            .write(true)
-            .open(&self.inbox_path)
-        {
+        match OpenOptions::new().create_new(true).write(true).open(&self.inbox_path) {
             Ok(mut file) => {
                 use std::io::Write;
                 file.write_all(b"[]")?;
@@ -168,9 +164,7 @@ impl Mailbox {
                     error = %e,
                     "Corrupt mailbox inbox, resetting"
                 );
-                let backup = self
-                    .inbox_path
-                    .with_extension(format!("corrupt.{}", now_ms()));
+                let backup = self.inbox_path.with_extension(format!("corrupt.{}", now_ms()));
                 let _ = fs::rename(&self.inbox_path, &backup);
                 self.write_messages(&[])?;
                 Ok(Vec::new())
@@ -219,11 +213,8 @@ impl Mailbox {
             fs::create_dir_all(parent)?;
         }
 
-        let lock_file = OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(false)
-            .open(&lock_path)?;
+        let lock_file =
+            OpenOptions::new().create(true).write(true).truncate(false).open(&lock_path)?;
 
         // Blocking lock acquisition (fd-lock)
         let mut rw_lock = fd_lock::RwLock::new(lock_file);
@@ -242,9 +233,7 @@ impl Mailbox {
 
 impl std::fmt::Debug for Mailbox {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Mailbox")
-            .field("path", &self.inbox_path)
-            .finish()
+        f.debug_struct("Mailbox").field("path", &self.inbox_path).finish()
     }
 }
 

@@ -74,11 +74,7 @@ impl SidechainWriter {
             self.warned_size = true;
         }
 
-        let record = TranscriptEntry {
-            seq: self.seq,
-            ts: now_ms(),
-            entry,
-        };
+        let record = TranscriptEntry { seq: self.seq, ts: now_ms(), entry };
 
         let line = serde_json::to_string(&record)?;
         self.file.write_all(line.as_bytes())?;

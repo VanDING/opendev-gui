@@ -75,10 +75,7 @@ pub fn process_includes(
     parent_path: Option<&Path>,
 ) -> (String, Vec<InstructionFile>) {
     if depth >= MAX_INCLUDE_DEPTH {
-        debug!(
-            depth,
-            "Max @include depth reached, skipping further includes"
-        );
+        debug!(depth, "Max @include depth reached, skipping further includes");
         return (content.to_string(), Vec::new());
     }
 
@@ -184,24 +181,15 @@ fn resolve_include(
 
     let content = if content.len() > MAX_INCLUDE_BYTES {
         let truncated = &content[..MAX_INCLUDE_BYTES];
-        format!(
-            "{truncated}\n\n... (truncated, included file is {} KB)",
-            content.len() / 1024
-        )
+        format!("{truncated}\n\n... (truncated, included file is {} KB)", content.len() / 1024)
     } else {
         content
     };
 
     // Recursively process includes in the included file
     let include_dir = canonical.parent().unwrap_or(base_dir);
-    let (processed_content, nested_includes) = process_includes(
-        &content,
-        include_dir,
-        working_dir,
-        depth + 1,
-        visited,
-        Some(&canonical),
-    );
+    let (processed_content, nested_includes) =
+        process_includes(&content, include_dir, working_dir, depth + 1, visited, Some(&canonical));
 
     let mut result = nested_includes;
     result.push(InstructionFile {

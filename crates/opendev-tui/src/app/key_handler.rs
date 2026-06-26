@@ -35,10 +35,7 @@ impl App {
         }
         // Only allow backgrounding when a bash tool or subagent is actively running
         let has_backgroundable = self.state.active_tools.iter().any(|t| {
-            matches!(
-                t.name.as_str(),
-                "Bash" | "bash" | "run_command" | "Agent" | "spawn_subagent"
-            )
+            matches!(t.name.as_str(), "Bash" | "bash" | "run_command" | "Agent" | "spawn_subagent")
         });
         if !has_backgroundable {
             use crate::widgets::toast::{Toast, ToastLevel};
@@ -106,13 +103,8 @@ impl App {
 
         if focus >= sa_count {
             // Background agent task
-            let filtered: Vec<_> = self
-                .state
-                .bg_agent_manager
-                .all_tasks()
-                .into_iter()
-                .filter(|t| !t.hidden)
-                .collect();
+            let filtered: Vec<_> =
+                self.state.bg_agent_manager.all_tasks().into_iter().filter(|t| !t.hidden).collect();
             let bg_idx = focus - sa_count;
             if bg_idx < filtered.len() {
                 let task = &filtered[bg_idx];
@@ -283,11 +275,8 @@ impl App {
                     {
                         token.cancel();
                         // If this was the last active subagent for the parent bg task, kill the parent too
-                        if let Some(parent_bg_id) = self
-                            .state
-                            .bg_subagent_map
-                            .get(&subagent.subagent_id)
-                            .cloned()
+                        if let Some(parent_bg_id) =
+                            self.state.bg_subagent_map.get(&subagent.subagent_id).cloned()
                         {
                             let other_active = self.state.active_subagents.iter().any(|s| {
                                 s.backgrounded
@@ -520,10 +509,9 @@ impl App {
             }
             _ => {
                 use crate::widgets::toast::{Toast, ToastLevel};
-                self.state.toasts.push(Toast::new(
-                    format!("C-x {:?} — unknown", key.code),
-                    ToastLevel::Warning,
-                ));
+                self.state
+                    .toasts
+                    .push(Toast::new(format!("C-x {:?} — unknown", key.code), ToastLevel::Warning));
             }
         }
         self.state.dirty = true;
@@ -592,13 +580,9 @@ impl App {
                 // Accept autocomplete selection
                 if let Some((insert_text, delete_count)) = self.state.autocomplete.accept() {
                     let start = self.state.input_cursor.saturating_sub(delete_count);
-                    self.state
-                        .input_buffer
-                        .drain(start..self.state.input_cursor);
+                    self.state.input_buffer.drain(start..self.state.input_cursor);
                     self.state.input_cursor = start;
-                    self.state
-                        .input_buffer
-                        .insert_str(self.state.input_cursor, &insert_text);
+                    self.state.input_buffer.insert_str(self.state.input_cursor, &insert_text);
                     self.state.input_cursor += insert_text.len();
                     // Add trailing space
                     self.state.input_buffer.insert(self.state.input_cursor, ' ');
@@ -615,9 +599,7 @@ impl App {
 
             if self.state.agent_active {
                 // Queue silently — message will display when consumed
-                self.state
-                    .pending_queue
-                    .push_back(super::PendingItem::UserMessage(msg));
+                self.state.pending_queue.push_back(super::PendingItem::UserMessage(msg));
                 self.state.dirty = true;
             } else {
                 // Start fading the welcome panel on first user message
@@ -628,8 +610,7 @@ impl App {
                 if msg.starts_with('/') {
                     self.execute_slash_command(&msg);
                 } else {
-                    self.message_controller
-                        .handle_user_submit(&mut self.state, &msg);
+                    self.message_controller.handle_user_submit(&mut self.state, &msg);
                     self.state.message_generation += 1;
                     let _ = self.event_tx.send(AppEvent::UserSubmit(msg));
                 }
@@ -644,10 +625,7 @@ impl App {
                 self.state.autocomplete.select_prev();
             } else if !self.state.input_buffer.contains('\n') && !self.state.agent_active {
                 // Single-line input: navigate command history
-                if let Some(text) = self
-                    .state
-                    .command_history
-                    .navigate_up(&self.state.input_buffer)
+                if let Some(text) = self.state.command_history.navigate_up(&self.state.input_buffer)
                 {
                     self.state.input_buffer = text.to_string();
                     self.state.input_cursor = self.state.input_buffer.len();
@@ -692,9 +670,7 @@ impl App {
             // iTerm2 (and many terminals) map Shift+Enter to Ctrl+J (ASCII LF).
             // Alt+Enter sends Enter with ALT modifier. Both insert a newline.
             (KeyModifiers::CONTROL, KeyCode::Char('j')) if !self.state.agent_active => {
-                self.state
-                    .input_buffer
-                    .insert(self.state.input_cursor, '\n');
+                self.state.input_buffer.insert(self.state.input_cursor, '\n');
                 self.state.input_cursor += '\n'.len_utf8();
             }
             (KeyModifiers::CONTROL, KeyCode::Char('j')) => {}
@@ -703,9 +679,7 @@ impl App {
                 if (m.contains(KeyModifiers::SHIFT) || m.contains(KeyModifiers::ALT))
                     && !self.state.agent_active =>
             {
-                self.state
-                    .input_buffer
-                    .insert(self.state.input_cursor, '\n');
+                self.state.input_buffer.insert(self.state.input_cursor, '\n');
                 self.state.input_cursor += '\n'.len_utf8();
             }
             (m, KeyCode::Enter)
@@ -808,13 +782,9 @@ impl App {
             (_, KeyCode::Tab) => {
                 if let Some((insert_text, delete_count)) = self.state.autocomplete.accept() {
                     let start = self.state.input_cursor.saturating_sub(delete_count);
-                    self.state
-                        .input_buffer
-                        .drain(start..self.state.input_cursor);
+                    self.state.input_buffer.drain(start..self.state.input_cursor);
                     self.state.input_cursor = start;
-                    self.state
-                        .input_buffer
-                        .insert_str(self.state.input_cursor, &insert_text);
+                    self.state.input_buffer.insert_str(self.state.input_cursor, &insert_text);
                     self.state.input_cursor += insert_text.len();
                     // Add trailing space
                     self.state.input_buffer.insert(self.state.input_cursor, ' ');
@@ -890,9 +860,7 @@ impl App {
                         self.state.task_watcher_page = 0;
                     } else {
                         use crate::widgets::toast::{Toast, ToastLevel};
-                        self.state
-                            .toasts
-                            .push(Toast::new("No background tasks", ToastLevel::Info));
+                        self.state.toasts.push(Toast::new("No background tasks", ToastLevel::Info));
                     }
                 }
             }
@@ -971,9 +939,7 @@ impl App {
                     self.state.task_watcher_page = 0;
                 } else {
                     use crate::widgets::toast::{Toast, ToastLevel};
-                    self.state
-                        .toasts
-                        .push(Toast::new("No background tasks", ToastLevel::Info));
+                    self.state.toasts.push(Toast::new("No background tasks", ToastLevel::Info));
                 }
             }
             self.state.dirty = true;

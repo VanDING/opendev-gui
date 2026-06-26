@@ -68,10 +68,7 @@ pub(super) fn discover_companion_files(skill_path: &Path) -> Vec<CompanionFile> 
 
     // Only discover companions for directory-style skills (file inside a subdir),
     // not for flat skills sitting directly in the skills root.
-    let skill_filename = skill_path
-        .file_name()
-        .and_then(|f| f.to_str())
-        .unwrap_or("");
+    let skill_filename = skill_path.file_name().and_then(|f| f.to_str()).unwrap_or("");
 
     // Heuristic: if the file is named SKILL.md or is inside a subdir that isn't
     // the top-level skills dir, it's a directory-style skill.
@@ -121,10 +118,7 @@ fn collect_companion_files(
                 .map(|p| p.to_string_lossy().to_string())
                 .unwrap_or_else(|_| name_str.to_string());
 
-            out.push(metadata::CompanionFile {
-                path: path.clone(),
-                relative_path: relative,
-            });
+            out.push(metadata::CompanionFile { path: path.clone(), relative_path: relative });
         }
     }
 }
@@ -145,12 +139,7 @@ const MAX_SKILL_DOWNLOAD_BYTES: usize = 1_000_000;
 /// (same approach as remote instructions).
 pub(super) fn fetch_url(url: &str) -> Result<String, String> {
     let output = std::process::Command::new("curl")
-        .args([
-            "-sSfL",
-            "--max-time",
-            &URL_FETCH_TIMEOUT_SECS.to_string(),
-            url,
-        ])
+        .args(["-sSfL", "--max-time", &URL_FETCH_TIMEOUT_SECS.to_string(), url])
         .output()
         .map_err(|e| format!("failed to run curl: {e}"))?;
 
@@ -185,11 +174,7 @@ pub(super) fn fetch_url(url: &str) -> Result<String, String> {
 /// }
 /// ```
 pub(super) fn pull_url_skills(base_url: &str) -> Result<Vec<PathBuf>, String> {
-    let base = if base_url.ends_with('/') {
-        base_url.to_string()
-    } else {
-        format!("{base_url}/")
-    };
+    let base = if base_url.ends_with('/') { base_url.to_string() } else { format!("{base_url}/") };
 
     // Determine cache directory
     let cache_dir = dirs::cache_dir()
@@ -277,11 +262,7 @@ pub(super) fn pull_url_skills(base_url: &str) -> Result<Vec<PathBuf>, String> {
         }
     }
 
-    debug!(
-        url = base_url,
-        count = result_dirs.len(),
-        "Pulled skills from URL"
-    );
+    debug!(url = base_url, count = result_dirs.len(), "Pulled skills from URL");
 
     Ok(result_dirs)
 }
@@ -307,10 +288,7 @@ pub(super) fn is_cache_stale(skill: &LoadedSkill) -> bool {
     };
 
     match std::fs::metadata(path) {
-        Ok(meta) => meta
-            .modified()
-            .map(|current| current > cached_mtime)
-            .unwrap_or(false),
+        Ok(meta) => meta.modified().map(|current| current > cached_mtime).unwrap_or(false),
         Err(_) => false, // File gone — keep cache, let load fail if re-invoked
     }
 }
