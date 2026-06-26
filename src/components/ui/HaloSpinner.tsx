@@ -24,7 +24,7 @@ export const HaloSpinner = React.memo(function HaloSpinner() {
         return (
           <span
             key={i}
-            className="absolute text-lg font-mono text-bg-300"
+            className="absolute text-lg font-mono text-surface-3"
             style={{
               left: '50%',
               top: '50%',

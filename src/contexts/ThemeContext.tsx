@@ -1,12 +1,12 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
-type Theme = 'dark-default' | 'light-default' | 'warm' | 'polar' | 'geek'
-  | 'afrofuturism' | 'sumi-e' | 'synthwave' | 'cyberpunk'
+type Theme = 'cyberpunk' | 'dark-default' | 'light-default' | 'warm' | 'polar' | 'geek'
+  | 'afrofuturism' | 'sumi-e' | 'synthwave'
   | 'techno' | 'brutalism' | 'pixel-by';
 
 const ALL_THEMES: Theme[] = [
-  'dark-default', 'light-default', 'warm', 'polar', 'geek',
-  'afrofuturism', 'sumi-e', 'synthwave', 'cyberpunk',
+  'cyberpunk', 'dark-default', 'light-default', 'warm', 'polar', 'geek',
+  'afrofuturism', 'sumi-e', 'synthwave',
   'techno', 'brutalism', 'pixel-by',
 ];
 
@@ -16,7 +16,7 @@ function getStoredTheme(): Theme {
   const stored = localStorage.getItem(THEME_KEY);
   if (stored && (ALL_THEMES as readonly string[]).includes(stored)) return stored as Theme;
   if (window.matchMedia('(prefers-color-scheme: light)').matches) return 'light-default';
-  return 'dark-default';
+  return 'cyberpunk';
 }
 
 function applyTheme(theme: Theme) {

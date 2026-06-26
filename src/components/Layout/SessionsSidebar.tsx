@@ -259,16 +259,16 @@ export function SessionsSidebar() {
                         setExpandedWorkspaces(prev => new Set([...prev, workspace.path]));
                       }, 100);
                     }}
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                    className={`w-10 h-10 rounded-md flex items-center justify-center ${
                       hasActiveSession
-                        ? 'bg-intent-warning-muted border-2 border-amber-400 shadow-sm'
-                        : 'bg-surface-primary hover:bg-surface-2 border border-border-default hover:shadow-md'
+                        ? 'bg-intent-warning-muted border border-intent-warning'
+                        : 'bg-surface-primary hover:bg-surface-2 border border-border-default'
                     }`}
                   >
                     <Folder className={`w-5 h-5 ${hasActiveSession ? 'text-intent-warning' : 'text-content-tertiary'}`} />
                   </button>
                   {hasRunningSession && (
-                    <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-[1.5px] border-intent-warning-muted border-t-amber-500 animate-spin" />
+                    <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-[1.5px] border-intent-warning-muted border-t-intent-warning animate-spin" />
                   )}
 
                   {/* Tooltip */}
@@ -468,7 +468,7 @@ export function SessionsSidebar() {
                                 >
                                   <div className="flex items-center gap-1.5">
                                     {isRunning && (
-                                      <div className="w-3.5 h-3.5 rounded-full border-2 border-intent-warning-muted border-t-amber-500 animate-spin flex-shrink-0" />
+                                      <div className="w-3.5 h-3.5 rounded-full border-2 border-intent-warning-muted border-t-intent-warning animate-spin flex-shrink-0" />
                                     )}
                                     {needsAttention && !isRunning && (
                                       <div className="w-4 h-4 rounded-full bg-intent-warning text-content-inverse text-[9px] font-bold flex items-center justify-center flex-shrink-0">!</div>

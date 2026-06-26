@@ -108,8 +108,8 @@
   --color-scrollbar-track: var(--_scrollbar-track);
 
   /* Font family (2) — also via var() since themes define them */
-  --font-sans: var(--_font-sans);
-  --font-mono: var(--_font-mono);
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Menlo, Monaco, Consolas, monospace;
 
   /* Font size (8) — via var() for consistency */
   --font-size-2xs: var(--_font-size-2xs);
@@ -122,17 +122,17 @@
   --font-size-3xl: var(--_font-size-3xl);
 
   /* Font weight (4) */
-  --font-weight-normal: var(--_font-weight-normal);
-  --font-weight-medium: var(--_font-weight-medium);
-  --font-weight-semibold: var(--_font-weight-semibold);
-  --font-weight-bold: var(--_font-weight-bold);
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 500;
+  --font-weight-bold: 600;
 
-  /* Radius (5) — via var() since per-theme */
-  --radius-none: var(--_radius-none);
-  --radius-sm: var(--_radius-sm);
-  --radius-md: var(--_radius-md);
-  --radius-lg: var(--_radius-lg);
-  --radius-xl: var(--_radius-xl);
+  /* Radius (5) — tighter design system default; per-theme overrides win */
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
 
   /* ===== Z-index (standard + custom) ===== */
   /* Standard z-index values needed by existing components */
@@ -172,6 +172,9 @@
   --animate-border-breathe: border-breathe 2.5s ease-in-out infinite;
   --animate-pulse-dot: pulse-dot 1.4s ease-in-out infinite;
   --animate-content-fade: content-fade 0.15s ease-out;
+  --animate-breathe-logo: breathe-logo 4s ease-in-out infinite;
+  --animate-breathe-subtitle: breathe-subtitle 4s ease-in-out infinite;
+  --animate-logo-gradient-sweep: logo-gradient-sweep 8s linear infinite;
 
   @keyframes slide-up { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
   @keyframes fade-in { 0% { opacity: 0; } 100% { opacity: 1; } }
@@ -182,6 +185,18 @@
   @keyframes border-breathe { 0%, 100% { border-left-color: hsl(39 100% 50% / 0.5); } 50% { border-left-color: hsl(39 100% 50% / 1); } }
   @keyframes pulse-dot { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.4); opacity: 1; } }
   @keyframes content-fade { 0% { opacity: 0; } 100% { opacity: 1; } }
+  @keyframes breathe-logo {
+    0%, 100% { opacity: 0.55; filter: brightness(0.95); }
+    50%      { opacity: 1.00; filter: brightness(1.15); }
+  }
+  @keyframes breathe-subtitle {
+    0%, 100% { opacity: 0.55; }
+    50%      { opacity: 0.90; }
+  }
+  @keyframes logo-gradient-sweep {
+    0%   { background-position:   0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
 }
 
 /* ===== Custom z-index utilities (Tailwind v4 doesn't auto-generate from named --z-* vars) ===== */
@@ -194,10 +209,130 @@
 .z-toast { z-index: var(--z-toast); }
 .z-tooltip { z-index: var(--z-tooltip); }
 
-/* ===== [data-theme] blocks — 12 themes ===== */
+/* ===== [data-theme] blocks — 13 themes ===== */
 
-/* dark-default is also the :root default */
+/* `cyberpunk` is the default — cyan accent, deep near-black navy, refined typography & radius. */
 :root,
+[data-theme="cyberpunk"] {
+  /* Surface — deep near-black navy, slight cyan cast */
+  --_surface-primary: #080C18;
+  --_surface-elevated: #0F1422;
+  --_surface-2: #141A28;
+  --_surface-3: #1C2436;
+  --_surface-muted: #1C2436;
+  --_surface-overlay: rgba(6, 8, 14, 0.92);
+  --_surface-floating: #0F1422;
+  --_surface-input: #080C18;
+  --_surface-sidebar: #080C18;
+
+  /* Content */
+  --_content-primary: #E0E4EE;
+  --_content-secondary: #8892A8;
+  --_content-tertiary: #5A6478;
+  --_content-inverse: #06080E;
+  --_content-link: #00B8FF;
+  --_content-disabled: #4D4D4D;
+
+  /* Accent — cyan */
+  --_accent-primary: #00E5D5;
+  --_accent-primary-hover: #00CCBE;
+  --_accent-primary-muted: rgba(0, 229, 213, 0.08);
+  --_accent-primary-fg: #06080E;
+  --_accent-secondary: #00c3b5;
+  --_accent-secondary-hover: #40d2c8;
+  --_accent-secondary-muted: rgba(0, 195, 181, 0.10);
+  --_accent-secondary-fg: #b3ede9;
+
+  /* Intent */
+  --_intent-success: #00FF88;
+  --_intent-success-hover: #33ffa0;
+  --_intent-success-muted: rgba(0, 255, 136, 0.08);
+  --_intent-success-fg: #a6ffd5;
+  --_intent-danger: #FF0080;
+  --_intent-danger-hover: #ff3399;
+  --_intent-danger-muted: rgba(255, 0, 128, 0.08);
+  --_intent-danger-fg: #ffa6d3;
+  --_intent-warning: #FCEE0A;
+  --_intent-warning-hover: #fdf13b;
+  --_intent-warning-muted: rgba(252, 238, 10, 0.08);
+  --_intent-warning-fg: #fef9a9;
+  --_intent-info: #00B8FF;
+  --_intent-info-hover: #33c6ff;
+  --_intent-info-muted: rgba(0, 184, 255, 0.08);
+  --_intent-info-fg: #a6e6ff;
+  --_intent-purple: #8844FF;
+  --_intent-purple-hover: #a069ff;
+  --_intent-purple-muted: rgba(136, 68, 255, 0.08);
+  --_intent-purple-fg: #d5beff;
+
+  /* Border — subtle cyan */
+  --_border-default: rgba(0,229,213,0.12);
+  --_border-subtle: rgba(0,229,213,0.08);
+  --_border-emphasis: rgba(0,229,213,0.12);
+  --_border-hairline: rgba(0,229,213,0.12);
+
+  /* Code */
+  --_code-block-bg: #080C18;
+  --_code-block-border: rgba(0,229,213,0.12);
+  --_code-block-text: #00E5D5;
+  --_code-inline-bg: rgba(0, 229, 213, 0.06);
+  --_code-inline-text: #00E5D5;
+
+  /* Diff */
+  --_diff-added-bg: rgba(0, 255, 136, 0.15);
+  --_diff-added-border: rgba(0, 255, 136, 0.4);
+  --_diff-added-text: #40ffa6;
+  --_diff-removed-bg: rgba(255, 0, 128, 0.15);
+  --_diff-removed-border: rgba(255, 0, 128, 0.4);
+  --_diff-removed-text: #ff40a0;
+  --_diff-header-bg: rgba(0, 229, 213, 0.12);
+  --_diff-header-border: rgba(0, 229, 213, 0.3);
+  --_diff-header-text: #40ece0;
+
+  /* Shadow — cyan glow */
+  --_shadow-xs: 0 0 2px rgba(0, 229, 213, 0.05);
+  --_shadow-sm: 0 0 4px rgba(0, 229, 213, 0.08);
+  --_shadow-md: 0 0 8px rgba(0, 229, 213, 0.12), 0 4px 16px rgba(0, 0, 0, 0.4);
+  --_shadow-lg: 0 0 16px rgba(0, 229, 213, 0.15), 0 8px 32px rgba(0, 0, 0, 0.5);
+  --_shadow-popover: 0 0 8px rgba(0, 229, 213, 0.12), 0 4px 16px rgba(0, 0, 0, 0.4);
+  --_shadow-none: none;
+
+  /* Icon */
+  --_icon-primary: #E0E4EE;
+  --_icon-secondary: #8892A8;
+  --_icon-accent: #00E5D5;
+
+  --_focus-ring: #00E5D5;
+  --_scrollbar-thumb: #00E5D5;
+  --_scrollbar-track: #080C18;
+
+  /* Typography — Inter for sans, JetBrains Mono for code */
+  --_font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --_font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+  --_font-size-2xs: 0.625rem;
+  --_font-size-xs: 0.75rem;
+  --_font-size-sm: 0.8125rem;
+  --_font-size-base: 0.9375rem;
+  --_font-size-lg: 1.0625rem;
+  --_font-size-xl: 1.1875rem;
+  --_font-size-2xl: 1.4375rem;
+  --_font-size-3xl: 1.8125rem;
+
+  --_font-weight-normal: 400;
+  --_font-weight-medium: 500;
+  --_font-weight-semibold: 500;
+  --_font-weight-bold: 600;
+
+  /* Radius — tighter, 6–10px range */
+  --_radius-none: 0;
+  --_radius-sm: 4px;
+  --_radius-md: 6px;
+  --_radius-lg: 8px;
+  --_radius-xl: 10px;
+}
+
+/* `dark-default` is now a regular theme in the picker (no longer the root default). */
 [data-theme="dark-default"] {
   --_surface-primary: #141414;
   --_surface-elevated: #1C1C1C;
@@ -952,100 +1087,6 @@
   --_radius-xl: 24px;
 }
 
-[data-theme="cyberpunk"] {
-  --_surface-primary: #080C18;
-  --_surface-elevated: #0F1422;
-  --_surface-2: #141A28;
-  --_surface-3: #1C2436;
-  --_surface-muted: #1C2436;
-  --_surface-overlay: rgba(6, 8, 14, 0.92);
-  --_surface-floating: #0F1422;
-  --_surface-input: #080C18;
-  --_surface-sidebar: #080C18;
-  --_content-primary: #E0E4EE;
-  --_content-secondary: #8892A8;
-  --_content-tertiary: #5A6478;
-  --_content-inverse: #06080E;
-  --_content-link: #00B8FF;
-  --_content-disabled: #4D4D4D;
-  --_accent-primary: #00E5D5;
-  --_accent-primary-hover: #00CCBE;
-  --_accent-primary-muted: rgba(0, 229, 213, 0.08);
-  --_accent-primary-fg: #06080E;
-  --_accent-secondary: #00c3b5;
-  --_accent-secondary-hover: #40d2c8;
-  --_accent-secondary-muted: rgba(0, 195, 181, 0.10);
-  --_accent-secondary-fg: #b3ede9;
-  --_intent-success: #00FF88;
-  --_intent-success-hover: #33ffa0;
-  --_intent-success-muted: rgba(0, 255, 136, 0.08);
-  --_intent-success-fg: #a6ffd5;
-  --_intent-danger: #FF0080;
-  --_intent-danger-hover: #ff3399;
-  --_intent-danger-muted: rgba(255, 0, 128, 0.08);
-  --_intent-danger-fg: #ffa6d3;
-  --_intent-warning: #FCEE0A;
-  --_intent-warning-hover: #fdf13b;
-  --_intent-warning-muted: rgba(252, 238, 10, 0.08);
-  --_intent-warning-fg: #fef9a9;
-  --_intent-info: #00B8FF;
-  --_intent-info-hover: #33c6ff;
-  --_intent-info-muted: rgba(0, 184, 255, 0.08);
-  --_intent-info-fg: #a6e6ff;
-  --_intent-purple: #8844FF;
-  --_intent-purple-hover: #a069ff;
-  --_intent-purple-muted: rgba(136, 68, 255, 0.08);
-  --_intent-purple-fg: #d5beff;
-  --_border-default: rgba(0,229,213,0.12);
-  --_border-subtle: rgba(0,229,213,0.08);
-  --_border-emphasis: rgba(0,229,213,0.12);
-  --_border-hairline: rgba(0,229,213,0.12);
-  --_code-block-bg: #080C18;
-  --_code-block-border: rgba(0,229,213,0.12);
-  --_code-block-text: #00E5D5;
-  --_code-inline-bg: rgba(0, 229, 213, 0.06);
-  --_code-inline-text: #00E5D5;
-  --_diff-added-bg: rgba(0, 255, 136, 0.15);
-  --_diff-added-border: rgba(0, 255, 136, 0.4);
-  --_diff-added-text: #40ffa6;
-  --_diff-removed-bg: rgba(255, 0, 128, 0.15);
-  --_diff-removed-border: rgba(255, 0, 128, 0.4);
-  --_diff-removed-text: #ff40a0;
-  --_diff-header-bg: rgba(0, 229, 213, 0.12);
-  --_diff-header-border: rgba(0, 229, 213, 0.3);
-  --_diff-header-text: #40ece0;
-  --_shadow-sm: 0 0 4px rgba(0, 229, 213, 0.08);
-  --_shadow-md: 0 0 8px rgba(0, 229, 213, 0.12), 0 4px 16px rgba(0, 0, 0, 0.4);
-  --_shadow-lg: 0 0 16px rgba(0, 229, 213, 0.15), 0 8px 32px rgba(0, 0, 0, 0.5);
-  --_shadow-popover: 0 0 8px rgba(0, 229, 213, 0.12), 0 4px 16px rgba(0, 0, 0, 0.4);
-  --_shadow-none: none;
-  --_icon-primary: #E0E4EE;
-  --_icon-secondary: #8892A8;
-  --_icon-accent: #00E5D5;
-  --_focus-ring: #00E5D5;
-  --_scrollbar-thumb: #00E5D5;
-  --_scrollbar-track: #080C18;
-  --_font-sans: \;
-  --_font-mono: JetBrains Mono, Fira Code, Monaco, Courier New, monospace;
-  --_font-size-2xs: 0.625rem;
-  --_font-size-xs: 0.75rem;
-  --_font-size-sm: 0.875rem;
-  --_font-size-base: 1rem;
-  --_font-size-lg: 1.125rem;
-  --_font-size-xl: 1.25rem;
-  --_font-size-2xl: 1.5rem;
-  --_font-size-3xl: 1.875rem;
-  --_font-weight-normal: 400;
-  --_font-weight-medium: 500;
-  --_font-weight-semibold: 600;
-  --_font-weight-bold: 700;
-  --_radius-none: 0;
-  --_radius-sm: 0;
-  --_radius-md: 2px;
-  --_radius-lg: 4px;
-  --_radius-xl: 6px;
-}
-
 [data-theme="techno"] {
   --_surface-primary: #1C1C1C;
   --_surface-elevated: #2A2A2A;
@@ -1328,6 +1369,23 @@
   --_radius-xl: 0;
 }
 
+/* === Per-theme MatrixRain intensity (--rain-opacity) ===
+   cyberpunk (default) gets full matrix rain; light/minimal themes opt out (0).
+   MatrixRain reads this var via getComputedStyle and multiplies into cell alpha. */
+:root,
+[data-theme="cyberpunk"]     { --rain-opacity: 0.35; }
+[data-theme="dark-default"]  { --rain-opacity: 0.20; }
+[data-theme="light-default"] { --rain-opacity: 0;    }
+[data-theme="warm"]          { --rain-opacity: 0.10; }
+[data-theme="polar"]         { --rain-opacity: 0;    }
+[data-theme="geek"]          { --rain-opacity: 0.30; }
+[data-theme="afrofuturism"]  { --rain-opacity: 0.20; }
+[data-theme="sumi-e"]        { --rain-opacity: 0.06; }
+[data-theme="synthwave"]     { --rain-opacity: 0.25; }
+[data-theme="techno"]        { --rain-opacity: 0.25; }
+[data-theme="brutalism"]     { --rain-opacity: 0;    }
+[data-theme="pixel-by"]      { --rain-opacity: 0;    }
+
 /* === Base styles === */
 @layer base {
   * {
@@ -1369,11 +1427,13 @@
   outline-offset: 2px;
 }
 
-/* === Smooth transitions === */
-* {
-  transition-property: background-color, border-color, color, fill, stroke, transform, box-shadow;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
+/* === Smooth transitions (kept in @layer base so utilities like transition-opacity can override) === */
+@layer base {
+  * {
+    transition-property: background-color, border-color, color, fill, stroke, transform, box-shadow;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
 }
 
 /* === Markdown content === */
@@ -1637,3 +1697,43 @@ code:not(pre code) {
 .animate-modal-overlay-out { animation: modal-overlay-out 150ms var(--ease-in); }
 .animate-modal-content-in  { animation: modal-content-in  200ms var(--ease-out); }
 .animate-modal-content-out { animation: modal-content-out 150ms var(--ease-in); }
+
+/* === Breathing logo (OPENDEV) — matches TUI welcome_panel breathe_phase === */
+.breathing-logo {
+  display: inline-block;
+  background: linear-gradient(
+    90deg,
+    hsl(195 90% 65%) 0%,
+    hsl(215 95% 75%) 35%,
+    hsl(235 90% 78%) 55%,
+    hsl(215 95% 75%) 75%,
+    hsl(195 90% 65%) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation:
+    var(--animate-breathe-logo),
+    var(--animate-logo-gradient-sweep);
+}
+
+.breathing-subtitle {
+  animation: var(--animate-breathe-subtitle);
+  animation-delay: 0.4s;
+}
+
+/* === kbd — command surface chip === */
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1.1rem;
+  color: var(--color-content-secondary);
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+}

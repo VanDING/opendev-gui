@@ -42,6 +42,7 @@ interface TopBarProps {
 }
 
 const THEME_LABELS: Record<Theme, string> = {
+  'cyberpunk':     'Cyberpunk',
   'dark-default':  'Dark',
   'light-default': 'Light',
   'warm':          'Warm',
@@ -50,7 +51,6 @@ const THEME_LABELS: Record<Theme, string> = {
   'afrofuturism':  'Afrofuturism',
   'sumi-e':        'Sumi-e',
   'synthwave':     'Synthwave',
-  'cyberpunk':     'Cyberpunk',
   'techno':        'Techno',
   'brutalism':     'Brutalism',
   'pixel-by':      'Pixel',
