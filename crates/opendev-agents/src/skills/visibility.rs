@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use super::metadata::{SkillMetadata, SkillStatus};
+use super::metadata::{SkillMetadata, SkillSource, SkillStatus};
 
 /// Check whether a skill should be visible to the agent given the available tools.
 pub fn is_visible(skill: &SkillMetadata, available_tools: &HashSet<String>) -> bool {
