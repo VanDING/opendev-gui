@@ -99,7 +99,7 @@ export function MCPSettings() {
   const handleDisconnect = async (name: string) => {
     setProcessingServer(name);
     try {
-      await dismcpRepository.connectServer(name);
+      await mcpRepository.connectServer(name);
       await loadServers(); // Reload to update UI
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to disconnect');

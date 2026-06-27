@@ -11,8 +11,8 @@ export function createMCPServerRepository(transport: Transport) {
       command: string;
       args?: string[];
       env?: Record<string, string>;
-      enabled: boolean;
-      auto_start: boolean;
+      enabled?: boolean;
+      auto_start?: boolean;
     }) => transport.invoke<any>('create_mcp_server', { req: server }),
     updateServer: (name: string, update: any) =>
       transport.invoke<any>('update_mcp_server', { name, req: update }),

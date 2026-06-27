@@ -1,4 +1,4 @@
-import type { Transport, StreamController } from './Transport';
+import type { Transport } from './Transport';
 
 export function createChatRepository(transport: Transport) {
   return {

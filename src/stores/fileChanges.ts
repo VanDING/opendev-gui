@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { sessionRepository } from '../repositories';
 
 export interface FileChange {
   id: string;
@@ -43,18 +42,12 @@ export const useFileChangesStore = create<FileChangesState>((set) => ({
   isLoading: false,
   error: null,
 
-  loadFileChanges: async (sessionId: string) => {
+  loadFileChanges: async (_sessionId: string) => {
     set({ isLoading: true, error: null });
 
     try {
-      // Use session messages as a proxy for file changes data
-      const response = await sessionRepository.getSessionMessages(sessionId);
-
-      set({
-        changes: data.changes || [],
-        summary: data.summary || null,
-        isLoading: false,
-      });
+      // TODO: Implement file-changes endpoint on backend
+      set({ changes: [], summary: null, isLoading: false });
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to load file changes',
