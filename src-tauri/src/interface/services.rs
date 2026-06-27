@@ -1,14 +1,14 @@
 //! Service injection — creates and wires Application Services with their dependencies.
 
 use crate::application::AppServices;
-use crate::application::config_service::ConfigService;
-use crate::application::session_service::SessionService;
 use crate::application::chat_service::ChatService;
-use crate::application::workflow_service::WorkflowService;
-use crate::application::mcp_service::MCPService;
-use crate::application::skill_service::SkillService;
+use crate::application::config_service::ConfigService;
 use crate::application::file_service::FileService;
+use crate::application::mcp_service::MCPService;
+use crate::application::session_service::SessionService;
+use crate::application::skill_service::SkillService;
 use crate::application::system_service::SystemService;
+use crate::application::workflow_service::WorkflowService;
 
 use opendev_config::ModelRegistry;
 use opendev_history::SessionManager;
@@ -28,8 +28,10 @@ pub fn build_services(
         chat: ChatService::new(
             opendev_history::SessionManager::new(
                 std::path::PathBuf::from(&working_dir).join(".opendev").join("sessions"),
-            ).unwrap_or_else(|_| {
-                let paths = opendev_config::Paths::new(Some(std::path::PathBuf::from(&working_dir)));
+            )
+            .unwrap_or_else(|_| {
+                let paths =
+                    opendev_config::Paths::new(Some(std::path::PathBuf::from(&working_dir)));
                 SessionManager::new(paths.global_sessions_dir())
                     .expect("Failed to create session manager for chat service")
             }),

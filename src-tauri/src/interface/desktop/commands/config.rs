@@ -1,15 +1,13 @@
 //! Config commands — DTO mapping only.
 
-use tauri::State;
 use crate::application::AppServices;
-use crate::application::config_service::{UpdateConfigInput, OperationMode};
+use crate::application::config_service::{OperationMode, UpdateConfigInput};
 use crate::interface::desktop::contract::config::*;
+use tauri::State;
 
 /// Get current application configuration.
 #[tauri::command]
-pub async fn get_app_config(
-    services: State<'_, AppServices>,
-) -> Result<ConfigResponse, String> {
+pub async fn get_app_config(services: State<'_, AppServices>) -> Result<ConfigResponse, String> {
     let cfg = services.config.get_config().await;
     let mode = services.config.get_mode().await;
     let autonomy_level = services.config.get_autonomy_level().await;
@@ -18,12 +16,14 @@ pub async fn get_app_config(
 
     // Resolve compact agent role
     let (compact_model, compact_provider) = cfg.resolve_agent_role("compact");
-    let compact_model_opt = if compact_model == cfg.model && compact_provider == cfg.model_provider {
+    let compact_model_opt = if compact_model == cfg.model && compact_provider == cfg.model_provider
+    {
         None
     } else {
         Some(compact_model)
     };
-    let compact_provider_opt = if compact_model_opt.is_none() { None } else { Some(compact_provider) };
+    let compact_provider_opt =
+        if compact_model_opt.is_none() { None } else { Some(compact_provider) };
 
     Ok(ConfigResponse {
         model_provider: cfg.model_provider,
@@ -70,8 +70,8 @@ pub async fn set_operation_mode(
     services: State<'_, AppServices>,
     req: ModeUpdateRequest,
 ) -> Result<(), String> {
-    let mode = OperationMode::from_str(&req.mode)
-        .ok_or_else(|| format!("Invalid mode: {}", req.mode))?;
+    let mode =
+        OperationMode::from_str(&req.mode).ok_or_else(|| format!("Invalid mode: {}", req.mode))?;
     services.config.set_mode(mode).await;
     Ok(())
 }
@@ -91,20 +91,23 @@ pub async fn list_model_providers(
     services: State<'_, AppServices>,
 ) -> Result<Vec<serde_json::Value>, String> {
     let providers = services.config.list_providers().await;
-    Ok(providers.into_iter().map(|p| {
-        serde_json::json!({
-            "id": p.id,
-            "name": p.name,
-            "description": p.description,
-            "models": p.models.into_iter().map(|m| {
-                serde_json::json!({
-                    "id": m.id,
-                    "name": m.name,
-                    "description": m.description,
-                })
-            }).collect::<Vec<_>>(),
+    Ok(providers
+        .into_iter()
+        .map(|p| {
+            serde_json::json!({
+                "id": p.id,
+                "name": p.name,
+                "description": p.description,
+                "models": p.models.into_iter().map(|m| {
+                    serde_json::json!({
+                        "id": m.id,
+                        "name": m.name,
+                        "description": m.description,
+                    })
+                }).collect::<Vec<_>>(),
+            })
         })
-    }).collect())
+        .collect())
 }
 
 /// Verify model availability.
@@ -114,8 +117,5 @@ pub async fn verify_model(
     req: VerifyModelRequest,
 ) -> Result<VerifyModelResponse, String> {
     let result = services.config.verify_model(&req.provider, &req.model).await;
-    Ok(VerifyModelResponse {
-        valid: result.valid,
-        error: result.error,
-    })
+    Ok(VerifyModelResponse { valid: result.valid, error: result.error })
 }

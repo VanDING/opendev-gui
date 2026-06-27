@@ -39,10 +39,7 @@ pub struct StreamSender<T> {
 
 impl<T: Clone + Send> StreamSender<T> {
     pub fn send(&self, value: T) -> Result<(), String> {
-        self.inner
-            .send(value)
-            .map(|_| ())
-            .map_err(|_| "Stream closed".to_string())
+        self.inner.send(value).map(|_| ()).map_err(|_| "Stream closed".to_string())
     }
 }
 

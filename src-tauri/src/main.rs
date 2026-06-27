@@ -1,11 +1,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod server;
 mod application;
 mod interface;
+mod server;
 
-use tauri::{Emitter, Manager};
 use opendev_web::state::WsBroadcast;
+use tauri::{Emitter, Manager};
 
 use application::AppServices;
 use interface::desktop::commands;
@@ -48,8 +48,7 @@ fn main() {
             .expect("Failed to load config");
 
             let session_dir = paths.global_sessions_dir();
-            std::fs::create_dir_all(&session_dir)
-                .expect("Failed to create session directory");
+            std::fs::create_dir_all(&session_dir).expect("Failed to create session directory");
             let session_manager = opendev_history::SessionManager::new(session_dir)
                 .expect("Failed to init session manager");
 

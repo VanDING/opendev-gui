@@ -46,14 +46,13 @@ impl SkillResponse {
 }
 
 /// List all discovered skills.
-async fn list_skills(
-    State(state): State<AppState>,
-) -> Json<Vec<SkillResponse>> {
+async fn list_skills(State(state): State<AppState>) -> Json<Vec<SkillResponse>> {
     let skills = state.with_skill_loader(|loader| loader.discover_skills()).await;
 
     match skills {
         Some(skills) => {
-            let response: Vec<SkillResponse> = skills.iter().map(SkillResponse::from_meta).collect();
+            let response: Vec<SkillResponse> =
+                skills.iter().map(SkillResponse::from_meta).collect();
             Json(response)
         }
         None => Json(Vec::new()),

@@ -4,23 +4,23 @@
 //! They do NOT depend on any interface framework (tauri, axum, clap).
 //! They do NOT know about Desktop, HTTP, CLI, or any platform.
 
-pub mod config_service;
-pub mod session_service;
 pub mod chat_service;
-pub mod workflow_service;
-pub mod mcp_service;
-pub mod skill_service;
+pub mod config_service;
 pub mod file_service;
+pub mod mcp_service;
+pub mod session_service;
+pub mod skill_service;
 pub mod system_service;
+pub mod workflow_service;
 
-pub use config_service::ConfigService;
-pub use session_service::SessionService;
 pub use chat_service::ChatService;
-pub use workflow_service::WorkflowService;
-pub use mcp_service::MCPService;
-pub use skill_service::SkillService;
+pub use config_service::ConfigService;
 pub use file_service::FileService;
+pub use mcp_service::MCPService;
+pub use session_service::SessionService;
+pub use skill_service::SkillService;
 pub use system_service::SystemService;
+pub use workflow_service::WorkflowService;
 
 /// Aggregated application services for dependency injection.
 pub struct AppServices {

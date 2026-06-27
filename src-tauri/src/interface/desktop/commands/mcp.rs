@@ -1,9 +1,9 @@
 //! MCP commands — DTO mapping only.
 
-use tauri::State;
 use crate::application::AppServices;
 use crate::application::mcp_service::{McpServerCreate, McpServerUpdate};
 use crate::interface::desktop::contract::mcp::*;
+use tauri::State;
 
 /// List all MCP servers.
 #[tauri::command]
@@ -11,8 +11,9 @@ pub async fn list_mcp_servers(
     services: State<'_, AppServices>,
 ) -> Result<MCPServerListResponse, String> {
     let servers = services.mcp.list_servers();
-    let items: Vec<MCPServerItem> = servers.into_iter().map(|s| {
-        MCPServerItem {
+    let items: Vec<MCPServerItem> = servers
+        .into_iter()
+        .map(|s| MCPServerItem {
             name: s.name,
             status: s.status,
             config: MCPServerConfigData {
@@ -25,8 +26,8 @@ pub async fn list_mcp_servers(
             tools_count: s.tools_count,
             config_location: s.config_location,
             config_path: s.config_path,
-        }
-    }).collect();
+        })
+        .collect();
 
     Ok(MCPServerListResponse { servers: items })
 }
@@ -37,8 +38,8 @@ pub async fn get_mcp_server(
     services: State<'_, AppServices>,
     name: String,
 ) -> Result<serde_json::Value, String> {
-    let server = services.mcp.get_server(&name)
-        .ok_or_else(|| format!("Server '{}' not found", name))?;
+    let server =
+        services.mcp.get_server(&name).ok_or_else(|| format!("Server '{}' not found", name))?;
 
     Ok(serde_json::json!({
         "name": server.name,

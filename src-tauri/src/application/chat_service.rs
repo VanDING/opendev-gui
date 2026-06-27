@@ -30,10 +30,7 @@ pub struct ChatService {
 }
 
 impl ChatService {
-    pub fn new(
-        session_manager: SessionManager,
-        config: AppConfig,
-    ) -> Self {
+    pub fn new(session_manager: SessionManager, config: AppConfig) -> Self {
         Self {
             session_manager: std::sync::Arc::new(tokio::sync::RwLock::new(session_manager)),
             config: std::sync::Arc::new(tokio::sync::RwLock::new(config)),
@@ -56,13 +53,9 @@ impl ChatService {
     }
 
     /// Get messages for the current session (filtered for display).
-    pub async fn get_current_messages(
-        &self,
-    ) -> Result<Vec<serde_json::Value>, String> {
+    pub async fn get_current_messages(&self) -> Result<Vec<serde_json::Value>, String> {
         let mgr = self.session_manager.read().await;
-        let session = mgr
-            .current_session()
-            .ok_or_else(|| "No active session".to_string())?;
+        let session = mgr.current_session().ok_or_else(|| "No active session".to_string())?;
 
         let messages: Vec<serde_json::Value> = session
             .messages
@@ -116,10 +109,7 @@ impl ChatService {
 
     /// Mark a session as running.
     pub async fn set_session_running(&self, session_id: String) {
-        self.running_sessions
-            .lock()
-            .await
-            .insert(session_id, "running".to_string());
+        self.running_sessions.lock().await.insert(session_id, "running".to_string());
     }
 
     /// Mark a session as idle.
@@ -135,9 +125,7 @@ impl ChatService {
     ) -> Result<(), String> {
         let mut queues = self.injection_queues.lock().await;
         if let Some(tx) = queues.get(session_id) {
-            tx.send(message)
-                .await
-                .map_err(|_| "Injection queue full or closed".to_string())?;
+            tx.send(message).await.map_err(|_| "Injection queue full or closed".to_string())?;
             Ok(())
         } else {
             Err("Session not found or injection queue not available".to_string())
@@ -150,10 +138,7 @@ impl ChatService {
         session_id: &str,
         tx: tokio::sync::mpsc::Sender<String>,
     ) {
-        self.injection_queues
-            .lock()
-            .await
-            .insert(session_id.to_string(), tx);
+        self.injection_queues.lock().await.insert(session_id.to_string(), tx);
     }
 
     /// Remove an injection queue.
@@ -177,9 +162,7 @@ impl ChatService {
     }
 
     /// Get a reference to the session manager for reading.
-    pub async fn session_manager_read(
-        &self,
-    ) -> tokio::sync::RwLockReadGuard<'_, SessionManager> {
+    pub async fn session_manager_read(&self) -> tokio::sync::RwLockReadGuard<'_, SessionManager> {
         self.session_manager.read().await
     }
 

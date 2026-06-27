@@ -116,10 +116,9 @@ fn save_server_to_config(
     }
 
     let mut servers = if path.exists() {
-        let data = std::fs::read_to_string(path)
-            .map_err(|e| format!("Failed to read config: {}", e))?;
-        serde_json::from_str::<HashMap<String, McpServerConfig>>(&data)
-            .unwrap_or_default()
+        let data =
+            std::fs::read_to_string(path).map_err(|e| format!("Failed to read config: {}", e))?;
+        serde_json::from_str::<HashMap<String, McpServerConfig>>(&data).unwrap_or_default()
     } else {
         HashMap::new()
     };
@@ -128,8 +127,7 @@ fn save_server_to_config(
 
     let data = serde_json::to_string_pretty(&servers)
         .map_err(|e| format!("Failed to serialize config: {}", e))?;
-    std::fs::write(path, data)
-        .map_err(|e| format!("Failed to write config: {}", e))?;
+    std::fs::write(path, data).map_err(|e| format!("Failed to write config: {}", e))?;
     Ok(())
 }
 
@@ -139,16 +137,15 @@ fn remove_server_from_config(name: &str, path: &PathBuf) -> Result<bool, String>
         return Ok(false);
     }
 
-    let data = std::fs::read_to_string(path)
-        .map_err(|e| format!("Failed to read config: {}", e))?;
+    let data =
+        std::fs::read_to_string(path).map_err(|e| format!("Failed to read config: {}", e))?;
     let mut servers: HashMap<String, McpServerConfig> =
         serde_json::from_str(&data).unwrap_or_default();
 
     if servers.remove(name).is_some() {
         let data = serde_json::to_string_pretty(&servers)
             .map_err(|e| format!("Failed to serialize config: {}", e))?;
-        std::fs::write(path, data)
-            .map_err(|e| format!("Failed to write config: {}", e))?;
+        std::fs::write(path, data).map_err(|e| format!("Failed to write config: {}", e))?;
         Ok(true)
     } else {
         Ok(false)
@@ -232,9 +229,7 @@ impl MCPService {
     /// Update an existing MCP server.
     pub fn update_server(&self, name: &str, update: McpServerUpdate) -> Result<(), String> {
         let servers = load_all_servers(&self.working_dir);
-        let existing = servers
-            .get(name)
-            .ok_or_else(|| format!("Server '{}' not found", name))?;
+        let existing = servers.get(name).ok_or_else(|| format!("Server '{}' not found", name))?;
 
         let config = McpServerConfig {
             command: update.command.unwrap_or_else(|| existing.command.clone()),
@@ -260,24 +255,17 @@ impl MCPService {
             remove_server_from_config(name, &project_config_path(&self.working_dir))?;
 
         if !global_removed && !project_removed {
-            return Err(format!(
-                "Server '{}' found in memory but not in config files",
-                name
-            ));
+            return Err(format!("Server '{}' found in memory but not in config files", name));
         }
 
         Ok(())
     }
 
     /// Connect to an MCP server (tests connectivity and discovers tools).
-    pub async fn connect_server(
-        &self,
-        name: &str,
-    ) -> Result<usize, String> {
+    pub async fn connect_server(&self, name: &str) -> Result<usize, String> {
         let servers = load_all_servers(&self.working_dir);
-        let server_config = servers
-            .get(name)
-            .ok_or_else(|| format!("Server '{}' not found", name))?;
+        let server_config =
+            servers.get(name).ok_or_else(|| format!("Server '{}' not found", name))?;
 
         let mcp_config = opendev_mcp::McpServerConfig {
             command: server_config.command.clone(),
@@ -288,8 +276,7 @@ impl MCPService {
             ..Default::default()
         };
 
-        let manager =
-            opendev_mcp::McpManager::new(Some(PathBuf::from(&self.working_dir)));
+        let manager = opendev_mcp::McpManager::new(Some(PathBuf::from(&self.working_dir)));
         manager
             .add_server(name.to_string(), mcp_config)
             .await

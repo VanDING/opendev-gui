@@ -81,13 +81,7 @@ impl WorkflowService {
         meta: PendingApproval,
     ) -> oneshot::Receiver<ApprovalResult> {
         let (tx, rx) = oneshot::channel();
-        self.pending_approvals.lock().await.insert(
-            id,
-            ApprovalSlot {
-                meta,
-                tx: Some(tx),
-            },
-        );
+        self.pending_approvals.lock().await.insert(id, ApprovalSlot { meta, tx: Some(tx) });
         rx
     }
 
@@ -101,10 +95,7 @@ impl WorkflowService {
         let mut approvals = self.pending_approvals.lock().await;
         if let Some(slot) = approvals.remove(id) {
             if let Some(tx) = slot.tx {
-                let _ = tx.send(ApprovalResult {
-                    approved,
-                    auto_approve,
-                });
+                let _ = tx.send(ApprovalResult { approved, auto_approve });
             }
             Some(slot.meta)
         } else {
@@ -126,13 +117,7 @@ impl WorkflowService {
         meta: PendingAskUser,
     ) -> oneshot::Receiver<AskUserResult> {
         let (tx, rx) = oneshot::channel();
-        self.pending_ask_users.lock().await.insert(
-            request_id,
-            AskUserSlot {
-                meta,
-                tx: Some(tx),
-            },
-        );
+        self.pending_ask_users.lock().await.insert(request_id, AskUserSlot { meta, tx: Some(tx) });
         rx
     }
 
@@ -163,13 +148,10 @@ impl WorkflowService {
         meta: PendingPlanApproval,
     ) -> oneshot::Receiver<PlanApprovalResult> {
         let (tx, rx) = oneshot::channel();
-        self.pending_plan_approvals.lock().await.insert(
-            request_id,
-            PlanApprovalSlot {
-                meta,
-                tx: Some(tx),
-            },
-        );
+        self.pending_plan_approvals
+            .lock()
+            .await
+            .insert(request_id, PlanApprovalSlot { meta, tx: Some(tx) });
         rx
     }
 
@@ -197,10 +179,7 @@ impl WorkflowService {
             let mut approvals = self.pending_approvals.lock().await;
             for (_id, slot) in approvals.iter_mut() {
                 if let Some(tx) = slot.tx.take() {
-                    let _ = tx.send(ApprovalResult {
-                        approved: false,
-                        auto_approve: false,
-                    });
+                    let _ = tx.send(ApprovalResult { approved: false, auto_approve: false });
                 }
             }
             approvals.clear();
@@ -209,10 +188,7 @@ impl WorkflowService {
             let mut ask_users = self.pending_ask_users.lock().await;
             for (_id, slot) in ask_users.iter_mut() {
                 if let Some(tx) = slot.tx.take() {
-                    let _ = tx.send(AskUserResult {
-                        answers: None,
-                        cancelled: true,
-                    });
+                    let _ = tx.send(AskUserResult { answers: None, cancelled: true });
                 }
             }
             ask_users.clear();

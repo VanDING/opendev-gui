@@ -1,7 +1,7 @@
 //! MCP DTOs.
 
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// MCP server create request.
 #[derive(Debug, Deserialize)]

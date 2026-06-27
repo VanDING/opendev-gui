@@ -113,8 +113,7 @@ impl SessionService {
             }
         }
 
-        mgr.save_current()
-            .map_err(|e| format!("Failed to save session: {}", e))?;
+        mgr.save_current().map_err(|e| format!("Failed to save session: {}", e))?;
 
         Ok((session_id, "created"))
     }
@@ -122,9 +121,8 @@ impl SessionService {
     /// Get session metadata by ID.
     pub async fn get_session(&self, id: &str) -> Result<serde_json::Value, String> {
         let mgr = self.session_manager.read().await;
-        let session = mgr
-            .load_session(id)
-            .map_err(|e| format!("Session {} not found: {}", id, e))?;
+        let session =
+            mgr.load_session(id).map_err(|e| format!("Session {} not found: {}", id, e))?;
         serde_json::to_value(session.get_metadata())
             .map_err(|e| format!("Failed to serialize session: {}", e))
     }
@@ -134,8 +132,7 @@ impl SessionService {
         let mut mgr = self.session_manager.write().await;
 
         // Verify session exists.
-        mgr.load_session(id)
-            .map_err(|e| format!("Session {} not found: {}", id, e))?;
+        mgr.load_session(id).map_err(|e| format!("Session {} not found: {}", id, e))?;
 
         // Delete session files.
         let session_dir = mgr.session_dir().to_path_buf();
@@ -156,9 +153,7 @@ impl SessionService {
         }
 
         // Remove from index.
-        mgr.index()
-            .remove_entry(id)
-            .map_err(|e| format!("Failed to update index: {}", e))?;
+        mgr.index().remove_entry(id).map_err(|e| format!("Failed to update index: {}", e))?;
 
         // Clear current session if it was the deleted one.
         if mgr.current_session().map(|s| s.id == id).unwrap_or(false) {
@@ -171,8 +166,7 @@ impl SessionService {
     /// Resume a session.
     pub async fn resume_session(&self, id: &str) -> Result<String, String> {
         let mut mgr = self.session_manager.write().await;
-        mgr.resume_session(id)
-            .map_err(|e| format!("Session {} not found: {}", id, e))?;
+        mgr.resume_session(id).map_err(|e| format!("Session {} not found: {}", id, e))?;
         Ok(id.to_string())
     }
 
@@ -182,22 +176,19 @@ impl SessionService {
         id: &str,
     ) -> Result<Vec<opendev_models::ChatMessage>, String> {
         let mgr = self.session_manager.read().await;
-        let session = mgr
-            .load_session(id)
-            .map_err(|e| format!("Session {} not found: {}", id, e))?;
+        let session =
+            mgr.load_session(id).map_err(|e| format!("Session {} not found: {}", id, e))?;
         Ok(session.messages.clone())
     }
 
     /// Get session model overrides from metadata.
-    pub async fn get_session_model(
-        &self,
-        session_id: &str,
-    ) -> Result<serde_json::Value, String> {
+    pub async fn get_session_model(&self, session_id: &str) -> Result<serde_json::Value, String> {
         let mgr = self.session_manager.read().await;
         let session = mgr
             .load_session(session_id)
             .map_err(|e| format!("Session {} not found: {}", session_id, e))?;
-        let overlay = session.metadata.get("session_model").cloned().unwrap_or(serde_json::json!({}));
+        let overlay =
+            session.metadata.get("session_model").cloned().unwrap_or(serde_json::json!({}));
         Ok(overlay)
     }
 
@@ -215,7 +206,9 @@ impl SessionService {
             .clone();
         drop(mgr);
 
-        let current = session.metadata.get("session_model")
+        let current = session
+            .metadata
+            .get("session_model")
             .and_then(|v| v.as_object())
             .cloned()
             .unwrap_or_default();
@@ -238,12 +231,13 @@ impl SessionService {
         if overlay.is_empty() {
             session.metadata.remove("session_model");
         } else {
-            session.metadata.insert("session_model".to_string(), serde_json::Value::Object(overlay));
+            session
+                .metadata
+                .insert("session_model".to_string(), serde_json::Value::Object(overlay));
         }
 
         let mut mgr = self.session_manager.write().await;
-        mgr.save_session(&session)
-            .map_err(|e| format!("Failed to save session: {}", e))?;
+        mgr.save_session(&session).map_err(|e| format!("Failed to save session: {}", e))?;
         Ok(())
     }
 
@@ -259,8 +253,7 @@ impl SessionService {
         session.metadata.remove("session_model");
 
         let mut mgr = self.session_manager.write().await;
-        mgr.save_session(&session)
-            .map_err(|e| format!("Failed to save session: {}", e))?;
+        mgr.save_session(&session).map_err(|e| format!("Failed to save session: {}", e))?;
         Ok(())
     }
 }

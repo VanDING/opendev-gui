@@ -79,9 +79,7 @@ impl FileService {
             Ok(entries) => entries
                 .filter_map(|e| e.ok())
                 .filter(|e| e.file_type().map(|t| t.is_dir()).unwrap_or(false))
-                .filter(|e| {
-                    show_hidden || !e.file_name().to_string_lossy().starts_with('.')
-                })
+                .filter(|e| show_hidden || !e.file_name().to_string_lossy().starts_with('.'))
                 .map(|e| {
                     let name = e.file_name().to_string_lossy().to_string();
                     let path = dir.join(&name).to_string_lossy().to_string();
@@ -92,12 +90,7 @@ impl FileService {
         };
         directories.sort_by(|a, b| a.name.cmp(&b.name));
 
-        BrowseDirResult {
-            current_path,
-            parent_path: parent,
-            directories,
-            error: None,
-        }
+        BrowseDirResult { current_path, parent_path: parent, directories, error: None }
     }
 
     /// Verify that a path exists within the workspace.
@@ -156,13 +149,7 @@ impl FileService {
         FileListResult { files }
     }
 
-    fn collect_files(
-        &self,
-        base: &Path,
-        dir: &Path,
-        query: &str,
-        depth: usize,
-    ) -> Vec<FileEntry> {
+    fn collect_files(&self, base: &Path, dir: &Path, query: &str, depth: usize) -> Vec<FileEntry> {
         if depth > 3 {
             return vec![];
         }
@@ -182,11 +169,8 @@ impl FileService {
 
             let full_path = entry.path();
             let is_file = entry.file_type().map(|t| t.is_file()).unwrap_or(false);
-            let relative = full_path
-                .strip_prefix(base)
-                .unwrap_or(&full_path)
-                .to_string_lossy()
-                .to_string();
+            let relative =
+                full_path.strip_prefix(base).unwrap_or(&full_path).to_string_lossy().to_string();
 
             if relative.to_lowercase().contains(&query_lower) {
                 results.push(FileEntry {

@@ -123,10 +123,7 @@ impl ConfigService {
     pub async fn set_autonomy_level(&self, level: &str) -> Result<(), String> {
         let valid = ["Manual", "Semi-Auto", "Auto"];
         if !valid.contains(&level) {
-            return Err(format!(
-                "Invalid autonomy level: {}. Must be one of {:?}",
-                level, valid
-            ));
+            return Err(format!("Invalid autonomy level: {}. Must be one of {:?}", level, valid));
         }
         *self.autonomy_level.write().await = level.to_string();
         Ok(())
@@ -233,10 +230,7 @@ impl ConfigService {
             } else {
                 format!("No API key found. Set {} environment variable", env_var)
             };
-            return VerifyModelResult {
-                valid: false,
-                error: Some(hint),
-            };
+            return VerifyModelResult { valid: false, error: Some(hint) };
         }
 
         VerifyModelResult { valid: true, error: None }

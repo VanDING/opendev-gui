@@ -1,8 +1,8 @@
 //! Files commands — DTO mapping only.
 
-use tauri::State;
 use crate::application::AppServices;
 use crate::interface::desktop::contract::files::*;
+use tauri::State;
 
 /// Browse directory contents.
 #[tauri::command]
@@ -14,10 +14,11 @@ pub async fn browse_directory(
     Ok(BrowseDirectoryResponse {
         current_path: result.current_path,
         parent_path: result.parent_path,
-        directories: result.directories.into_iter().map(|d| DirEntryData {
-            name: d.name,
-            path: d.path,
-        }).collect(),
+        directories: result
+            .directories
+            .into_iter()
+            .map(|d| DirEntryData { name: d.name, path: d.path })
+            .collect(),
         error: result.error,
     })
 }

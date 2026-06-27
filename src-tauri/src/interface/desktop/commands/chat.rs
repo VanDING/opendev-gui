@@ -1,8 +1,8 @@
 //! Chat commands — DTO mapping only.
 
-use tauri::State;
 use crate::application::AppServices;
 use crate::interface::desktop::contract::chat::*;
+use tauri::State;
 
 /// Send a chat query. Returns immediately; results arrive via event stream.
 #[tauri::command]
@@ -17,13 +17,19 @@ pub async fn send_chat_query(
 
     let session_id = match req.session_id {
         Some(id) => id,
-        None => services.session.current_session_id().await
+        None => services
+            .session
+            .current_session_id()
+            .await
             .ok_or_else(|| "No active session. Create a session first.".to_string())?,
     };
 
     // If session is already running, inject into queue
     if services.chat.is_session_running(&session_id).await {
-        services.chat.try_inject_message(&session_id, message.clone()).await
+        services
+            .chat
+            .try_inject_message(&session_id, message.clone())
+            .await
             .map_err(|_| "Agent is busy; try again shortly.".to_string())?;
         return Ok(ChatActionResponse {
             status: "accepted".to_string(),

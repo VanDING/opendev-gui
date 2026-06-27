@@ -36,9 +36,7 @@ pub struct SkillService {
 
 impl SkillService {
     pub fn new() -> Self {
-        Self {
-            skill_loader: std::sync::Mutex::new(None),
-        }
+        Self { skill_loader: std::sync::Mutex::new(None) }
     }
 
     /// Set the skill loader (called once during initialization).
