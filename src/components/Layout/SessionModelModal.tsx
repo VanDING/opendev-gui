@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { apiClient } from '../../api/client';
+import { configRepository, sessionRepository } from '../../repositories';
 import { ModelSlot } from '../Settings/ModelSlot';
 import type { Provider } from '../Settings/ModelSlot';
 import { toast } from 'sonner';
@@ -48,9 +48,9 @@ export function SessionModelModal({ sessionId, sessionLabel, onClose }: SessionM
     try {
       setLoading(true);
       const [providersData, configData, overlayData] = await Promise.all([
-        apiClient.listProviders(),
-        apiClient.getConfig(),
-        apiClient.getSessionModel(sessionId),
+        configRepository.listProviders(),
+        configRepository.getConfig(),
+        sessionRepository.getSessionModel(sessionId),
       ]);
 
       setProviders(providersData);
@@ -86,7 +86,7 @@ export function SessionModelModal({ sessionId, sessionLabel, onClose }: SessionM
     setError(undefined);
 
     try {
-      const result = await apiClient.verifyModel(provider, model);
+      const result = await configRepository.verifyModel(provider, model);
       if (result.valid) {
         setStatus('success');
         return true;
@@ -143,14 +143,11 @@ export function SessionModelModal({ sessionId, sessionLabel, onClose }: SessionM
     try {
       setSaving(true);
 
-      await apiClient.updateSessionModel(sessionId, {
-        model_provider: normalProvider || null,
-        model: normalModel || null,
-        model_thinking_provider: thinkingProvider || null,
-        model_thinking: thinkingModel || null,
-        model_vlm_provider: visionProvider || null,
-        model_vlm: visionModel || null,
-      });
+      await sessionRepository.updateSessionModel(
+        sessionId,
+        normalModel,
+        normalProvider,
+      );
 
       setHasExistingOverlay(true);
       toast.success('Session model updated');
@@ -167,11 +164,11 @@ export function SessionModelModal({ sessionId, sessionLabel, onClose }: SessionM
     if (!sessionId) return;
     try {
       setSaving(true);
-      await apiClient.clearSessionModel(sessionId);
+      await sessionRepository.clearSessionModel(sessionId);
       setHasExistingOverlay(false);
 
       // Reload with global defaults
-      const configData = await apiClient.getConfig();
+      const configData = await configRepository.getConfig();
       setNormalProvider(configData.model_provider || '');
       setNormalModel(configData.model || '');
       setThinkingProvider(configData.model_thinking_provider || '');

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useChatStore } from '../../stores/chat';
-import { apiClient } from '../../api/client';
+import { mcpRepository } from '../../repositories';
 import { Modal } from '../ui/Modal';
 
 interface StatusDialogProps {
@@ -29,7 +29,7 @@ export function StatusDialog({ isOpen, onClose }: StatusDialogProps) {
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
-    apiClient.get<{ servers: MCPServer[] }>('/mcp/servers')
+    mcpRepository.listServers()
       .then(data => setMcpServers(data?.servers || []))
       .catch(() => setMcpServers([]))
       .finally(() => setLoading(false));

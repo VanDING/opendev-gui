@@ -6,7 +6,7 @@ import { SettingsModal } from '../Settings/SettingsModal';
 import { NewSessionModal } from './NewSessionModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { SessionModelModal } from './SessionModelModal';
-import { apiClient } from '../../api/client';
+import { sessionRepository } from '../../repositories';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { useWorkspaces } from '../../hooks/useWorkspaces';
@@ -123,7 +123,7 @@ export function SessionsSidebar() {
     e.stopPropagation();
 
     try {
-      const result = await apiClient.createSession(workspacePath);
+      const result = await sessionRepository.createSession(workspacePath);
 
       // Refresh sessions list
       await fetchSessions();
@@ -153,10 +153,7 @@ export function SessionsSidebar() {
     if (!deleteSessionId) return;
 
     try {
-      const response = await fetch(`/api/sessions/${deleteSessionId}`, { method: 'DELETE' });
-      if (!response.ok) {
-        throw new Error(`Delete failed: ${response.status}`);
-      }
+      await sessionRepository.deleteSession(deleteSessionId);
 
       // Clean up per-session state
       const { sessionStates: currentStates } = useChatStore.getState();
@@ -188,10 +185,7 @@ export function SessionsSidebar() {
 
       // Delete all sessions for this workspace
       for (const session of deleteWorkspace.sessions) {
-        const response = await fetch(`/api/sessions/${session.id}`, { method: 'DELETE' });
-        if (!response.ok) {
-          throw new Error(`Delete failed for session ${session.id}: ${response.status}`);
-        }
+        await sessionRepository.deleteSession(session.id);
 
         // Clean up per-session state
         const { sessionStates: currentStates } = useChatStore.getState();
@@ -261,21 +255,21 @@ export function SessionsSidebar() {
                     }}
                     className={`w-10 h-10 rounded-md flex items-center justify-center ${
                       hasActiveSession
-                        ? 'bg-intent-warning-muted border border-intent-warning'
+                        ? 'bg-accent-magenta-muted border border-accent-magenta'
                         : 'bg-surface-primary hover:bg-surface-2 border border-border-default'
                     }`}
                   >
-                    <Folder className={`w-5 h-5 ${hasActiveSession ? 'text-intent-warning' : 'text-content-tertiary'}`} />
+                    <Folder className={`w-5 h-5 ${hasActiveSession ? 'text-accent-magenta' : 'text-content-tertiary'}`} />
                   </button>
                   {hasRunningSession && (
-                    <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-[1.5px] border-intent-warning-muted border-t-intent-warning animate-spin" />
+                    <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-[1.5px] border-accent-magenta-muted border-t-accent-magenta animate-spin" />
                   )}
 
                   {/* Tooltip */}
                   <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-accent-primary text-content-inverse text-xs rounded-lg px-3 py-2 whitespace-nowrap opacity-60 group-hover:opacity-100 pointer-events-none z-50 shadow-lg">
                     <div className="font-medium text-sm mb-1">{projectName}</div>
                     <div className="text-content-tertiary text-xs">{workspace.sessions.length} session{workspace.sessions.length !== 1 ? 's' : ''}</div>
-                    {hasActiveSession && <div className="text-intent-warning-muted text-xs mt-1">Active</div>}
+                    {hasActiveSession && <div className="text-accent-magenta text-xs mt-1 font-semibold">Active</div>}
                     <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-surface-primary"></div>
                   </div>
                 </div>
@@ -398,7 +392,7 @@ export function SessionsSidebar() {
                               </span>
                               <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs flex-shrink-0 ${
                                 hasActiveSession
-                                  ? 'bg-intent-warning-muted text-intent-warning font-medium'
+                                  ? 'bg-accent-magenta-muted text-accent-magenta font-medium'
                                   : 'bg-surface-3 text-content-secondary'
                               }`}>
                                 {workspace.sessions.length}
@@ -462,24 +456,24 @@ export function SessionsSidebar() {
                                   onClick={(e) => handleSessionClick(session, e)}
                                   className={`w-full px-4 py-3 pr-10 rounded-lg text-left cursor-pointer ${
                                     isActiveSession
-                                      ? 'bg-intent-warning-muted border-l-4 animate-border-breathe'
-                                      : 'bg-surface-primary border border-border-default hover:border-intent-warning hover:bg-intent-warning-muted/30 hover:scale-[1.01] hover:shadow-sm transition-all duration-200'
+                                      ? 'bg-accent-magenta-muted border-l-4 border-accent-magenta animate-border-breathe-magenta'
+                                      : 'bg-surface-primary border border-border-default hover:border-accent-magenta hover:bg-accent-magenta-muted/30 hover:scale-[1.01] hover:shadow-sm transition-all duration-200'
                                   }`}
                                 >
                                   <div className="flex items-center gap-1.5">
                                     {isRunning && (
-                                      <div className="w-3.5 h-3.5 rounded-full border-2 border-intent-warning-muted border-t-intent-warning animate-spin flex-shrink-0" />
+                                      <div className="w-3.5 h-3.5 rounded-full border-2 border-accent-magenta-muted border-t-accent-magenta animate-spin flex-shrink-0" />
                                     )}
                                     {needsAttention && !isRunning && (
-                                      <div className="w-4 h-4 rounded-full bg-intent-warning text-content-inverse text-[9px] font-bold flex items-center justify-center flex-shrink-0">!</div>
+                                      <div className="w-4 h-4 rounded-full bg-accent-magenta text-content-inverse text-[9px] font-bold flex items-center justify-center flex-shrink-0">!</div>
                                     )}
                                     <div className={`text-xs font-medium truncate ${
-                                      isActiveSession ? 'text-intent-warning-fg' : 'text-content-primary'
+                                      isActiveSession ? 'text-accent-magenta' : 'text-content-primary'
                                     }`} title={session.title || session.id}>
                                       {sessionLabel}
                                     </div>
                                     {needsAttention && isRunning && (
-                                      <div className="w-4 h-4 rounded-full bg-intent-warning text-content-inverse text-[9px] font-bold flex items-center justify-center flex-shrink-0">!</div>
+                                      <div className="w-4 h-4 rounded-full bg-accent-magenta text-content-inverse text-[9px] font-bold flex items-center justify-center flex-shrink-0">!</div>
                                     )}
                                     {session.has_session_model && (
                                       <span className="w-2 h-2 rounded-full bg-intent-purple-muted flex-shrink-0" title="Custom model" />
@@ -487,12 +481,12 @@ export function SessionsSidebar() {
                                   </div>
                                   <div className="flex items-center justify-between text-xs mt-1">
                                     <span className={`${
-                                      isActiveSession ? 'text-intent-warning' : 'text-content-tertiary'
+                                      isActiveSession ? 'text-accent-magenta' : 'text-content-tertiary'
                                     }`}>
                                       {formatDate(session.updated_at)}
                                     </span>
                                     <span className={`${
-                                      isActiveSession ? 'text-intent-warning' : 'text-content-tertiary'
+                                      isActiveSession ? 'text-accent-magenta' : 'text-content-tertiary'
                                     }`}>
                                       {session.message_count} msgs
                                     </span>
@@ -508,7 +502,7 @@ export function SessionsSidebar() {
                                       setSessionModelSessionId(session.id);
                                       setSessionModelLabel(getSessionLabel(session));
                                     }}
-                                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-intent-warning-muted text-content-tertiary hover:text-intent-warning"
+                                    className="w-6 h-6 rounded flex items-center justify-center hover:bg-accent-magenta-muted text-content-tertiary hover:text-accent-magenta"
                                     title="Session models"
                                   >
                                     <Settings className="w-3.5 h-3.5" />

@@ -39,8 +39,8 @@ const ACTIONS: QuickAction[] = [
     command: '/build',
     description: 'Generate code, tests,\nor documentation',
     icon: Box,
-    colorClass: 'text-intent-warning',
-    borderClass: 'group-hover:border-intent-warning-muted',
+    colorClass: 'text-accent-magenta',
+    borderClass: 'group-hover:border-accent-magenta-muted',
   },
 ];
 

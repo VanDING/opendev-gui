@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../../api/client';
+import { Cpu, Brain, LayoutGrid, Eye, EyeOff } from 'lucide-react';
+import { configRepository } from '../../repositories';
 import { ModelSlot } from './ModelSlot';
 import type { Provider } from './ModelSlot';
 import { toast } from 'sonner';
@@ -15,11 +16,13 @@ interface Config {
   model_compact_provider?: string | null;
   model_compact?: string | null;
   temperature: number;
+  api_key?: string | null;
+  api_base_url?: string | null;
 }
 
 export function ModelSettings() {
   const [providers, setProviders] = useState<Provider[]>([]);
-  const [_config, setConfig] = useState<Config | null>(null);
+  const [config, setConfig] = useState<Config | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   // Normal model
@@ -41,6 +44,14 @@ export function ModelSettings() {
   // Other settings
   const [temperature, setTemperature] = useState<number>(0.7);
 
+  // API configuration
+  const [apiKey, setApiKey] = useState('');
+  const [apiBaseUrl, setApiBaseUrl] = useState('');
+  const [apiKeyDirty, setApiKeyDirty] = useState(false);
+  const [apiBaseUrlDirty, setApiBaseUrlDirty] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [verifyState, setVerifyState] = useState<'idle' | 'verifying' | 'success' | 'error'>('idle');
+  const [verifyMessage, setVerifyMessage] = useState('');
 
   useEffect(() => {
     loadSettings();
@@ -50,8 +61,8 @@ export function ModelSettings() {
     try {
       setLoading(true);
       const [providersData, configData] = await Promise.all([
-        apiClient.listProviders(),
-        apiClient.getConfig(),
+        configRepository.listProviders(),
+        configRepository.getConfig(),
       ]);
 
       setProviders(providersData);
@@ -74,9 +85,16 @@ export function ModelSettings() {
       setCompactModel(configData.model_compact || '');
 
       // Other settings
-      setTemperature(configData.temperature);
+      setTemperature(configData.temperature ?? 0.7);
+
+      // API config — keep empty initially so user explicitly sets it
+      setApiKey('');
+      setApiBaseUrl(configData.api_base_url || '');
+      setApiKeyDirty(false);
+      setApiBaseUrlDirty(false);
     } catch (error) {
       console.error('Failed to load settings:', error);
+      toast.error('Failed to load settings');
     } finally {
       setLoading(false);
     }
@@ -86,7 +104,7 @@ export function ModelSettings() {
     try {
       setSaving(true);
 
-      await apiClient.updateConfig({
+      const payload: Record<string, any> = {
         model_provider: normalProvider,
         model: normalModel,
         model_thinking_provider: thinkingProvider || null,
@@ -94,7 +112,12 @@ export function ModelSettings() {
         model_vlm_provider: visionProvider || null,
         model_vlm: visionModel || null,
         temperature,
-      });
+      };
+
+      if (apiKeyDirty) payload.api_key = apiKey;
+      if (apiBaseUrlDirty) payload.api_base_url = apiBaseUrl;
+
+      await configRepository.updateConfig(payload);
 
       // Dispatch custom event to notify other components
       window.dispatchEvent(new CustomEvent('config-updated', {
@@ -105,6 +128,10 @@ export function ModelSettings() {
         }
       }));
 
+      // Reset dirty flags after save
+      setApiKeyDirty(false);
+      setApiBaseUrlDirty(false);
+
       toast.success('Settings saved successfully');
     } catch (error) {
       console.error('Failed to save settings:', error);
@@ -114,13 +141,47 @@ export function ModelSettings() {
     }
   };
 
+  const handleVerify = async () => {
+    const provider = normalProvider;
+    const model = normalModel;
+    if (!provider || !model) {
+      toast.error('Select a provider and model first');
+      return;
+    }
+    setVerifyState('verifying');
+    setVerifyMessage('');
+    try {
+      const result = await configRepository.verifyModel(provider, model);
+      if (result.valid) {
+        setVerifyState('success');
+        setVerifyMessage('Connection verified successfully');
+      } else {
+        setVerifyState('error');
+        setVerifyMessage(result.error || 'Verification failed');
+      }
+    } catch (e: any) {
+      setVerifyState('error');
+      setVerifyMessage(e.message || 'Verification failed');
+    }
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="flex items-center gap-2 text-content-secondary">
-          <div className="w-4 h-4 border-2 border-border-emphasis border-t-surface-muted rounded-full animate-spin" />
-          <span>Loading settings...</span>
-        </div>
+      <div className="space-y-6 animate-pulse">
+        <div className="bg-accent-primary-muted rounded-lg p-4 h-24" />
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="border border-border-default rounded-lg p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 rounded bg-surface-2" />
+              <div className="flex-1 space-y-1">
+                <div className="h-4 w-32 bg-surface-2 rounded" />
+                <div className="h-3 w-48 bg-surface-2 rounded" />
+              </div>
+            </div>
+            <div className="h-9 bg-surface-2 rounded-lg" />
+            <div className="h-9 bg-surface-2 rounded-lg" />
+          </div>
+        ))}
       </div>
     );
   }
@@ -139,7 +200,7 @@ export function ModelSettings() {
               Configure different models for different tasks: <strong>Normal</strong> for standard coding,
               <strong> Thinking</strong> for complex reasoning, <strong>Compact</strong> for context compaction
               summaries, and <strong>Vision</strong> for image processing.
-              Optional models fall back: Thinking &rarr; Normal, Compact &rarr; Normal, Vision &rarr; disabled.
+              Optional models fall back: Thinking → Normal, Compact → Normal, Vision → disabled.
             </p>
           </div>
         </div>
@@ -149,11 +210,7 @@ export function ModelSettings() {
       <ModelSlot
         title="Normal Model"
         description="For standard coding tasks and general-purpose operations"
-        icon={
-          <svg className="w-5 h-5 text-content-inverse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-          </svg>
-        }
+        icon={<Cpu className="w-5 h-5 text-accent-primary" />}
         providers={providers}
         selectedProvider={normalProvider}
         selectedModel={normalModel}
@@ -165,11 +222,7 @@ export function ModelSettings() {
       <ModelSlot
         title="Thinking Model"
         description="For complex reasoning and planning tasks (falls back to Normal if not set)"
-        icon={
-          <svg className="w-5 h-5 text-content-inverse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-          </svg>
-        }
+        icon={<Brain className="w-5 h-5 text-accent-primary" />}
         providers={providers}
         selectedProvider={thinkingProvider}
         selectedModel={thinkingModel}
@@ -183,11 +236,7 @@ export function ModelSettings() {
       <ModelSlot
         title="Compact Model"
         description="For context compaction summaries (falls back to Normal)"
-        icon={
-          <svg className="w-5 h-5 text-content-inverse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-          </svg>
-        }
+        icon={<LayoutGrid className="w-5 h-5 text-accent-primary" />}
         providers={providers}
         selectedProvider={compactProvider}
         selectedModel={compactModel}
@@ -201,12 +250,7 @@ export function ModelSettings() {
       <ModelSlot
         title="Vision Model"
         description="For image processing and multi-modal tasks (vision unavailable if not set)"
-        icon={
-          <svg className="w-5 h-5 text-content-inverse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-          </svg>
-        }
+        icon={<Eye className="w-5 h-5 text-accent-primary" />}
         providers={providers}
         selectedProvider={visionProvider}
         selectedModel={visionModel}
@@ -215,6 +259,77 @@ export function ModelSettings() {
         optional
         notSetText="Vision Disabled"
       />
+
+      {/* API Configuration */}
+      <div className="border-t border-border-default pt-6 space-y-4">
+        <h3 className="text-sm font-semibold text-content-primary">API Configuration</h3>
+
+        <div>
+          <label className="block text-sm font-medium text-content-primary mb-2">
+            API Key
+            {config?.api_key && (
+              <span className="text-content-tertiary font-normal ml-1">
+                (currently configured — enter new value to replace)
+              </span>
+            )}
+          </label>
+          <div className="relative">
+            <input
+              type={showApiKey ? 'text' : 'password'}
+              value={apiKey}
+              onChange={(e) => { setApiKey(e.target.value); setApiKeyDirty(true); }}
+              placeholder={config?.api_key ? 'Leave blank to keep current key' : 'Enter API key'}
+              className="w-full px-3 py-2 text-sm border border-border-emphasis rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent bg-surface-primary pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowApiKey(!showApiKey)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-content-tertiary hover:text-content-secondary transition-colors"
+              tabIndex={-1}
+            >
+              {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-content-primary mb-2">
+            Base URL <span className="text-content-tertiary font-normal">(optional)</span>
+          </label>
+          <input
+            type="text"
+            value={apiBaseUrl}
+            onChange={(e) => { setApiBaseUrl(e.target.value); setApiBaseUrlDirty(true); }}
+            placeholder={config?.api_base_url || 'https://api.example.com/v1'}
+            className="w-full px-3 py-2 text-sm border border-border-emphasis rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent bg-surface-primary"
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleVerify}
+            disabled={verifyState === 'verifying'}
+            loading={verifyState === 'verifying'}
+          >
+            Test Connection
+          </Button>
+
+          {verifyState === 'success' && (
+            <span className="flex items-center gap-1.5 text-xs text-intent-success">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              {verifyMessage}
+            </span>
+          )}
+          {verifyState === 'error' && (
+            <span className="flex items-center gap-1.5 text-xs text-intent-danger">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              {verifyMessage}
+            </span>
+          )}
+        </div>
+      </div>
 
       {/* Global Settings */}
       <div className="border-t border-border-default pt-6 space-y-4">
@@ -240,7 +355,6 @@ export function ModelSettings() {
             <span>Creative</span>
           </div>
         </div>
-
       </div>
 
       {/* Save Button */}

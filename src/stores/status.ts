@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { wsClient } from '../api/websocket';
+import { eventBridge } from '../api/eventBridge';
+// TODO: Future migration — replace wsClient.on('status_update', ...) with Tauri event listener (e.g., listen('status_update', ...))
 
 export interface StatusBarData {
   model: string | null;
@@ -43,8 +44,8 @@ export const useStatusStore = create<StatusStore>((set) => ({
   update: (partial) => set((state) => ({ data: { ...state.data, ...partial } })),
 }));
 
-// Subscribe to WebSocket status events
-wsClient.on('status_update', (message) => {
+// Subscribe to status events via Tauri IPC
+eventBridge.on('status_update', (message) => {
   const d = message.data;
   if (!d) return;
 

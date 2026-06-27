@@ -57,10 +57,10 @@ interface MatrixRainProps {
 }
 
 interface ThemeTokens {
-  intentInfo: string;
-  intentInfoHsl: Hsl;
+  accent: string;
+  accentHsl: Hsl;
   surfaceElevated: string;
-  secondaryHsl: Hsl;
+  subtitleHsl: Hsl;
   rainOpacity: number;
 }
 
@@ -84,27 +84,27 @@ export function MatrixRain({ opacity = 1, cellSize = 14 }: MatrixRainProps) {
 
     const root = document.documentElement;
     const theme: ThemeTokens = {
-      intentInfo: '#4A9EFF',
-      intentInfoHsl: { h: 210, s: 100, l: 62 },
-      surfaceElevated: '#161B22',
-      secondaryHsl: { h: 220, s: 12, l: 60 },
-      rainOpacity: 0.35,
+      accent: '#00F0FF',
+      accentHsl: { h: 187, s: 100, l: 50 },
+      surfaceElevated: '#12121F',
+      subtitleHsl: { h: 187, s: 80, l: 70 },
+      rainOpacity: 0.55,
     };
 
     const refreshTheme = () => {
       const cs = getComputedStyle(root);
-      const info = cs.getPropertyValue('--color-intent-info').trim();
+      const accent = cs.getPropertyValue('--color-accent-primary').trim();
       const surface = cs.getPropertyValue('--color-surface-elevated').trim();
-      const secondary = cs.getPropertyValue('--color-content-secondary').trim();
       const rainOp = cs.getPropertyValue('--rain-opacity').trim();
-      if (info) {
-        theme.intentInfo = info;
-        theme.intentInfoHsl = hexToHsl(info);
+      if (accent) {
+        theme.accent = accent;
+        theme.accentHsl = hexToHsl(accent);
       }
       if (surface) theme.surfaceElevated = surface;
-      if (secondary) theme.secondaryHsl = hexToHsl(secondary);
       const parsed = parseFloat(rainOp);
       if (!Number.isNaN(parsed)) theme.rainOpacity = parsed;
+      // Subtitle uses accent color, not gray secondary
+      theme.subtitleHsl = { ...theme.accentHsl, s: Math.min(100, theme.accentHsl.s), l: 70 };
     };
 
     refreshTheme();
@@ -169,8 +169,8 @@ export function MatrixRain({ opacity = 1, cellSize = 14 }: MatrixRainProps) {
       const brailleOffset = Math.floor(frame / 2) % SPINNER_FRAMES.length;
       const breathePhase = (frame * Math.PI * 2) / 240;
       const globalHueOffset = Math.sin(frame * 0.0035) * 10;
-      const baseHue = theme.intentInfoHsl.h;
-      const baseSat = Math.min(100, theme.intentInfoHsl.s);
+      const baseHue = theme.accentHsl.h;
+      const baseSat = Math.min(100, theme.accentHsl.s);
 
       // === Layout ===
       const totalCols = Math.floor(width / cellSize);
@@ -286,7 +286,7 @@ export function MatrixRain({ opacity = 1, cellSize = 14 }: MatrixRainProps) {
 
       // === Frame lines: drawn as fillRect (no font dependency) ===
       if (canShowLogo) {
-        const frameLightness = Math.min(75, theme.intentInfoHsl.l + 5);
+        const frameLightness = Math.min(75, theme.accentHsl.l + 5);
         const frameAlpha = 0.6;
         ctx.fillStyle = `hsla(${baseHue}, ${baseSat * 0.6}%, ${frameLightness}%, ${frameAlpha})`;
         const frameH = Math.max(1.5, cellSize * 0.1);
@@ -322,7 +322,7 @@ export function MatrixRain({ opacity = 1, cellSize = 14 }: MatrixRainProps) {
         const subtitleWidth = ctx.measureText(SUBTITLE).width;
         const subtitleX = (width - subtitleWidth) / 2;
         const subtitleY = titleY + titleH + cellSize * 1.0;
-        const subHsl = theme.secondaryHsl;
+        const subHsl = theme.subtitleHsl;
         const subBreathe = 0.70 + 0.22 * (0.5 + 0.5 * Math.sin(breathePhase + Math.PI * 0.4));
         ctx.fillStyle = `hsla(${subHsl.h}, ${subHsl.s}%, ${subHsl.l}%, ${subBreathe * 0.95})`;
         ctx.fillText(SUBTITLE, subtitleX, subtitleY);

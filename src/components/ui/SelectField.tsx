@@ -13,6 +13,7 @@ interface SelectFieldProps {
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  className?: string;
 }
 
 export function SelectField({
@@ -21,6 +22,7 @@ export function SelectField({
   onChange,
   placeholder = 'Select...',
   disabled = false,
+  className = '',
 }: SelectFieldProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -40,7 +42,7 @@ export function SelectField({
   }, [open]);
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className={`relative ${className}`}>
       <button
         type="button"
         onClick={() => !disabled && setOpen(!open)}
@@ -54,7 +56,7 @@ export function SelectField({
       </button>
 
       {open && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-surface-primary border border-border-default rounded-lg shadow-lg overflow-hidden animate-fade-in max-h-60 overflow-y-auto">
+        <div className="absolute z-dropdown top-full left-0 right-0 mt-1 bg-surface-primary border border-border-default rounded-lg shadow-popover overflow-hidden animate-scale-in max-h-60 overflow-y-auto">
           {options.map(option => (
             <button
               key={option.value}

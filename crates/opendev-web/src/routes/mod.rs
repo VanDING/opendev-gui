@@ -6,3 +6,4 @@ pub mod commands;
 pub mod config;
 pub mod mcp;
 pub mod sessions;
+pub mod skills;

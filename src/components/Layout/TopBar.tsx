@@ -1,19 +1,19 @@
 import { useEffect, useState, useRef } from 'react';
 import { PanelLeft, Command, Palette } from 'lucide-react';
 import { useChatStore } from '../../stores/chat';
-import { apiClient } from '../../api/client';
+import { configRepository } from '../../repositories';
 import { useTheme, ALL_THEMES } from '../../contexts/ThemeContext';
 import type { Theme } from '../../contexts/ThemeContext';
 import { Button } from '../ui/Button';
 
 const MODE_STYLES = {
   normal: 'bg-surface-muted/40 text-content-secondary border-border-emphasis hover:bg-surface-muted/60',
-  plan: 'bg-accent-secondary-muted text-accent-secondary border-accent-secondary-fg/50 hover:bg-accent-secondary-muted/80',
+  plan: 'bg-accent-magenta-muted text-accent-magenta border-accent-magenta/50 hover:bg-accent-magenta-muted/80',
 } as const;
 
 const AUTONOMY_STYLES = {
   'Manual': 'bg-surface-muted/40 text-content-secondary border-border-emphasis hover:bg-surface-muted/60',
-  'Semi-Auto': 'bg-accent-secondary-muted text-accent-secondary border-accent-secondary-fg/50 hover:bg-accent-secondary-muted/80',
+  'Semi-Auto': 'bg-accent-magenta-muted text-accent-magenta border-accent-magenta/50 hover:bg-accent-magenta-muted/80',
   'Auto': 'bg-intent-success/10 text-intent-success border-intent-success/20 hover:bg-intent-success/15',
 } as const;
 
@@ -46,14 +46,11 @@ const THEME_LABELS: Record<Theme, string> = {
   'dark-default':  'Dark',
   'light-default': 'Light',
   'warm':          'Warm',
-  'polar':         'Polar',
   'geek':          'Geek',
-  'afrofuturism':  'Afrofuturism',
   'sumi-e':        'Sumi-e',
   'synthwave':     'Synthwave',
   'techno':        'Techno',
   'brutalism':     'Brutalism',
-  'pixel-by':      'Pixel',
 };
 
 export function TopBar({ onOpenCommandPalette, detailCollapsed, onToggleDetail }: TopBarProps) {
@@ -73,7 +70,7 @@ export function TopBar({ onOpenCommandPalette, detailCollapsed, onToggleDetail }
   useEffect(() => {
     const loadStatus = async () => {
       try {
-        const configData = await apiClient.getConfig();
+        const configData = await configRepository.getConfig();
         useChatStore.setState({
           thinkingLevel: configData.thinking_level || 'Medium',
         });
@@ -151,7 +148,7 @@ export function TopBar({ onOpenCommandPalette, detailCollapsed, onToggleDetail }
         <img src="/icon_blue.png" alt="OpenDev" className="w-7 h-7 rounded-lg shadow-sm flex-shrink-0" />
 
         <div className="flex items-baseline gap-1.5">
-          <span className="text-sm font-bold tracking-tight text-content-primary">OPENDEV</span>
+          <span className="font-display text-sm font-black tracking-[0.15em] text-content-primary">OPENDEV</span>
           <span className="text-[10px] uppercase tracking-wider text-content-tertiary hidden sm:inline">AI Assistant</span>
         </div>
       </div>

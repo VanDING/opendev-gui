@@ -3,12 +3,12 @@ import ReactDOM from 'react-dom/client'
 import { Toaster } from 'sonner'
 import App from './App.tsx'
 import './index.css'
-import { wsClient } from './api/websocket'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
-// Connect WebSocket on app start
-wsClient.connect()
+// Tauri IPC is always available — no connection step needed.
+// Events arrive via Tauri listen(), requests via Tauri invoke().
+// The legacy HTTP/WebSocket bridge is handled transparently.
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -1,6 +1,6 @@
 import { useState, KeyboardEvent, useRef, useEffect } from 'react';
 import { useChatStore } from '../../stores/chat';
-import { apiClient } from '../../api/client';
+import { fileRepository, chatRepository } from '../../repositories';
 import { FileMentionDropdown } from './FileMentionDropdown';
 import { FileChangesButton } from './FileChangesButton';
 import { Button } from '../ui/Button';
@@ -37,7 +37,7 @@ export function InputBox() {
       // Debounce the listFiles API call by 300ms to reduce network requests
       // and prevent race conditions when typing quickly
       const timeoutId = setTimeout(() => {
-        apiClient.listFiles(mentionQuery).then(response => {
+        fileRepository.listFiles(mentionQuery).then(response => {
           setFilesList(response.files);
           setSelectedFileIndex(0);
         }).catch(error => {
@@ -60,7 +60,7 @@ export function InputBox() {
 
   const handleStop = async () => {
     try {
-      await apiClient.interruptTask();
+      await chatRepository.interrupt();
     } catch (error) {
       console.error('Failed to interrupt task:', error);
     }

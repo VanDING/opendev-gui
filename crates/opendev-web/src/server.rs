@@ -43,6 +43,7 @@ pub fn build_app(state: AppState, static_dir: Option<&Path>) -> Router {
         .merge(routes::chat::router())
         .merge(routes::mcp::router())
         .merge(routes::commands::router())
+        .merge(routes::skills::router())
         // Health check
         .route("/api/health", axum::routing::get(health_check))
         // WebSocket

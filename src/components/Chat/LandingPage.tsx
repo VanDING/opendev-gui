@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, KeyboardEvent } from 'react';
 import { useChatStore } from '../../stores/chat';
-import { apiClient } from '../../api/client';
+import { sessionRepository } from '../../repositories';
 import { NewSessionModal } from '../Layout/NewSessionModal';
 import { Button } from '../ui/Button';
 import { useWorkspaces } from '../../hooks/useWorkspaces';
@@ -76,7 +76,7 @@ export function LandingPage() {
     setError(null);
 
     try {
-      const result = await apiClient.createSession(selectedWorkspace);
+      const result = await sessionRepository.createSession(selectedWorkspace);
       bumpSessionList();
       const sessionId = result.id;
       await loadSession(sessionId);
@@ -145,7 +145,7 @@ export function LandingPage() {
 
       {/* Centered input card */}
       <div className="relative z-10 w-full max-w-2xl">
-        <div className="rounded-md border border-border-default bg-surface-elevated shadow-xs">
+        <div className="rounded-md border border-accent-primary/40 bg-surface-2 cyber-glow">
           {/* Prompt + textarea */}
           <div className="relative px-4 pt-4 pb-3">
             <span
@@ -193,18 +193,17 @@ export function LandingPage() {
 
           {/* Bottom utility bar */}
           <div className="flex items-center justify-between px-4 py-2.5 border-t border-border-subtle">
-            {/* Left: context hints */}
-            <div className="flex items-center gap-3 text-xs font-mono text-content-tertiary">
+            {/* Left: + button to attach files */}
+            <div className="flex items-center">
               <div className="relative" ref={plusMenuRef}>
                 <button
                   onClick={() => setShowPlusMenu(!showPlusMenu)}
-                  className="inline-flex items-center gap-1 hover:text-content-primary transition-colors"
+                  className="w-8 h-8 rounded-full flex items-center justify-center bg-surface-2 hover:bg-surface-3 text-content-tertiary hover:text-content-primary transition-colors"
                   title="Attach files"
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                   </svg>
-                  <span>Add context</span>
                 </button>
                 {showPlusMenu && (
                   <div className="absolute bottom-full left-0 mb-2 w-48 bg-surface-elevated border border-border-default rounded-md shadow-md overflow-hidden z-50 animate-fade-in">
@@ -229,10 +228,6 @@ export function LandingPage() {
                   </div>
                 )}
               </div>
-              <span className="text-border-default">·</span>
-              <span>@ to mention</span>
-              <span className="text-border-default">·</span>
-              <span>/ for commands</span>
             </div>
 
             {/* Right: project picker + send */}

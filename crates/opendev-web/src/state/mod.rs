@@ -13,6 +13,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use tokio::sync::{Mutex, RwLock, broadcast, mpsc, oneshot};
 
+use opendev_agents::SkillLoader;
 use opendev_config::ModelRegistry;
 use opendev_history::SessionManager;
 use opendev_http::UserStore;
@@ -82,6 +83,8 @@ pub(super) struct AppStateInner {
     pub(super) broadcast_seq: AtomicU64,
     /// Ring buffer of recent broadcasts for client catch-up on reconnect.
     pub(super) recent_broadcasts: Mutex<VecDeque<WsBroadcast>>,
+    /// Skill loader for discovering and managing skills.
+    pub(super) skill_loader: Mutex<Option<SkillLoader>>,
 }
 
 /// Bridge mode state: when the TUI owns agent execution and
@@ -220,6 +223,7 @@ impl AppState {
                 bridge: RwLock::new(BridgeState::default()),
                 broadcast_seq: AtomicU64::new(1),
                 recent_broadcasts: Mutex::new(VecDeque::with_capacity(RING_BUFFER_CAPACITY)),
+                skill_loader: Mutex::new(None),
             }),
         }
     }
@@ -273,6 +277,21 @@ impl AppState {
     /// Get a write guard for the model registry.
     pub async fn model_registry_mut(&self) -> tokio::sync::RwLockWriteGuard<'_, ModelRegistry> {
         self.inner.model_registry.write().await
+    }
+
+    /// Set the skill loader for skills management.
+    pub async fn set_skill_loader(&self, loader: SkillLoader) {
+        *self.inner.skill_loader.lock().await = Some(loader);
+    }
+
+    /// Run an operation with the skill loader, returning the result.
+    /// Returns `None` if the skill loader has not been initialized.
+    pub async fn with_skill_loader<T, F>(&self, f: F) -> Option<T>
+    where
+        F: FnOnce(&mut SkillLoader) -> T,
+    {
+        let mut guard = self.inner.skill_loader.lock().await;
+        guard.as_mut().map(f)
     }
 
     // --- WebSocket ---

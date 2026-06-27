@@ -1,24 +1,34 @@
-use std::net::TcpListener as StdTcpListener;
-use std::path::Path;
+//! Legacy server module — maintains the event broadcast infrastructure
+//! without an HTTP listener.
+//!
+//! The AppState and broadcast channel are still needed for agent event
+//! routing. The actual HTTP listener has been removed.
+//! This module will be fully removed when agent events flow directly
+//! through Application Services.
 
+use std::path::{Path, PathBuf};
+
+use opendev_agents::SkillLoader;
 use opendev_config::ConfigLoader;
 use opendev_config::Paths;
 use opendev_history::SessionManager;
 use opendev_http::UserStore;
-use opendev_web::server::build_app;
-use opendev_web::state::AppState;
+use opendev_web::state::{AppState, WsBroadcast};
 
-pub struct ServerHandle {
-    pub port: u16,
-    pub shutdown_tx: tokio::sync::oneshot::Sender<()>,
+/// Handle containing the broadcast receiver for the Tauri event bridge.
+pub struct EventBridgeHandle {
+    pub broadcast_rx: tokio::sync::broadcast::Receiver<WsBroadcast>,
 }
 
-pub fn build_server(working_dir: &Path) -> Result<ServerHandle, String> {
+/// Sets up the broadcast infrastructure without starting an HTTP server.
+pub fn setup_event_broadcast(working_dir: &Path) -> Result<EventBridgeHandle, String> {
     let paths = Paths::new(Some(working_dir.to_path_buf()));
 
-    // ── Config & Session ───────────────────────────────────────────
     let config = ConfigLoader::load(&paths.global_settings(), &paths.project_settings())
         .map_err(|e| format!("Failed to load config: {}", e))?;
+
+    let skill_paths = config.skill_paths.clone();
+    let skill_urls = config.skill_urls.clone();
 
     let session_dir = paths.global_sessions_dir();
     std::fs::create_dir_all(&session_dir)
@@ -34,7 +44,6 @@ pub fn build_server(working_dir: &Path) -> Result<ServerHandle, String> {
 
     let model_registry = opendev_config::ModelRegistry::new();
 
-    // ── App State ──────────────────────────────────────────────────
     let state = AppState::new(
         session_manager,
         config,
@@ -43,28 +52,38 @@ pub fn build_server(working_dir: &Path) -> Result<ServerHandle, String> {
         model_registry,
     );
 
-    let router = build_app(state, None);
+    // Skill Loader
+    let skill_dirs = resolve_skill_dirs(working_dir, &skill_paths);
+    let mut skill_loader = SkillLoader::new(skill_dirs);
+    if !skill_urls.is_empty() {
+        skill_loader.add_urls(skill_urls);
+    }
+    let _ = tokio::runtime::Handle::current().block_on(state.set_skill_loader(skill_loader));
 
-    let std_listener =
-        StdTcpListener::bind("127.0.0.1:0").map_err(|e| format!("Failed to bind: {}", e))?;
-    let port = std_listener
-        .local_addr()
-        .map(|a| a.port())
-        .map_err(|e| format!("Failed to get port: {}", e))?;
-    std_listener.set_nonblocking(true).map_err(|e| format!("Failed to set nonblocking: {}", e))?;
-    let listener = tokio::net::TcpListener::from_std(std_listener)
-        .map_err(|e| format!("Failed to create tokio listener: {}", e))?;
+    let broadcast_rx = state.ws_subscribe();
 
-    let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
+    Ok(EventBridgeHandle { broadcast_rx })
+}
 
-    tokio::spawn(async move {
-        axum::serve(listener, router)
-            .with_graceful_shutdown(async {
-                let _ = shutdown_rx.await;
-            })
-            .await
-            .ok();
-    });
+fn resolve_skill_dirs(working_dir: &Path, skill_paths: &[String]) -> Vec<PathBuf> {
+    let mut dirs = Vec::new();
+    dirs.push(working_dir.join(".opendev").join("skills"));
+    if let Some(home) = home_dir() {
+        dirs.push(home.join(".opendev").join("skills"));
+    }
+    for path in skill_paths {
+        let resolved = if let Some(rest) = path.strip_prefix("~/") {
+            home_dir().map(|h| h.join(rest)).unwrap_or_else(|| PathBuf::from(path))
+        } else if Path::new(path).is_absolute() {
+            PathBuf::from(path)
+        } else {
+            working_dir.join(path)
+        };
+        dirs.push(resolved);
+    }
+    dirs
+}
 
-    Ok(ServerHandle { port, shutdown_tx })
+fn home_dir() -> Option<PathBuf> {
+    std::env::var("HOME").ok().map(PathBuf::from)
 }

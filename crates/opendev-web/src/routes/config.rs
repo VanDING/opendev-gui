@@ -19,6 +19,8 @@ pub struct ConfigUpdate {
     pub temperature: Option<f64>,
     pub max_tokens: Option<u32>,
     pub enable_bash: Option<bool>,
+    pub api_key: Option<String>,
+    pub api_base_url: Option<String>,
 }
 
 /// Mode update request.
@@ -86,6 +88,7 @@ async fn get_config(State(state): State<AppState>) -> Result<Json<serde_json::Va
         "model_compact_provider": compact_provider_opt,
         "model_compact": compact_model_opt,
         "api_key": masked_key,
+        "api_base_url": config.api_base_url,
         "temperature": config.temperature,
         "max_tokens": config.max_tokens,
         "enable_bash": config.enable_bash,
@@ -123,6 +126,12 @@ async fn update_config(
     }
     if let Some(bash) = update.enable_bash {
         config.enable_bash = bash;
+    }
+    if let Some(key) = update.api_key {
+        config.api_key = if key.is_empty() { None } else { Some(key) };
+    }
+    if let Some(url) = update.api_base_url {
+        config.api_base_url = if url.is_empty() { None } else { Some(url) };
     }
 
     Ok(Json(serde_json::json!({

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { wsClient } from '../api/websocket';
+import { eventBridge } from '../api/eventBridge';
+// TODO: Future migration — replace wsClient.on('tool_result', ...) and wsClient.on('status_update', ...) with Tauri event listeners
 
 export interface TodoItem {
   id: string;
@@ -25,7 +26,7 @@ export const useTodoStore = create<TodoStore>((set) => ({
 }));
 
 // Listen for todo-related tool results that carry todo state
-wsClient.on('tool_result', (message) => {
+eventBridge.on('tool_result', (message) => {
   const d = message.data;
   if (!d) return;
 
@@ -49,7 +50,7 @@ wsClient.on('tool_result', (message) => {
 });
 
 // Listen for status updates that may carry todo data
-wsClient.on('status_update', (message) => {
+eventBridge.on('status_update', (message) => {
   const d = message.data;
   if (!d?.todos) return;
 

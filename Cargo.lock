@@ -5070,10 +5070,12 @@ dependencies = [
 name = "opendev-desktop"
 version = "0.1.0"
 dependencies = [
- "axum",
+ "async-trait",
+ "opendev-agents",
  "opendev-config",
  "opendev-history",
  "opendev-http",
+ "opendev-mcp",
  "opendev-models",
  "opendev-runtime",
  "opendev-web",
@@ -5434,6 +5436,7 @@ dependencies = [
  "futures",
  "hmac",
  "http-body-util",
+ "opendev-agents",
  "opendev-config",
  "opendev-history",
  "opendev-http",

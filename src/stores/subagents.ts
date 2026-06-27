@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { wsClient } from '../api/websocket';
+import { eventBridge } from '../api/eventBridge';
 
 export interface ActiveToolCall {
   toolName: string;
@@ -77,7 +77,7 @@ export { formatToolVerb, formatToolArg };
 
 // ─── WebSocket Event Handlers ───────────────────────────────────────────────
 
-wsClient.on('subagent_start', (message) => {
+eventBridge.on('subagent_start', (message) => {
   const d = message.data;
   if (!d) return;
 
@@ -121,7 +121,7 @@ wsClient.on('subagent_start', (message) => {
   });
 });
 
-wsClient.on('nested_tool_call', (message) => {
+eventBridge.on('nested_tool_call', (message) => {
   const d = message.data;
   if (!d) return;
 
@@ -155,7 +155,7 @@ wsClient.on('nested_tool_call', (message) => {
   }
 });
 
-wsClient.on('nested_tool_result', (message) => {
+eventBridge.on('nested_tool_result', (message) => {
   const d = message.data;
   if (!d) return;
 
@@ -203,7 +203,7 @@ wsClient.on('nested_tool_result', (message) => {
   }
 });
 
-wsClient.on('subagent_complete', (message) => {
+eventBridge.on('subagent_complete', (message) => {
   const d = message.data;
   if (!d) return;
 
@@ -243,7 +243,7 @@ wsClient.on('subagent_complete', (message) => {
 });
 
 // Token updates (if backend sends them)
-wsClient.on('status_update', (message) => {
+eventBridge.on('status_update', (message) => {
   const d = message.data;
   if (!d?.subagent_id || (d.input_tokens == null && d.output_tokens == null)) return;
 

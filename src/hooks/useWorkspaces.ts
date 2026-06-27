@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { apiClient } from '../api/client';
+import { sessionRepository } from '../repositories';
 import type { Session } from '../types';
 
 export interface WorkspaceGroup {
@@ -50,7 +50,7 @@ export function useWorkspaces() {
   const fetchSessions = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await apiClient.listSessions();
+      const data = await sessionRepository.listSessions();
       const grouped = groupByWorkspace(data);
       setWorkspaces(grouped);
 

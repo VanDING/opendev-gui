@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useChatStore } from '../../stores/chat';
-import { apiClient } from '../../api/client';
+import { } from '../../repositories';
 import { MessageList } from './MessageList';
 import { QueueBar } from './QueueBar';
 import { InputBox } from './InputBox';
@@ -16,19 +16,9 @@ export function ChatInterface() {
   const loadSession = useChatStore(state => state.loadSession);
   const [bridgeChecked, setBridgeChecked] = useState(false);
 
-  // Auto-join TUI session in bridge mode
+  // Bridge info is always disabled in desktop mode
   useEffect(() => {
-    let cancelled = false;
-    apiClient.getBridgeInfo().then(info => {
-      if (cancelled) return;
-      if (info.bridge_mode && info.session_id) {
-        loadSession(info.session_id);
-      }
-      setBridgeChecked(true);
-    }).catch(() => {
-      if (!cancelled) setBridgeChecked(true);
-    });
-    return () => { cancelled = true; };
+    setBridgeChecked(true);
   }, [loadSession]);
 
   // Brief null render while checking bridge info (imperceptible)

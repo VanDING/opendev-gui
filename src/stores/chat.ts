@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import type { Message, ApprovalRequest, StatusInfo, AskUserRequest, PlanApprovalRequest, PerSessionState, ToolCallInfo } from '../types';
-import { apiClient } from '../api/client';
-import { wsClient } from '../api/websocket';
+import { eventBridge } from '../api/eventBridge';
 import { toast } from 'sonner';
+import { sessionRepository, chatRepository, configRepository, workflowRepository } from '../repositories';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -185,7 +185,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       try {
         console.log(`[Frontend] Fetching messages for session ${sessionId}`);
-        const rawMessages = await apiClient.getSessionMessages(sessionId);
+        const rawMessages = await sessionRepository.getSessionMessages(sessionId);
         const messages = expandMessages(rawMessages);
         console.log(`[Frontend] Loaded ${messages.length} messages for ${sessionId}`);
 
@@ -204,12 +204,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
 
     // Fire-and-forget: resume on backend for config context
-    apiClient.resumeSession(sessionId).catch(() => {});
+    sessionRepository.resumeSession(sessionId).catch(() => {});
 
     // Refresh status after session change (skip if already cached)
     if (!get().status) {
       try {
-        const configData = await apiClient.getConfig();
+        const configData = await configRepository.getConfig();
         set({
           thinkingLevel: configData.thinking_level || 'Medium',
           status: {
@@ -261,10 +261,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }));
 
     try {
-      wsClient.send({
-        type: 'query',
-        data: { message: content, session_id: sessionId },
-      });
+      await chatRepository.sendQuery(content, sessionId);
     } catch (error) {
       set(state => ({
         ...patchSession(state, sessionId, {
@@ -278,7 +275,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   clearChat: async () => {
     const sessionId = get().currentSessionId;
     try {
-      await apiClient.clearChat();
+      await chatRepository.clearChat();
       if (sessionId) {
         set(state => ({
           ...patchSession(state, sessionId, { messages: [], error: null }),
@@ -300,10 +297,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   respondToApproval: (approvalId: string, approved: boolean, autoApprove: boolean = false) => {
-    wsClient.send({
-      type: 'approve',
-      data: { approvalId, approved, autoApprove },
-    });
+    workflowRepository.approveTool(approvalId, approved, autoApprove).catch(console.error);
     const sessionId = get().currentSessionId;
     if (sessionId) {
       set(state => ({
@@ -324,7 +318,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const { status } = get();
     if (!status) return;
     const newMode = status.mode === 'normal' ? 'plan' : 'normal';
-    apiClient.setMode(newMode).catch(console.error);
+    configRepository.setMode(newMode).catch(console.error);
     set({ status: { ...status, mode: newMode } });
   },
 
@@ -333,7 +327,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     if (!status) return;
     const currentIdx = AUTONOMY_CYCLE.indexOf(status.autonomy_level);
     const nextLevel = AUTONOMY_CYCLE[(currentIdx + 1) % AUTONOMY_CYCLE.length];
-    apiClient.setAutonomy(nextLevel).catch(console.error);
+    configRepository.setAutonomy(nextLevel).catch(console.error);
     set({ status: { ...status, autonomy_level: nextLevel } });
   },
 
@@ -342,7 +336,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const currentLevel = status?.thinking_level || get().thinkingLevel;
     const currentIdx = THINKING_CYCLE.indexOf(currentLevel as any);
     const nextLevel = THINKING_CYCLE[(currentIdx + 1) % THINKING_CYCLE.length];
-    apiClient.setThinkingLevel(nextLevel).catch(console.error);
+    configRepository.setAutonomy(nextLevel).catch(console.error);
     set({
       thinkingLevel: nextLevel,
       status: status ? { ...status, thinking_level: nextLevel } : status,
@@ -350,10 +344,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   respondToAskUser: (requestId: string, answers: Record<string, any> | null) => {
-    wsClient.send({
-      type: 'ask_user_response',
-      data: { requestId, answers, cancelled: answers === null },
-    });
+    workflowRepository.respondToAsk(requestId, answers, answers === null).catch(console.error);
     const sessionId = get().currentSessionId;
     if (sessionId) {
       set(state => ({
@@ -363,10 +354,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   respondToPlanApproval: (requestId: string, action: string, feedback?: string) => {
-    wsClient.send({
-      type: 'plan_approval_response',
-      data: { requestId, action, feedback: feedback || '' },
-    });
+    workflowRepository.respondToPlan(requestId, action, feedback || '').catch(console.error);
     const sessionId = get().currentSessionId;
     if (sessionId) {
       set(state => ({
@@ -379,7 +367,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const sessionId = get().currentSessionId;
     if (!sessionId) return;
 
-    apiClient.interruptTask().catch(console.error);
+    chatRepository.interrupt().catch(console.error);
 
     set(state => ({
       ...patchSession(state, sessionId, prev => ({
@@ -420,7 +408,7 @@ function resolveSessionId(data: any): string | null {
 let connectionStableTimer: number | null = null;
 let wasEverStable = false;
 
-wsClient.on('connected', () => {
+eventBridge.on('connected', () => {
   useChatStore.getState().setConnected(true);
   if (wasEverStable) {
     toast.success('Reconnected to server');
@@ -457,7 +445,7 @@ wsClient.on('connected', () => {
   }, 2000);
 });
 
-wsClient.on('disconnected', () => {
+eventBridge.on('disconnected', () => {
   useChatStore.getState().setConnected(false);
   if (connectionStableTimer) {
     clearTimeout(connectionStableTimer);
@@ -468,7 +456,7 @@ wsClient.on('disconnected', () => {
   }
 });
 
-wsClient.on('user_message', (message) => {
+eventBridge.on('user_message', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   const content = message.data.content;
@@ -521,7 +509,7 @@ wsClient.on('user_message', (message) => {
   });
 });
 
-wsClient.on('message_start', (message) => {
+eventBridge.on('message_start', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   useChatStore.setState(state => ({
@@ -540,7 +528,7 @@ function finalizeThinking(msgs: Message[]): Message[] {
   return msgs;
 }
 
-wsClient.on('message_chunk', (message) => {
+eventBridge.on('message_chunk', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   console.log('[Frontend] Received message_chunk:', message.data.content.substring(0, 100));
@@ -567,7 +555,7 @@ wsClient.on('message_chunk', (message) => {
   });
 });
 
-wsClient.on('message_complete', (message) => {
+eventBridge.on('message_complete', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   console.log('[Frontend] Received message_complete');
@@ -576,7 +564,7 @@ wsClient.on('message_complete', (message) => {
   }));
 });
 
-wsClient.on('error', (message) => {
+eventBridge.on('error', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   useChatStore.setState(state => ({
@@ -588,7 +576,7 @@ wsClient.on('error', (message) => {
   toast.error(message.data.message || 'An error occurred');
 });
 
-wsClient.on('approval_required', (message) => {
+eventBridge.on('approval_required', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   console.log('[Frontend] Received approval_required:', message.data);
@@ -597,7 +585,7 @@ wsClient.on('approval_required', (message) => {
   }));
 });
 
-wsClient.on('approval_resolved', (message) => {
+eventBridge.on('approval_resolved', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   useChatStore.setState(state => ({
@@ -605,7 +593,7 @@ wsClient.on('approval_resolved', (message) => {
   }));
 });
 
-wsClient.on('tool_call', (message) => {
+eventBridge.on('tool_call', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
 
@@ -625,7 +613,7 @@ wsClient.on('tool_call', (message) => {
   });
 });
 
-wsClient.on('tool_result', (message) => {
+eventBridge.on('tool_result', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
 
@@ -656,7 +644,7 @@ wsClient.on('tool_result', (message) => {
   });
 });
 
-wsClient.on('thinking_block', (message) => {
+eventBridge.on('thinking_block', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   const content = message.data.content || '';
@@ -705,7 +693,7 @@ wsClient.on('thinking_block', (message) => {
   });
 });
 
-wsClient.on('status_update', (message) => {
+eventBridge.on('status_update', (message) => {
   const { status } = useChatStore.getState();
   const newStatus = {
     ...status,
@@ -717,7 +705,7 @@ wsClient.on('status_update', (message) => {
   });
 });
 
-wsClient.on('ask_user_required', (message) => {
+eventBridge.on('ask_user_required', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   console.log('[Frontend] Received ask_user_required:', message.data);
@@ -726,7 +714,7 @@ wsClient.on('ask_user_required', (message) => {
   }));
 });
 
-wsClient.on('ask_user_resolved', (message) => {
+eventBridge.on('ask_user_resolved', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   useChatStore.setState(state => ({
@@ -734,7 +722,7 @@ wsClient.on('ask_user_resolved', (message) => {
   }));
 });
 
-wsClient.on('session_activity', (message) => {
+eventBridge.on('session_activity', (message) => {
   const { session_id, status, running } = message.data;
   // Support both formats: {status: "running"} and {running: true}
   const isRunning = running === true || status === 'running';
@@ -754,7 +742,7 @@ wsClient.on('session_activity', (message) => {
 
 // ─── Plan Approval Events ────────────────────────────────────────────────────
 
-wsClient.on('plan_approval_required', (message) => {
+eventBridge.on('plan_approval_required', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   console.log('[Frontend] Received plan_approval_required:', message.data);
@@ -763,7 +751,7 @@ wsClient.on('plan_approval_required', (message) => {
   }));
 });
 
-wsClient.on('plan_approval_resolved', (message) => {
+eventBridge.on('plan_approval_resolved', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   useChatStore.setState(state => ({
@@ -773,7 +761,7 @@ wsClient.on('plan_approval_resolved', (message) => {
 
 // ─── Subagent Events ─────────────────────────────────────────────────────────
 
-wsClient.on('subagent_start', (message) => {
+eventBridge.on('subagent_start', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   const { agent_type, description, tool_call_id } = message.data;
@@ -794,7 +782,7 @@ wsClient.on('subagent_start', (message) => {
   });
 });
 
-wsClient.on('subagent_complete', (message) => {
+eventBridge.on('subagent_complete', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   const { tool_call_id, success } = message.data;
@@ -823,7 +811,7 @@ wsClient.on('subagent_complete', (message) => {
   });
 });
 
-wsClient.on('task_completed', (message) => {
+eventBridge.on('task_completed', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   console.log('[Frontend] Task completed:', message.data.summary);
@@ -831,7 +819,7 @@ wsClient.on('task_completed', (message) => {
 
 // ─── Full Sync (gap too large, reload from REST) ────────────────────────────
 
-wsClient.on('full_sync', () => {
+eventBridge.on('full_sync', () => {
   const sessionId = useChatStore.getState().currentSessionId;
   if (!sessionId) return;
   console.log('[Frontend] Received full_sync, reloading session from REST');
@@ -844,7 +832,7 @@ wsClient.on('full_sync', () => {
 
 // ─── Progress Events ─────────────────────────────────────────────────────────
 
-wsClient.on('progress', (message) => {
+eventBridge.on('progress', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   const { status, message: progressMsg } = message.data;
@@ -862,7 +850,7 @@ wsClient.on('progress', (message) => {
 
 // ─── Nested Tool Events ──────────────────────────────────────────────────────
 
-wsClient.on('nested_tool_call', (message) => {
+eventBridge.on('nested_tool_call', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   const { tool_name, arguments: args, depth, parent } = message.data;
@@ -884,7 +872,7 @@ wsClient.on('nested_tool_call', (message) => {
   });
 });
 
-wsClient.on('nested_tool_result', (message) => {
+eventBridge.on('nested_tool_result', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;
   const { tool_name, success, summary, depth } = message.data;

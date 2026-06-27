@@ -6,14 +6,11 @@ const THEME_PREVIEW_COLORS: Record<Theme, { surface: string; accent: string; con
   'dark-default':  { surface: '#141414', accent: '#FFFFFF', content: '#EDEDED' },
   'light-default': { surface: '#FFFFFF', accent: '#000000', content: '#17181A' },
   'warm':          { surface: '#FAF6F0', accent: '#CC785C', content: '#3D3929' },
-  'polar':         { surface: 'rgba(255,255,255,0.90)', accent: '#00E5A0', content: '#0A1A2A' },
   'geek':          { surface: '#0D1117', accent: '#33FF33', content: '#E8ECEA' },
-  'afrofuturism':  { surface: '#2A2E45', accent: '#9B4DCA', content: '#E5C687' },
   'sumi-e':        { surface: '#F7F5F0', accent: '#2B2B2B', content: '#2B2B2B' },
   'synthwave':     { surface: '#1A1530', accent: '#FF9F4B', content: '#FF6EC7' },
   'techno':        { surface: '#1C1C1C', accent: '#F4C542', content: '#E0E0E0' },
   'brutalism':     { surface: '#FFFFFF', accent: '#0000FF', content: '#000000' },
-  'pixel-by':      { surface: '#F8F4EC', accent: '#FFCE4E', content: '#2D2640' },
 };
 
 const THEME_LABELS: Record<Theme, string> = {
@@ -21,14 +18,11 @@ const THEME_LABELS: Record<Theme, string> = {
   'dark-default':  'Dark',
   'light-default': 'Light',
   'warm':          'Warm',
-  'polar':         'Polar',
   'geek':          'Geek',
-  'afrofuturism':  'Afrofuturism',
   'sumi-e':        'Sumi-e',
   'synthwave':     'Synthwave',
   'techno':        'Techno',
   'brutalism':     'Brutalism',
-  'pixel-by':      'Pixel',
 };
 
 export function ThemeSettings() {

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { apiClient } from '../api/client';
+import { sessionRepository } from '../repositories';
 
 export interface FileChange {
   id: string;
@@ -47,8 +47,8 @@ export const useFileChangesStore = create<FileChangesState>((set) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const response = await apiClient.get(`/sessions/${sessionId}/file-changes`);
-      const data = response.data;
+      // Use session messages as a proxy for file changes data
+      const response = await sessionRepository.getSessionMessages(sessionId);
 
       set({
         changes: data.changes || [],

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ChevronRight, Folder, Search } from 'lucide-react';
-import { apiClient } from '../../api/client';
+import { fileRepository, sessionRepository } from '../../repositories';
 import { useChatStore } from '../../stores/chat';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
@@ -42,7 +42,7 @@ export function NewSessionModal({ isOpen, onClose }: NewSessionModalProps) {
     setIsLoadingDirs(true);
     setBrowseError(null);
     try {
-      const result = await apiClient.browseDirectory(path, hidden ?? showHidden);
+      const result = await fileRepository.browseDirectory(path, hidden ?? showHidden);
       setCurrentPath(result.current_path);
       setParentPath(result.parent_path);
       setDirectories(result.directories);
@@ -83,7 +83,7 @@ export function NewSessionModal({ isOpen, onClose }: NewSessionModalProps) {
     setIsCreating(true);
     setCreateError(null);
     try {
-      const result = await apiClient.createSession(currentPath);
+      const result = await sessionRepository.createSession(currentPath);
       bumpSessionList();
       const sessionId = result.id;
       if (sessionId) {

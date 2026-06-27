@@ -1,3 +1,5 @@
+import { SelectField } from '../ui/SelectField';
+
 export interface Provider {
   id: string;
   name: string;
@@ -37,7 +39,7 @@ export function ModelSlot({
   onProviderChange,
   onModelChange,
   optional = false,
-  notSetText = "Not configured",
+  notSetText = 'Not configured',
   verifyStatus = 'idle',
   verifyError,
   onVerify
@@ -45,11 +47,26 @@ export function ModelSlot({
   const currentProvider = providers.find(p => p.id === selectedProvider);
   const availableModels = currentProvider?.models || [];
 
+  const providerOptions = [
+    ...(optional ? [{ value: '', label: notSetText, description: undefined }] : []),
+    ...providers.map(p => ({
+      value: p.id,
+      label: p.name,
+      description: p.description || undefined,
+    })),
+  ];
+
+  const modelOptions = availableModels.map(m => ({
+    value: m.id,
+    label: m.name,
+    description: m.description || undefined,
+  }));
+
   return (
     <div className="border border-border-default rounded-lg p-4 bg-gradient-to-br from-surface-primary to-surface-elevated">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-accent-primary to-intent-purple-hover flex items-center justify-center shadow-md flex-shrink-0">
+        <div className="flex-shrink-0">
           {icon}
         </div>
         <div className="flex-1">
@@ -71,28 +88,19 @@ export function ModelSlot({
           <label className="block text-xs font-medium text-content-secondary mb-1.5">
             Provider
           </label>
-          <select
+          <SelectField
+            options={providerOptions}
             value={selectedProvider || ''}
-            onChange={(e) => {
-              const newProvider = e.target.value;
-              onProviderChange(newProvider);
+            onChange={(value) => {
+              onProviderChange(value);
               // Reset model selection when provider changes
-              const provider = providers.find(p => p.id === newProvider);
+              const provider = providers.find(p => p.id === value);
               if (provider && provider.models.length > 0) {
                 onModelChange(provider.models[0].id);
               }
             }}
-            className="w-full px-3 py-2 text-sm border border-border-emphasis rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent bg-surface-primary"
-          >
-            {optional && (
-              <option value="">{notSetText}</option>
-            )}
-            {providers.map(provider => (
-              <option key={provider.id} value={provider.id}>
-                {provider.name}
-              </option>
-            ))}
-          </select>
+            placeholder={notSetText}
+          />
         </div>
 
         {/* Model Selection */}
@@ -101,18 +109,13 @@ export function ModelSlot({
             <label className="block text-xs font-medium text-content-secondary mb-1.5">
               Model
             </label>
-            <select
+            <SelectField
+              options={modelOptions}
               value={selectedModel || ''}
-              onChange={(e) => onModelChange(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-border-emphasis rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent bg-surface-primary"
+              onChange={onModelChange}
+              placeholder="Select a model"
               disabled={availableModels.length === 0}
-            >
-              {availableModels.map(model => (
-                <option key={model.id} value={model.id}>
-                  {model.name}
-                </option>
-              ))}
-            </select>
+            />
             {availableModels.find(m => m.id === selectedModel) && (
               <p className="mt-1.5 text-xs text-content-tertiary">
                 {availableModels.find(m => m.id === selectedModel)?.description}

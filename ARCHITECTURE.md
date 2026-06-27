@@ -9,22 +9,50 @@ user interfaces.
 ## Architecture Layers
 
 ```
-┌─────────────────────────────────────────────────┐
-│                  Interfaces                      │
-│  Tauri Desktop  │  TUI (Ratatui)  │  Web (Axum) │
-├─────────────────────────────────────────────────┤
-│            Application Orchestration             │
-│     Agent Runtime  │  ReAct Loop  │  Subagents   │
-├─────────────────────────────────────────────────┤
-│               Domain Model                       │
-│    Messages  │  Sessions  │  Tools  │  Events    │
-├─────────────────────────────────────────────────┤
-│              Infrastructure                      │
-│  HTTP Client  │  SQLite  │  MCP  │  File System  │
-└─────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│   React Components                               │
+│         │                                        │
+│   Stores (Zustand)                               │
+│         │                                        │
+│   Repositories                                   │
+│         │                                        │
+│   Transport (Platform-agnostic)                  │
+├──────────────────────────────────────────────────┤
+│   Desktop Interface (Tauri IPC)                  │
+│   Commands · Events · Streams                    │
+├──────────────────────────────────────────────────┤
+│   Application Services                           │
+│   Config · Session · Chat · Workflow · MCP       │
+├──────────────────────────────────────────────────┤
+│   Domain Model                                   │
+│   Messages · Sessions · Tools · Events           │
+├──────────────────────────────────────────────────┤
+│   Infrastructure                                 │
+│   HTTP Client · SQLite · MCP · File System       │
+└──────────────────────────────────────────────────┘
 ```
 
+## Communication Model
+
+| Type | Mechanism | Use Case |
+|------|-----------|----------|
+| **Command** | `invoke()` → `Result<T>` | CRUD, config, status queries |
+| **Event** | `listen()` → push | State changes, broadcasts |
+| **Stream** | `Channel` → delta | Chat streaming, progress |
+
 ## Core Data Flow
+
+```
+User Input → React Component → Store → Repository
+    → Transport.invoke("send_chat_query")
+    → Desktop Interface (Tauri Command)
+    → Application Service (ChatService)
+    → Agent Runtime
+    → Events streamed back via Transport.onEvent()
+    → Store updates → React re-render
+```
+
+## Agent Loop (Detailed)
 
 ```
 User Input → Agent Runtime

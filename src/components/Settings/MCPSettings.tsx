@@ -9,19 +9,10 @@ import { useState, useEffect, useRef } from 'react';
 import { AddMCPServerModal } from './AddMCPServerModal';
 import { EditMCPServerModal } from './EditMCPServerModal';
 import { MCPToolsModal } from './MCPToolsModal';
-import { wsClient } from '../../api/websocket';
+import { eventBridge } from '../../api/eventBridge';
+import { mcpRepository } from '../../repositories';
 import type { MCPServer, MCPServerCreateRequest, MCPServerUpdateRequest, MCPTool } from '../../types/mcp';
 import type { WSMessage } from '../../types';
-import {
-  listMCPServers,
-  connectMCPServer,
-  disconnectMCPServer,
-  testMCPServer,
-  createMCPServer,
-  updateMCPServer,
-  deleteMCPServer,
-  getMCPServer,
-} from '../../api/mcp';
 import { Button } from '../ui/Button';
 
 export function MCPSettings() {
@@ -49,24 +40,29 @@ export function MCPSettings() {
   // WebSocket event listener for real-time updates
   useEffect(() => {
     const handleWSMessage = (message: WSMessage) => {
-      if (message.type === 'mcp_status_update') {
+      if (message.type === 'mcp:status_changed' || message.type === 'mcp_status_update') {
         const { server_name, status } = message.data;
-        console.log('[MCPSettings] Status update via WebSocket:', { server_name, status });
+        console.log('[MCPSettings] Status update:', { server_name, status });
         setServers(prev => prev.map(server =>
           server.name === server_name ? { ...server, status } : server
         ));
-      } else if (message.type === 'mcp_servers_update') {
-        console.log('[MCPSettings] Full update via WebSocket:', message.data);
+      } else if (message.type === 'mcp:servers_updated' || message.type === 'mcp_servers_update') {
+        console.log('[MCPSettings] Full update:', message.data);
         setServers(message.data.servers);
       }
     };
 
-    const unsubscribe1 = wsClient.on('mcp_status_update', handleWSMessage);
-    const unsubscribe2 = wsClient.on('mcp_servers_update', handleWSMessage);
+    const unsubs: (() => void)[] = [];
+
+    (async () => {
+      const u1 = await eventBridge.on('mcp:status_changed', handleWSMessage);
+      unsubs.push(u1);
+      const u2 = await eventBridge.on('mcp:servers_updated', handleWSMessage);
+      unsubs.push(u2);
+    })();
 
     return () => {
-      unsubscribe1();
-      unsubscribe2();
+      unsubs.forEach(fn => fn());
     };
   }, []);
 
@@ -75,7 +71,7 @@ export function MCPSettings() {
     setError(null);
     try {
       console.log('[MCPSettings] Fetching from /api/mcp/servers...');
-      const response = await listMCPServers();
+      const response = await mcpRepository.listServers();
       console.log('[MCPSettings] API Response:', response);
       console.log('[MCPSettings] Servers loaded:', response.servers?.length || 0, 'servers');
       setServers(response.servers || []);
@@ -91,7 +87,7 @@ export function MCPSettings() {
   const handleConnect = async (name: string) => {
     setProcessingServer(name);
     try {
-      await connectMCPServer(name);
+      await mcpRepository.connectServer(name);
       await loadServers(); // Reload to update UI
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to connect');
@@ -103,7 +99,7 @@ export function MCPSettings() {
   const handleDisconnect = async (name: string) => {
     setProcessingServer(name);
     try {
-      await disconnectMCPServer(name);
+      await dismcpRepository.connectServer(name);
       await loadServers(); // Reload to update UI
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to disconnect');
@@ -115,7 +111,7 @@ export function MCPSettings() {
   const handleTest = async (name: string) => {
     setProcessingServer(name);
     try {
-      const response = await testMCPServer(name);
+      const response = await mcpRepository.connectServer(name);
       alert(response.message || 'Connection test successful');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Test failed');
@@ -126,7 +122,7 @@ export function MCPSettings() {
 
   const handleViewTools = async (name: string) => {
     try {
-      const serverDetail = await getMCPServer(name);
+      const serverDetail = await mcpRepository.getServer(name);
       setSelectedServerTools(serverDetail.tools);
       setSelectedServer(servers.find(s => s.name === name) || null);
       setShowToolsModal(true);
@@ -144,7 +140,7 @@ export function MCPSettings() {
     if (!confirm(`Remove "${name}"? This action cannot be undone.`)) return;
 
     try {
-      await deleteMCPServer(name);
+      await mcpRepository.deleteServer(name);
       await loadServers();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove server');
@@ -153,7 +149,7 @@ export function MCPSettings() {
 
   const handleAddServer = async (server: MCPServerCreateRequest) => {
     try {
-      await createMCPServer(server);
+      await mcpRepository.createServer(server);
       await loadServers();
       setShowAddModal(false);
     } catch (err) {
@@ -163,7 +159,7 @@ export function MCPSettings() {
 
   const handleUpdateServer = async (name: string, update: MCPServerUpdateRequest) => {
     try {
-      await updateMCPServer(name, update);
+      await mcpRepository.updateServer(name, update);
       await loadServers();
       setShowEditModal(false);
       setSelectedServer(null);
@@ -270,11 +266,20 @@ export function MCPSettings() {
 
 function LoadingState() {
   return (
-    <div className="text-center py-12 bg-surface-elevated rounded-lg border border-border-default">
-      <div className="inline-flex items-center justify-center w-12 h-12 mb-3">
-        <div className="w-8 h-8 border-3 border-border-emphasis border-t-surface-primary rounded-full animate-spin" />
-      </div>
-      <p className="text-sm text-content-secondary">Loading MCP servers...</p>
+    <div className="space-y-3 animate-pulse">
+      {[1, 2, 3].map(i => (
+        <div key={i} className="bg-surface-elevated rounded-lg border border-border-default p-4">
+          <div className="flex items-center gap-4">
+            <div className="h-4 w-32 bg-surface-2 rounded" />
+            <div className="h-3 w-20 bg-surface-2 rounded-full" />
+            <div className="ml-auto flex gap-2">
+              <div className="h-6 w-16 bg-surface-2 rounded-md" />
+              <div className="h-6 w-16 bg-surface-2 rounded-md" />
+              <div className="h-6 w-16 bg-surface-2 rounded-md" />
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

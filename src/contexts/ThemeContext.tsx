@@ -1,13 +1,13 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
-type Theme = 'cyberpunk' | 'dark-default' | 'light-default' | 'warm' | 'polar' | 'geek'
-  | 'afrofuturism' | 'sumi-e' | 'synthwave'
-  | 'techno' | 'brutalism' | 'pixel-by';
+type Theme = 'cyberpunk' | 'dark-default' | 'light-default' | 'warm' | 'geek'
+  | 'sumi-e' | 'synthwave'
+  | 'techno' | 'brutalism';
 
 const ALL_THEMES: Theme[] = [
-  'cyberpunk', 'dark-default', 'light-default', 'warm', 'polar', 'geek',
-  'afrofuturism', 'sumi-e', 'synthwave',
-  'techno', 'brutalism', 'pixel-by',
+  'cyberpunk', 'dark-default', 'light-default', 'warm', 'geek',
+  'sumi-e', 'synthwave',
+  'techno', 'brutalism',
 ];
 
 const THEME_KEY = 'opendev-theme';
