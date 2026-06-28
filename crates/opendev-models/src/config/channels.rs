@@ -44,11 +44,16 @@ pub struct TelegramChannelConfig {
     pub allowed_users: Vec<String>,
 }
 
-fn serialize_secret_string<S: serde::Serializer>(value: &secrecy::SecretString, serializer: S) -> Result<S::Ok, S::Error> {
+fn serialize_secret_string<S: serde::Serializer>(
+    value: &secrecy::SecretString,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
     serializer.serialize_str(secrecy::ExposeSecret::expose_secret(value))
 }
 
-fn deserialize_secret_string<'de, D: serde::Deserializer<'de>>(d: D) -> Result<secrecy::SecretString, D::Error> {
+fn deserialize_secret_string<'de, D: serde::Deserializer<'de>>(
+    d: D,
+) -> Result<secrecy::SecretString, D::Error> {
     let s = String::deserialize(d)?;
     Ok(s.into())
 }

@@ -15,9 +15,8 @@ pub fn build_otlp_layer(
         .build()
         .ok()?;
 
-    let provider = opentelemetry_sdk::trace::TracerProvider::builder()
-        .with_batch_exporter(exporter)
-        .build();
+    let provider =
+        opentelemetry_sdk::trace::TracerProvider::builder().with_batch_exporter(exporter).build();
 
     let tracer = provider.tracer("opendev");
     Some(tracing_opentelemetry::layer().with_tracer(tracer))

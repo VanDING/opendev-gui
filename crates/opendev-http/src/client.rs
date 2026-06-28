@@ -225,8 +225,11 @@ impl HttpClient {
             )
             .header(
                 HeaderName::from_static("traceparent"),
-                HeaderValue::from_str(&traceparent)
-                    .unwrap_or_else(|_| HeaderValue::from_static("00-00000000000000000000000000000000-0000000000000000-01")),
+                HeaderValue::from_str(&traceparent).unwrap_or_else(|_| {
+                    HeaderValue::from_static(
+                        "00-00000000000000000000000000000000-0000000000000000-01",
+                    )
+                }),
             )
             .json(payload)
             .send();

@@ -224,7 +224,10 @@ async fn login(
         .get_by_username(&payload.username)
         .ok_or_else(|| WebError::BadRequest("Incorrect username or password".to_string()))?;
 
-    if !verify_password(&payload.password, secrecy::ExposeSecret::expose_secret(&user.password_hash)) {
+    if !verify_password(
+        &payload.password,
+        secrecy::ExposeSecret::expose_secret(&user.password_hash),
+    ) {
         return Err(WebError::BadRequest("Incorrect username or password".to_string()));
     }
 

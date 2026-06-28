@@ -383,7 +383,7 @@ impl AppConfig {
 
     /// Get API key using the SecretStore chain (env → keyring → file).
     /// Falls back to the deprecated `self.api_key` with a warning.
-    /// 
+    ///
     /// This should be preferred over `get_api_key_with_env` going forward.
     pub async fn get_api_key_via_secrets(
         &self,
@@ -418,10 +418,11 @@ impl AppConfig {
             }
         }
 
-        let hint = registry_env_var
-            .filter(|s| !s.is_empty())
-            .unwrap_or("OPENAI_API_KEY");
-        Err(format!("No API key found. Set {} environment variable or configure via secret manager", hint))
+        let hint = registry_env_var.filter(|s| !s.is_empty()).unwrap_or("OPENAI_API_KEY");
+        Err(format!(
+            "No API key found. Set {} environment variable or configure via secret manager",
+            hint
+        ))
     }
 
     /// Extract env var resolution into a helper (used by both old and new paths).

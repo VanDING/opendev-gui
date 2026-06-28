@@ -1,8 +1,8 @@
-use std::process::Command;
-#[cfg(unix)]
-use std::os::unix::process::CommandExt;
 use crate::env_filter;
 use crate::policy::ExecRequest;
+#[cfg(unix)]
+use std::os::unix::process::CommandExt;
+use std::process::Command;
 
 /// A hardened command that applies env_filter and pre_exec hooks.
 pub struct HardenedProcess {

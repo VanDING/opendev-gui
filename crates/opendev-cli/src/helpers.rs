@@ -41,7 +41,9 @@ pub fn load_app_config(working_dir: &std::path::Path) -> opendev_models::AppConf
 
     // Check for unmigrated plaintext secrets
     if let Ok(true) = opendev_secrets::migration::has_unmigrated_secrets(&global_settings) {
-        eprintln!("⚠️  settings.json contains plaintext API keys. Consider running `opendev secret migrate`.");
+        eprintln!(
+            "⚠️  settings.json contains plaintext API keys. Consider running `opendev secret migrate`."
+        );
     }
 
     match opendev_config::ConfigLoader::load(&global_settings, &project_settings) {

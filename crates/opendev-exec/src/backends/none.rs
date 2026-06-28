@@ -1,6 +1,6 @@
-use std::process::Command;
-use crate::backend::{SandboxBackend, BackendError};
+use crate::backend::{BackendError, SandboxBackend};
 use crate::policy::ExecRequest;
+use std::process::Command;
 
 /// No-op backend — used when no sandbox is available.
 /// Only env_filter is applied at the process level.

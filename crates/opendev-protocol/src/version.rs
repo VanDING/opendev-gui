@@ -5,7 +5,18 @@ pub const PROTOCOL_VERSION_PATCH: u16 = 0;
 pub const PROTOCOL_VERSION: &str = "1.0.0";
 
 /// Represents a protocol version for wire serialization.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    serde::Serialize,
+    serde::Deserialize,
+    ts_rs::TS,
+)]
 #[ts(export)]
 pub struct ProtocolVersion {
     pub major: u16,

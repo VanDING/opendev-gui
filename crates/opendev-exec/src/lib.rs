@@ -10,21 +10,23 @@
 //!
 //! Fail-closed by design: any backend error → child is NOT spawned.
 
-pub mod policy;
 pub mod backend;
 pub mod backends;
-pub mod process;
-pub mod env_filter;
-pub mod patterns;
 pub mod capability;
+pub mod env_filter;
 pub mod net_filter;
+pub mod patterns;
+pub mod policy;
+pub mod process;
 
-pub use policy::{ExecPolicy, ExecRequest, Decision, PolicyVerdict, RequiredCapabilities, ToolKind, PolicyError};
-pub use backend::{SandboxBackend, BackendError};
-pub use process::HardenedProcess;
+pub use backend::{BackendError, SandboxBackend};
 pub use env_filter::filtered_env;
-pub use patterns::is_dangerous;
 pub use net_filter::is_private_url;
+pub use patterns::is_dangerous;
+pub use policy::{
+    Decision, ExecPolicy, ExecRequest, PolicyError, PolicyVerdict, RequiredCapabilities, ToolKind,
+};
+pub use process::HardenedProcess;
 
 /// Fail-closed constant — code reviewers must verify this is honored.
 pub const BACKEND_FAIL_CLOSED: &str = "Any SandboxBackend::apply() error MUST result in Decision::Deny. Never allow child to spawn un-sandboxed.";

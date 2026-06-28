@@ -1,8 +1,8 @@
-use crate::version::ProtocolVersion;
-use crate::methods::Method;
 use crate::events::Event;
+use crate::methods::Method;
+use crate::version::ProtocolVersion;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
 
 /// Trait for payloads that can be carried in a WireEnvelope.
 pub trait Payload: Serialize + for<'de> Deserialize<'de> + Send + Sync + 'static {}

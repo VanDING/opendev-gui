@@ -23,42 +23,27 @@ impl Default for ResourceLimits {
 /// Apply resource limits to the current process (called in pre_exec hook).
 #[cfg(unix)]
 pub fn apply_limits(limits: &ResourceLimits) {
-    use libc::{rlimit, RLIMIT_AS, RLIMIT_CPU, RLIMIT_NOFILE, RLIMIT_FSIZE, RLIMIT_NPROC};
+    use libc::{RLIMIT_AS, RLIMIT_CPU, RLIMIT_FSIZE, RLIMIT_NOFILE, RLIMIT_NPROC, rlimit};
 
     unsafe {
         if let Some(max_mem) = limits.max_memory_bytes {
-            let rlim = rlimit {
-                rlim_cur: max_mem,
-                rlim_max: max_mem,
-            };
+            let rlim = rlimit { rlim_cur: max_mem, rlim_max: max_mem };
             libc::setrlimit(RLIMIT_AS, &rlim);
         }
         if let Some(max_cpu) = limits.max_cpu_seconds {
-            let rlim = rlimit {
-                rlim_cur: max_cpu,
-                rlim_max: max_cpu,
-            };
+            let rlim = rlimit { rlim_cur: max_cpu, rlim_max: max_cpu };
             libc::setrlimit(RLIMIT_CPU, &rlim);
         }
         if let Some(max_fds) = limits.max_open_fds {
-            let rlim = rlimit {
-                rlim_cur: max_fds,
-                rlim_max: max_fds,
-            };
+            let rlim = rlimit { rlim_cur: max_fds, rlim_max: max_fds };
             libc::setrlimit(RLIMIT_NOFILE, &rlim);
         }
         if let Some(max_fsize) = limits.max_file_size_bytes {
-            let rlim = rlimit {
-                rlim_cur: max_fsize,
-                rlim_max: max_fsize,
-            };
+            let rlim = rlimit { rlim_cur: max_fsize, rlim_max: max_fsize };
             libc::setrlimit(RLIMIT_FSIZE, &rlim);
         }
         if let Some(max_procs) = limits.max_processes {
-            let rlim = rlimit {
-                rlim_cur: max_procs,
-                rlim_max: max_procs,
-            };
+            let rlim = rlimit { rlim_cur: max_procs, rlim_max: max_procs };
             libc::setrlimit(RLIMIT_NPROC, &rlim);
         }
     }

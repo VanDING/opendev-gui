@@ -47,7 +47,10 @@ impl User {
     }
 }
 
-fn serialize_secret_string<S: serde::Serializer>(value: &secrecy::SecretString, serializer: S) -> Result<S::Ok, S::Error> {
+fn serialize_secret_string<S: serde::Serializer>(
+    value: &secrecy::SecretString,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
     serializer.serialize_str(secrecy::ExposeSecret::expose_secret(value))
 }
 

@@ -57,7 +57,10 @@ impl PartialEq for McpOAuthConfig {
     }
 }
 
-fn serialize_secret_string<S: serde::Serializer>(value: &secrecy::SecretString, serializer: S) -> Result<S::Ok, S::Error> {
+fn serialize_secret_string<S: serde::Serializer>(
+    value: &secrecy::SecretString,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
     serializer.serialize_str(secrecy::ExposeSecret::expose_secret(value))
 }
 
@@ -278,7 +281,8 @@ pub fn prepare_server_config(config: &McpServerConfig) -> McpServerConfig {
         transport: config.transport.clone(),
         oauth: config.oauth.as_ref().map(|o| McpOAuthConfig {
             client_id: expand_env_vars(&o.client_id),
-            client_secret: expand_env_vars(secrecy::ExposeSecret::expose_secret(&o.client_secret)).into(),
+            client_secret: expand_env_vars(secrecy::ExposeSecret::expose_secret(&o.client_secret))
+                .into(),
             token_url: expand_env_vars(&o.token_url),
             scope: o.scope.as_ref().map(|s| expand_env_vars(s)),
         }),

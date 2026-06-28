@@ -195,9 +195,8 @@ impl std::fmt::Debug for SessionDebugLogger {
 fn redact_value(value: Value) -> Value {
     match value {
         Value::Object(map) => {
-            let sensitive_keys = [
-                "api_key", "token", "password", "secret", "key", "authorization", "bearer",
-            ];
+            let sensitive_keys =
+                ["api_key", "token", "password", "secret", "key", "authorization", "bearer"];
             let redacted: serde_json::Map<String, Value> = map
                 .into_iter()
                 .map(|(k, v)| {

@@ -1,11 +1,11 @@
-use async_trait::async_trait;
 use crate::error::SecretError;
-use crate::key::{SecretKey, Namespace};
-use crate::value::SecretValue;
+use crate::key::{Namespace, SecretKey};
 use crate::store::SecretStore;
+use crate::value::SecretValue;
+use async_trait::async_trait;
 
 /// Environment variable-backed secret store.
-/// 
+///
 /// EnvStore always wins in the chain — it's the highest priority.
 /// set and delete are no-ops (env vars are read-only at runtime).
 pub struct EnvStore;

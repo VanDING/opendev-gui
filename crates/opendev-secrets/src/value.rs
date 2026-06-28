@@ -1,5 +1,5 @@
-use secrecy::{SecretString, ExposeSecret};
-use serde::{Serialize, Deserialize};
+use secrecy::{ExposeSecret, SecretString};
+use serde::{Deserialize, Serialize};
 use zeroize::ZeroizeOnDrop;
 
 /// A secret value that is automatically zeroized on drop.

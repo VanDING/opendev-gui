@@ -1,6 +1,6 @@
-use std::process::Command;
-use crate::backend::{SandboxBackend, BackendError};
+use crate::backend::{BackendError, SandboxBackend};
 use crate::policy::ExecRequest;
+use std::process::Command;
 
 /// macOS Seatbelt-backed sandbox using sandbox-exec.
 /// Applies a sandbox profile before execution.
@@ -22,18 +22,16 @@ impl SandboxBackend for SeatbeltBackend {
 
         // Write profile to a temp file
         let tmp_dir = std::env::temp_dir();
-        let profile_path =
-            tmp_dir.join(format!("opendev-seatbelt-{}.sb", std::process::id()));
-        std::fs::write(&profile_path, &profile)
-            .map_err(|e| BackendError::ApplyFailed(format!("Failed to write seatbelt profile: {}", e)))?;
+        let profile_path = tmp_dir.join(format!("opendev-seatbelt-{}.sb", std::process::id()));
+        std::fs::write(&profile_path, &profile).map_err(|e| {
+            BackendError::ApplyFailed(format!("Failed to write seatbelt profile: {}", e))
+        })?;
 
         // Wrap the command with sandbox-exec
         let original_program = cmd.get_program().to_os_string();
         let original_args: Vec<_> = cmd.get_args().map(|a| a.to_os_string()).collect();
-        let original_envs: Vec<_> = cmd
-            .get_envs()
-            .map(|(k, v)| (k.to_os_string(), v.map(|v| v.to_os_string())))
-            .collect();
+        let original_envs: Vec<_> =
+            cmd.get_envs().map(|(k, v)| (k.to_os_string(), v.map(|v| v.to_os_string()))).collect();
         let original_dir = cmd.get_current_dir().map(|d| d.to_path_buf());
 
         // Replace with sandbox-exec
@@ -91,10 +89,7 @@ fn build_seatbelt_profile(request: &ExecRequest) -> String {
     }
 
     // Allow reading the working directory
-    profile.push_str(&format!(
-        "  (subpath \"{}\")\n",
-        request.cwd.display()
-    ));
+    profile.push_str(&format!("  (subpath \"{}\")\n", request.cwd.display()));
     profile.push_str(")\n"); // close file-read*
 
     // ── File write access: tmp + dev ──
@@ -109,10 +104,7 @@ fn build_seatbelt_profile(request: &ExecRequest) -> String {
     }
 
     // Allow writing to the working directory
-    profile.push_str(&format!(
-        "  (subpath \"{}\")\n",
-        request.cwd.display()
-    ));
+    profile.push_str(&format!("  (subpath \"{}\")\n", request.cwd.display()));
     profile.push_str(")\n"); // close file-write*
 
     // ── Network (opt-in) ──

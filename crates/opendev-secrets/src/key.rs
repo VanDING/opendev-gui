@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Secret namespace — categorizes what the secret is used for.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
@@ -36,10 +36,7 @@ pub struct SecretKey {
 
 impl SecretKey {
     pub fn new(namespace: Namespace, account: impl Into<String>) -> Self {
-        Self {
-            namespace,
-            account: account.into(),
-        }
+        Self { namespace, account: account.into() }
     }
 
     /// Create a secret key for an LLM provider.

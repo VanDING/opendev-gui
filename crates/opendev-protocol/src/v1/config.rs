@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 /// ── config/get ──
@@ -34,14 +34,14 @@ pub struct ConfigUpdateParams {
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct ConfigModeSetParams {
-    pub mode: String,  // "normal" | "plan"
+    pub mode: String, // "normal" | "plan"
 }
 
 /// ── config/autonomy/set ──
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct ConfigAutonomySetParams {
-    pub level: String,  // "manual" | "semi-auto" | "auto"
+    pub level: String, // "manual" | "semi-auto" | "auto"
 }
 
 /// ── config/model/verify ──

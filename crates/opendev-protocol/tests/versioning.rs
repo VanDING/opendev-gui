@@ -1,4 +1,4 @@
-use opendev_protocol::version::{ProtocolVersion, PROTOCOL_VERSION_MAJOR, PROTOCOL_VERSION_MINOR};
+use opendev_protocol::version::{PROTOCOL_VERSION_MAJOR, PROTOCOL_VERSION_MINOR, ProtocolVersion};
 
 #[test]
 fn test_protocol_version_constants() {

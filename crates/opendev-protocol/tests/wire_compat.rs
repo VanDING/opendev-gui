@@ -1,6 +1,6 @@
-use opendev_protocol::envelope::{WireEnvelope, RequestFrame, NotificationFrame, ErrorFrame};
-use opendev_protocol::methods::Method;
+use opendev_protocol::envelope::{ErrorFrame, NotificationFrame, RequestFrame, WireEnvelope};
 use opendev_protocol::events::Event;
+use opendev_protocol::methods::Method;
 use opendev_protocol::version::ProtocolVersion;
 use serde_json::Value;
 
@@ -29,7 +29,8 @@ fn test_request_round_trip() {
     assert_eq!(parsed["params"]["title"], "test session");
 
     // Deserialize back
-    let _decoded: WireEnvelope<Value> = serde_json::from_str(&json).expect("deserialize should succeed");
+    let _decoded: WireEnvelope<Value> =
+        serde_json::from_str(&json).expect("deserialize should succeed");
 }
 
 /// V1 wire format: Notification round-trip.
@@ -51,7 +52,8 @@ fn test_notification_round_trip() {
     assert_eq!(parsed["seq"], 42);
     assert_eq!(parsed["event"], "message/chunked");
 
-    let _decoded: WireEnvelope<Value> = serde_json::from_str(&json).expect("deserialize should succeed");
+    let _decoded: WireEnvelope<Value> =
+        serde_json::from_str(&json).expect("deserialize should succeed");
 }
 
 /// V1 wire format: Error frame.

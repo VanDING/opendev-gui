@@ -1,10 +1,10 @@
-use async_trait::async_trait;
 use crate::error::SecretError;
-use crate::key::{SecretKey, Namespace};
+use crate::key::{Namespace, SecretKey};
 use crate::value::SecretValue;
+use async_trait::async_trait;
 
 /// The core secret store trait.
-/// 
+///
 /// Priority chain: env → keyring → file
 /// EnvStore always wins (for CI/Docker/temp overrides).
 /// KeyringStore is the primary persistent store.

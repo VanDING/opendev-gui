@@ -1,12 +1,12 @@
 //! MicroVM sandbox backend for OpenDev.
-//! 
+//!
 //! This crate is feature-gated behind `microsandbox`.
 //! Without the feature, it is an empty library.
-//! 
+//!
 //! The microVM approach uses `microsandbox` (libkrunfw-backed microVM)
 //! for Python code execution. This is NOT the primary sandbox strategy —
 //! `opendev-exec` with Landlock/Seatbelt is the primary approach.
-//! 
+//!
 //! This crate is retained for experimental/advanced use cases.
 
 #[cfg(feature = "microsandbox")]

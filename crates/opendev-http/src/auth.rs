@@ -2,10 +2,10 @@
 //!
 //! This replaces the old `auth.json`-backed CredentialStore.
 //! All operations are delegated to `opendev_secrets::ChainedSecretStore`.
-//! 
+//!
 //! Environment variables always take precedence over stored values.
 
-use opendev_secrets::{SecretKey, ChainedSecretStore, SecretValue};
+use opendev_secrets::{ChainedSecretStore, SecretKey, SecretValue};
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -50,17 +50,18 @@ impl CredentialStore {
     /// Get API key for a provider. Environment variable takes precedence.
     pub async fn get_key(&self, provider: &str) -> Option<String> {
         let key = SecretKey::llm(provider);
-        
+
         // SecretStore chain handles env → keyring → file
-        self.secrets.get(&key).await.ok()?
-            .map(|v| v.expose().to_string())
+        self.secrets.get(&key).await.ok()?.map(|v| v.expose().to_string())
     }
 
     /// Store an API key for a provider.
     pub async fn set_key(&self, provider: &str, key: &str) -> Result<(), HttpError> {
         let secret_key = SecretKey::llm(provider);
         let secret_value = SecretValue::new(key.to_string());
-        self.secrets.set(&secret_key, &secret_value).await
+        self.secrets
+            .set(&secret_key, &secret_value)
+            .await
             .map_err(|e| HttpError::Other(e.to_string()))?;
         tracing::info!("Stored API key for {}", provider);
         Ok(())
@@ -78,10 +79,7 @@ impl CredentialStore {
         for &(provider, env_var) in PROVIDER_ENV_VARS {
             let has_env = std::env::var(env_var).map(|v| !v.is_empty()).unwrap_or(false);
             let key = SecretKey::llm(provider);
-            let has_stored = self.secrets.get(&key).await
-                .ok()
-                .flatten()
-                .is_some();
+            let has_stored = self.secrets.get(&key).await.ok().flatten().is_some();
             result.push(ProviderStatus {
                 provider: provider.to_string(),
                 has_env_key: has_env,

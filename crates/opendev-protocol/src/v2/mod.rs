@@ -16,8 +16,6 @@ pub struct V2Placeholder {
 
 impl Default for V2Placeholder {
     fn default() -> Self {
-        Self {
-            message: "V2 protocol — active development target, not yet defined".into(),
-        }
+        Self { message: "V2 protocol — active development target, not yet defined".into() }
     }
 }

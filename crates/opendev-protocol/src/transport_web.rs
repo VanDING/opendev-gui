@@ -3,15 +3,15 @@
 //! This is the server-side WebSocket handler; the client side
 //! is the TypeScript HttpTransport.
 
-use async_trait::async_trait;
 use crate::envelope::{Payload, WireEnvelope, new_request_id};
-use crate::methods::Method;
 use crate::events::Event;
-use crate::transport::{Transport, EventStream, EventHandle, NegotiatedVersion, ProtocolError};
+use crate::methods::Method;
+use crate::transport::{EventHandle, EventStream, NegotiatedVersion, ProtocolError, Transport};
 use crate::version::ProtocolVersion;
-use tokio::sync::mpsc;
+use async_trait::async_trait;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use tokio::sync::mpsc;
 
 /// Server-side WebSocket transport.
 /// Wraps an axum WebSocket connection.
@@ -41,7 +41,11 @@ impl WebSocketTransport {
     }
 
     /// Send a notification event to the WebSocket client.
-    pub fn send_notification(&self, event: &Event, data: serde_json::Value) -> Result<(), ProtocolError> {
+    pub fn send_notification(
+        &self,
+        event: &Event,
+        data: serde_json::Value,
+    ) -> Result<(), ProtocolError> {
         let frame = WireEnvelope::Notification(crate::envelope::NotificationFrame {
             v: ProtocolVersion::V1_0_0,
             seq: 0, // seq managed by server-side counter
@@ -50,8 +54,8 @@ impl WebSocketTransport {
             data,
         });
 
-        let json = serde_json::to_string(&frame)
-            .map_err(|e| ProtocolError::Internal(e.to_string()))?;
+        let json =
+            serde_json::to_string(&frame).map_err(|e| ProtocolError::Internal(e.to_string()))?;
 
         self.send_tx
             .send(json)
@@ -75,18 +79,12 @@ impl Transport for WebSocketTransport {
 
     async fn subscribe(&self, event: Event) -> Result<EventStream, ProtocolError> {
         let (tx, rx) = mpsc::channel(256);
-        let handle = EventHandle {
-            event: event.clone(),
-            id: new_request_id(),
-        };
+        let handle = EventHandle { event: event.clone(), id: new_request_id() };
 
         let mut subs = self.subscriptions.lock().await;
         subs.push((event, tx));
 
-        Ok(EventStream {
-            rx,
-            _handle: handle,
-        })
+        Ok(EventStream { rx, _handle: handle })
     }
 
     async fn unsubscribe(&self, handle: EventHandle) -> Result<(), ProtocolError> {

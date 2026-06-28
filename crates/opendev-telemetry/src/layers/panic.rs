@@ -55,7 +55,9 @@ pub fn install_crash_handler() {
                 opts.mode(0o600);
             }
 
-            let success = opts.open(&temp_path).ok()
+            let success = opts
+                .open(&temp_path)
+                .ok()
                 .and_then(|mut f| f.write_all(report.as_bytes()).ok())
                 .and_then(|_| std::fs::rename(&temp_path, &crash_path).ok())
                 .is_some();
@@ -75,6 +77,5 @@ pub fn install_crash_handler() {
 }
 
 fn get_crash_dir() -> Option<PathBuf> {
-    std::env::var("HOME").ok()
-        .map(|h| PathBuf::from(h).join(".opendev").join("crash"))
+    std::env::var("HOME").ok().map(|h| PathBuf::from(h).join(".opendev").join("crash"))
 }

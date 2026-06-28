@@ -1,7 +1,7 @@
 pub mod env;
-pub mod keyring;
 pub mod file;
+pub mod keyring;
 
 pub use env::EnvStore;
-pub use keyring::KeyringStore;
 pub use file::FileStore;
+pub use keyring::KeyringStore;

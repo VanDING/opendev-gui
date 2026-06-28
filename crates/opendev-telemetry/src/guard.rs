@@ -1,6 +1,6 @@
-use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
-use crate::config::{LogLevel, TelemetryConfig};
 use crate::TelemetryError;
+use crate::config::{LogLevel, TelemetryConfig};
+use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 pub struct TelemetryGuard {
     _worker_guard: Option<tracing_appender::non_blocking::WorkerGuard>,
@@ -17,13 +17,13 @@ impl TelemetryGuard {
             return Ok(Self { _worker_guard: None });
         }
 
-        let log_dir = config.log_dir.clone()
-            .unwrap_or_else(|| {
-                let paths = opendev_config::Paths::new(None);
-                paths.global_logs_dir()
-            });
-        std::fs::create_dir_all(&log_dir)
-            .map_err(|e| TelemetryError::Init { message: format!("failed to create log dir: {e}") })?;
+        let log_dir = config.log_dir.clone().unwrap_or_else(|| {
+            let paths = opendev_config::Paths::new(None);
+            paths.global_logs_dir()
+        });
+        std::fs::create_dir_all(&log_dir).map_err(|e| TelemetryError::Init {
+            message: format!("failed to create log dir: {e}"),
+        })?;
 
         let env_filter = build_env_filter(config.log_level);
         let (file_writer, worker_guard) = build_file_layer(&log_dir, config.retention_days)
@@ -36,16 +36,12 @@ impl TelemetryGuard {
             .with_span_list(false)
             .with_writer(file_writer);
 
-        let registry = tracing_subscriber::registry()
-            .with(env_filter)
-            .with(file_layer);
+        let registry = tracing_subscriber::registry().with(env_filter).with(file_layer);
 
         // Init globally
         registry.init();
 
-        Ok(Self {
-            _worker_guard: Some(worker_guard),
-        })
+        Ok(Self { _worker_guard: Some(worker_guard) })
     }
 
     pub fn flush(&self) {
@@ -64,7 +60,10 @@ fn build_env_filter(level: LogLevel) -> EnvFilter {
 fn build_file_layer(
     log_dir: &std::path::Path,
     retention_days: u32,
-) -> Result<(tracing_appender::non_blocking::NonBlocking, tracing_appender::non_blocking::WorkerGuard), String> {
+) -> Result<
+    (tracing_appender::non_blocking::NonBlocking, tracing_appender::non_blocking::WorkerGuard),
+    String,
+> {
     // Use rolling file appender with max_log_files for retention
     let file_appender = tracing_appender::rolling::RollingFileAppender::builder()
         .rotation(tracing_appender::rolling::Rotation::DAILY)

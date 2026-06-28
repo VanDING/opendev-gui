@@ -1,18 +1,18 @@
+use crate::backends::{EnvStore, FileStore, KeyringStore};
+use crate::error::SecretError;
+use crate::key::{Namespace, SecretKey};
+use crate::store::SecretStore;
+use crate::value::SecretValue;
 use async_trait::async_trait;
 use std::sync::Arc;
-use crate::error::SecretError;
-use crate::key::{SecretKey, Namespace};
-use crate::value::SecretValue;
-use crate::store::SecretStore;
-use crate::backends::{EnvStore, KeyringStore, FileStore};
 
 /// Chained secret store resolver.
-/// 
+///
 /// Resolves secrets by trying each store in priority order:
 /// 1. EnvStore (always wins)
-/// 2. KeyringStore 
+/// 2. KeyringStore
 /// 3. FileStore (fallback)
-/// 
+///
 /// For `set`: writes to ALL writable stores (keyring + file)
 /// For `delete`: deletes from ALL stores
 pub struct ChainedSecretStore {
@@ -28,10 +28,8 @@ impl ChainedSecretStore {
             None
         };
 
-        let mut stores: Vec<Arc<dyn SecretStore>> = vec![
-            Arc::new(EnvStore),
-            Arc::new(KeyringStore::new()),
-        ];
+        let mut stores: Vec<Arc<dyn SecretStore>> =
+            vec![Arc::new(EnvStore), Arc::new(KeyringStore::new())];
 
         if let Some(fs) = file_store {
             stores.push(fs);

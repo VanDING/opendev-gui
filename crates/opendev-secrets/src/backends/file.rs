@@ -1,14 +1,14 @@
-use std::path::PathBuf;
+use crate::error::SecretError;
+use crate::key::{Namespace, SecretKey};
+use crate::store::SecretStore;
+use crate::value::SecretValue;
 use async_trait::async_trait;
 use secrecy::SecretString;
-use serde::{Serialize, Deserialize};
-use crate::error::SecretError;
-use crate::key::{SecretKey, Namespace};
-use crate::value::SecretValue;
-use crate::store::SecretStore;
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 /// Age-encrypted file-backed secret store.
-/// 
+///
 /// Fallback for headless/CI environments where keyring is not available.
 /// Uses age X25519 + scrypt encryption.
 pub struct FileStore {
@@ -18,7 +18,7 @@ pub struct FileStore {
 
 impl FileStore {
     /// Create a new FileStore.
-    /// 
+    ///
     /// `path` is the path to the encrypted secrets file.
     /// `passphrase` is the passphrase for decrypting/encrypting the file.
     ///   If empty, uses `OPENDEV_MASTER_KEY` env var, or generates one.
@@ -46,8 +46,8 @@ impl FileStore {
     }
 
     fn save_data(&self, data: &FileData) -> Result<(), SecretError> {
-        let plaintext = serde_json::to_vec(data)
-            .map_err(|e| SecretError::Serialization(e.to_string()))?;
+        let plaintext =
+            serde_json::to_vec(data).map_err(|e| SecretError::Serialization(e.to_string()))?;
         let passphrase = SecretString::new(self.passphrase.clone().into_boxed_str());
         let recipient = age::scrypt::Recipient::new(passphrase);
         let encrypted = age::encrypt(&recipient, &plaintext)
@@ -87,7 +87,9 @@ impl SecretStore for FileStore {
     async fn list(&self, namespace: Namespace) -> Result<Vec<SecretKey>, SecretError> {
         let data = self.load_data()?;
         let prefix = format!("{}/", namespace.as_str());
-        let keys = data.entries.keys()
+        let keys = data
+            .entries
+            .keys()
             .filter(|k| k.starts_with(&prefix))
             .filter_map(|k| {
                 let account = k.strip_prefix(&prefix)?;

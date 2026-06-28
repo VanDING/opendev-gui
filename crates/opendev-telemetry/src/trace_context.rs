@@ -16,11 +16,7 @@ pub fn generate_traceparent() -> String {
 /// Extract trace id from a traceparent header.
 pub fn extract_trace_id(traceparent: &str) -> Option<String> {
     let parts: Vec<&str> = traceparent.split('-').collect();
-    if parts.len() >= 2 {
-        Some(parts[1].to_string())
-    } else {
-        None
-    }
+    if parts.len() >= 2 { Some(parts[1].to_string()) } else { None }
 }
 
 /// Inject a traceparent header into the LLM request headers.

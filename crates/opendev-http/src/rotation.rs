@@ -3,9 +3,9 @@
 //! Uses opendev-secrets SecretStore chain instead of raw Vec<String>.
 //! Cooldown: 429=30s, 401=300s, 403=600s, 5xx=30-60s.
 
+use opendev_secrets::{ChainedSecretStore, SecretKey, SecretStore, SecretValue};
 use std::sync::Arc;
 use std::time::Instant;
-use opendev_secrets::{SecretKey, SecretValue, SecretStore, ChainedSecretStore};
 use tracing::{info, warn};
 
 /// Cooldown durations in seconds by HTTP status code.
@@ -88,7 +88,7 @@ pub struct AuthProfileManager {
 
 impl AuthProfileManager {
     /// Create a new manager using the SecretStore.
-    /// 
+    ///
     /// Tries single key first, then account-1..9 for multi-key support.
     pub async fn new(provider: &str, secrets: Arc<ChainedSecretStore>) -> Result<Self, String> {
         let mut profiles = Vec::new();
@@ -115,12 +115,7 @@ impl AuthProfileManager {
             return Err(format!("No API keys found for provider '{}'", provider));
         }
 
-        Ok(Self {
-            provider: provider.to_string(),
-            secrets,
-            profiles,
-            current_index: 0,
-        })
+        Ok(Self { provider: provider.to_string(), secrets, profiles, current_index: 0 })
     }
 
     pub fn get_active_key(&mut self) -> Option<&str> {
@@ -142,8 +137,12 @@ impl AuthProfileManager {
             }
         }
 
-        let soonest = self.profiles.iter()
-            .filter_map(|p| p.cooldown_until.map(|u| u.saturating_duration_since(Instant::now()).as_secs_f64()))
+        let soonest = self
+            .profiles
+            .iter()
+            .filter_map(|p| {
+                p.cooldown_until.map(|u| u.saturating_duration_since(Instant::now()).as_secs_f64())
+            })
             .fold(f64::MAX, f64::min);
         warn!(
             total = self.profiles.len(),
@@ -166,11 +165,15 @@ impl AuthProfileManager {
         }
     }
 
-    pub fn profile_count(&self) -> usize { self.profiles.len() }
+    pub fn profile_count(&self) -> usize {
+        self.profiles.len()
+    }
     pub fn available_count(&self) -> usize {
         self.profiles.iter().filter(|p| p.is_available()).count()
     }
-    pub fn provider(&self) -> &str { &self.provider }
+    pub fn provider(&self) -> &str {
+        &self.provider
+    }
 }
 
 impl std::fmt::Debug for AuthProfileManager {

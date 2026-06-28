@@ -22,9 +22,9 @@
 //! - `Win32_Security`
 //! - `Win32_Foundation`
 
-use std::process::Command;
-use crate::backend::{SandboxBackend, BackendError};
+use crate::backend::{BackendError, SandboxBackend};
 use crate::policy::ExecRequest;
+use std::process::Command;
 
 /// Windows sandbox using Job Objects and restricted tokens.
 pub struct WindowsBackend;
@@ -138,7 +138,7 @@ impl SandboxBackend for WindowsBackend {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::policy::{ToolKind, RequiredCapabilities};
+    use crate::policy::{RequiredCapabilities, ToolKind};
 
     #[test]
     fn test_windows_backend_name() {

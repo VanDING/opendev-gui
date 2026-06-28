@@ -1,9 +1,9 @@
-use std::sync::Arc;
-use std::time::{Duration, Instant};
 use crate::error::SecretError;
 use crate::key::SecretKey;
-use crate::value::SecretValue;
 use crate::store::SecretStore;
+use crate::value::SecretValue;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 /// Cooldown seconds based on HTTP status code.
 pub fn cooldown_seconds(status: u16) -> f64 {
@@ -29,7 +29,7 @@ struct AuthProfile {
 }
 
 /// AuthProfileManager — revived from dead code, now backed by SecretStore.
-/// 
+///
 /// Manages multiple API keys per provider with automatic rotation on failure.
 /// Cooldown: 429=30s, 401=300s, 403=600s, 5xx=30-60s.
 pub struct AuthProfileManager {
@@ -41,12 +41,12 @@ pub struct AuthProfileManager {
 
 impl AuthProfileManager {
     /// Create a new manager from a SecretStore.
-    /// 
+    ///
     /// Loads all keys for the given provider from the store.
     /// Supports multi-key indexing: `{PROVIDER}/account-1`, `{PROVIDER}/account-2`, etc.
     pub async fn new(provider: &str, secrets: Arc<dyn SecretStore>) -> Result<Self, SecretError> {
         let mut profiles = Vec::new();
-        
+
         // Try single key first
         let single_key = SecretKey::llm(provider);
         if let Some(value) = secrets.get(&single_key).await? {
@@ -63,10 +63,8 @@ impl AuthProfileManager {
 
         // Try multi-key indexing
         for i in 1..=9 {
-            let multi_key = SecretKey::new(
-                crate::key::Namespace::Llm,
-                format!("{}/account-{}", provider, i),
-            );
+            let multi_key =
+                SecretKey::new(crate::key::Namespace::Llm, format!("{}/account-{}", provider, i));
             if let Some(value) = secrets.get(&multi_key).await? {
                 profiles.push(AuthProfile {
                     key: value,
@@ -82,16 +80,12 @@ impl AuthProfileManager {
 
         if profiles.is_empty() {
             return Err(SecretError::NotFound(format!(
-                "No API keys found for provider '{}'", provider
+                "No API keys found for provider '{}'",
+                provider
             )));
         }
 
-        Ok(Self {
-            provider: provider.to_string(),
-            secrets,
-            profiles,
-            current_index: 0,
-        })
+        Ok(Self { provider: provider.to_string(), secrets, profiles, current_index: 0 })
     }
 
     /// Get an active key from the current profile.
@@ -112,7 +106,9 @@ impl AuthProfileManager {
         }
 
         // None available
-        let soonest = self.profiles.iter()
+        let soonest = self
+            .profiles
+            .iter()
             .filter_map(|p| p.cooldown_until)
             .min()
             .map(|t| {
@@ -158,7 +154,7 @@ impl AuthProfileManager {
             profile.failure_status = status_code;
             profile.cooldown_until = Some(Instant::now() + Duration::from_secs_f64(cooldown));
             profile.failure_count += 1;
-            
+
             tracing::warn!(
                 provider = %self.provider,
                 status = status_code,

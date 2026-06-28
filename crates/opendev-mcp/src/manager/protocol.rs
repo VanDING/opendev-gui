@@ -152,7 +152,10 @@ impl McpManager {
         let mut params = vec![
             ("grant_type", "client_credentials".to_string()),
             ("client_id", oauth.client_id.clone()),
-            ("client_secret", secrecy::ExposeSecret::expose_secret(&oauth.client_secret).to_string()),
+            (
+                "client_secret",
+                secrecy::ExposeSecret::expose_secret(&oauth.client_secret).to_string(),
+            ),
         ];
         if let Some(ref scope) = oauth.scope {
             params.push(("scope", scope.clone()));

@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum LogLevel {
@@ -116,8 +116,12 @@ pub struct TelemetryConfig {
     pub include_full_payload: bool,
 }
 
-fn default_retention_days() -> u32 { 14 }
-fn default_sentry_sample_rate() -> f32 { 0.1 }
+fn default_retention_days() -> u32 {
+    14
+}
+fn default_sentry_sample_rate() -> f32 {
+    0.1
+}
 
 impl Default for TelemetryConfig {
     fn default() -> Self {

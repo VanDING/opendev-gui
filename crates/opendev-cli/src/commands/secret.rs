@@ -1,7 +1,4 @@
-use opendev_secrets::{
-    ChainedSecretStore, doctor::diagnose,
-    migration::migrate_settings_json,
-};
+use opendev_secrets::{ChainedSecretStore, doctor::diagnose, migration::migrate_settings_json};
 use std::sync::Arc;
 
 pub async fn handle_secret_doctor() -> Result<(), String> {
@@ -9,12 +6,10 @@ pub async fn handle_secret_doctor() -> Result<(), String> {
         .map(std::path::PathBuf::from)
         .map(|h| h.join(".opendev"))
         .unwrap_or_else(|_| std::path::PathBuf::from("."));
-    
+
     let file_path = config_dir.join("secrets.age");
-    
-    let secrets: Arc<ChainedSecretStore> = Arc::new(
-        ChainedSecretStore::new(Some(file_path), None)
-    );
+
+    let secrets: Arc<ChainedSecretStore> = Arc::new(ChainedSecretStore::new(Some(file_path), None));
 
     let results = diagnose(&*secrets).await;
     opendev_secrets::doctor::print_report(&results);
@@ -26,7 +21,7 @@ pub async fn handle_secret_migrate() -> Result<(), String> {
         .map(std::path::PathBuf::from)
         .map(|h| h.join(".opendev"))
         .unwrap_or_else(|_| std::path::PathBuf::from("."));
-    
+
     let file_path = config_dir.join("secrets.age");
     let secrets = ChainedSecretStore::new(Some(file_path), None);
 

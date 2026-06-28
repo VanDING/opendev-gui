@@ -1,8 +1,8 @@
-use async_trait::async_trait;
 use crate::envelope::{Payload, RequestId};
-use crate::methods::Method;
 use crate::events::Event;
+use crate::methods::Method;
 use crate::version::ProtocolVersion;
+use async_trait::async_trait;
 use tokio::sync::mpsc;
 
 /// Negotiated protocol version after client-server handshake.
@@ -25,11 +25,7 @@ pub enum ProtocolError {
     #[error("Transport error: {0}")]
     Transport(String),
     #[error("Version mismatch: requested {requested}, server supports {min}..{max}")]
-    VersionMismatch {
-        requested: ProtocolVersion,
-        min: ProtocolVersion,
-        max: ProtocolVersion,
-    },
+    VersionMismatch { requested: ProtocolVersion, min: ProtocolVersion, max: ProtocolVersion },
     #[error("Method not found: {0}")]
     MethodNotFound(String),
     #[error("Invalid params: {0}")]

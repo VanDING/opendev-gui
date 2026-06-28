@@ -1,7 +1,7 @@
 use crate::key::SecretKey;
 
 /// Audit logging for secret access.
-/// 
+///
 /// Records when secrets are accessed, by what key, and whether
 /// the access succeeded. Used by the telemetry layer.
 pub fn record_access(key: &SecretKey, success: bool) {

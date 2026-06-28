@@ -141,8 +141,7 @@ pub(super) fn fetch_url(url: &str) -> Result<String, String> {
     let mut cmd = std::process::Command::new("curl");
     cmd.args(["-sSfL", "--max-time", &URL_FETCH_TIMEOUT_SECS.to_string(), url]);
     opendev_exec::env_filter::apply(&mut cmd);
-    let output = cmd.output()
-        .map_err(|e| format!("failed to run curl: {e}"))?;
+    let output = cmd.output().map_err(|e| format!("failed to run curl: {e}"))?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);

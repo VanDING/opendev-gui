@@ -7,8 +7,8 @@
 //! - Which are in the deprecated AppConfig.api_key
 
 use crate::key::SecretKey;
-use crate::store::SecretStore;
 use crate::provider::SecretProvider;
+use crate::store::SecretStore;
 
 /// Status of a single secret key.
 #[derive(Debug)]
@@ -17,8 +17,8 @@ pub struct SecretStatus {
     pub in_keyring: bool,
     pub env_var: Option<String>,
     pub env_set: bool,
-    pub shadowed: bool,   // true if in keyring AND env is set
-    pub healthy: bool,     // true if in keyring and not shadowed (or explicitly opted-in)
+    pub shadowed: bool, // true if in keyring AND env is set
+    pub healthy: bool,  // true if in keyring and not shadowed (or explicitly opted-in)
 }
 
 /// Run the secret doctor on a SecretStore.
@@ -67,9 +67,11 @@ pub fn print_report(results: &[SecretStatus]) {
     let healthy: Vec<_> = results.iter().filter(|r| r.healthy).collect();
     let shadowed: Vec<_> = results.iter().filter(|r| r.shadowed).collect();
     let not_migrated: Vec<_> = results.iter().filter(|r| !r.in_keyring && r.env_set).collect();
-    
+
     if healthy.is_empty() && shadowed.is_empty() && not_migrated.is_empty() {
-        println!("✅ No secrets found. Use `opendev setup` or the settings UI to configure API keys.");
+        println!(
+            "✅ No secrets found. Use `opendev setup` or the settings UI to configure API keys."
+        );
         println!();
         return;
     }
@@ -87,7 +89,10 @@ pub fn print_report(results: &[SecretStatus]) {
         for s in &shadowed {
             println!("   • {} (keyring)", s.key);
             println!("     ← env: {} is still set", s.env_var.as_ref().unwrap_or(&String::new()));
-            println!("     To fix: unset {} or use the keyring value", s.env_var.as_ref().unwrap_or(&String::new()));
+            println!(
+                "     To fix: unset {} or use the keyring value",
+                s.env_var.as_ref().unwrap_or(&String::new())
+            );
         }
         println!();
     }
@@ -95,7 +100,11 @@ pub fn print_report(results: &[SecretStatus]) {
     if !not_migrated.is_empty() {
         println!("📦 Not migrated (only in env var, not in keyring):");
         for s in &not_migrated {
-            println!("   • {} → set only via env var {}", s.key, s.env_var.as_ref().unwrap_or(&String::new()));
+            println!(
+                "   • {} → set only via env var {}",
+                s.key,
+                s.env_var.as_ref().unwrap_or(&String::new())
+            );
         }
         println!("   Run `opendev secret migrate` to store them in the keyring.");
         println!();

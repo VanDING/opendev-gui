@@ -51,19 +51,18 @@ fn main() {
     // ── Initialize Telemetry FIRST ──
     // This must happen before any other initialization so all
     // subsequent operations are observable.
-    let _telemetry_guard = opendev_telemetry::TelemetryGuard::init(
-        &opendev_telemetry::TelemetryConfig {
+    let _telemetry_guard =
+        opendev_telemetry::TelemetryGuard::init(&opendev_telemetry::TelemetryConfig {
             enabled: true,
             log_level: opendev_telemetry::LogLevel::Info,
             format: opendev_telemetry::LogFormat::Json,
             retention_days: 14,
             ..Default::default()
-        }
-    )
-    .map_err(|e| {
-        eprintln!("Warning: failed to initialize telemetry: {e}");
-    })
-    .ok();
+        })
+        .map_err(|e| {
+            eprintln!("Warning: failed to initialize telemetry: {e}");
+        })
+        .ok();
 
     // Install panic handler
     opendev_telemetry::layers::panic::install_crash_handler();
@@ -92,7 +91,9 @@ fn main() {
             // ── Secret Store Migration ──────────────────────────────
             // Check if settings.json has unmigrated plaintext secrets.
             let global_settings = paths.global_settings();
-            if let Ok(has_secrets) = opendev_secrets::migration::has_unmigrated_secrets(&global_settings) {
+            if let Ok(has_secrets) =
+                opendev_secrets::migration::has_unmigrated_secrets(&global_settings)
+            {
                 if has_secrets {
                     eprintln!(
                         "⚠️  settings.json contains API keys in plaintext. \

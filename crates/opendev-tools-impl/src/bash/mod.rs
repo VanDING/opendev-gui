@@ -180,9 +180,9 @@ use std::sync::Arc;
 
 use tokio::sync::Mutex;
 
-use opendev_tools_core::{BaseTool, ToolContext, ToolResult};
-use opendev_exec::policy::{BashToolPolicy, ExecRequest, ExecPolicy, ToolKind, Decision};
 use opendev_exec::backend::detect_backend;
+use opendev_exec::policy::{BashToolPolicy, Decision, ExecPolicy, ExecRequest, ToolKind};
+use opendev_tools_core::{BaseTool, ToolContext, ToolResult};
 
 use helpers::{BackgroundStore, DEFAULT_TIMEOUT_SECS, MAX_TIMEOUT};
 use patterns::{is_dangerous, is_server_command};

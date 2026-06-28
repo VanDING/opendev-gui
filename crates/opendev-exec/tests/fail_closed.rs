@@ -7,8 +7,8 @@
 //! "Any SandboxBackend::apply() error MUST result in Decision::Deny.
 //!  Never allow child to spawn un-sandboxed."
 
-use opendev_exec::backend::{SandboxBackend, BackendError};
-use opendev_exec::policy::{ExecRequest, ToolKind, RequiredCapabilities};
+use opendev_exec::backend::{BackendError, SandboxBackend};
+use opendev_exec::policy::{ExecRequest, RequiredCapabilities, ToolKind};
 use std::collections::HashMap;
 use std::process::Command;
 
@@ -29,9 +29,7 @@ impl SandboxBackend for AlwaysFailBackend {
     }
 
     fn apply(&self, _cmd: &mut Command, _request: &ExecRequest) -> Result<(), BackendError> {
-        Err(BackendError::ApplyFailed(
-            "Intentional failure for fail-closed test".into(),
-        ))
+        Err(BackendError::ApplyFailed("Intentional failure for fail-closed test".into()))
     }
 }
 
@@ -41,10 +39,7 @@ fn sample_request(command: &str) -> ExecRequest {
     ExecRequest {
         tool: ToolKind::Bash,
         command: command.into(),
-        argv: command
-            .split_whitespace()
-            .map(String::from)
-            .collect(),
+        argv: command.split_whitespace().map(String::from).collect(),
         cwd: std::env::temp_dir(),
         env: HashMap::new(),
         requested_paths: vec![],
@@ -94,11 +89,7 @@ fn test_fail_closed_contract_constant_exists() {
         "Contract must mention that errors result in Deny; got: {}",
         contract
     );
-    assert!(
-        contract.contains("error"),
-        "Contract must reference errors; got: {}",
-        contract
-    );
+    assert!(contract.contains("error"), "Contract must reference errors; got: {}", contract);
 }
 
 #[test]
@@ -120,10 +111,7 @@ fn test_none_backend_never_fails() {
 fn test_detect_backend_always_returns_some() {
     // detect_backend should always return at least one backend (never None)
     let backend = opendev_exec::backend::detect_backend();
-    assert!(
-        backend.is_some(),
-        "detect_backend should always return at least one backend"
-    );
+    assert!(backend.is_some(), "detect_backend should always return at least one backend");
 
     // The returned backend name should be a known value.
     // On Linux: "landlock" or "bwrap" or "none"

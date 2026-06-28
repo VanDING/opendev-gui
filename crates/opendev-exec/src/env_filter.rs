@@ -65,9 +65,31 @@ const SENSITIVE_ENV_EXACT: &[&str] = &[
 
 /// Protected env vars — always passed through, never stripped.
 const PROTECTED_ENV_PREFIXES: &[&str] = &[
-    "PATH", "HOME", "USER", "LOGNAME", "SHELL", "LANG", "LC_", "TERM", "COLORTERM", "TMPDIR",
-    "TMP", "TEMP", "XDG_", "DBUS_", "DISPLAY", "WAYLAND_", "SSH_TTY", "SSH_CONNECTION",
-    "SSH_CLIENT", "PYTHONPATH", "CARGO_", "RUST_", "GOPATH", "NODE_PATH", "JAVA_HOME",
+    "PATH",
+    "HOME",
+    "USER",
+    "LOGNAME",
+    "SHELL",
+    "LANG",
+    "LC_",
+    "TERM",
+    "COLORTERM",
+    "TMPDIR",
+    "TMP",
+    "TEMP",
+    "XDG_",
+    "DBUS_",
+    "DISPLAY",
+    "WAYLAND_",
+    "SSH_TTY",
+    "SSH_CONNECTION",
+    "SSH_CLIENT",
+    "PYTHONPATH",
+    "CARGO_",
+    "RUST_",
+    "GOPATH",
+    "NODE_PATH",
+    "JAVA_HOME",
     "OPENDEV_", // Allow opendev-specific vars through (they're controlled by us)
 ];
 
@@ -81,10 +103,7 @@ pub fn is_sensitive_env(name: &str) -> bool {
     }
 
     // Suffix match
-    if SENSITIVE_ENV_SUFFIXES
-        .iter()
-        .any(|suffix| upper.ends_with(suffix))
-    {
+    if SENSITIVE_ENV_SUFFIXES.iter().any(|suffix| upper.ends_with(suffix)) {
         return true;
     }
 
@@ -94,16 +113,12 @@ pub fn is_sensitive_env(name: &str) -> bool {
 /// Check if an env var name is protected and should always pass through.
 pub fn is_protected_env(name: &str) -> bool {
     let upper = name.to_uppercase();
-    PROTECTED_ENV_PREFIXES
-        .iter()
-        .any(|prefix| upper.starts_with(prefix))
+    PROTECTED_ENV_PREFIXES.iter().any(|prefix| upper.starts_with(prefix))
 }
 
 /// Filter environment variables: strip sensitive ones, keep protected and benign ones.
 pub fn filtered_env() -> HashMap<String, String> {
-    std::env::vars()
-        .filter(|(k, _)| !is_sensitive_env(k) || is_protected_env(k))
-        .collect()
+    std::env::vars().filter(|(k, _)| !is_sensitive_env(k) || is_protected_env(k)).collect()
 }
 
 /// Apply env filter to a Command — clears env then adds filtered + protected vars.

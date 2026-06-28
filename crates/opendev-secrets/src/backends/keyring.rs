@@ -1,11 +1,11 @@
+use crate::error::SecretError;
+use crate::key::{Namespace, SecretKey};
+use crate::store::SecretStore;
+use crate::value::SecretValue;
 use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Mutex;
-use serde::{Serialize, Deserialize};
-use crate::error::SecretError;
-use crate::key::{SecretKey, Namespace};
-use crate::value::SecretValue;
-use crate::store::SecretStore;
 
 /// Local index of keys stored in the keyring.
 /// The keyring crate does not support enumeration, so we track keys ourselves.
@@ -33,22 +33,14 @@ impl KeyringStore {
     pub fn new() -> Self {
         let index_path = default_index_path();
         let index = Self::load_index(&index_path).unwrap_or_default();
-        Self {
-            service: "com.opendev.desktop".into(),
-            index_path,
-            index: Mutex::new(index),
-        }
+        Self { service: "com.opendev.desktop".into(), index_path, index: Mutex::new(index) }
     }
 
     /// Create a new KeyringStore with a custom config directory for the index file.
     pub fn with_config_dir(config_dir: PathBuf) -> Self {
         let index_path = config_dir.join(".keyring-index.json");
         let index = Self::load_index(&index_path).unwrap_or_default();
-        Self {
-            service: "com.opendev.desktop".into(),
-            index_path,
-            index: Mutex::new(index),
-        }
+        Self { service: "com.opendev.desktop".into(), index_path, index: Mutex::new(index) }
     }
 
     fn default_config_dir() -> PathBuf {
@@ -59,18 +51,15 @@ impl KeyringStore {
     }
 
     fn load_index(path: &PathBuf) -> Option<KeyringIndex> {
-        std::fs::read_to_string(path)
-            .ok()
-            .and_then(|s| serde_json::from_str(&s).ok())
+        std::fs::read_to_string(path).ok().and_then(|s| serde_json::from_str(&s).ok())
     }
 
     fn save_index(&self) -> Result<(), SecretError> {
         if let Some(parent) = self.index_path.parent() {
             std::fs::create_dir_all(parent)?;
         }
-        let json =
-            serde_json::to_string_pretty(&*self.index.lock().unwrap())
-                .map_err(|e| SecretError::Serialization(e.to_string()))?;
+        let json = serde_json::to_string_pretty(&*self.index.lock().unwrap())
+            .map_err(|e| SecretError::Serialization(e.to_string()))?;
         std::fs::write(&self.index_path, json)?;
         Ok(())
     }

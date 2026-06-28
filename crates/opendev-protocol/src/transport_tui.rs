@@ -1,24 +1,34 @@
 //! In-process transport for TUI mode. Uses tokio mpsc channels.
 //! No network I/O — all communication stays within one process.
 
-use async_trait::async_trait;
 use crate::envelope::{Payload, RequestId, new_request_id};
-use crate::methods::Method;
 use crate::events::Event;
-use crate::transport::{Transport, EventStream, EventHandle, NegotiatedVersion, ProtocolError};
+use crate::methods::Method;
+use crate::transport::{EventHandle, EventStream, NegotiatedVersion, ProtocolError, Transport};
 use crate::version::ProtocolVersion;
-use tokio::sync::{mpsc, oneshot};
+use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use tokio::sync::{mpsc, oneshot};
 
-type RequestSender = mpsc::UnboundedSender<(RequestId, Method, serde_json::Value, oneshot::Sender<Result<serde_json::Value, ProtocolError>>)>;
+type RequestSender = mpsc::UnboundedSender<(
+    RequestId,
+    Method,
+    serde_json::Value,
+    oneshot::Sender<Result<serde_json::Value, ProtocolError>>,
+)>;
 type EventBroadcaster = Arc<Mutex<HashMap<Event, mpsc::Sender<serde_json::Value>>>>;
 
 /// Server-side handle for TuiInProcessTransport.
 /// The server calls these to respond to requests and emit events.
 pub struct TuiTransportServer {
-    request_rx: mpsc::UnboundedReceiver<(RequestId, Method, serde_json::Value, oneshot::Sender<Result<serde_json::Value, ProtocolError>>)>,
+    request_rx: mpsc::UnboundedReceiver<(
+        RequestId,
+        Method,
+        serde_json::Value,
+        oneshot::Sender<Result<serde_json::Value, ProtocolError>>,
+    )>,
     event_broadcasters: EventBroadcaster,
 }
 
@@ -28,21 +38,22 @@ impl TuiTransportServer {
         let (request_tx, request_rx) = mpsc::unbounded_channel();
         let event_broadcasters = Arc::new(Mutex::new(HashMap::new()));
 
-        let server = Self {
-            request_rx,
-            event_broadcasters: event_broadcasters.clone(),
-        };
+        let server = Self { request_rx, event_broadcasters: event_broadcasters.clone() };
 
-        let client = TuiInProcessTransport {
-            request_tx,
-            event_broadcasters,
-        };
+        let client = TuiInProcessTransport { request_tx, event_broadcasters };
 
         (server, client)
     }
 
     /// Receive the next request from the TUI client.
-    pub async fn recv_request(&mut self) -> Option<(RequestId, Method, serde_json::Value, oneshot::Sender<Result<serde_json::Value, ProtocolError>>)> {
+    pub async fn recv_request(
+        &mut self,
+    ) -> Option<(
+        RequestId,
+        Method,
+        serde_json::Value,
+        oneshot::Sender<Result<serde_json::Value, ProtocolError>>,
+    )> {
         self.request_rx.recv().await
     }
 
@@ -77,9 +88,8 @@ impl Transport for TuiInProcessTransport {
             .send((id, method, params_value, tx))
             .map_err(|e| ProtocolError::Transport(format!("send failed: {}", e)))?;
 
-        let result = rx
-            .await
-            .map_err(|e| ProtocolError::Transport(format!("recv failed: {}", e)))??;
+        let result =
+            rx.await.map_err(|e| ProtocolError::Transport(format!("recv failed: {}", e)))??;
 
         serde_json::from_value(result)
             .map_err(|e| ProtocolError::Internal(format!("deserialize response: {}", e)))
@@ -87,18 +97,12 @@ impl Transport for TuiInProcessTransport {
 
     async fn subscribe(&self, event: Event) -> Result<EventStream, ProtocolError> {
         let (tx, rx) = mpsc::channel(256);
-        let handle = EventHandle {
-            event: event.clone(),
-            id: new_request_id(),
-        };
+        let handle = EventHandle { event: event.clone(), id: new_request_id() };
 
         let mut broadcasters = self.event_broadcasters.lock().await;
         broadcasters.insert(event, tx);
 
-        Ok(EventStream {
-            rx,
-            _handle: handle,
-        })
+        Ok(EventStream { rx, _handle: handle })
     }
 
     async fn unsubscribe(&self, handle: EventHandle) -> Result<(), ProtocolError> {

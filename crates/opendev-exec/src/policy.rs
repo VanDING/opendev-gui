@@ -1,6 +1,6 @@
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Duration;
-use std::collections::HashMap;
 use url::Url;
 
 /// Identifies which tool is requesting execution.
@@ -158,11 +158,7 @@ pub struct WorkspaceWritePolicy {
 impl ExecPolicy for WorkspaceWritePolicy {
     fn evaluate(&self, request: &ExecRequest) -> Result<Decision, PolicyError> {
         // Default: allow commands targeting the workspace
-        if request
-            .requested_paths
-            .iter()
-            .all(|p| p.starts_with(&self.cwd))
-        {
+        if request.requested_paths.iter().all(|p| p.starts_with(&self.cwd)) {
             return Ok(Decision::Allow);
         }
         // External paths need prompting
@@ -191,9 +187,7 @@ impl ExecPolicy for ReadOnlyPolicy {
             });
         }
         if !request.capabilities.write.is_empty() {
-            return Ok(Decision::Deny {
-                reason: "Write access denied by read-only policy".into(),
-            });
+            return Ok(Decision::Deny { reason: "Write access denied by read-only policy".into() });
         }
         Ok(Decision::Allow)
     }
@@ -261,10 +255,7 @@ impl BashToolPolicy {
             "mv".into(),
             "touch".into(),
         ];
-        Self {
-            safe_commands,
-            working_dir,
-        }
+        Self { safe_commands, working_dir }
     }
 
     pub fn is_safe_command(&self, command: &str) -> bool {
@@ -277,9 +268,7 @@ impl ExecPolicy for BashToolPolicy {
     fn evaluate(&self, request: &ExecRequest) -> Result<Decision, PolicyError> {
         // 1. Check dangerous patterns first
         if crate::patterns::is_dangerous(request.command.as_str()) {
-            return Ok(Decision::Deny {
-                reason: "Command matches dangerous pattern".into(),
-            });
+            return Ok(Decision::Deny { reason: "Command matches dangerous pattern".into() });
         }
 
         // 2. Allow all non-dangerous commands.

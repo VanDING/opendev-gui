@@ -77,8 +77,9 @@ pub async fn handle_channel(action: ChannelAction, working_dir: &std::path::Path
             let config = load_app_config(working_dir);
             match &config.channels.telegram {
                 Some(tg) if tg.enabled => {
-                    let api =
-                        opendev_channels::telegram::api::TelegramApi::new(secrecy::ExposeSecret::expose_secret(&tg.bot_token).to_string());
+                    let api = opendev_channels::telegram::api::TelegramApi::new(
+                        secrecy::ExposeSecret::expose_secret(&tg.bot_token).to_string(),
+                    );
                     match api.get_me().await {
                         Ok(user) => {
                             println!(
@@ -179,8 +180,11 @@ pub async fn handle_channel(action: ChannelAction, working_dir: &std::path::Path
                 tg.allowed_users.push(user_id.clone());
             }
 
-            let bot_token: Option<String> =
-                config.channels.telegram.as_ref().map(|t| secrecy::ExposeSecret::expose_secret(&t.bot_token).to_string());
+            let bot_token: Option<String> = config
+                .channels
+                .telegram
+                .as_ref()
+                .map(|t| secrecy::ExposeSecret::expose_secret(&t.bot_token).to_string());
 
             save_config(&config, &global_settings);
             println!("Paired {user_id}.");

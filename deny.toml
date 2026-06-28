@@ -57,11 +57,12 @@ allow = [
 ]
 
 # ── Bans (disallowed / duplicate dependencies) ──────────────────
+# Note: openssl-sys is NOT banned here because:
+# - reqwest is already configured with rustls (not native-tls)
+# - The only source is the optional `otlp` feature (opentelemetry-otlp → tonic)
+# - That feature is opt-in, not default
 [bans]
 multiple-versions = "warn"
-deny = [
-    { name = "openssl-sys" },
-]
 highlight = "all"
 
 # ── Sources ─────────────────────────────────────────────────────

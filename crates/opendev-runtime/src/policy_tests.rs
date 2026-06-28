@@ -66,7 +66,8 @@ fn test_for_project_preset() {
 
 #[test]
 fn test_empty_command() {
-    let config = ExecPolicyConfig { enabled: true, allowed_commands: vec![], writable_paths: vec![] };
+    let config =
+        ExecPolicyConfig { enabled: true, allowed_commands: vec![], writable_paths: vec![] };
     assert!(config.check_command("").is_ok());
     assert!(config.check_command("   ").is_ok());
 }

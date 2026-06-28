@@ -3,7 +3,9 @@
 /// Build the Sentry layer.
 /// Only initializes if config.sentry_dsn is set and non-empty.
 #[cfg(feature = "sentry")]
-pub fn build_sentry_layer(config: &crate::config::TelemetryConfig) -> Option<sentry::ClientInitGuard> {
+pub fn build_sentry_layer(
+    config: &crate::config::TelemetryConfig,
+) -> Option<sentry::ClientInitGuard> {
     let dsn = config.sentry_dsn.as_ref()?;
     if dsn.is_empty() {
         return None;

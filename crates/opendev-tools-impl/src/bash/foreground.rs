@@ -47,9 +47,7 @@ impl BashTool {
         // backend apply, because the backend may replace the inner
         // std::process::Command (e.g., Seatbelt wrapping with sandbox-exec).
         let mut cmd = Command::new("sh");
-        cmd.arg("-c")
-            .arg(&exec_command)
-            .current_dir(working_dir);
+        cmd.arg("-c").arg(&exec_command).current_dir(working_dir);
 
         // Apply env filter (from opendev-exec) — env_clear + filtered envs + PYTHONUNBUFFERED
         opendev_exec::env_filter::apply(cmd.as_std_mut());
@@ -74,7 +72,8 @@ impl BashTool {
             tracing::error!(error = %e, backend = backend.name(), "sandbox apply failed; refusing to spawn");
             return ToolResult::fail(format!(
                 "Sandbox backend '{}' failed to apply: {}. Command not executed (fail-closed).",
-                backend.name(), e
+                backend.name(),
+                e
             ));
         }
 

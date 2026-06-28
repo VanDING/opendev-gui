@@ -1,9 +1,9 @@
-use serde::{Serialize, Deserialize};
-use std::path::Path;
 use crate::error::SecretError;
 use crate::key::SecretKey;
-use crate::value::SecretValue;
 use crate::resolver::ChainedSecretStore;
+use crate::value::SecretValue;
+use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 /// Report of what was migrated.
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -22,21 +22,16 @@ pub async fn migrate_settings_json(
     path: &Path,
     secrets: &ChainedSecretStore,
 ) -> Result<MigrationReport, SecretError> {
-    let raw = std::fs::read_to_string(path)
-        .map_err(|e| SecretError::Io(e))?;
-    let mut value: serde_json::Value = serde_json::from_str(&raw)
-        .map_err(|e| SecretError::Serialization(e.to_string()))?;
+    let raw = std::fs::read_to_string(path).map_err(|e| SecretError::Io(e))?;
+    let mut value: serde_json::Value =
+        serde_json::from_str(&raw).map_err(|e| SecretError::Serialization(e.to_string()))?;
     let mut report = MigrationReport::default();
 
     // Migrate api_key
-    if let Some(api_key) = value.get("api_key")
-        .and_then(|v| v.as_str())
-        .filter(|k| !k.is_empty())
-        .map(String::from)
+    if let Some(api_key) =
+        value.get("api_key").and_then(|v| v.as_str()).filter(|k| !k.is_empty()).map(String::from)
     {
-        let provider = value.get("model_provider")
-            .and_then(|v| v.as_str())
-            .unwrap_or("unknown");
+        let provider = value.get("model_provider").and_then(|v| v.as_str()).unwrap_or("unknown");
         let key = SecretKey::llm(provider);
 
         // Write to secret store
@@ -48,13 +43,17 @@ pub async fn migrate_settings_json(
         // Remove from JSON, add reference
         if let Some(obj) = value.as_object_mut() {
             obj.remove("api_key");
-            obj.insert("api_key_ref".into(), serde_json::json!(format!("{}/{}", key.namespace().as_str(), key.account())));
+            obj.insert(
+                "api_key_ref".into(),
+                serde_json::json!(format!("{}/{}", key.namespace().as_str(), key.account())),
+            );
         }
         report.moved.push(format!("api_key → {}", key));
     }
 
     // Migrate telegram bot_token
-    if let Some(token) = value.pointer("/channels/telegram/bot_token")
+    if let Some(token) = value
+        .pointer("/channels/telegram/bot_token")
         .and_then(|v| v.as_str())
         .filter(|t| !t.is_empty())
         .map(String::from)
@@ -88,8 +87,8 @@ pub fn has_unmigrated_secrets(path: &Path) -> Result<bool, SecretError> {
         return Ok(false);
     }
     let raw = std::fs::read_to_string(path)?;
-    let value: serde_json::Value = serde_json::from_str(&raw)
-        .map_err(|e| SecretError::Serialization(e.to_string()))?;
+    let value: serde_json::Value =
+        serde_json::from_str(&raw).map_err(|e| SecretError::Serialization(e.to_string()))?;
 
     // Check for api_key
     if let Some(key) = value.get("api_key").and_then(|v| v.as_str()) {
@@ -99,9 +98,7 @@ pub fn has_unmigrated_secrets(path: &Path) -> Result<bool, SecretError> {
     }
 
     // Check for telegram bot_token
-    if let Some(token) = value.pointer("/channels/telegram/bot_token")
-        .and_then(|v| v.as_str())
-    {
+    if let Some(token) = value.pointer("/channels/telegram/bot_token").and_then(|v| v.as_str()) {
         if !token.is_empty() {
             return Ok(true);
         }

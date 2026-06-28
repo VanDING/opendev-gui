@@ -22,15 +22,15 @@ static DANGEROUS_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
         r"git\s+checkout\s+--\s+\.",
         r"git\s+branch\s+-D\b",
         // ── Added per design §4.3.4 ──
-        r"chmod\s+777\s+\S", // chmod 777 on any file (not just root)
-        r"chown\s+-R",       // recursive chown
-        r"\beval\s",         // shell eval
-        r"\bexec\s",         // shell exec
-        r"\bsource\s",       // shell source
+        r"chmod\s+777\s+\S",            // chmod 777 on any file (not just root)
+        r"chown\s+-R",                  // recursive chown
+        r"\beval\s",                    // shell eval
+        r"\bexec\s",                    // shell exec
+        r"\bsource\s",                  // shell source
         r">\s*~/\.ssh/authorized_keys", // SSH key injection
-        r">\s*/etc/passwd",  // passwd injection
-        r">\s*/etc/shadow",  // shadow injection
-        r"base64\s+-d\s*\|", // base64 decode piped
+        r">\s*/etc/passwd",             // passwd injection
+        r">\s*/etc/shadow",             // shadow injection
+        r"base64\s+-d\s*\|",            // base64 decode piped
     ]
     .iter()
     .map(|p| Regex::new(p).expect("invalid dangerous pattern regex"))

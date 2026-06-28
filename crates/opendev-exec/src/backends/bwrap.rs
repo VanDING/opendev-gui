@@ -1,6 +1,6 @@
-use std::process::Command;
-use crate::backend::{SandboxBackend, BackendError};
+use crate::backend::{BackendError, SandboxBackend};
 use crate::policy::ExecRequest;
+use std::process::Command;
 
 /// Bubblewrap-backed sandbox for Linux.
 /// Creates a new namespace with restricted filesystem access.
@@ -10,9 +10,7 @@ pub struct BwrapBackend {
 
 impl BwrapBackend {
     pub fn new() -> Self {
-        Self {
-            bwrap_path: "bwrap".into(),
-        }
+        Self { bwrap_path: "bwrap".into() }
     }
 }
 
@@ -35,10 +33,8 @@ impl SandboxBackend for BwrapBackend {
     fn apply(&self, cmd: &mut Command, request: &ExecRequest) -> Result<(), BackendError> {
         let original_program = cmd.get_program().to_os_string();
         let original_args: Vec<_> = cmd.get_args().map(|a| a.to_os_string()).collect();
-        let original_envs: Vec<_> = cmd
-            .get_envs()
-            .map(|(k, v)| (k.to_os_string(), v.map(|v| v.to_os_string())))
-            .collect();
+        let original_envs: Vec<_> =
+            cmd.get_envs().map(|(k, v)| (k.to_os_string(), v.map(|v| v.to_os_string()))).collect();
         let original_dir = cmd.get_current_dir().map(|d| d.to_path_buf());
 
         // Build bwrap command

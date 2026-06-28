@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 /// ── fs/browse ──
@@ -30,7 +30,7 @@ pub struct DirectoryEntry {
 #[ts(export)]
 pub struct FsVerifyPathParams {
     pub path: String,
-    pub mode: Option<String>,  // "file" | "directory" | "any"
+    pub mode: Option<String>, // "file" | "directory" | "any"
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]

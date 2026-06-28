@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 /// ── mcp/server/list ──
@@ -17,7 +17,7 @@ pub struct McpServerListResponse {
 pub struct McpServerInfo {
     pub name: String,
     pub command: String,
-    pub status: String,  // "connected" | "disconnected" | "error"
+    pub status: String, // "connected" | "disconnected" | "error"
     pub tools_count: u32,
 }
 

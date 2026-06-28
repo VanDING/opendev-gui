@@ -94,8 +94,7 @@ impl HookExecutor {
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped());
         opendev_exec::env_filter::apply(cmd.as_std_mut());
-        let mut child = match cmd.spawn()
-        {
+        let mut child = match cmd.spawn() {
             Ok(child) => child,
             Err(e) => {
                 error!(
