@@ -87,13 +87,14 @@ impl HookExecutor {
         // Determine shell to use
         let (shell, flag) = if cfg!(target_os = "windows") { ("cmd", "/C") } else { ("sh", "-c") };
 
-        let mut child = match Command::new(shell)
-            .arg(flag)
+        let mut cmd = Command::new(shell);
+        cmd.arg(flag)
             .arg(&command.command)
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
-            .spawn()
+            .stderr(std::process::Stdio::piped());
+        opendev_exec::env_filter::apply(cmd.as_std_mut());
+        let mut child = match cmd.spawn()
         {
             Ok(child) => child,
             Err(e) => {

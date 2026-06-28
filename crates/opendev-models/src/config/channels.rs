@@ -25,7 +25,9 @@ pub enum DmPolicy {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TelegramChannelConfig {
     /// Bot token from @BotFather.
-    pub bot_token: String,
+    #[serde(default, deserialize_with = "deserialize_secret_string")]
+    #[serde(serialize_with = "serialize_secret_string")]
+    pub bot_token: secrecy::SecretString,
     /// Whether the Telegram channel is enabled (default: false).
     /// Must be explicitly set to `true` to activate — prevents the remote
     /// session claim from killing other TUI instances sharing the same token.
@@ -40,6 +42,15 @@ pub struct TelegramChannelConfig {
     /// Allowed Telegram user IDs (as strings).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub allowed_users: Vec<String>,
+}
+
+fn serialize_secret_string<S: serde::Serializer>(value: &secrecy::SecretString, serializer: S) -> Result<S::Ok, S::Error> {
+    serializer.serialize_str(secrecy::ExposeSecret::expose_secret(value))
+}
+
+fn deserialize_secret_string<'de, D: serde::Deserializer<'de>>(d: D) -> Result<secrecy::SecretString, D::Error> {
+    let s = String::deserialize(d)?;
+    Ok(s.into())
 }
 
 pub fn is_channels_default(c: &ChannelsConfig) -> bool {

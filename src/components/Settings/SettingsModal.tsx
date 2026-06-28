@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Cpu, Server, Palette, Zap } from 'lucide-react';
+import { Cpu, Server, Zap, Palette, Shield } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { ModelSettings } from './ModelSettings';
 import { MCPSettings } from './MCPSettings';
 import { ThemeSettings } from './ThemeSettings';
 import { SkillsSettings } from './SkillsSettings';
+import { PrivacySettings } from './PrivacySettings';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -13,7 +14,7 @@ interface SettingsModalProps {
   initialTab?: TabId;
 }
 
-type TabId = 'model' | 'mcp' | 'skills' | 'theme';
+type TabId = 'model' | 'mcp' | 'skills' | 'theme' | 'privacy';
 
 interface TabConfig {
   id: TabId;
@@ -47,10 +48,17 @@ const tabs: TabConfig[] = [
     icon: Palette,
     description: 'Choose your preferred theme'
   },
+  {
+    id: 'privacy',
+    label: 'Privacy',
+    icon: Shield,
+    description: 'Manage privacy and data collection'
+  },
 ];
 
 export function SettingsModal({ isOpen, onClose, initialTab }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab || 'model');
+  const [config] = useState<{ shadowed_env_vars?: string[] }>({});
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Settings" size="xl">
@@ -97,6 +105,9 @@ export function SettingsModal({ isOpen, onClose, initialTab }: SettingsModalProp
               {activeTab === 'mcp' && <MCPSettings />}
               {activeTab === 'skills' && <SkillsSettings />}
               {activeTab === 'theme' && <ThemeSettings />}
+              {activeTab === 'privacy' && (
+                <PrivacySettings config={config} />
+              )}
             </div>
           </div>
         </div>

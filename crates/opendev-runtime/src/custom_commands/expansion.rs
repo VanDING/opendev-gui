@@ -54,7 +54,10 @@ pub(super) fn expand_shell_commands(content: &str) -> String {
     let re = Regex::new(r"!`([^`]+)`").expect("valid regex");
     re.replace_all(content, |caps: &regex::Captures| {
         let cmd = &caps[1];
-        match std::process::Command::new("sh").arg("-c").arg(cmd).output() {
+        let mut sh_cmd = std::process::Command::new("sh");
+        sh_cmd.arg("-c").arg(cmd);
+        opendev_exec::env_filter::apply(&mut sh_cmd);
+        match sh_cmd.output() {
             Ok(output) if output.status.success() => {
                 String::from_utf8_lossy(&output.stdout).trim().to_string()
             }

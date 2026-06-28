@@ -9,6 +9,7 @@ license.workspace = true
 opendev-models = { workspace = true }
 opendev-config = { workspace = true }
 opendev-history = { workspace = true }
+opendev-telemetry = { workspace = true }
 
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -24,6 +25,7 @@ notify = "8"
 notify-debouncer-mini = "0.7"
 rand = "0.8"
 uuid = { workspace = true, features = ["v4"] }
+opendev-exec = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

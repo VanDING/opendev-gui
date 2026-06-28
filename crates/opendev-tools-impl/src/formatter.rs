@@ -182,7 +182,10 @@ static STATE: LazyLock<Mutex<FormatterState>> = LazyLock::new(|| {
 
 /// Check if a command is available on the system PATH.
 fn command_exists(cmd: &str) -> bool {
-    Command::new("which").arg(cmd).output().map(|o| o.status.success()).unwrap_or(false)
+    let mut which_cmd = Command::new("which");
+    which_cmd.arg(cmd);
+    opendev_exec::env_filter::apply(&mut which_cmd);
+    which_cmd.output().map(|o| o.status.success()).unwrap_or(false)
 }
 
 /// Detect which formatters are available on the system.
@@ -281,6 +284,7 @@ pub fn format_file_with_config(
         for (k, v) in &override_cfg.environment {
             cmd.env(k, v);
         }
+        opendev_exec::env_filter::apply(&mut cmd);
 
         match cmd.output() {
             Ok(output) if output.status.success() => {
@@ -347,7 +351,10 @@ pub fn format_file(file_path: &str, working_dir: &Path) -> bool {
 
     let args: Vec<String> = def.args.iter().map(|a| a.replace("{file}", file_path)).collect();
 
-    match Command::new(def.command).args(&args).current_dir(working_dir).output() {
+    let mut fmt_cmd = Command::new(def.command);
+    fmt_cmd.args(&args).current_dir(working_dir);
+    opendev_exec::env_filter::apply(&mut fmt_cmd);
+    match fmt_cmd.output() {
         Ok(output) => {
             if output.status.success() {
                 debug!("Formatted {} with {}", file_path, formatter_name);

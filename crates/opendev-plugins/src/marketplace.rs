@@ -327,9 +327,10 @@ impl PluginManager {
 
     /// Run `git clone --depth 1` into a target directory.
     fn git_clone(&self, url: &str, branch: &str, target_dir: &Path) -> Result<()> {
-        let output = std::process::Command::new("git")
-            .args(["clone", "--depth", "1", "--branch", branch, url, &target_dir.to_string_lossy()])
-            .output()
+        let mut cmd = std::process::Command::new("git");
+        cmd.args(["clone", "--depth", "1", "--branch", branch, url, &target_dir.to_string_lossy()]);
+        opendev_exec::env_filter::apply(&mut cmd);
+        let output = cmd.output()
             .map_err(|e| PluginError::Git(format!("Failed to run git: {}", e)))?;
 
         if !output.status.success() {
@@ -341,10 +342,10 @@ impl PluginManager {
 
     /// Run `git pull` in a directory.
     fn git_pull(&self, dir: &Path) -> Result<()> {
-        let output = std::process::Command::new("git")
-            .args(["pull"])
-            .current_dir(dir)
-            .output()
+        let mut cmd = std::process::Command::new("git");
+        cmd.args(["pull"]).current_dir(dir);
+        opendev_exec::env_filter::apply(&mut cmd);
+        let output = cmd.output()
             .map_err(|e| PluginError::Git(format!("Failed to run git: {}", e)))?;
 
         if !output.status.success() {

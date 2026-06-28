@@ -181,6 +181,8 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use opendev_tools_core::{BaseTool, ToolContext, ToolResult};
+use opendev_exec::policy::{BashToolPolicy, ExecRequest, ExecPolicy, ToolKind, Decision};
+use opendev_exec::backend::detect_backend;
 
 use helpers::{BackgroundStore, DEFAULT_TIMEOUT_SECS, MAX_TIMEOUT};
 use patterns::{is_dangerous, is_server_command};
@@ -327,11 +329,45 @@ impl BaseTool for BashTool {
             ctx.working_dir.clone()
         };
 
-        // Security check
+        // Security check (fast path — same implementation as BashToolPolicy below)
         if is_dangerous(command) {
             return ToolResult::fail(format!(
                 "Blocked dangerous command. The command matched a security pattern: {command}"
             ));
+        }
+
+        // ── Sandbox: ExecPolicy evaluation (authoritative) ──
+        let policy = BashToolPolicy::new(working_dir.clone());
+        let _backend = detect_backend().expect("at least NoneBackend is always available");
+
+        // Build exec request for policy evaluation
+        let exec_request = ExecRequest {
+            tool: ToolKind::Bash,
+            command: command.to_string(),
+            argv: vec!["sh".into(), "-c".into(), command.to_string()],
+            cwd: working_dir.clone(),
+            env: std::collections::HashMap::new(),
+            requested_paths: vec![],
+            requested_net: None,
+            capabilities: Default::default(),
+        };
+
+        // Evaluate policy
+        let decision = match policy.evaluate(&exec_request) {
+            Ok(d) => d,
+            Err(e) => return ToolResult::fail(format!("Policy evaluation error: {e}")),
+        };
+
+        match decision {
+            Decision::Deny { reason } => {
+                tracing::warn!(command = %command, reason = %reason, "BashTool: command denied by policy");
+                return ToolResult::fail(format!("Denied by sandbox policy: {reason}"));
+            }
+            Decision::Prompt { reason, .. } => {
+                // For now, treat prompts as deny (until approval UI integration)
+                return ToolResult::fail(format!("Command requires approval: {reason}"));
+            }
+            _ => {} // Allow / AllowWith proceed
         }
 
         // Determine background mode

@@ -28,6 +28,7 @@ opendev-models = { workspace = true }
 opendev-config = { workspace = true }
 opendev-history = { workspace = true }
 opendev-http = { workspace = true }
+secrecy = { version = "0.10", features = ["serde"] }
 opendev-mcp = { workspace = true }
 opendev-agents = { workspace = true }
 

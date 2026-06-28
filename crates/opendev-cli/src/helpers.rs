@@ -6,13 +6,19 @@ use opendev_mcp::config::{
 };
 
 pub fn init_tracing(verbose: bool, _tui_mode: bool) {
-    use opendev_observability::{LogLevel, TelemetryConfig};
+    use opendev_telemetry::{LogLevel, TelemetryConfig};
 
     let log_level = if verbose { LogLevel::Debug } else { LogLevel::Info };
 
-    let config = TelemetryConfig { enabled: true, log_level, ..Default::default() };
+    let config = TelemetryConfig {
+        enabled: true,
+        log_level,
+        format: opendev_telemetry::LogFormat::Json,
+        retention_days: 14,
+        ..Default::default()
+    };
 
-    if let Err(e) = opendev_observability::OtelGuard::init(&config) {
+    if let Err(e) = opendev_telemetry::TelemetryGuard::init(&config) {
         // Fallback: basic stderr logging
         tracing_subscriber::fmt()
             .with_env_filter(tracing_subscriber::EnvFilter::new(if verbose {
@@ -32,6 +38,11 @@ pub fn load_app_config(working_dir: &std::path::Path) -> opendev_models::AppConf
     let paths = opendev_config::Paths::new(Some(working_dir.to_path_buf()));
     let global_settings = paths.global_settings();
     let project_settings = paths.project_settings();
+
+    // Check for unmigrated plaintext secrets
+    if let Ok(true) = opendev_secrets::migration::has_unmigrated_secrets(&global_settings) {
+        eprintln!("⚠️  settings.json contains plaintext API keys. Consider running `opendev secret migrate`.");
+    }
 
     match opendev_config::ConfigLoader::load(&global_settings, &project_settings) {
         Ok(config) => config,
@@ -73,84 +84,8 @@ pub fn save_global_mcp_config(config: &opendev_mcp::McpConfig) {
 
 /// Install a custom panic hook that writes crash reports to `~/.opendev/crash/`.
 pub fn install_panic_handler() {
-    let default_hook = std::panic::take_hook();
-    std::panic::set_hook(Box::new(move |panic_info| {
-        // Capture backtrace
-        let backtrace = std::backtrace::Backtrace::force_capture();
-
-        // Build crash report
-        let timestamp = chrono::Utc::now().format("%Y%m%d-%H%M%S");
-        let mut report = String::new();
-        report.push_str("OpenDev Crash Report\n");
-        report.push_str(&format!("Timestamp: {}\n", chrono::Utc::now()));
-        report.push_str(&format!("Version: {}\n\n", env!("CARGO_PKG_VERSION")));
-
-        // Panic message
-        let message = if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
-            (*s).to_string()
-        } else if let Some(s) = panic_info.payload().downcast_ref::<String>() {
-            s.clone()
-        } else {
-            "Unknown panic payload".to_string()
-        };
-        report.push_str(&format!("Panic: {}\n", message));
-
-        if let Some(location) = panic_info.location() {
-            report.push_str(&format!(
-                "Location: {}:{}:{}\n",
-                location.file(),
-                location.line(),
-                location.column()
-            ));
-        }
-
-        report.push_str(&format!("\nBacktrace:\n{}\n", backtrace));
-
-        // Write crash report to ~/.opendev/crash/
-        if let Some(home) = dirs_next::home_dir() {
-            let crash_dir = home.join(".opendev").join("crash");
-            if let Ok(()) = std::fs::create_dir_all(&crash_dir) {
-                let filename = format!("crash-{}.log", timestamp);
-                let crash_path = crash_dir.join(&filename);
-
-                let temp_suffix = uuid::Uuid::new_v4();
-                let temp_path = crash_dir.join(format!(".{filename}.{temp_suffix}.tmp"));
-
-                let mut opts = std::fs::OpenOptions::new();
-                opts.write(true).create_new(true);
-                #[cfg(unix)]
-                {
-                    use std::os::unix::fs::OpenOptionsExt;
-                    opts.mode(0o600);
-                }
-
-                let write_success = match opts.open(&temp_path) {
-                    Ok(mut file) => {
-                        use std::io::Write;
-                        if file.write_all(report.as_bytes()).is_ok() {
-                            std::fs::rename(&temp_path, &crash_path).is_ok()
-                        } else {
-                            let _ = std::fs::remove_file(&temp_path);
-                            false
-                        }
-                    }
-                    Err(_) => false,
-                };
-
-                if write_success {
-                    eprintln!(
-                        "\nOpenDev crashed unexpectedly. A crash report has been saved to:\n  {}\n\nPlease include this file when reporting the issue.\n",
-                        crash_path.display()
-                    );
-                } else {
-                    eprintln!("\nOpenDev crashed unexpectedly. Failed to write crash report.\n");
-                }
-            }
-        }
-
-        // Call the default panic handler
-        default_hook(panic_info);
-    }));
+    // Delegate to opendev-telemetry's crash handler
+    opendev_telemetry::layers::panic::install_crash_handler();
 }
 
 /// Format a timestamp as a relative time string (e.g., "just now", "5m ago").

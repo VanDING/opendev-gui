@@ -138,9 +138,10 @@ const MAX_SKILL_DOWNLOAD_BYTES: usize = 1_000_000;
 /// Uses `curl` via `std::process::Command` to avoid async runtime conflicts
 /// (same approach as remote instructions).
 pub(super) fn fetch_url(url: &str) -> Result<String, String> {
-    let output = std::process::Command::new("curl")
-        .args(["-sSfL", "--max-time", &URL_FETCH_TIMEOUT_SECS.to_string(), url])
-        .output()
+    let mut cmd = std::process::Command::new("curl");
+    cmd.args(["-sSfL", "--max-time", &URL_FETCH_TIMEOUT_SECS.to_string(), url]);
+    opendev_exec::env_filter::apply(&mut cmd);
+    let output = cmd.output()
         .map_err(|e| format!("failed to run curl: {e}"))?;
 
     if !output.status.success() {

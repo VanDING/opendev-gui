@@ -167,6 +167,8 @@ fn test_anthropic_cache_discount_accuracy() {
         completion_tokens: 1_000,
         cache_read_input_tokens: 50_000,
         cache_creation_input_tokens: 0,
+        provider: Some("anthropic".into()),
+        model: Some("claude-sonnet-4-20250514".into()),
     };
     let cost = tracker.record_usage(&usage, Some(&anthropic_sonnet_pricing()));
 
@@ -217,6 +219,8 @@ fn test_openai_pricing_accuracy() {
         // OpenAI has no cache tokens
         cache_read_input_tokens: 0,
         cache_creation_input_tokens: 0,
+        provider: Some("openai".into()),
+        model: Some("gpt-4o".into()),
     };
     let cost = tracker.record_usage(&usage, Some(&pricing));
 
@@ -241,30 +245,40 @@ fn test_cost_sum_across_multiple_calls() {
             completion_tokens: 500,
             cache_read_input_tokens: 0,
             cache_creation_input_tokens: 0,
+            provider: None,
+            model: None,
         },
         TokenUsage {
             prompt_tokens: 10_000,
             completion_tokens: 2_000,
             cache_read_input_tokens: 30_000,
             cache_creation_input_tokens: 0,
+            provider: None,
+            model: None,
         },
         TokenUsage {
             prompt_tokens: 50_000,
             completion_tokens: 5_000,
             cache_read_input_tokens: 100_000,
             cache_creation_input_tokens: 0,
+            provider: None,
+            model: None,
         },
         TokenUsage {
             prompt_tokens: 250_000, // triggers tiered pricing
             completion_tokens: 3_000,
             cache_read_input_tokens: 0,
             cache_creation_input_tokens: 0,
+            provider: None,
+            model: None,
         },
         TokenUsage {
             prompt_tokens: 500,
             completion_tokens: 100,
             cache_read_input_tokens: 0,
             cache_creation_input_tokens: 0,
+            provider: None,
+            model: None,
         },
     ];
 

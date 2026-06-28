@@ -10,6 +10,7 @@ use crate::models::{SandboxContext, SandboxRequest, SandboxResult};
 use crate::parser::{self, TerminalValue};
 use crate::prompts;
 use crate::sandbox::MicroSandbox;
+#[allow(deprecated)]
 use opendev_models::config::SandboxConfig;
 
 /// A sandbox session that runs the iterative LLM-code-execute cycle.

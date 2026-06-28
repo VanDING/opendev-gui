@@ -383,5 +383,49 @@ strings target/debug/opendev-desktop | grep "axum\|cors\|127.0.0.1" → 0
   workflow.step.waiting    → 等待审批
   workflow.step.completed  → 步骤完成
   workflow.plan.ready      → 方案就绪
-  workflow.approval.required → 需要审批
+   workflow.approval.required → 需要审批
 ```
+
+---
+
+## 附录 A: V1 Protocol Integration (v0.2.0+)
+
+As of v0.2.0, the desktop communication architecture is formalized as **opendev-protocol**
+(see ADR-008). Key changes:
+
+### Transport Layer
+
+The existing `Transport.invoke()/onEvent()/openStream()` abstraction is now backed by the
+`opendev_protocol::transport::Transport` trait. All 5 client types implement the same trait:
+
+| Client | Implementation | Backend |
+|--------|---------------|---------|
+| Tauri | `TauriTransport` | tauri::invoke + Channel<T> |
+| TUI | `TuiInProcessTransport` | tokio mpsc (in-process) |
+| Web | `WebSocketTransport` | axum WS + JSONL |
+| Workspace | `UnixSocketTransport` / `NamedPipeTransport` | UDS/NP + JSONL |
+| Telegram | `TelegramTransport` (v2) | HTTP long-poll + JSON |
+
+### Wire Format
+
+JSON-RPC 2.0-like envelope (ADR-008):
+- Methods: `<domain>/<verb>` (30 methods)
+- Events: `<noun>/<past-tense>` (18 events)
+- Fields: snake_case (wire) → camelCase (TS via ts-rs)
+- IDs: UUID v7 strings (time-ordered)
+
+### Version Negotiation
+
+Client sends `protocol_version` on connect; server responds with `min_supported` + `max_supported`.
+V1 is frozen at v0.2.0 GA (bug fixes only). V2 development starts at v0.3.0.
+
+### Dual-Emit Migration (v0.2.0 → v0.3.0)
+
+Server emits both legacy event names (`message_chunk`) and v1 event names (`message/chunked`)
+during this period. Frontend handlers migrate incrementally. See `src-tauri/src/server.rs`.
+
+### References
+
+- ADR-008: `docs/adr/008-app-server-protocol.md`
+- Protocol types: `crates/opendev-protocol/`
+- Protocol naming: `docs/architecture/protocol-naming.md`

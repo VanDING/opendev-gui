@@ -8,6 +8,7 @@ description = "Session history management: persistence, indexing, locking, and s
 [dependencies]
 opendev-models = { workspace = true }
 opendev-config = { workspace = true }
+opendev-telemetry = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 chrono = { workspace = true }

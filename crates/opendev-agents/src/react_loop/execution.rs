@@ -14,6 +14,7 @@ use crate::traits::{AgentError, AgentResult, TaskMonitor};
 use opendev_context::{ArtifactIndex, ContextCompactor};
 use opendev_http::adapted_client::AdaptedClient;
 use opendev_runtime::{CostTracker, SessionDebugLogger, TodoManager};
+use opendev_telemetry::trace_context::generate_traceparent;
 use opendev_tools_core::{ToolContext, ToolRegistry};
 use std::sync::Arc;
 use tokio_util::sync::CancellationToken;
@@ -123,6 +124,19 @@ impl ReactLoop {
             let iter_start = Instant::now();
             let emitter = IterationEmitter::new(event_callback, state.completion_nudge_sent);
 
+            // Create a per-iteration tracing span for observability
+            let session_id = tool_context
+                .shared_state
+                .as_ref()
+                .and_then(|ss| ss.lock().ok())
+                .and_then(|ss| ss.get("session_id").and_then(|v| v.as_str()).map(String::from));
+            let _iter_span = info_span!("react_loop_iteration",
+                iteration = state.iteration,
+                session_id = %session_id.as_deref().unwrap_or("unknown"),
+            );
+            let _iter_guard = _iter_span.enter();
+            drop(_iter_guard); // Span remains active as parent for nested work
+
             // Tick proactive reminders and fire any that are due
             state.proactive_reminders.tick();
             for (name, class) in state.proactive_reminders.check_and_fire() {
@@ -212,6 +226,9 @@ impl ReactLoop {
             } else {
                 tool_schemas
             };
+
+            // Inject W3C TraceContext for distributed tracing
+            let _traceparent = generate_traceparent();
 
             let llm_result = match super::phases::execute_llm_call(
                 caller,

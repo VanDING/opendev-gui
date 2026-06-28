@@ -54,6 +54,7 @@ export interface Config {
   temperature: number;
   enable_bash: boolean;
   working_directory: string;
+  shadowed_env_vars?: string[];
 }
 
 // Provider types

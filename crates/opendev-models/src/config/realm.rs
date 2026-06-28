@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// Controls microsandbox parameters for the `sandbox_exec` tool.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SandboxConfig {
+pub struct ExecPolicy {
     /// Whether the sandbox tool is available to agents.
     #[serde(default)]
     pub enabled: bool,
@@ -64,7 +64,11 @@ fn default_output_max_chars() -> usize {
     50_000
 }
 
-impl Default for SandboxConfig {
+/// Deprecated alias — use ExecPolicy instead.
+#[deprecated(since = "0.2.0", note = "Use ExecPolicy instead")]
+pub type SandboxConfig = ExecPolicy;
+
+impl Default for ExecPolicy {
     fn default() -> Self {
         Self {
             enabled: false,

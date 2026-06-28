@@ -9,54 +9,42 @@
 
 ## Security Mechanisms
 
-### API Key Management
+### API Key Management (v0.2.0+)
 
-- API keys are stored in system credential store when available.
-- Environment variable fallback (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, etc.).
-- Keys are never logged or exposed in error messages.
-- Key rotation support via `CredentialStore`.
+- **OS keyring is primary:** API keys stored in macOS Keychain / Linux Secret Service /
+  Windows Credential Manager via `opendev-secrets::KeyringStore` (ADR-010).
+- **Environment variable override:** env var ALWAYS wins (for CI/Docker/temp scenarios).
+- **Encrypted file fallback:** age X25519 + scrypt encryption for headless/CI environments.
+- **Type-level protection:** All secret fields use `secrecy::SecretString` + `zeroize::ZeroizeOnDrop`.
+  Display/Debug always print `[REDACTED]` — Constitution 7 is now concretely enforced.
+- **Migration path:** `opendev secret migrate` moves plaintext keys from settings.json to keyring.
+  AppConfig.api_key deprecated: v0.2 warn → v0.3 force → v0.4 remove.
+- **Shadow-key UX:** When env var overrides keyring, UI shows "🔒 env overrides" indicator.
+  `opendev secret doctor` CLI diagnoses all secrets.
 
-### Secrets Detection
+### Sandbox (v0.2.0+)
 
-- Regex scanning of command output for credential patterns.
-- Detected secrets are redacted before display.
-- Pattern list in `crates/opendev-runtime/src/secrets.rs`.
+- **ExecPolicy trait** evaluates every command before execution (6 built-in policies).
+- **SandboxBackend** applies OS-level isolation (Landlock/Seatbelt/bwrap/Windows).
+- **Fail-closed:** Any backend.apply() error → child process not spawned. NEVER run unsandboxed.
+- **env_filter** applied to ALL 17+ exec points (BashTool, hooks, MCP, custom tools, git, LSP, etc.)
+- **Dangerous patterns:** 25 regex patterns block rm -rf /, curl | sh, eval, chmod 777, base64 pipe, etc.
+- **SSRF protection:** is_private_url() shared module for all fetch tools (web_fetch, web_screenshot, etc.)
+- **Resource limits:** rlimit/ulimit for memory, CPU, file descriptors, process count.
+- **Only env_filter fallback:** NoneBackend with UI warning banner on unsupported systems.
 
-### File System Permissions
+### Redaction (v0.2.0+)
 
-- Glob-based permission system controls file access.
-- Read/write/execute permissions per path pattern.
-- Configuration in `~/.config/opendev/permissions.toml`.
-- Implementation in `crates/opendev-runtime/src/permissions/`.
+- **Field-name-based redact layer** in opendend-telemetry: api_key, token, password, secret, bearer,
+  client_secret, bot_token, oauth, jwt, etc. are automatically redacted from all tracing output.
+- **SessionDebugLogger** defaults to `false`. When enabled, content is redacted before writing.
+- **Memory content** is no longer logged at info level (fixed facade.rs:147).
 
-### SSRF Protection
+## References
 
-- WebFetch tool blocks requests to private/internal IP ranges.
-- Blocks: 127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, ::1/128.
-- Implementation in `crates/opendev-tools-impl/src/web_fetch/`.
-
-### Session Authentication
-
-- Session tokens use HMAC-SHA256 with configurable secret key.
-- Release builds require `OPENDEV_SECRET_KEY` environment variable.
-- Token verification on every API request.
-- Implementation in `crates/opendev-runtime/src/session_model.rs`.
-
-### Web Server Auth
-
-- Password hashing via Argon2 for web server authentication.
-- Session-based auth with secure cookies.
-- Implementation in `crates/opendev-web/src/routes/auth.rs`.
-
-### Tool Execution Policies
-
-- Per-tool permission policies.
-- Path validation for file-related tools.
-- Approval flow for destructive operations.
-- Implementation in `crates/opendev-runtime/src/approval/`.
-
-## Known Gaps
-
-- `opendev-sandbox` is stubs — no sandboxing of tool execution.
-- No network-level sandboxing (separate network namespace).
-- No capability-based security for plugins.
+- ADR-008: App-Server Protocol v1 (`docs/adr/008-app-server-protocol.md`)
+- ADR-009: Multi-Platform Sandbox (`docs/adr/009-multi-platform-sandbox.md`)
+- ADR-010: OS Keyring Secret Store (`docs/adr/010-os-keyring-secret-store.md`)
+- ADR-011: Telemetry Architecture (`docs/adr/011-telemetry-architecture.md`)
+- Constitution: `docs/constitution.md`
+- Data Flow: `docs/architecture/data-flow.md`

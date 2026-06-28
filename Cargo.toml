@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "src-tauri",
+    "crates/opendev-protocol",
     "crates/opendev-models",
     "crates/opendev-config",
     "crates/opendev-http",
@@ -23,8 +24,10 @@ members = [
     "crates/opendev-plugins",
     "crates/opendev-sandbox",
     "crates/opendev-memory",
-    "crates/opendev-observability",
+    "crates/opendev-exec",
+    "crates/opendev-telemetry",
     "crates/opendev-workflow",
+    "crates/opendev-secrets",
 ]
 
 [workspace.package]
@@ -94,10 +97,13 @@ ts-rs = { version = "10", features = ["serde-json-impl", "chrono-impl"] }
 tempfile = "3"
 
 # Internal crates
+opendev-protocol = { version = "0.1.6", path = "crates/opendev-protocol" }
+opendev-secrets = { version = "0.1.6", path = "crates/opendev-secrets" }
 opendev-models = { version = "0.1.6", path = "crates/opendev-models" }
 opendev-config = { version = "0.1.6", path = "crates/opendev-config" }
 opendev-http = { version = "0.1.6", path = "crates/opendev-http" }
 opendev-context = { version = "0.1.6", path = "crates/opendev-context" }
+opendev-exec = { version = "0.1.6", path = "crates/opendev-exec" }
 opendev-history = { version = "0.1.6", path = "crates/opendev-history" }
 opendev-tools-core = { version = "0.1.6", path = "crates/opendev-tools-core" }
 opendev-tools-impl = { version = "0.1.6", path = "crates/opendev-tools-impl" }
@@ -115,7 +121,7 @@ opendev-hooks = { version = "0.1.6", path = "crates/opendev-hooks" }
 opendev-plugins = { version = "0.1.6", path = "crates/opendev-plugins" }
 opendev-sandbox = { version = "0.1.6", path = "crates/opendev-sandbox" }
 opendev-memory = { version = "0.1.6", path = "crates/opendev-memory" }
-opendev-observability = { version = "0.1.6", path = "crates/opendev-observability" }
+opendev-telemetry = { version = "0.1.6", path = "crates/opendev-telemetry" }
 opendev-workflow = { version = "0.1.6", path = "crates/opendev-workflow" }
 url = "2"
 

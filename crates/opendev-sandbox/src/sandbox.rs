@@ -6,6 +6,7 @@ use tokio::sync::Mutex;
 use tracing::{info, warn};
 
 use crate::errors::{Result, SandboxError};
+#[allow(deprecated)]
 use opendev_models::config::SandboxConfig;
 
 /// Wrapper around a microsandbox Python sandbox with lifecycle management.

@@ -31,6 +31,7 @@ impl AstGrepTool {
         }
 
         cmd.arg(search_path);
+        opendev_exec::env_filter::apply(cmd.as_std_mut());
 
         let output = match tokio::time::timeout(SEARCH_TIMEOUT, cmd.output()).await {
             Ok(Ok(output)) => output,
@@ -167,6 +168,7 @@ impl GrepTool {
         search_path: &Path,
     ) -> Result<ToolResult, RgError> {
         let mut cmd = Self::build_rg_command(args, search_path);
+        opendev_exec::env_filter::apply(cmd.as_std_mut());
 
         let output = match tokio::time::timeout(SEARCH_TIMEOUT, cmd.output()).await {
             Ok(Ok(output)) => output,

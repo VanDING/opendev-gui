@@ -146,13 +146,15 @@ impl WorktreeManager {
             tokio::fs::create_dir_all(parent).await?;
         }
 
-        let output = Command::new("git")
-            .args(["worktree", "add", "-b", &branch])
-            .arg(&worktree_path)
-            .arg(base_branch)
-            .current_dir(&self.project_dir)
-            .output()
-            .await?;
+        let output = {
+            let mut cmd = Command::new("git");
+            cmd.args(["worktree", "add", "-b", &branch])
+                .arg(&worktree_path)
+                .arg(base_branch)
+                .current_dir(&self.project_dir);
+            opendev_exec::env_filter::apply(cmd.as_std_mut());
+            cmd.output().await?
+        };
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
@@ -197,8 +199,12 @@ impl WorktreeManager {
         let path_str = worktree_path.to_string_lossy().to_string();
         args.push(&path_str);
 
-        let output =
-            Command::new("git").args(&args).current_dir(&self.project_dir).output().await?;
+        let output = {
+            let mut cmd = Command::new("git");
+            cmd.args(&args).current_dir(&self.project_dir);
+            opendev_exec::env_filter::apply(cmd.as_std_mut());
+            cmd.output().await?
+        };
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
@@ -213,11 +219,12 @@ impl WorktreeManager {
 
     /// Clean up stale/prunable worktree references.
     pub async fn cleanup(&self) -> Result<String, WorktreeError> {
-        let output = Command::new("git")
-            .args(["worktree", "prune"])
-            .current_dir(&self.project_dir)
-            .output()
-            .await?;
+        let output = {
+            let mut cmd = Command::new("git");
+            cmd.args(["worktree", "prune"]).current_dir(&self.project_dir);
+            opendev_exec::env_filter::apply(cmd.as_std_mut());
+            cmd.output().await?
+        };
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
@@ -258,7 +265,10 @@ impl WorktreeManager {
 
     async fn git_output(&self, args: &[&str], cwd: Option<&Path>) -> Option<String> {
         let cwd = cwd.unwrap_or(&self.project_dir);
-        let output = Command::new("git").args(args).current_dir(cwd).output().await.ok()?;
+        let mut cmd = Command::new("git");
+        cmd.args(args).current_dir(cwd);
+        opendev_exec::env_filter::apply(cmd.as_std_mut());
+        let output = cmd.output().await.ok()?;
 
         if !output.status.success() {
             return None;

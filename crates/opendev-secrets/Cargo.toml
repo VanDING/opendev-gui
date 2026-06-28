@@ -1,0 +1,24 @@
+[package]
+name = "opendev-secrets"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Secret/key management for OpenDev — OS keyring, env vars, age-encrypted file fallback"
+
+[dependencies]
+keyring = { version = "3", default-features = false, features = ["apple-native", "windows-native", "sync-secret-service"] }
+secrecy = { version = "0.10", features = ["serde"] }
+zeroize = { version = "1", features = ["zeroize_derive"] }
+age = "0.11"
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true, features = ["sync"] }
+async-trait = { workspace = true }
+rand = "0.8"
+uuid = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+tokio = { workspace = true, features = ["full"] }

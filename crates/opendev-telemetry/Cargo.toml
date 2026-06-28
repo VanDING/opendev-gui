@@ -1,0 +1,42 @@
+[package]
+name = "opendev-telemetry"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Telemetry: structured JSON logging, OTLP export, Sentry, redaction, metrics, crash dumps"
+
+[features]
+default = ["file", "redact", "panic"]
+file = []
+redact = []
+panic = []
+otlp = ["dep:opentelemetry", "dep:opentelemetry-otlp", "dep:tracing-opentelemetry", "dep:opentelemetry_sdk"]
+sentry = ["dep:sentry"]
+metrics = ["dep:metrics"]
+all = ["file", "redact", "panic", "otlp", "sentry", "metrics"]
+
+[dependencies]
+opendev-config = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter", "json"] }
+tracing-appender = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+libc = { workspace = true }
+dirs-next = "2"
+tokio = { workspace = true, features = ["process", "sync", "time"] }
+
+# Feature-gated
+opentelemetry = { version = "0.27", optional = true }
+opentelemetry-otlp = { version = "0.27", optional = true }
+opentelemetry_sdk = { version = "0.27", optional = true }
+tracing-opentelemetry = { version = "0.28", optional = true }
+sentry = { version = "0.36", optional = true }
+metrics = { version = "0.24", optional = true }
+
+
+[dev-dependencies]
+tempfile = { workspace = true }

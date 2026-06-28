@@ -18,6 +18,8 @@ opendev-models = { workspace = true }
 opendev-config = { workspace = true }
 futures = { workspace = true }
 uuid = { workspace = true }
+opendev-exec = { workspace = true }
+secrecy = { version = "0.10", features = ["serde"] }
 
 [dev-dependencies]
 tempfile = { workspace = true }

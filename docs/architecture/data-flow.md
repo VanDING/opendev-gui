@@ -96,42 +96,71 @@ On next user message:
     → returns top entries within token budget
 ```
 
-## IPC Protocol (Desktop → Frontend)
+## IPC Protocol (Desktop → Frontend) — opendev-protocol v1
+
+Since v0.2.0, the app-server protocol is defined in the `opendev-protocol` crate
+(see ADR-008). All 5 client surfaces (Tauri, TUI, Web, Telegram, Workspace)
+implement the unified `Transport` trait.
+
+### Wire Format
+
+JSON-RPC 2.0-like envelope with fixed field order (`v`, `id`/`src`/`dst`, `kind`, `payload`).
+Methods use `<domain>/<verb>` naming (30 methods). Events use `<noun>/<past-tense>` naming (18 events).
+
+### Tauri IPC Path
 
 ```
 OpenDev Desktop (Tauri)                         React Frontend
   │                                              │
-  │  Frontend invokes Tauri Command              │
+  │  Frontend invokes via Transport.invoke()     │
   │◄─────────────────────────────────────────────│
-  │  (e.g., send_chat_query, get_app_config)     │
+  │  (e.g., turn/start, config/get)              │
   │                                              │
   │  Application Service processes               │
   │                                              │
-  │  Events streamed via Tauri listen()           │
-  │  (chat.message.chunk, tool_call,              │
-  │   chat.thinking.block, status_update...)     │
+  │  Events streamed via Transport.onEvent()     │
+  │  (message/chunked, tool/started,              │
+  │   status/updated, approval/required...)      │
   │─────────────────────────────────────────────►│
   │                                              │
   │  Store updates → React re-render              │
   │                                              │
 ```
 
-## Event Naming Convention
+### Dual-Emit Period (v0.2.0 → v0.3.0)
 
-All events follow `domain.object.action`:
+Server emits both legacy names (`message_chunk`) and v1 names (`message/chunked`)
+during migration. Frontend handlers migrate incrementally. See `src-tauri/src/server.rs`
+for the `legacy_event_name_to_v1()` mapping shim.
+
+### Protocol Versioning
+
+- **V1 (frozen):** v0.2.0 GA — bug fixes only, no new methods/events.
+- **V2 (active):** v0.3.0+ — new methods/events; V1 clients remain compatible.
+- **Negotiation:** Client sends `protocol_version`; server returns `min_supported` + `max_supported`.
+
+## Event Naming Convention (v1 Protocol)
+
+All events follow `<noun>/<past-tense>` naming per ADR-008:
 
 ```
-chat.message.chunk
-chat.message.completed
-chat.tool.executing
-chat.tool.completed
-chat.thinking.block
-chat.approval.required
-session.activity
-config.updated
-mcp.server.connected
-mcp.servers.updated
+message/started
+message/chunked
+message/completed
+thinking/chunked
+tool/started
+tool/completed
+subagent/spawned
+subagent/completed
+status/updated
+approval/required
+session/activity
+mcp/server/connected
+error/raised
 ```
+
+See `docs/architecture/protocol-naming.md` for the complete 30-method + 18-event reference table
+and legacy name mappings.
 
 ## Architecture Compliance
 

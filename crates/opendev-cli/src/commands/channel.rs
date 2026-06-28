@@ -49,7 +49,7 @@ pub async fn handle_channel(action: ChannelAction, working_dir: &std::path::Path
             let global_settings = paths.global_settings();
             let mut config = load_app_config(working_dir);
             config.channels.telegram = Some(TelegramChannelConfig {
-                bot_token,
+                bot_token: bot_token.into(),
                 enabled: true,
                 group_mention_only: true,
                 dm_policy: opendev_models::DmPolicy::Pairing,
@@ -78,7 +78,7 @@ pub async fn handle_channel(action: ChannelAction, working_dir: &std::path::Path
             match &config.channels.telegram {
                 Some(tg) if tg.enabled => {
                     let api =
-                        opendev_channels::telegram::api::TelegramApi::new(tg.bot_token.clone());
+                        opendev_channels::telegram::api::TelegramApi::new(secrecy::ExposeSecret::expose_secret(&tg.bot_token).to_string());
                     match api.get_me().await {
                         Ok(user) => {
                             println!(
@@ -165,7 +165,7 @@ pub async fn handle_channel(action: ChannelAction, working_dir: &std::path::Path
 
             {
                 let tg = config.channels.telegram.get_or_insert_with(|| TelegramChannelConfig {
-                    bot_token: String::new(),
+                    bot_token: String::new().into(),
                     enabled: false,
                     group_mention_only: true,
                     dm_policy: opendev_models::DmPolicy::Pairing,
@@ -179,17 +179,18 @@ pub async fn handle_channel(action: ChannelAction, working_dir: &std::path::Path
                 tg.allowed_users.push(user_id.clone());
             }
 
-            let bot_token =
-                config.channels.telegram.as_ref().map(|t| t.bot_token.clone()).unwrap_or_default();
+            let bot_token: Option<String> =
+                config.channels.telegram.as_ref().map(|t| secrecy::ExposeSecret::expose_secret(&t.bot_token).to_string());
 
             save_config(&config, &global_settings);
             println!("Paired {user_id}.");
 
             // Notify user on Telegram
-            if !bot_token.is_empty()
+            if let Some(ref token) = bot_token
+                && !token.is_empty()
                 && let Ok(chat_id) = user_id.parse::<i64>()
             {
-                let api = opendev_channels::telegram::api::TelegramApi::new(bot_token);
+                let api = opendev_channels::telegram::api::TelegramApi::new(token.clone());
                 let _ = api
                     .send_message(opendev_channels::telegram::types::SendMessageRequest {
                         chat_id,
@@ -228,7 +229,7 @@ async fn run_telegram_serve(working_dir: &std::path::Path) {
     router.set_executor(executor).await;
 
     let telegram_config = opendev_channels::telegram::TelegramConfig {
-        bot_token: tg.bot_token.clone(),
+        bot_token: secrecy::ExposeSecret::expose_secret(&tg.bot_token).to_string(),
         enabled: true,
         group_mention_only: tg.group_mention_only,
         dm_policy: to_channel_dm_policy(&tg.dm_policy),
@@ -322,7 +323,7 @@ pub async fn handle_remote(
 
     // Start Telegram in remote-control mode
     let telegram_config = opendev_channels::telegram::TelegramConfig {
-        bot_token: tg.bot_token.clone(),
+        bot_token: secrecy::ExposeSecret::expose_secret(&tg.bot_token).to_string(),
         enabled: true,
         group_mention_only: false,
         dm_policy: to_channel_dm_policy(&tg.dm_policy),

@@ -15,7 +15,6 @@ use super::helpers::{
     IDLE_TIMEOUT, MAX_OUTPUT_CHARS, MAX_TIMEOUT, command_failure_suffix, kill_process_group,
     prepare_command, truncate_output,
 };
-use super::patterns::filtered_env;
 
 impl BashTool {
     pub(super) async fn run_foreground(
@@ -41,18 +40,47 @@ impl BashTool {
 
         // Spawn with new process group.
         // Use filtered environment to prevent API keys/tokens from leaking
-        // into child processes. The filtered_env() strips known sensitive
-        // variables (API keys, tokens, secrets) while preserving everything else.
-        let safe_env = filtered_env();
+        // into child processes. Delegates to opendev-exec for centralized
+        // secret stripping (handles env_clear + filtered envs + PYTHONUNBUFFERED).
+        //
+        // NOTE: stdout/stderr and pre_exec are configured AFTER the sandbox
+        // backend apply, because the backend may replace the inner
+        // std::process::Command (e.g., Seatbelt wrapping with sandbox-exec).
         let mut cmd = Command::new("sh");
         cmd.arg("-c")
             .arg(&exec_command)
-            .current_dir(working_dir)
-            .env_clear()
-            .envs(&safe_env)
-            .env("PYTHONUNBUFFERED", "1")
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped());
+            .current_dir(working_dir);
+
+        // Apply env filter (from opendev-exec) — env_clear + filtered envs + PYTHONUNBUFFERED
+        opendev_exec::env_filter::apply(cmd.as_std_mut());
+
+        // ── Apply sandbox backend (fail-closed) ──
+        //
+        // Must run before stdout/stderr + pre_exec config, since some
+        // backends (e.g., Seatbelt) replace the inner std::process::Command.
+        let backend = opendev_exec::backend::detect_backend()
+            .expect("at least NoneBackend is always available");
+        let exec_request = opendev_exec::policy::ExecRequest {
+            tool: opendev_exec::policy::ToolKind::Bash,
+            command: command.to_string(),
+            argv: vec!["sh".into(), "-c".into(), exec_command.clone()],
+            cwd: working_dir.to_path_buf(),
+            env: std::collections::HashMap::new(),
+            requested_paths: vec![],
+            requested_net: None,
+            capabilities: Default::default(),
+        };
+        if let Err(e) = backend.apply(cmd.as_std_mut(), &exec_request) {
+            tracing::error!(error = %e, backend = backend.name(), "sandbox apply failed; refusing to spawn");
+            return ToolResult::fail(format!(
+                "Sandbox backend '{}' failed to apply: {}. Command not executed (fail-closed).",
+                backend.name(), e
+            ));
+        }
+
+        // ── Configure stdout/stderr + process group (after backend apply) ──
+        cmd.stdout(std::process::Stdio::piped());
+        cmd.stderr(std::process::Stdio::piped());
 
         // SAFETY: `pre_exec` runs in the child process after `fork()` and
         // before `exec()`. At this point only a single thread exists, so

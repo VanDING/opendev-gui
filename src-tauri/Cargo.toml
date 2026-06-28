@@ -23,6 +23,8 @@ opendev-http = { path = "../crates/opendev-http" }
 opendev-runtime = { path = "../crates/opendev-runtime" }
 opendev-agents = { path = "../crates/opendev-agents" }
 opendev-mcp = { path = "../crates/opendev-mcp" }
+opendev-secrets = { path = "../crates/opendev-secrets" }
+opendev-telemetry = { path = "../crates/opendev-telemetry" }
 
 [features]
 default = ["custom-protocol"]

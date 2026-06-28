@@ -61,6 +61,22 @@ async fn main() {
         Some(Commands::Channel { action }) => {
             commands::handle_channel(action, &working_dir).await;
         }
+        Some(Commands::Secret { action }) => {
+            match action {
+                cli::SecretCommands::Doctor => {
+                    if let Err(e) = commands::handle_secret_doctor().await {
+                        eprintln!("Error: {e}");
+                        std::process::exit(1);
+                    }
+                }
+                cli::SecretCommands::Migrate => {
+                    if let Err(e) = commands::handle_secret_migrate().await {
+                        eprintln!("Error: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+        }
         Some(Commands::Remote { continue_session, resume }) => {
             commands::handle_remote(&working_dir, continue_session, resume.as_deref()).await;
         }

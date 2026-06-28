@@ -193,7 +193,10 @@ impl SnapshotManager {
     }
 
     fn git(&self, args: &[&str]) -> Option<String> {
-        let result = Command::new("git").args(args).current_dir(&self.snapshot_dir).output();
+        let mut cmd = Command::new("git");
+        cmd.args(args).current_dir(&self.snapshot_dir);
+        opendev_exec::env_filter::apply(&mut cmd);
+        let result = cmd.output();
 
         match result {
             Ok(output) => {

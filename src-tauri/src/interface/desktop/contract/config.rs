@@ -53,6 +53,9 @@ pub struct ConfigResponse {
     pub autonomy_level: String,
     pub working_dir: String,
     pub git_branch: Option<String>,
+    /// List of env vars that shadow keyring-stored secrets.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub shadowed_env_vars: Vec<String>,
 }
 
 /// Verify model response.

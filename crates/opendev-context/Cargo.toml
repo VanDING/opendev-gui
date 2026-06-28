@@ -19,6 +19,7 @@ tokio = { workspace = true }
 regex = { workspace = true }
 dirs-next = { workspace = true }
 glob = { workspace = true }
+opendev-exec = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

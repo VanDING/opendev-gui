@@ -501,10 +501,10 @@ pub fn resolve_instruction_paths(patterns: &[String], working_dir: &Path) -> Vec
 /// Returns `None` on any failure (network error, timeout, non-200 status, empty body).
 /// Uses a 5-second timeout to avoid blocking startup.
 pub(super) fn fetch_remote_instruction(url: &str) -> Option<InstructionFile> {
-    let output = Command::new("curl")
-        .args(["-sSfL", "--max-time", &REMOTE_INSTRUCTION_TIMEOUT_SECS.to_string(), url])
-        .output()
-        .ok()?;
+    let mut cmd = Command::new("curl");
+    cmd.args(["-sSfL", "--max-time", &REMOTE_INSTRUCTION_TIMEOUT_SECS.to_string(), url]);
+    opendev_exec::env_filter::apply(&mut cmd);
+    let output = cmd.output().ok()?;
 
     if !output.status.success() {
         tracing::debug!(url = %url, "Failed to fetch remote instruction");

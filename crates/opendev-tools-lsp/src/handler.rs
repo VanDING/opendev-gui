@@ -61,6 +61,7 @@ impl LspHandler {
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
             .kill_on_drop(true);
+        opendev_exec::env_filter::apply(cmd.as_std_mut());
 
         let mut child = cmd.spawn().map_err(|e| {
             LspError::ServerStart(format!("Failed to start {}: {}", self.config.command, e))

@@ -97,8 +97,10 @@ impl SessionDebugLogger {
         self.write_entry(event, component, data);
     }
 
-    /// Log an outgoing LLM request payload.
+    /// Log an outgoing LLM request payload with redaction.
     pub fn log_llm_request(&self, iteration: usize, model: &str, streaming: bool, payload: &Value) {
+        // Redact sensitive fields before logging
+        let redacted = redact_value(payload.clone());
         self.log_full(
             "llm_request",
             "react",
@@ -106,12 +108,12 @@ impl SessionDebugLogger {
                 "iteration": iteration,
                 "model": model,
                 "streaming": streaming,
-                "payload": payload,
+                "payload": redacted,
             }),
         );
     }
 
-    /// Log an incoming LLM response body.
+    /// Log an incoming LLM response body with redaction.
     pub fn log_llm_response(
         &self,
         iteration: usize,
@@ -120,6 +122,7 @@ impl SessionDebugLogger {
         output_tokens: u64,
         body: &Value,
     ) {
+        let redacted = redact_value(body.clone());
         self.log_full(
             "llm_response",
             "react",
@@ -128,7 +131,7 @@ impl SessionDebugLogger {
                 "latency_ms": latency_ms,
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
-                "body": body,
+                "body": redacted,
             }),
         );
     }
@@ -185,6 +188,32 @@ impl std::fmt::Debug for SessionDebugLogger {
             .field("enabled", &self.is_enabled())
             .field("file_path", &self.file_path())
             .finish()
+    }
+}
+
+/// Simple redaction: replace sensitive field values with [REDACTED].
+fn redact_value(value: Value) -> Value {
+    match value {
+        Value::Object(map) => {
+            let sensitive_keys = [
+                "api_key", "token", "password", "secret", "key", "authorization", "bearer",
+            ];
+            let redacted: serde_json::Map<String, Value> = map
+                .into_iter()
+                .map(|(k, v)| {
+                    if sensitive_keys.contains(&k.as_str()) {
+                        (k, Value::String("[REDACTED]".to_string()))
+                    } else if v.is_object() || v.is_array() {
+                        (k, redact_value(v))
+                    } else {
+                        (k, v)
+                    }
+                })
+                .collect();
+            Value::Object(redacted)
+        }
+        Value::Array(arr) => Value::Array(arr.into_iter().map(redact_value).collect()),
+        other => other,
     }
 }
 

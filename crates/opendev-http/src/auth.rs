@@ -1,18 +1,27 @@
-//! Secure credential storage with restrictive file permissions.
+//! Credential store — compat facade over `opendev-secrets`.
 //!
-//! Credentials are stored in `~/.opendev/auth.json` with mode 0600
-//! (owner read/write only). Environment variables take precedence over
-//! stored credentials.
+//! This replaces the old `auth.json`-backed CredentialStore.
+//! All operations are delegated to `opendev_secrets::ChainedSecretStore`.
+//! 
+//! Environment variables always take precedence over stored values.
 
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use tracing::{info, warn};
+use opendev_secrets::{SecretKey, ChainedSecretStore, SecretValue};
+use std::path::PathBuf;
+use std::sync::Arc;
 
 use crate::models::HttpError;
 
-/// Map of provider names to their environment variable names.
-const ENV_VAR_MAP: &[(&str, &str)] = &[
+/// Status of a provider's credential.
+#[derive(Debug, Clone)]
+pub struct ProviderStatus {
+    pub provider: String,
+    pub has_env_key: bool,
+    pub has_stored_key: bool,
+    pub env_var: String,
+}
+
+/// Well-known LLM provider env vars (used for status reporting).
+const PROVIDER_ENV_VARS: &[(&str, &str)] = &[
     ("openai", "OPENAI_API_KEY"),
     ("anthropic", "ANTHROPIC_API_KEY"),
     ("fireworks", "FIREWORKS_API_KEY"),
@@ -24,213 +33,75 @@ const ENV_VAR_MAP: &[(&str, &str)] = &[
     ("azure", "AZURE_OPENAI_API_KEY"),
 ];
 
-/// On-disk format for auth.json.
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
-struct AuthData {
-    #[serde(default)]
-    keys: HashMap<String, String>,
-    #[serde(default)]
-    tokens: HashMap<String, TokenEntry>,
-}
-
-/// A stored token with optional metadata.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct TokenEntry {
-    token: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    metadata: Option<serde_json::Value>,
-}
-
-/// Status of a provider's credential.
-#[derive(Debug, Clone)]
-pub struct ProviderStatus {
-    pub provider: String,
-    pub has_env_key: bool,
-    pub has_stored_key: bool,
-    pub env_var: String,
-}
-
-/// Secure credential store backed by a JSON file with 0600 permissions.
+/// Secure credential store — compat facade over opendev-secrets.
 ///
 /// Environment variables always take precedence over stored values.
+/// Backed by the SecretStore chain: env → keyring → file.
 pub struct CredentialStore {
-    path: PathBuf,
-    cache: Option<AuthData>,
+    secrets: Arc<ChainedSecretStore>,
 }
 
 impl CredentialStore {
-    /// Create a new credential store.
-    ///
-    /// If `auth_path` is `None`, defaults to `~/.opendev/auth.json`.
-    pub fn new(auth_path: Option<PathBuf>) -> Self {
-        let path = auth_path
-            .unwrap_or_else(|| opendev_config::Paths::default().config_dir().join("auth.json"));
-        Self { path, cache: None }
+    /// Create a new CredentialStore backed by the given SecretStore chain.
+    pub fn new(secrets: Arc<ChainedSecretStore>) -> Self {
+        Self { secrets }
     }
 
     /// Get API key for a provider. Environment variable takes precedence.
-    pub fn get_key(&mut self, provider: &str) -> Option<String> {
-        let provider_lower = provider.to_lowercase();
-
-        // Check environment variable first
-        if let Some(env_var) = env_var_for_provider(&provider_lower)
-            && let Ok(val) = std::env::var(env_var)
-            && !val.is_empty()
-        {
-            return Some(val);
-        }
-
-        // Fall back to stored credential
-        let data = self.load();
-        data.keys.get(&provider_lower).cloned()
+    pub async fn get_key(&self, provider: &str) -> Option<String> {
+        let key = SecretKey::llm(provider);
+        
+        // SecretStore chain handles env → keyring → file
+        self.secrets.get(&key).await.ok()?
+            .map(|v| v.expose().to_string())
     }
 
     /// Store an API key for a provider.
-    pub fn set_key(&mut self, provider: &str, key: &str) -> Result<(), HttpError> {
-        let mut data = self.load().clone();
-        data.keys.insert(provider.to_lowercase(), key.to_string());
-        self.save(&data)?;
-        info!("Stored API key for {}", provider);
+    pub async fn set_key(&self, provider: &str, key: &str) -> Result<(), HttpError> {
+        let secret_key = SecretKey::llm(provider);
+        let secret_value = SecretValue::new(key.to_string());
+        self.secrets.set(&secret_key, &secret_value).await
+            .map_err(|e| HttpError::Other(e.to_string()))?;
+        tracing::info!("Stored API key for {}", provider);
         Ok(())
     }
 
-    /// Remove a stored API key. Returns `true` if the key existed.
-    pub fn remove_key(&mut self, provider: &str) -> Result<bool, HttpError> {
-        let mut data = self.load().clone();
-        let removed = data.keys.remove(&provider.to_lowercase()).is_some();
-        if removed {
-            self.save(&data)?;
-        }
-        Ok(removed)
+    /// Remove a stored API key.
+    pub async fn remove_key(&self, provider: &str) -> Result<bool, HttpError> {
+        let key = SecretKey::llm(provider);
+        self.secrets.delete(&key).await.map_err(|e| HttpError::Other(e.to_string()))
     }
 
     /// List all known providers with their credential status.
-    pub fn list_providers(&mut self) -> Vec<ProviderStatus> {
-        let data = self.load();
-        ENV_VAR_MAP
-            .iter()
-            .map(|&(provider, env_var)| {
-                let has_env = std::env::var(env_var).map(|v| !v.is_empty()).unwrap_or(false);
-                let has_stored = data.keys.contains_key(provider);
-                ProviderStatus {
-                    provider: provider.to_string(),
-                    has_env_key: has_env,
-                    has_stored_key: has_stored,
-                    env_var: env_var.to_string(),
-                }
-            })
-            .collect()
-    }
-
-    /// Store an arbitrary token (e.g., OAuth token for MCP servers).
-    pub fn store_token(
-        &mut self,
-        name: &str,
-        token: &str,
-        metadata: Option<serde_json::Value>,
-    ) -> Result<(), HttpError> {
-        let mut data = self.load().clone();
-        data.tokens.insert(name.to_string(), TokenEntry { token: token.to_string(), metadata });
-        self.save(&data)
-    }
-
-    /// Retrieve a stored token.
-    pub fn get_token(&mut self, name: &str) -> Option<String> {
-        let data = self.load();
-        data.tokens.get(name).map(|e| e.token.clone())
-    }
-
-    /// Load credentials from file, caching the result.
-    fn load(&mut self) -> &AuthData {
-        if let Some(ref cached) = self.cache {
-            return cached;
+    pub async fn list_providers(&self) -> Vec<ProviderStatus> {
+        let mut result = Vec::new();
+        for &(provider, env_var) in PROVIDER_ENV_VARS {
+            let has_env = std::env::var(env_var).map(|v| !v.is_empty()).unwrap_or(false);
+            let key = SecretKey::llm(provider);
+            let has_stored = self.secrets.get(&key).await
+                .ok()
+                .flatten()
+                .is_some();
+            result.push(ProviderStatus {
+                provider: provider.to_string(),
+                has_env_key: has_env,
+                has_stored_key: has_stored,
+                env_var: env_var.to_string(),
+            });
         }
-
-        let data = if self.path.exists() {
-            // Verify and tighten permissions
-            #[cfg(unix)]
-            self.check_permissions();
-
-            match std::fs::read_to_string(&self.path) {
-                Ok(content) => serde_json::from_str(&content).unwrap_or_default(),
-                Err(e) => {
-                    warn!("Failed to load credentials from {:?}: {}", self.path, e);
-                    AuthData::default()
-                }
-            }
-        } else {
-            AuthData::default()
-        };
-
-        self.cache = Some(data);
-        // SAFETY: we just set self.cache to Some on the line above
-        self.cache.as_ref().expect("cache was just set to Some")
+        result
     }
 
-    /// Save credentials with restrictive permissions.
-    fn save(&mut self, data: &AuthData) -> Result<(), HttpError> {
-        self.cache = Some(data.clone());
-
-        if let Some(parent) = self.path.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
-
-        // Write to temp file, then rename (atomic)
-        let tmp_path = self.path.with_extension("tmp");
-        let json = serde_json::to_string_pretty(data)?;
-
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::OpenOptionsExt;
-            let mut opts = std::fs::OpenOptions::new();
-            opts.write(true).create_new(true).mode(0o600);
-            std::io::Write::write_all(&mut opts.open(&tmp_path)?, json.as_bytes())?;
-        }
-
-        #[cfg(not(unix))]
-        {
-            std::io::Write::write_all(
-                &mut std::fs::OpenOptions::new().write(true).create_new(true).open(&tmp_path)?,
-                json.as_bytes(),
-            )?;
-        }
-
-        std::fs::rename(&tmp_path, &self.path)?;
-        Ok(())
-    }
-
-    /// Check and tighten file permissions on Unix.
-    #[cfg(unix)]
-    fn check_permissions(&self) {
-        use std::os::unix::fs::PermissionsExt;
-        if let Ok(meta) = std::fs::metadata(&self.path) {
-            let mode = meta.permissions().mode() & 0o777;
-            if mode & 0o077 != 0 {
-                warn!(
-                    "Credential file {:?} has loose permissions ({:o}). Tightening to 0600.",
-                    self.path, mode
-                );
-                let _ =
-                    std::fs::set_permissions(&self.path, std::fs::Permissions::from_mode(0o600));
-            }
-        }
-    }
-
-    /// Get the path to the auth file.
-    pub fn path(&self) -> &Path {
-        &self.path
+    /// Get the path to the auth file (deprecated).
+    pub fn path(&self) -> Option<PathBuf> {
+        None // auth.json is no longer used
     }
 }
 
 impl std::fmt::Debug for CredentialStore {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("CredentialStore").field("path", &self.path).finish()
+        f.debug_struct("CredentialStore").finish()
     }
-}
-
-/// Look up the environment variable name for a provider.
-fn env_var_for_provider(provider: &str) -> Option<&'static str> {
-    ENV_VAR_MAP.iter().find(|&&(p, _)| p == provider).map(|&(_, v)| v)
 }
 
 #[cfg(test)]

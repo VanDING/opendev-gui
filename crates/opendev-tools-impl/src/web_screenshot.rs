@@ -189,11 +189,11 @@ async fn capture_screenshot(
         let window_size = format!("--window-size={viewport_width},{viewport_height}");
         let screenshot_arg = format!("--screenshot={}", dest.display());
 
-        let result = tokio::process::Command::new(&browser)
-            .args([
+        let result = {
+            let mut cmd = tokio::process::Command::new(&browser);
+            cmd.args([
                 "--headless",
                 "--disable-gpu",
-                "--no-sandbox",
                 "--disable-software-rasterizer",
                 "--disable-dev-shm-usage",
                 &window_size,
@@ -201,9 +201,10 @@ async fn capture_screenshot(
                 &url,
             ])
             .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
-            .output()
-            .await;
+            .stderr(std::process::Stdio::piped());
+            opendev_exec::env_filter::apply(cmd.as_std_mut());
+            cmd.output().await
+        };
 
         match result {
             Ok(output) if output.status.success() && dest.exists() => {

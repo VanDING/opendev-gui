@@ -144,7 +144,7 @@ impl MemoryFacade {
         let tier = WriteGate::classify(content);
 
         if tier == WriteGateTier::TransientNoise {
-            tracing::info!(content = %content, "dropping transient noise memory");
+            tracing::debug!("dropping transient noise memory");
             return Ok(None);
         }
 

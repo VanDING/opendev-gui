@@ -25,6 +25,20 @@ pub async fn get_app_config(services: State<'_, AppServices>) -> Result<ConfigRe
     let compact_provider_opt =
         if compact_model_opt.is_none() { None } else { Some(compact_provider) };
 
+    // Detect shadowed env vars that would override keyring-stored secrets
+    let known_env_vars = [
+        "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "AZURE_OPENAI_API_KEY",
+        "GROQ_API_KEY", "MISTRAL_API_KEY", "DEEPINFRA_API_KEY",
+        "OPENROUTER_API_KEY", "FIREWORKS_API_KEY", "GOOGLE_API_KEY",
+        "GEMINI_API_KEY", "DEEPSEEK_API_KEY", "COHERE_API_KEY",
+        "TOGETHER_API_KEY", "PERPLEXITY_API_KEY", "XAI_API_KEY",
+        "TELEGRAM_BOT_TOKEN",
+    ];
+    let shadowed_env_vars: Vec<String> = known_env_vars.iter()
+        .filter(|v| std::env::var(v).map(|s| !s.is_empty()).unwrap_or(false))
+        .map(|v| v.to_string())
+        .collect();
+
     Ok(ConfigResponse {
         model_provider: cfg.model_provider,
         model: cfg.model,
@@ -41,6 +55,7 @@ pub async fn get_app_config(services: State<'_, AppServices>) -> Result<ConfigRe
         autonomy_level,
         working_dir: services.system.working_dir().to_string(),
         git_branch,
+        shadowed_env_vars,
     })
 }
 

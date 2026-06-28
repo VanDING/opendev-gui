@@ -1,0 +1,20 @@
+[package]
+name = "opendev-protocol"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Unified app-server protocol for OpenDev — v1 frozen + v2 active"
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+uuid = { workspace = true, features = ["v7", "serde"] }
+chrono = { workspace = true }
+ts-rs = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["sync", "net", "io-util"] }
+async-trait = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

@@ -99,10 +99,13 @@ impl McpTransport for StdioTransport {
 
         let mut cmd = Command::new(&self.command);
         cmd.args(&self.args)
-            .envs(&self.env)
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped());
+
+        // Apply env filter first, then override with configured envs
+        opendev_exec::env_filter::apply(cmd.as_std_mut());
+        cmd.envs(&self.env);
 
         let mut child = cmd.spawn().map_err(|e| {
             McpError::Transport(format!("Failed to spawn '{}': {}", self.command, e))

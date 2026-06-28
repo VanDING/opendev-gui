@@ -4,6 +4,7 @@
 //! from global (~/.opendev/mcp.json) and project-level (.mcp.json) files.
 
 use regex::Regex;
+use secrecy;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -32,17 +33,32 @@ impl std::fmt::Display for TransportType {
 }
 
 /// OAuth 2.0 configuration for MCP server authentication.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct McpOAuthConfig {
     /// OAuth client ID.
     pub client_id: String,
     /// OAuth client secret.
-    pub client_secret: String,
+    #[serde(serialize_with = "serialize_secret_string")]
+    pub client_secret: secrecy::SecretString,
     /// Token endpoint URL.
     pub token_url: String,
     /// OAuth scope (space-separated).
     #[serde(default)]
     pub scope: Option<String>,
+}
+
+impl PartialEq for McpOAuthConfig {
+    fn eq(&self, other: &Self) -> bool {
+        self.client_id == other.client_id
+            && secrecy::ExposeSecret::expose_secret(&self.client_secret)
+                == secrecy::ExposeSecret::expose_secret(&other.client_secret)
+            && self.token_url == other.token_url
+            && self.scope == other.scope
+    }
+}
+
+fn serialize_secret_string<S: serde::Serializer>(value: &secrecy::SecretString, serializer: S) -> Result<S::Ok, S::Error> {
+    serializer.serialize_str(secrecy::ExposeSecret::expose_secret(value))
 }
 
 /// Configuration for a single MCP server.
@@ -262,7 +278,7 @@ pub fn prepare_server_config(config: &McpServerConfig) -> McpServerConfig {
         transport: config.transport.clone(),
         oauth: config.oauth.as_ref().map(|o| McpOAuthConfig {
             client_id: expand_env_vars(&o.client_id),
-            client_secret: expand_env_vars(&o.client_secret),
+            client_secret: expand_env_vars(secrecy::ExposeSecret::expose_secret(&o.client_secret)).into(),
             token_url: expand_env_vars(&o.token_url),
             scope: o.scope.as_ref().map(|s| expand_env_vars(s)),
         }),

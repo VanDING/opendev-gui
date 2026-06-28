@@ -10,8 +10,11 @@ pub use agent::{AgentConfigInline, ModelVariant};
 pub use channels::{ChannelsConfig, DmPolicy, TelegramChannelConfig, is_channels_default};
 pub use formatter::{FormatterConfig, FormatterOverride, FormatterOverrides};
 pub use permissions::{PermissionConfig, ToolPermission};
+pub use realm::ExecPolicy;
+#[allow(deprecated)]
 pub use realm::SandboxConfig;
 
+use opendev_secrets::SecretKey;
 use permissions::default_true;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -206,7 +209,7 @@ pub struct AppConfig {
 
     // Sandbox execution configuration (microsandbox microVMs)
     #[serde(default)]
-    pub sandbox: SandboxConfig,
+    pub sandbox: ExecPolicy,
 
     // Config version for migration support
     #[serde(default = "default_config_version")]
@@ -292,7 +295,7 @@ impl Default for AppConfig {
             model_variants: HashMap::new(),
             formatter: FormatterConfig::default(),
             channels: ChannelsConfig::default(),
-            sandbox: SandboxConfig::default(),
+            sandbox: ExecPolicy::default(),
             config_version: default_config_version(),
         }
     }
@@ -376,6 +379,83 @@ impl AppConfig {
     /// Convenience wrapper that calls [`get_api_key_with_env`] without registry info.
     pub fn get_api_key(&self) -> Result<String, String> {
         self.get_api_key_with_env(None)
+    }
+
+    /// Get API key using the SecretStore chain (env → keyring → file).
+    /// Falls back to the deprecated `self.api_key` with a warning.
+    /// 
+    /// This should be preferred over `get_api_key_with_env` going forward.
+    pub async fn get_api_key_via_secrets(
+        &self,
+        registry_env_var: Option<&str>,
+        secrets: &opendev_secrets::ChainedSecretStore,
+    ) -> Result<String, String> {
+        // 1. Try SecretStore chain (env → keyring → file)
+        let key = SecretKey::llm(&self.model_provider);
+        if let Some(value) = secrets.get(&key).await.map_err(|e| e.to_string())? {
+            return Ok(value.expose().to_string());
+        }
+
+        // 2. Fallback: keep the old env var resolution for backward compat
+        // (registry env var, builtin env var, convention env var)
+        if let Some(env_key) = self.get_api_key_from_env_vars(registry_env_var) {
+            return Ok(env_key);
+        }
+
+        // 3. Deprecated: self.api_key (with warning)
+        if let Some(ref key) = self.api_key {
+            tracing::warn!(
+                "AppConfig.api_key is deprecated. Run migration to SecretStore. provider={}",
+                self.model_provider
+            );
+            return Ok(key.clone());
+        }
+
+        // 4. Last resort: OPENAI_API_KEY fallback
+        if let Ok(key) = std::env::var("OPENAI_API_KEY") {
+            if !key.is_empty() {
+                return Ok(key);
+            }
+        }
+
+        let hint = registry_env_var
+            .filter(|s| !s.is_empty())
+            .unwrap_or("OPENAI_API_KEY");
+        Err(format!("No API key found. Set {} environment variable or configure via secret manager", hint))
+    }
+
+    /// Extract env var resolution into a helper (used by both old and new paths).
+    fn get_api_key_from_env_vars(&self, registry_env_var: Option<&str>) -> Option<String> {
+        // Try registry env var first
+        if let Some(env_var) = registry_env_var
+            && !env_var.is_empty()
+            && let Ok(key) = std::env::var(env_var)
+            && !key.is_empty()
+        {
+            return Some(key);
+        }
+
+        // Try well-known env var for built-in providers
+        let builtin_env = Self::builtin_env_var(&self.model_provider);
+        if !builtin_env.is_empty()
+            && let Ok(key) = std::env::var(builtin_env)
+            && !key.is_empty()
+        {
+            return Some(key);
+        }
+
+        // Convention-based env var
+        let convention_env = Self::convention_env_var(&self.model_provider);
+        if !convention_env.is_empty()
+            && convention_env != builtin_env
+            && registry_env_var != Some(convention_env.as_str())
+            && let Ok(key) = std::env::var(&convention_env)
+            && !key.is_empty()
+        {
+            return Some(key);
+        }
+
+        None
     }
 
     /// Map well-known provider IDs to their conventional env var names.

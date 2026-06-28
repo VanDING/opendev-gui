@@ -30,7 +30,7 @@ pub mod permissions;
 pub mod plan_approval;
 pub mod plan_index;
 pub mod plan_names;
-pub mod sandbox;
+pub mod policy;
 pub mod secrets;
 pub mod session_model;
 pub mod session_status;
@@ -79,7 +79,9 @@ pub use plan_approval::{
     PlanApprovalReceiver, PlanApprovalRequest, PlanApprovalSender, PlanDecision,
     plan_approval_channel,
 };
-pub use sandbox::SandboxConfig;
+pub use policy::ExecPolicyConfig;
+#[allow(deprecated)]
+pub use policy::SandboxConfig;
 pub use secrets::{SecretKind, SecretMatch, detect_secrets, redact_secrets};
 pub use session_status::{SessionStatus, SessionStatusTracker};
 pub use snapshot::SnapshotManager;

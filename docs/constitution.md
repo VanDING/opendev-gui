@@ -21,6 +21,21 @@ crate dependency graph acyclic and makes each crate independently testable.
 
 ---
 
+### Foundation Layers (v0.2.0+)
+Four new foundation crates provide cross-cutting capabilities:
+
+- **opendev-protocol** — Unified app-server wire protocol (ADR-008). 30 methods + 18 events.
+  5-end Transport trait (Tauri/TUI/Web/Workspace/Telegram). V1 frozen + V2 active dual-track.
+- **opendev-exec** — Multi-platform sandbox execution (ADR-009). Landlock (Linux), Seatbelt (macOS),
+  bwrap (Linux), Windows Job Objects. ExecPolicy trait + env_filter shared across 17+ exec points.
+  Fail-closed by design.
+- **opendev-secrets** — OS keyring + env + encrypted file secret store (ADR-010). SecretStore trait
+  with chain resolution. SecretValue Display/Debug always prints [REDACTED].
+- **opendev-telemetry** — JSON structured logging, 14-day retention, metrics, OTLP, Sentry opt-in,
+  W3C TraceContext (ADR-011). Privacy-first: no analytics, opt-in error reporting.
+
+---
+
 ## Principle 2: Traits Over Concrete Types
 
 **Core behavior is defined by traits, not concrete structs. Traits provide sensible defaults
@@ -100,8 +115,12 @@ predictable. No runtime surprises from filesystem changes or auto-discovery.
 **Security mechanisms are always-on, not opt-in. The system assumes untrusted input and
 untrusted network boundaries.**
 
-- API keys are stored in system credential store when available (never logged).
-- Secrets detection scans command output for credential patterns.
+- ✅ API keys are stored in system credential store when available (opendev-secrets KeyringStore).
+- ✅ Secrets are always [REDACTED] in Display/Debug (SecretValue constitution enforcement).
+- ✅ SecretStore chain: env var > keyring > age-encrypted file fallback.
+- ✅ env_filter strips 20+ sensitive env var patterns from ALL child processes (not just BashTool).
+- ✅ Sandbox is fail-closed: any backend error prevents child process from spawning.
+- ✅ Panic handler writes crash dumps to ~/.opendev/crash/ with 0o600 permissions.
 - File access is controlled by glob-based permission system.
 - SSRF protection blocks private/internal IP ranges in WebFetch.
 - Session tokens use HMAC-SHA256 with a configurable secret key.
@@ -223,3 +242,10 @@ and domain model. No interface-specific logic lives in the core layers.**
 **Why it exists:** Duplicating agent logic across interfaces creates a maintenance nightmare.
 A single core with multiple shells keeps interfaces free to evolve independently while
 the core stays consistent.
+
+This is realized by the opendev-protocol crate (ADR-008):
+- 5 Transport implementations: TauriTransport, TuiInProcessTransport, WebSocketTransport,
+  UnixSocketTransport/NamedPipeTransport, TelegramTransport (v2).
+- 30 typed RPC methods, 18 typed events — same wire format for all clients.
+- V1 frozen (bug fixes only) + V2 active development.
+- ts-rs auto-generates TypeScript bindings for all client types.

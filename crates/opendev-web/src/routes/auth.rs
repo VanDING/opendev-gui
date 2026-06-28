@@ -54,24 +54,47 @@ struct TokenPayload {
     iat: i64,
 }
 
-/// Secret key for HMAC signing. In production this should come from
-/// the `OPENDEV_SECRET_KEY` environment variable.
+/// Resolve the HMAC signing key, trying environment variables first.
 ///
-/// In debug builds a hardcoded default is used for development convenience.
-/// In release builds, the binary will panic at startup if the env var is
-/// not set, forcing explicit configuration.
+/// Priority:
+/// 1. `OPENDEV_SECRET_KEY` env var (highest priority)
+/// 2. `OPENDEV_MASTER_KEY` env var (second source, e.g. for keyring file encryption)
+/// 3. Debug build: `b"change-me-in-production"` (with warning)
+/// 4. Release build: panic (no key configured)
+fn resolve_secret_key() -> &'static [u8] {
+    // Try OPENDEV_SECRET_KEY first
+    if let Ok(val) = std::env::var("OPENDEV_SECRET_KEY") {
+        if !val.is_empty() {
+            return Box::leak(val.into_bytes().into_boxed_slice());
+        }
+    }
+
+    // Try OPENDEV_MASTER_KEY as fallback
+    if let Ok(val) = std::env::var("OPENDEV_MASTER_KEY") {
+        if !val.is_empty() {
+            return Box::leak(val.into_bytes().into_boxed_slice());
+        }
+    }
+
+    // In production, one of these must be set
+    if !cfg!(debug_assertions) {
+        panic!(
+            "OPENDEV_SECRET_KEY or OPENDEV_MASTER_KEY environment variable must be set in production. \
+             Use `opendev secret doctor` to check your keyring status, or set the env var."
+        );
+    }
+
+    tracing::warn!(
+        "OPENDEV_SECRET_KEY not set. Using debug fallback 'change-me-in-production'. \
+         DO NOT USE IN PRODUCTION. Set OPENDEV_SECRET_KEY in your environment."
+    );
+    b"change-me-in-production"
+}
+
+/// Backward-compatible wrapper with OnceLock caching.
 fn secret_key() -> &'static [u8] {
     static KEY: std::sync::OnceLock<&'static [u8]> = std::sync::OnceLock::new();
-    KEY.get_or_init(|| match std::env::var("OPENDEV_SECRET_KEY") {
-        Ok(val) => Box::leak(val.into_bytes().into_boxed_slice()) as &[u8],
-        Err(_) => {
-            if cfg!(debug_assertions) {
-                b"change-me-in-production"
-            } else {
-                panic!("OPENDEV_SECRET_KEY environment variable must be set in production");
-            }
-        }
-    })
+    KEY.get_or_init(|| resolve_secret_key())
 }
 
 /// Create an HMAC-SHA256 signed token encoding the user ID.
@@ -201,7 +224,7 @@ async fn login(
         .get_by_username(&payload.username)
         .ok_or_else(|| WebError::BadRequest("Incorrect username or password".to_string()))?;
 
-    if !verify_password(&payload.password, &user.password_hash) {
+    if !verify_password(&payload.password, secrecy::ExposeSecret::expose_secret(&user.password_hash)) {
         return Err(WebError::BadRequest("Incorrect username or password".to_string()));
     }
 

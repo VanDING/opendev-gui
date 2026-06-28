@@ -1,6 +1,7 @@
 use std::sync::Mutex;
 
 use chrono::Utc;
+use opendev_telemetry::metrics::{record_cost, record_llm_call};
 
 use super::types::{CostCall, ModelPricing, TokenUsage};
 
@@ -61,6 +62,11 @@ impl CostTracker {
         pricing: &ModelPricing,
     ) -> f64 {
         let cost = calculate_cost(usage, pricing);
+
+        // Record telemetry metrics
+        record_llm_call(provider, model, "success");
+        record_cost(provider, cost);
+
         let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
         state.total_rmb += cost;
         state.daily_rmb += cost;

@@ -22,9 +22,11 @@ dirs-next = { workspace = true }
 which = "7"
 opendev-models = { workspace = true }
 opendev-http = { workspace = true }
+microsandbox = { version = "0.3", optional = true }
 
-[target.'cfg(target_os = "linux")'.dependencies]
-microsandbox = "0.3"
+[features]
+default = []
+microsandbox = ["dep:microsandbox"]
 
 [dev-dependencies]
 tempfile = { workspace = true }

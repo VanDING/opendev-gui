@@ -19,13 +19,14 @@ opendev-repl = { workspace = true }
 opendev-tools-core = { workspace = true }
 opendev-web = { workspace = true }
 opendev-mcp = { workspace = true }
-opendev-observability = { workspace = true }
+opendev-telemetry = { workspace = true }
 opendev-http = { workspace = true }
 opendev-agents = { workspace = true }
 opendev-runtime = { workspace = true }
 opendev-tui = { workspace = true }
 opendev-tools-impl = { workspace = true }
 opendev-channels = { workspace = true }
+opendev-secrets = { workspace = true }
 
 async-trait = { workspace = true }
 crossterm = { workspace = true }
@@ -39,6 +40,7 @@ dirs-next = { workspace = true }
 reqwest = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true }
+secrecy = { version = "0.10", features = ["serde"] }
 
 [dev-dependencies]
 tempfile = { workspace = true }

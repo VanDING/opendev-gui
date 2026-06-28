@@ -1,0 +1,5 @@
+{
+  "name": "eslint-plugin-opendev",
+  "version": "1.0.0",
+  "main": "event-bridge-constants.js"
+}

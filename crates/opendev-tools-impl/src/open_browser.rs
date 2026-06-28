@@ -50,6 +50,8 @@ impl BaseTool for OpenBrowserTool {
             return ToolResult::fail("URL must start with http:// or https://");
         }
 
+        // NOTE: If this is changed to use Command::new() directly instead of open::that(),
+        // add opendev_exec::env_filter::apply(&mut cmd) to strip sensitive env vars.
         match open::that(url) {
             Ok(_) => ToolResult::ok(format!("Opened {url} in default browser")),
             Err(e) => ToolResult::fail(format!("Failed to open browser: {e}")),

@@ -13,6 +13,7 @@ opendev-http = { workspace = true }
 opendev-mcp = { workspace = true }
 opendev-history = { workspace = true }
 opendev-context = { workspace = true }
+opendev-exec = { workspace = true }
 opendev-agents = { workspace = true }
 opendev-runtime = { workspace = true }
 opendev-tools-lsp = { workspace = true }

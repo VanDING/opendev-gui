@@ -99,16 +99,18 @@ impl BaseTool for PatchTool {
 async fn try_git_apply(patch: &str, cwd: &Path, strip: usize) -> ToolResult {
     let strip_arg = format!("-p{strip}");
 
-    let mut child = match tokio::process::Command::new("git")
-        .args(["apply", &strip_arg, "--stat", "-"])
-        .current_dir(cwd)
-        .stdin(std::process::Stdio::piped())
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()
-    {
-        Ok(c) => c,
-        Err(_) => return ToolResult::fail("git not available"),
+    let mut child = {
+        let mut cmd = tokio::process::Command::new("git");
+        cmd.args(["apply", &strip_arg, "--stat", "-"])
+            .current_dir(cwd)
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped());
+        opendev_exec::env_filter::apply(cmd.as_std_mut());
+        match cmd.spawn() {
+            Ok(c) => c,
+            Err(_) => return ToolResult::fail("git not available"),
+        }
     };
 
     // Write patch to stdin
@@ -124,16 +126,18 @@ async fn try_git_apply(patch: &str, cwd: &Path, strip: usize) -> ToolResult {
     };
 
     // Now actually apply (first was just --stat for preview)
-    let mut child = match tokio::process::Command::new("git")
-        .args(["apply", &strip_arg, "-"])
-        .current_dir(cwd)
-        .stdin(std::process::Stdio::piped())
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()
-    {
-        Ok(c) => c,
-        Err(_) => return ToolResult::fail("git not available"),
+    let mut child = {
+        let mut cmd = tokio::process::Command::new("git");
+        cmd.args(["apply", &strip_arg, "-"])
+            .current_dir(cwd)
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped());
+        opendev_exec::env_filter::apply(cmd.as_std_mut());
+        match cmd.spawn() {
+            Ok(c) => c,
+            Err(_) => return ToolResult::fail("git not available"),
+        }
     };
 
     if let Some(mut stdin) = child.stdin.take() {

@@ -52,6 +52,26 @@ export function ModelSettings() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [verifyState, setVerifyState] = useState<'idle' | 'verifying' | 'success' | 'error'>('idle');
   const [verifyMessage, setVerifyMessage] = useState('');
+  const [shadowedEnvVars, setShadowedEnvVars] = useState<string[]>([]);
+
+  // Map of provider IDs to their known environment variable names
+  const PROVIDER_ENV_VARS: Record<string, string> = {
+    openai: 'OPENAI_API_KEY',
+    anthropic: 'ANTHROPIC_API_KEY',
+    google: 'GOOGLE_API_KEY',
+    gemini: 'GEMINI_API_KEY',
+    groq: 'GROQ_API_KEY',
+    mistral: 'MISTRAL_API_KEY',
+    deepseek: 'DEEPSEEK_API_KEY',
+    openrouter: 'OPENROUTER_API_KEY',
+    together: 'TOGETHER_API_KEY',
+    xai: 'XAI_API_KEY',
+    fireworks: 'FIREWORKS_API_KEY',
+    cohere: 'COHERE_API_KEY',
+    perplexity: 'PERPLEXITY_API_KEY',
+    deepinfra: 'DEEPINFRA_API_KEY',
+    azure_openai: 'AZURE_OPENAI_API_KEY',
+  };
 
   useEffect(() => {
     loadSettings();
@@ -86,6 +106,9 @@ export function ModelSettings() {
 
       // Other settings
       setTemperature(configData.temperature ?? 0.7);
+
+      // Shadowed env vars (env vars that override keyring-stored secrets)
+      setShadowedEnvVars(configData.shadowed_env_vars || []);
 
       // API config — keep empty initially so user explicitly sets it
       setApiKey('');
@@ -133,6 +156,13 @@ export function ModelSettings() {
       setApiBaseUrlDirty(false);
 
       toast.success('Settings saved successfully');
+
+      // If API key was saved, show keyring toast
+      if (apiKeyDirty && apiKey) {
+        toast.success('API key saved to system keyring', {
+          description: 'For enhanced security, your API key is now stored in the OS keyring.',
+        });
+      }
     } catch (error) {
       console.error('Failed to save settings:', error);
       toast.error('Failed to save settings');
@@ -330,6 +360,33 @@ export function ModelSettings() {
           )}
         </div>
       </div>
+
+      {/* Shadowed env var warning — shown if an env var overrides the keyring for the selected provider */}
+      {(() => {
+        const shadowedEnvVar = PROVIDER_ENV_VARS[normalProvider]
+          ? shadowedEnvVars.find(v => v === PROVIDER_ENV_VARS[normalProvider])
+          : undefined;
+        return shadowedEnvVar ? (
+          <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+            <div className="flex items-start gap-2">
+              <span className="text-lg">🔒</span>
+              <div>
+                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                  Environment variable overrides keyring
+                </p>
+                <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                  <code>{shadowedEnvVar}</code> is set in your environment.
+                  This key was saved to the system keyring but the environment variable
+                  takes precedence. To use the keyring value, unset the environment variable.
+                </p>
+                <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                  Run <code>opendev secret doctor</code> in your terminal for a full report.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null;
+      })()}
 
       {/* Global Settings */}
       <div className="border-t border-border-default pt-6 space-y-4">

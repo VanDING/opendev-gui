@@ -8,6 +8,8 @@ description = "HTTP client, authentication, and provider adapters for OpenDev"
 [dependencies]
 opendev-models = { workspace = true }
 opendev-config = { workspace = true }
+opendev-secrets = { workspace = true }
+opendev-telemetry = { workspace = true }
 reqwest = { workspace = true }
 tokio = { workspace = true }
 tokio-util = { workspace = true }

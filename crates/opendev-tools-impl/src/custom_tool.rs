@@ -124,15 +124,17 @@ impl BaseTool for CustomTool {
         // Execute the command.
         let timeout = std::time::Duration::from_secs(self.manifest.timeout_secs);
         let result = tokio::time::timeout(timeout, async {
-            let mut child = match tokio::process::Command::new(cmd_path.as_os_str())
-                .current_dir(&ctx.working_dir)
-                .stdin(std::process::Stdio::piped())
-                .stdout(std::process::Stdio::piped())
-                .stderr(std::process::Stdio::piped())
-                .spawn()
-            {
-                Ok(c) => c,
-                Err(e) => return Err(e),
+            let mut child = {
+                let mut cmd = tokio::process::Command::new(cmd_path.as_os_str());
+                cmd.current_dir(&ctx.working_dir)
+                    .stdin(std::process::Stdio::piped())
+                    .stdout(std::process::Stdio::piped())
+                    .stderr(std::process::Stdio::piped());
+                opendev_exec::env_filter::apply(cmd.as_std_mut());
+                match cmd.spawn() {
+                    Ok(c) => c,
+                    Err(e) => return Err(e),
+                }
             };
 
             // Write input to stdin.

@@ -1,7 +1,8 @@
 //! Command classification patterns and environment variable filtering.
 //!
-//! Contains regex-based detection for dangerous, server, and interactive
-//! commands, plus sensitive environment variable filtering.
+//! Delegates dangerous-command detection and env filtering to `opendev-exec`.
+//! Server-command and interactive-command patterns remain local (they are
+//! specific to BashTool behavior, not sandbox policy).
 
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -9,68 +10,35 @@ use std::sync::LazyLock;
 use regex::Regex;
 
 // ---------------------------------------------------------------------------
-// Sensitive environment variable patterns (stripped from child processes)
+// Sensitive environment variable filtering (delegated to opendev-exec)
 // ---------------------------------------------------------------------------
 
-/// Env var name suffixes that indicate API keys, tokens, or secrets.
-/// These are removed from child process environments to prevent leakage.
-const SENSITIVE_ENV_SUFFIXES: &[&str] =
-    &["_API_KEY", "_SECRET_KEY", "_SECRET", "_TOKEN", "_PASSWORD", "_CREDENTIALS"];
-
-/// Specific env var names to always strip (case-sensitive).
-const SENSITIVE_ENV_EXACT: &[&str] = &[
-    "OPENAI_API_KEY",
-    "ANTHROPIC_API_KEY",
-    "AZURE_OPENAI_API_KEY",
-    "GROQ_API_KEY",
-    "MISTRAL_API_KEY",
-    "DEEPINFRA_API_KEY",
-    "OPENROUTER_API_KEY",
-    "FIREWORKS_API_KEY",
-    "GOOGLE_API_KEY",
-    "GITHUB_TOKEN",
-    "GH_TOKEN",
-    "NPM_TOKEN",
-    "PYPI_TOKEN",
-];
-
 /// Check if an environment variable name is sensitive and should be stripped.
-pub(crate) fn is_sensitive_env(name: &str) -> bool {
-    let upper = name.to_uppercase();
-    if SENSITIVE_ENV_EXACT.iter().any(|&e| upper == e) {
-        return true;
-    }
-    SENSITIVE_ENV_SUFFIXES.iter().any(|suffix| upper.ends_with(suffix))
+///
+/// Delegates to `opendev_exec::env_filter` for centralized secret management.
+#[allow(dead_code)]
+pub fn is_sensitive_env(name: &str) -> bool {
+    opendev_exec::env_filter::is_sensitive_env(name)
 }
 
 /// Build a filtered environment map: inherits all env vars except sensitive ones.
-pub(crate) fn filtered_env() -> HashMap<String, String> {
-    std::env::vars().filter(|(key, _)| !is_sensitive_env(key)).collect()
+///
+/// Delegates to `opendev_exec::env_filter` for centralized secret management.
+#[allow(dead_code)]
+pub fn filtered_env() -> HashMap<String, String> {
+    opendev_exec::env_filter::filtered_env()
 }
 
 // ---------------------------------------------------------------------------
-// Dangerous-command regex patterns
+// Dangerous-command detection (delegated to opendev-exec)
 // ---------------------------------------------------------------------------
 
-const DANGEROUS_REGEX_PATTERNS: &[&str] = &[
-    r"rm\s+-rf\s+/",
-    r"curl.*\|\s*(ba)?sh",
-    r"wget.*\|\s*(ba)?sh",
-    r"sudo\s+",
-    r"mkfs",
-    r"dd\s+.*of=",
-    r"chmod\s+-R\s+777\s+/",
-    r":\(\)\{.*:\|:&\s*\};:",
-    r"mv\s+/",
-    r">\s*/dev/sd[a-z]",
-    // Git destructive operations (--force but not --force-with-lease)
-    r"git\s+push\s+.*--force\b",
-    r"git\s+push\s+-f\b",
-    r"git\s+reset\s+--hard",
-    r"git\s+clean\s+-[a-zA-Z]*f",
-    r"git\s+checkout\s+--\s+\.",
-    r"git\s+branch\s+-D\b",
-];
+/// Check if a command matches known dangerous patterns (e.g., `rm -rf /`, `sudo`).
+///
+/// Delegates to `opendev_exec::patterns` for centralized dangerous command detection.
+pub fn is_dangerous(command: &str) -> bool {
+    opendev_exec::patterns::is_dangerous(command)
+}
 
 // ---------------------------------------------------------------------------
 // Interactive-command patterns (auto-confirm with `yes |`)
@@ -155,25 +123,11 @@ impl CompiledPatterns {
     }
 }
 
-static DANGEROUS_COMPILED: LazyLock<CompiledPatterns> =
-    LazyLock::new(|| CompiledPatterns::new(DANGEROUS_REGEX_PATTERNS));
-
 static SERVER_COMPILED: LazyLock<CompiledPatterns> =
     LazyLock::new(|| CompiledPatterns::new(SERVER_PATTERNS));
 
 static INTERACTIVE_COMPILED: LazyLock<CompiledPatterns> =
     LazyLock::new(|| CompiledPatterns::new(INTERACTIVE_PATTERNS));
-
-pub(crate) fn is_dangerous(command: &str) -> bool {
-    if DANGEROUS_COMPILED.matches(command) {
-        // Allow `git push --force-with-lease` (safe force push)
-        if command.contains("--force-with-lease") && !command.contains("--force ") {
-            return false;
-        }
-        return true;
-    }
-    false
-}
 
 pub(crate) fn is_server_command(command: &str) -> bool {
     SERVER_COMPILED.matches(command)

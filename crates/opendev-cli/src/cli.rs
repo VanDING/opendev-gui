@@ -109,6 +109,12 @@ pub enum Commands {
         action: ChannelAction,
     },
 
+    /// Manage secrets (keyring, env, migration).
+    Secret {
+        #[command(subcommand)]
+        action: SecretCommands,
+    },
+
     /// Start a headless remote session (Telegram as primary interface).
     Remote {
         /// Resume the most recent session instead of starting a new one.
@@ -228,6 +234,15 @@ pub enum SessionAction {
         /// Session ID to export. Defaults to the most recent session.
         id: Option<String>,
     },
+}
+
+/// Secret subcommands.
+#[derive(Subcommand, Debug)]
+pub enum SecretCommands {
+    /// Diagnose secrets — shows shadow-key status.
+    Doctor,
+    /// Migrate secrets from env vars to keyring.
+    Migrate,
 }
 
 /// Run subcommands.

@@ -34,15 +34,19 @@ impl ContextCollector for GitStatusCollector {
         let dir = ctx.working_dir;
 
         // Run git commands concurrently
-        let branch_fut = tokio::process::Command::new("git")
-            .args(["rev-parse", "--abbrev-ref", "HEAD"])
-            .current_dir(dir)
-            .output();
+        let branch_fut = {
+            let mut cmd = tokio::process::Command::new("git");
+            cmd.args(["rev-parse", "--abbrev-ref", "HEAD"]).current_dir(dir);
+            opendev_exec::env_filter::apply(cmd.as_std_mut());
+            cmd.output()
+        };
 
-        let status_fut = tokio::process::Command::new("git")
-            .args(["status", "--short"])
-            .current_dir(dir)
-            .output();
+        let status_fut = {
+            let mut cmd = tokio::process::Command::new("git");
+            cmd.args(["status", "--short"]).current_dir(dir);
+            opendev_exec::env_filter::apply(cmd.as_std_mut());
+            cmd.output()
+        };
 
         let (branch_result, status_result) = tokio::join!(branch_fut, status_fut);
 

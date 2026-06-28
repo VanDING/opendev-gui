@@ -12,6 +12,7 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 tokio = { workspace = true }
 regex = { workspace = true }
+opendev-exec = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

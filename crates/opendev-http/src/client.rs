@@ -1,5 +1,6 @@
 //! HTTP client with retry logic and cancellation support.
 
+use opendev_telemetry::trace_context::generate_traceparent;
 use reqwest::header::{CONTENT_TYPE, HeaderMap, HeaderName, HeaderValue};
 use std::time::Duration;
 use tokio_util::sync::CancellationToken;
@@ -210,7 +211,8 @@ impl HttpClient {
         cancel: Option<&CancellationToken>,
     ) -> Result<HttpResult, HttpError> {
         let request_id = Uuid::new_v4().to_string();
-        debug!(request_id = %request_id, api_url = %self.api_url, "Sending LLM request");
+        let traceparent = generate_traceparent();
+        debug!(request_id = %request_id, %traceparent, api_url = %self.api_url, "Sending LLM request");
 
         let request = self
             .client
@@ -220,6 +222,11 @@ impl HttpClient {
                 HeaderName::from_static("x-request-id"),
                 HeaderValue::from_str(&request_id)
                     .unwrap_or_else(|_| HeaderValue::from_static("unknown")),
+            )
+            .header(
+                HeaderName::from_static("traceparent"),
+                HeaderValue::from_str(&traceparent)
+                    .unwrap_or_else(|_| HeaderValue::from_static("00-00000000000000000000000000000000-0000000000000000-01")),
             )
             .json(payload)
             .send();

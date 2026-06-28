@@ -8,6 +8,7 @@
 use std::sync::Mutex as StdMutex;
 
 use opendev_history::cost::CostTracker as HistoryCostTracker;
+use opendev_telemetry::metrics::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::debug;
@@ -23,6 +24,10 @@ pub struct TokenUsage {
     pub cache_read_input_tokens: u64,
     /// Anthropic prompt-caching: tokens written to cache.
     pub cache_creation_input_tokens: u64,
+    /// LLM provider (e.g. "openai", "anthropic").
+    pub provider: Option<String>,
+    /// Model identifier (e.g. "gpt-4o", "claude-3-opus").
+    pub model: Option<String>,
 }
 
 impl TokenUsage {
@@ -39,6 +44,8 @@ impl TokenUsage {
                 .get("cache_creation_input_tokens")
                 .and_then(|v| v.as_u64())
                 .unwrap_or(0),
+            provider: value.get("provider").and_then(|v| v.as_str()).map(String::from),
+            model: value.get("model").and_then(|v| v.as_str()).map(String::from),
         }
     }
 }
@@ -136,8 +143,20 @@ impl CostTracker {
 
         self.total_cost_usd += incremental_cost;
 
+        // Extract provider and model from usage (fixes hardcoded "openai"/"unknown" bug)
+        let provider = usage.provider.as_deref().unwrap_or("unknown");
+        let model = usage.model.as_deref().unwrap_or("unknown");
+        let status = if incremental_cost > 0.0 { "success" } else { "no_cost" };
+
+        // Record metrics
+        record_llm_tokens(provider, usage.prompt_tokens, usage.completion_tokens);
+        record_cost(provider, incremental_cost);
+        record_llm_call(provider, model, status);
+
         debug!(
             call = self.call_count,
+            provider = %provider,
+            model = %model,
             input = usage.prompt_tokens,
             output = usage.completion_tokens,
             cost_delta = format!("${:.6}", incremental_cost),
@@ -155,7 +174,7 @@ impl CostTracker {
                     cache_write_tokens: usage.cache_creation_input_tokens,
                     thinking_tokens: None,
                 };
-                let _ = ht.record("openai", "unknown", &h_usage, &Default::default());
+                let _ = ht.record(provider, model, &h_usage, &Default::default());
             }
         }
 
