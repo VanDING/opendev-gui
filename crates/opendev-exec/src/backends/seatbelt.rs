@@ -107,10 +107,172 @@ fn build_seatbelt_profile(request: &ExecRequest) -> String {
     profile.push_str(&format!("  (subpath \"{}\")\n", request.cwd.display()));
     profile.push_str(")\n"); // close file-write*
 
-    // ── Network (opt-in) ──
+    // ── Network (opt-in with domain policies) ──
     if request.capabilities.network {
-        profile.push_str("(allow network-outbound)\n");
+        if !request.allowed_domains.is_empty() {
+            // Allow only specific remote domains.
+            for domain in &request.allowed_domains {
+                profile.push_str(&format!("(allow network-outbound (remote \"{}\"))\n", domain));
+            }
+        } else {
+            // Allow all outbound network.
+            profile.push_str("(allow network-outbound (remote \"*\"))\n");
+        }
+
+        // Deny specific domains if listed (overrides allow for those domains).
+        for domain in &request.denied_domains {
+            profile.push_str(&format!("(deny network-outbound (remote \"{}\"))\n", domain));
+        }
+    } else {
+        // Network denied: block all network access.
+        profile.push_str("(deny network*)\n");
     }
 
     profile
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::policy::{RequiredCapabilities, ToolKind};
+    use std::collections::HashMap;
+    use std::path::PathBuf;
+
+    fn make_request(
+        network: bool,
+        read: Vec<&str>,
+        write: Vec<&str>,
+        allowed_domains: Vec<&str>,
+        denied_domains: Vec<&str>,
+    ) -> ExecRequest {
+        ExecRequest {
+            tool: ToolKind::Bash,
+            command: "echo hello".into(),
+            argv: vec!["echo".into(), "hello".into()],
+            cwd: PathBuf::from("/Users/user/project"),
+            env: HashMap::new(),
+            requested_paths: vec![],
+            requested_net: None,
+            capabilities: RequiredCapabilities {
+                network,
+                read: read.iter().map(|p| PathBuf::from(p)).collect(),
+                write: write.iter().map(|p| PathBuf::from(p)).collect(),
+                ..Default::default()
+            },
+            allowed_domains: allowed_domains.iter().map(|s| s.to_string()).collect(),
+            denied_domains: denied_domains.iter().map(|s| s.to_string()).collect(),
+        }
+    }
+
+    #[test]
+    fn profile_starts_with_version_and_deny_default() {
+        let req = make_request(false, vec![], vec![], vec![], vec![]);
+        let profile = build_seatbelt_profile(&req);
+        assert!(profile.starts_with("(version 1)\n(deny default)\n"));
+    }
+
+    #[test]
+    fn profile_allows_process_lifecycle() {
+        let req = make_request(false, vec![], vec![], vec![], vec![]);
+        let profile = build_seatbelt_profile(&req);
+        assert!(profile.contains("(allow process-exec)\n"));
+        assert!(profile.contains("(allow process-fork)\n"));
+        assert!(profile.contains("(allow signal)\n"));
+        assert!(profile.contains("(allow sysctl-read)\n"));
+    }
+
+    #[test]
+    fn profile_includes_workspace_read_path() {
+        let req = make_request(false, vec![], vec![], vec![], vec![]);
+        let profile = build_seatbelt_profile(&req);
+        assert!(profile.contains("(subpath \"/Users/user/project\")"));
+    }
+
+    #[test]
+    fn profile_includes_file_read_system_paths() {
+        let req = make_request(false, vec![], vec![], vec![], vec![]);
+        let profile = build_seatbelt_profile(&req);
+        assert!(profile.contains("(subpath \"/usr\")"));
+        assert!(profile.contains("(subpath \"/bin\")"));
+        assert!(profile.contains("(subpath \"/tmp\")"));
+    }
+
+    #[test]
+    fn profile_includes_read_capabilities() {
+        let req = make_request(false, vec!["/Users/user/project/src"], vec![], vec![], vec![]);
+        let profile = build_seatbelt_profile(&req);
+        assert!(profile.contains("(subpath \"/Users/user/project/src\")"));
+    }
+
+    #[test]
+    fn profile_includes_write_capabilities() {
+        let req = make_request(false, vec![], vec!["/Users/user/project/output"], vec![], vec![]);
+        let profile = build_seatbelt_profile(&req);
+        assert!(profile.contains("(subpath \"/Users/user/project/output\")"));
+    }
+
+    #[test]
+    fn profile_allows_network_outbound_when_network_enabled() {
+        let req = make_request(true, vec![], vec![], vec![], vec![]);
+        let profile = build_seatbelt_profile(&req);
+        assert!(profile.contains("(allow network-outbound (remote \"*\"))"));
+        assert!(!profile.contains("(deny network*)"));
+    }
+
+    #[test]
+    fn profile_denies_network_when_network_disabled() {
+        let req = make_request(false, vec![], vec![], vec![], vec![]);
+        let profile = build_seatbelt_profile(&req);
+        assert!(profile.contains("(deny network*)"));
+        assert!(!profile.contains("(allow network-outbound)"));
+    }
+
+    #[test]
+    fn profile_allows_only_specific_domains() {
+        let req = make_request(true, vec![], vec![], vec!["api.example.com"], vec![]);
+        let profile = build_seatbelt_profile(&req);
+        assert!(profile.contains("(allow network-outbound (remote \"api.example.com\"))"));
+        assert!(!profile.contains("(allow network-outbound (remote \"*\"))"));
+    }
+
+    #[test]
+    fn profile_denies_specific_domains() {
+        let req = make_request(
+            true, vec![], vec![], vec![],
+            vec!["malicious.example.com"],
+        );
+        let profile = build_seatbelt_profile(&req);
+        assert!(profile.contains("(allow network-outbound (remote \"*\"))"));
+        assert!(profile.contains("(deny network-outbound (remote \"malicious.example.com\"))"));
+    }
+
+    #[test]
+    fn profile_combined_allow_and_deny_domains() {
+        let req = make_request(
+            true, vec![], vec![],
+            vec!["good.example.com"],
+            vec!["bad.example.com"],
+        );
+        let profile = build_seatbelt_profile(&req);
+        assert!(profile.contains("(allow network-outbound (remote \"good.example.com\"))"));
+        assert!(!profile.contains("(allow network-outbound (remote \"*\"))"));
+        assert!(profile.contains("(deny network-outbound (remote \"bad.example.com\"))"));
+    }
+
+    #[test]
+    fn profile_writes_are_gated_to_tmp_and_dev_and_cwd() {
+        let req = make_request(false, vec![], vec![], vec![], vec![]);
+        let profile = build_seatbelt_profile(&req);
+        // Write section should include tmp and dev.
+        assert!(profile.contains("(allow file-write*"));
+        assert!(profile.contains("(subpath \"/tmp\")"));
+        assert!(profile.contains("(subpath \"/dev\")"));
+    }
+
+    #[test]
+    fn profile_writes_include_workspace_dir() {
+        let req = make_request(false, vec![], vec!["/Users/user/project"], vec![], vec![]);
+        let profile = build_seatbelt_profile(&req);
+        assert!(profile.contains("(subpath \"/Users/user/project\")"));
+    }
 }

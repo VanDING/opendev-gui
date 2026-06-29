@@ -45,6 +45,8 @@ fn sample_request(command: &str) -> ExecRequest {
         requested_paths: vec![],
         requested_net: None,
         capabilities: RequiredCapabilities::default(),
+        allowed_domains: vec![],
+        denied_domains: vec![],
     }
 }
 

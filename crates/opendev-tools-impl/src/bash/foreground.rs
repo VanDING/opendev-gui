@@ -68,6 +68,8 @@ impl BashTool {
             requested_paths: vec![],
             requested_net: None,
             capabilities: Default::default(),
+            allowed_domains: vec![],
+            denied_domains: vec![],
         };
         if let Err(e) = backend.apply(cmd.as_std_mut(), &exec_request) {
             tracing::error!(error = %e, backend = backend.name(), "sandbox apply failed; refusing to spawn");

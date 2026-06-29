@@ -14,6 +14,8 @@
 pub mod action_summarizer;
 pub mod approval;
 pub mod ask_user_channel;
+pub mod bash_classifier;
+pub mod classifier;
 pub mod constants;
 pub mod cost_tracker;
 pub mod custom_commands;

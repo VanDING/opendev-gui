@@ -374,6 +374,8 @@ impl BaseTool for BashTool {
             requested_paths: vec![],
             requested_net: None,
             capabilities: Default::default(),
+            allowed_domains: vec![],
+            denied_domains: vec![],
         };
 
         // Evaluate policy

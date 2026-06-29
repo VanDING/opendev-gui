@@ -13,11 +13,13 @@ pub mod loader;
 pub mod migration;
 pub mod models_dev;
 pub mod paths;
+pub mod policy_settings;
 pub mod profile;
 pub mod watcher;
 
 pub use loader::ConfigLoader;
 pub use migration::{CURRENT_CONFIG_VERSION, config_version, migrate_config, needs_migration};
+pub use policy_settings::{ManagedRule, PolicySettings};
 pub use models_dev::{ModelInfo, ModelRegistry, ProviderInfo, sync_provider_cache_async};
 pub use paths::Paths;
 pub use profile::{Profile, apply_profile};

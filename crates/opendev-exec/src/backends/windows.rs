@@ -166,6 +166,8 @@ mod tests {
             requested_paths: vec![],
             requested_net: None,
             capabilities: RequiredCapabilities::default(),
+            allowed_domains: vec![],
+            denied_domains: vec![],
         };
 
         let result = backend.apply(&mut cmd, &request);

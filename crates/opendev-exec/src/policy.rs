@@ -78,6 +78,11 @@ pub struct ExecRequest {
     pub requested_paths: Vec<PathBuf>,
     pub requested_net: Option<Url>,
     pub capabilities: RequiredCapabilities,
+    /// Domain names the command is allowed to access (network allowlist).
+    /// Empty = no domain-level restrictions beyond the network bool.
+    pub allowed_domains: Vec<String>,
+    /// Domain names the command is explicitly denied from accessing.
+    pub denied_domains: Vec<String>,
 }
 
 /// The policy decision for an exec request.

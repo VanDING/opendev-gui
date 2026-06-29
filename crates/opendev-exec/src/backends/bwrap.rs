@@ -40,8 +40,23 @@ impl SandboxBackend for BwrapBackend {
         // Build bwrap command
         let mut bwrap = Command::new(&self.bwrap_path);
 
-        // Unshare all namespaces
-        bwrap.arg("--unshare-all");
+        // ── Namespace isolation ──
+        if request.capabilities.network {
+            // Unshare everything EXCEPT network (so the command can make outbound connections).
+            bwrap.arg("--unshare-ipc");
+            bwrap.arg("--unshare-pid");
+            bwrap.arg("--unshare-uts");
+            bwrap.arg("--unshare-cgroup");
+            bwrap.arg("--unshare-user");
+            // Bind-mount resolv.conf for DNS resolution when network is allowed.
+            if std::path::Path::new("/etc/resolv.conf").exists() {
+                bwrap.arg("--ro-bind").arg("/etc/resolv.conf").arg("/etc/resolv.conf");
+            }
+        } else {
+            // Network denied: unshare ALL namespaces including network.
+            bwrap.arg("--unshare-all");
+            bwrap.arg("--unshare-net");
+        }
 
         // Mount minimal /proc
         bwrap.arg("--proc").arg("/proc");
