@@ -537,6 +537,24 @@ pub trait BaseTool: Send + Sync + std::fmt::Debug {
         None
     }
 
+    /// Maximum result size in characters for this tool.
+    ///
+    /// Declarative per-tool budget that limits how much output from this tool
+    /// may enter LLM context. When `Some(N)`, output exceeding N characters is
+    /// truncated before the truncation rule is applied, and the full output is
+    /// spilled to an overflow file with a retrieval hint.
+    ///
+    /// `None` means unlimited (inherits the default truncation rule's limit).
+    ///
+    /// This mirrors Claude Code's `maxResultSizeChars: number` on every `Tool`.
+    /// For example, `Read` would set this to `Infinity` to prevent circular
+    /// Read→file→Read loops (the Read tool's output is what the LLM requested).
+    ///
+    /// Default: `None`.
+    fn max_result_size_chars(&self) -> Option<usize> {
+        None
+    }
+
     // ── Search & discovery ─────────────────────────────────────────────
 
     /// A short capability phrase for `ToolSearch` keyword matching.

@@ -27,19 +27,43 @@ pub enum TruncationStrategy {
 pub struct TruncationRule {
     pub max_chars: usize,
     pub strategy: TruncationStrategy,
+    /// Declarative per-tool budget: if the tool's output exceeds this,
+    /// truncate before applying the strategy and spill to overflow file.
+    /// `None` means unlimited (uses `max_chars` only).
+    pub max_result_size_chars: Option<usize>,
 }
 
 impl TruncationRule {
     pub fn head(max_chars: usize) -> Self {
-        Self { max_chars, strategy: TruncationStrategy::Head }
+        Self { max_chars, strategy: TruncationStrategy::Head, max_result_size_chars: None }
     }
 
     pub fn tail(max_chars: usize) -> Self {
-        Self { max_chars, strategy: TruncationStrategy::Tail }
+        Self { max_chars, strategy: TruncationStrategy::Tail, max_result_size_chars: None }
     }
 
     pub fn head_tail(max_chars: usize, head_ratio: f64) -> Self {
-        Self { max_chars, strategy: TruncationStrategy::HeadTail { head_ratio } }
+        Self {
+            max_chars,
+            strategy: TruncationStrategy::HeadTail { head_ratio },
+            max_result_size_chars: None,
+        }
+    }
+
+    /// Set the max result size char budget on this rule.
+    pub fn with_max_result_size(mut self, max_chars: usize) -> Self {
+        self.max_result_size_chars = Some(max_chars);
+        self
+    }
+
+    /// Compute the effective character limit by combining `max_result_size_chars`
+    /// and `max_chars`. The effective limit is the minimum of both, or whichever
+    /// is set if only one is set.
+    pub fn effective_max_chars(&self) -> usize {
+        match self.max_result_size_chars {
+            Some(limit) => limit.min(self.max_chars),
+            None => self.max_chars,
+        }
     }
 }
 
@@ -114,7 +138,7 @@ impl ToolResultSanitizer {
             if let Some(existing) = rules.get(&tool_name) {
                 rules.insert(
                     tool_name,
-                    TruncationRule { max_chars, strategy: existing.strategy.clone() },
+                    TruncationRule { max_chars, strategy: existing.strategy.clone(), max_result_size_chars: None },
                 );
             } else {
                 rules.insert(tool_name, TruncationRule::head(max_chars));
@@ -176,7 +200,10 @@ impl ToolResultSanitizer {
             }
         };
 
-        if output_str.len() <= rule.max_chars {
+        // Use effective_max_chars() which combines max_result_size_chars and max_chars.
+        let effective_limit = rule.effective_max_chars();
+
+        if output_str.len() <= effective_limit {
             return SanitizedResult {
                 output: Some(output_str.to_string()),
                 error: None,
@@ -186,7 +213,15 @@ impl ToolResultSanitizer {
         }
 
         let original_len = output_str.len();
-        let truncated = apply_strategy(output_str, rule);
+
+        // Apply truncation with the effective limit.
+        let truncated_rule = TruncationRule {
+            max_chars: effective_limit,
+            strategy: rule.strategy.clone(),
+            max_result_size_chars: None, // Already folded into max_chars
+        };
+        let truncated = apply_strategy(output_str, &truncated_rule);
+
         let strategy_name = match &rule.strategy {
             TruncationStrategy::Head => "head",
             TruncationStrategy::Tail => "tail",
@@ -324,7 +359,10 @@ impl ToolResultSanitizer {
             }
         };
 
-        if output_str.len() <= rule.max_chars {
+        // Use effective_max_chars() which combines max_result_size_chars and max_chars.
+        let effective_limit = rule.effective_max_chars();
+
+        if output_str.len() <= effective_limit {
             return SanitizedResult {
                 output: Some(output_str.to_string()),
                 error: None,
@@ -333,7 +371,13 @@ impl ToolResultSanitizer {
             };
         }
 
-        let truncated = apply_strategy(output_str, rule);
+        // Apply truncation with the effective limit.
+        let truncated_rule = TruncationRule {
+            max_chars: effective_limit,
+            strategy: rule.strategy.clone(),
+            max_result_size_chars: None,
+        };
+        let truncated = apply_strategy(output_str, &truncated_rule);
         let strategy_name = match &rule.strategy {
             TruncationStrategy::Head => "head",
             TruncationStrategy::Tail => "tail",

@@ -566,7 +566,7 @@ impl AgentRuntime {
             46, // right after tool_selection (45)
             None,
             Box::new(move || {
-                let summaries = registry_for_deferred.get_deferred_summaries();
+                let summaries = registry_for_deferred.get_deferred_tool_list();
                 if summaries.is_empty() {
                     return None;
                 }

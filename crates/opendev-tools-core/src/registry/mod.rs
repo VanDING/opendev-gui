@@ -7,7 +7,7 @@
 mod execution;
 mod helpers;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::{Arc, Mutex, RwLock};
 
 use crate::middleware::ToolMiddleware;
@@ -264,6 +264,17 @@ impl ToolRegistry {
                     }
                 })
             })
+            .collect()
+    }
+
+    /// Get deferred tool names and descriptions as a list (for programmatic use).
+    pub fn get_deferred_tool_list(&self) -> Vec<(String, String)> {
+        let tools = self.tools.read().unwrap_or_else(|e| e.into_inner());
+        let core = self.core_tools.read().unwrap_or_else(|e| e.into_inner());
+        tools
+            .values()
+            .filter(|tool| !core.contains(tool.name()))
+            .map(|tool| (tool.name().to_string(), tool.description().to_string()))
             .collect()
     }
 
