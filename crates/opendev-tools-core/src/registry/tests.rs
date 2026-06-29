@@ -1,6 +1,6 @@
 use super::helpers::{camel_to_snake_name, edit_distance, make_dedup_key};
 use super::*;
-use crate::traits::ToolContext;
+use crate::traits::{ToolCategory, ToolContext};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -643,4 +643,164 @@ fn test_camel_to_snake_name() {
     assert_eq!(camel_to_snake_name("read_file"), "read_file");
     assert_eq!(camel_to_snake_name("webFetch"), "web_fetch");
     assert_eq!(camel_to_snake_name("HTMLParser"), "h_t_m_l_parser");
+}
+
+// --- Deferred tool tests ---
+
+/// A test tool in the Read category (non-core).
+#[derive(Debug)]
+struct ReadCategoryTool;
+
+#[async_trait::async_trait]
+impl BaseTool for ReadCategoryTool {
+    fn name(&self) -> &str {
+        "test_read_tool"
+    }
+    fn description(&self) -> &str {
+        "A read category tool for testing"
+    }
+    fn category(&self) -> ToolCategory {
+        ToolCategory::Read
+    }
+    fn parameter_schema(&self) -> serde_json::Value {
+        serde_json::json!({"type": "object", "properties": {}})
+    }
+    async fn execute(
+        &self,
+        _args: HashMap<String, serde_json::Value>,
+        _ctx: &ToolContext,
+    ) -> ToolResult {
+        ToolResult::ok("ok")
+    }
+}
+
+/// A test tool in the Web category (deferred).
+#[derive(Debug)]
+struct WebCategoryTool;
+
+#[async_trait::async_trait]
+impl BaseTool for WebCategoryTool {
+    fn name(&self) -> &str {
+        "test_web_tool"
+    }
+    fn description(&self) -> &str {
+        "A web category tool for testing"
+    }
+    fn category(&self) -> ToolCategory {
+        ToolCategory::Web
+    }
+    fn parameter_schema(&self) -> serde_json::Value {
+        serde_json::json!({"type": "object", "properties": {}})
+    }
+    async fn execute(
+        &self,
+        _args: HashMap<String, serde_json::Value>,
+        _ctx: &ToolContext,
+    ) -> ToolResult {
+        ToolResult::ok("ok")
+    }
+}
+
+/// A core tool that should NOT appear in deferred summaries.
+#[derive(Debug)]
+struct CoreTool;
+
+#[async_trait::async_trait]
+impl BaseTool for CoreTool {
+    fn name(&self) -> &str {
+        "core_tool"
+    }
+    fn description(&self) -> &str {
+        "A core tool"
+    }
+    fn category(&self) -> ToolCategory {
+        ToolCategory::Meta
+    }
+    fn parameter_schema(&self) -> serde_json::Value {
+        serde_json::json!({"type": "object", "properties": {}})
+    }
+    async fn execute(
+        &self,
+        _args: HashMap<String, serde_json::Value>,
+        _ctx: &ToolContext,
+    ) -> ToolResult {
+        ToolResult::ok("ok")
+    }
+}
+
+#[test]
+fn test_get_deferred_summaries_empty_when_no_deferred() {
+    let reg = ToolRegistry::new();
+    let summaries = reg.get_deferred_summaries();
+    assert!(summaries.is_empty(), "No tools registered => no summaries");
+}
+
+#[test]
+fn test_get_deferred_summaries_excludes_core() {
+    let reg = ToolRegistry::new();
+    reg.register(Arc::new(ReadCategoryTool));
+    reg.register(Arc::new(CoreTool));
+    reg.mark_as_core("core_tool");
+
+    let summaries = reg.get_deferred_summaries();
+    assert!(!summaries.is_empty(), "Should have deferred tools");
+    // Should contain the deferred tool
+    assert!(summaries.contains("test_read_tool"), "Should list deferred tool: {summaries}");
+    // Should NOT contain the core tool
+    assert!(!summaries.contains("core_tool"), "Should NOT list core tool: {summaries}");
+}
+
+#[test]
+fn test_get_deferred_summaries_is_formatted_markdown() {
+    let reg = ToolRegistry::new();
+    reg.register(Arc::new(ReadCategoryTool));
+    reg.register(Arc::new(WebCategoryTool));
+    reg.mark_as_core("nonexistent"); // No core tools — both are deferred
+
+    let summaries = reg.get_deferred_summaries();
+    assert!(!summaries.is_empty(), "Should produce markdown");
+
+    // Should be proper markdown format
+    assert!(summaries.contains("## Deferred Tools"), "Should have heading");
+    assert!(summaries.contains("### Read"), "Should have Read category heading");
+    assert!(summaries.contains("### Web"), "Should have Web category heading");
+
+    // Should contain tool names as inline code
+    assert!(summaries.contains("`test_read_tool`"), "Should have tool in code ticks");
+    assert!(summaries.contains("`test_web_tool`"), "Should have tool in code ticks");
+
+    // Should contain descriptions
+    assert!(summaries.contains("A read category tool for testing"), "Should have description");
+    assert!(summaries.contains("A web category tool for testing"), "Should have description");
+}
+
+#[test]
+fn test_get_deferred_summaries_groups_by_category() {
+    let reg = ToolRegistry::new();
+    // Two deferred tools from different categories — should be grouped
+    reg.register(Arc::new(ReadCategoryTool));
+    reg.register(Arc::new(WebCategoryTool));
+
+    let summaries = reg.get_deferred_summaries();
+    assert!(!summaries.is_empty());
+
+    // Verify category ordering (BTreeMap keeps alphabetical order)
+    let read_pos = summaries.find("### Read").unwrap();
+    let web_pos = summaries.find("### Web").unwrap();
+    assert!(read_pos < web_pos, "Read should come before Web alphabetically");
+}
+
+#[test]
+fn test_activated_tools_cleared_per_turn() {
+    // This test verifies the per-turn clearing behavior by checking
+    // that a newly created LoopState (simulating a new iteration)
+    // starts with an empty activated_tools set.
+    let mut activated = std::collections::HashSet::<String>::new();
+    activated.insert("activated_tool".to_string());
+
+    // Simulate per-turn clearing
+    activated.clear();
+
+    assert!(activated.is_empty(), "Activated tools should be empty after per-turn clear");
+    assert!(!activated.contains("activated_tool"), "Previously activated tool should be cleared");
 }

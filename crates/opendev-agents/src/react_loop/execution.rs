@@ -121,6 +121,10 @@ impl ReactLoop {
 
         loop {
             state.iteration += 1;
+            // Reset activated deferred tools at each turn boundary so deferred
+            // tool activation is scoped to a single turn. The LLM must re-request
+            // activation via ToolSearch each turn if it wants access.
+            state.activated_tools.clear();
             let iter_start = Instant::now();
             let emitter = IterationEmitter::new(event_callback, state.completion_nudge_sent);
 

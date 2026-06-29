@@ -267,15 +267,62 @@ impl ToolRegistry {
             .collect()
     }
 
-    /// Get compact summaries of deferred (non-core) tools: `(name, description)`.
-    pub fn get_deferred_summaries(&self) -> Vec<(String, String)> {
+    /// Get compact summaries of deferred (non-core) tools as categorized markdown.
+    ///
+    /// Returns a formatted markdown string grouped by `ToolCategory`. Each group
+    /// lists available tool names with descriptions in a compact format suitable
+    /// for embedding in the system prompt. The LLM can use `ToolSearch` to
+    /// discover these tools with their full schemas if needed.
+    ///
+    /// Example output:
+    /// ```markdown
+    /// ## Deferred Tools
+    ///
+    /// ### Read (available)
+    /// - `Glob`: Find files by glob pattern
+    /// - `Grep`: Search file contents
+    ///
+    /// ### Web (available)
+    /// - `WebFetch`: Fetch a URL
+    /// - `WebSearch`: Search the web
+    /// ```
+    pub fn get_deferred_summaries(&self) -> String {
         let tools = self.tools.read().unwrap_or_else(|e| e.into_inner());
         let core = self.core_tools.read().unwrap_or_else(|e| e.into_inner());
-        tools
-            .values()
-            .filter(|tool| !core.contains(tool.name()))
-            .map(|tool| (tool.name().to_string(), tool.description().to_string()))
-            .collect()
+
+        // Collect deferred tools grouped by category
+        use std::collections::BTreeMap;
+        let mut by_category: BTreeMap<String, Vec<(String, String)>> = BTreeMap::new();
+
+        for tool in tools.values() {
+            if core.contains(tool.name()) {
+                continue;
+            }
+            let cat = tool.category().to_string();
+            by_category
+                .entry(cat)
+                .or_default()
+                .push((tool.name().to_string(), tool.description().to_string()));
+        }
+
+        if by_category.is_empty() {
+            return String::new();
+        }
+
+        let mut output = String::from("\n\n## Deferred Tools\n\n");
+        output.push_str(
+            "These tools are available but not loaded. Use ToolSearch to discover and activate them.\n\n",
+        );
+
+        for (category, tools) in &by_category {
+            output.push_str(&format!("### {category}\n"));
+            for (name, desc) in tools {
+                output.push_str(&format!("- `{name}`: {desc}\n"));
+            }
+            output.push('\n');
+        }
+
+        output
     }
 
     /// Build a map of `ToolCategory` → tool names from all registered tools.
