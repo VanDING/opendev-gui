@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Cpu, Server, Zap, Palette, Shield } from 'lucide-react';
+import { Cpu, Server, Zap, Palette, Shield, Lock, Globe, Database } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { ModelSettings } from './ModelSettings';
@@ -7,6 +7,9 @@ import { MCPSettings } from './MCPSettings';
 import { ThemeSettings } from './ThemeSettings';
 import { SkillsSettings } from './SkillsSettings';
 import { PrivacySettings } from './PrivacySettings';
+import { PermissionsSettings } from './PermissionsSettings';
+import { SandboxSettings } from './SandboxSettings';
+import { MemorySettings } from './MemorySettings';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -14,7 +17,7 @@ interface SettingsModalProps {
   initialTab?: TabId;
 }
 
-type TabId = 'model' | 'mcp' | 'skills' | 'theme' | 'privacy';
+type TabId = 'model' | 'mcp' | 'skills' | 'theme' | 'privacy' | 'permissions' | 'sandbox' | 'memory';
 
 interface TabConfig {
   id: TabId;
@@ -41,6 +44,24 @@ const tabs: TabConfig[] = [
     label: 'Skills',
     icon: Zap,
     description: 'Manage agent skills and knowledge'
+  },
+  {
+    id: 'permissions',
+    label: 'Permissions',
+    icon: Lock,
+    description: 'Manage tool permission rules'
+  },
+  {
+    id: 'sandbox',
+    label: 'Sandbox',
+    icon: Globe,
+    description: 'Configure sandbox and network policies'
+  },
+  {
+    id: 'memory',
+    label: 'Memory',
+    icon: Database,
+    description: 'View and manage memories'
   },
   {
     id: 'theme',
@@ -104,6 +125,9 @@ export function SettingsModal({ isOpen, onClose, initialTab }: SettingsModalProp
               {activeTab === 'model' && <ModelSettings />}
               {activeTab === 'mcp' && <MCPSettings />}
               {activeTab === 'skills' && <SkillsSettings />}
+              {activeTab === 'permissions' && <PermissionsSettings />}
+              {activeTab === 'sandbox' && <SandboxSettings />}
+              {activeTab === 'memory' && <MemorySettings />}
               {activeTab === 'theme' && <ThemeSettings />}
               {activeTab === 'privacy' && (
                 <PrivacySettings config={config} />

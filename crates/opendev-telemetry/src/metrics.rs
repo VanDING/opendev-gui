@@ -167,3 +167,56 @@ pub fn record_frontend_error(component: &str) {
         "Frontend error recorded"
     );
 }
+
+/// Record an LLM call span (request start, first token, completion).
+///
+/// Call at the start of an LLM request with `phase = "start"`,
+/// on first token with `phase = "first_token"`,
+/// and on completion with `phase = "complete"`.
+pub fn record_llm_call_span(provider: &str, model: &str, phase: &str, latency_ms: u64) {
+    tracing::debug!(
+        target: "metrics",
+        metric = "opendev.llm.call_span",
+        provider = %provider,
+        model = %model,
+        phase = %phase,
+        latency_ms = latency_ms,
+        "LLM call span: {} ({}ms)", phase, latency_ms,
+    );
+}
+
+/// Record tool execution spans (resolve, execute, sanitize phases).
+pub fn record_tool_span(tool: &str, phase: &str, duration_ms: u64) {
+    tracing::debug!(
+        target: "metrics",
+        metric = "opendev.tools.span",
+        tool = %tool,
+        phase = %phase,
+        duration_ms = duration_ms,
+        "Tool span: {}::{} ({}ms)", tool, phase, duration_ms,
+    );
+}
+
+/// Record per-model cost metric with session context.
+pub fn record_cost_per_model(model: &str, provider: &str, cost_usd: f64) {
+    tracing::debug!(
+        target: "metrics",
+        metric = "opendev.cost.per_model",
+        model = %model,
+        provider = %provider,
+        cost_usd = cost_usd,
+        "Model cost: ${:.6} for {} via {}", cost_usd, model, provider,
+    );
+}
+
+/// Propagate W3C trace context for distributed tracing.
+///
+/// Generates a `traceparent` header value in W3C Trace Context format:
+/// `00-{trace_id}-{span_id}-{flags}`.
+///
+/// The trace_id is preserved from the current span context if available,
+/// or a new one is generated. span_id is always new for each call.
+pub fn generate_traceparent() -> String {
+    // Use the existing trace context module
+    crate::trace_context::generate_traceparent()
+}

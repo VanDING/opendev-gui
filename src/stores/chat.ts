@@ -872,6 +872,29 @@ eventBridge.on('nested_tool_call', (message) => {
   });
 });
 
+// ─── Session Cleanup ──────────────────────────────────────────────────────────
+//
+// Edge case: when a session is deleted, we must clean up its state to prevent
+// memory leaks from accumulating sessionStates entries on rapid session switching.
+// The optimistic message expiration is 30s (documented in the 'connected' handler).
+
+eventBridge.on('session_deleted', (message) => {
+  const sid = resolveSessionId(message.data);
+  if (!sid) {
+    console.warn('[Frontend] session_deleted event without session_id, data:', message.data);
+    return;
+  }
+  console.log(`[Frontend] Cleaning up session state for deleted session ${sid}`);
+  useChatStore.setState(state => {
+    const { [sid]: _removed, ...rest } = state.sessionStates;
+    return {
+      sessionStates: rest,
+      // If the deleted session was the current session, reset to null
+      currentSessionId: state.currentSessionId === sid ? null : state.currentSessionId,
+    };
+  });
+});
+
 eventBridge.on('nested_tool_result', (message) => {
   const sid = resolveSessionId(message.data);
   if (!sid) return;

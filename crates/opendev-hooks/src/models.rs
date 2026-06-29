@@ -22,6 +22,10 @@ pub enum HookEvent {
     SubagentStart,
     /// Fired when a subagent finishes.
     SubagentStop,
+    /// Fired when the agent wants to show a notification to the user.
+    /// Hook can modify or suppress the notification by returning JSON with
+    /// `{decision: "suppress"}` on stdout.
+    Notification,
     /// Fired when the agent decides to stop.
     Stop,
     /// Fired before context compaction.
@@ -41,6 +45,7 @@ impl HookEvent {
             Self::PostToolUseFailure => "PostToolUseFailure",
             Self::SubagentStart => "SubagentStart",
             Self::SubagentStop => "SubagentStop",
+            Self::Notification => "Notification",
             Self::Stop => "Stop",
             Self::PreCompact => "PreCompact",
             Self::SessionEnd => "SessionEnd",
@@ -57,6 +62,7 @@ impl HookEvent {
             "PostToolUseFailure" => Some(Self::PostToolUseFailure),
             "SubagentStart" => Some(Self::SubagentStart),
             "SubagentStop" => Some(Self::SubagentStop),
+            "Notification" => Some(Self::Notification),
             "Stop" => Some(Self::Stop),
             "PreCompact" => Some(Self::PreCompact),
             "SessionEnd" => Some(Self::SessionEnd),
@@ -83,6 +89,7 @@ impl HookEvent {
         Self::PostToolUseFailure,
         Self::SubagentStart,
         Self::SubagentStop,
+        Self::Notification,
         Self::Stop,
         Self::PreCompact,
         Self::SessionEnd,

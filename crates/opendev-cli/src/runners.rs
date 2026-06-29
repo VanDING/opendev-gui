@@ -199,10 +199,48 @@ pub async fn run_interactive(
     } else if let Some(resume_id) = resume {
         match resume_id {
             Some(id) => {
-                info!(session_id = %id, "Resuming session");
-                if let Err(e) = session_manager.resume_session(&id) {
-                    eprintln!("Failed to load session '{id}': {e}");
-                    std::process::exit(1);
+                // Try exact match first, then slug/prefix match
+                let found_id = find_session_by_id_or_slug(&session_dir, &id);
+
+                match found_id {
+                    Some(session_id) => {
+                        info!(session_id = %session_id, "Resuming session");
+
+                        // Warn if session working directory differs from current
+                        if let Ok(session) = session_manager.load_session(&session_id) {
+                            if let Some(ref wd) = session.working_directory {
+                                if wd != &working_dir.to_string_lossy().to_string() {
+                                    eprintln!(
+                                        "Warning: session was created in '{}', not current directory '{}'",
+                                        wd,
+                                        working_dir.display(),
+                                    );
+                                }
+                            }
+                        }
+
+                        if let Err(e) = session_manager.resume_session(&session_id) {
+                            eprintln!("Failed to load session '{session_id}': {e}");
+                            std::process::exit(1);
+                        }
+                    }
+                    None => {
+                        eprintln!("Session '{}' not found by ID or slug", id);
+                        // Show available sessions
+                        let all_sessions = SessionListing::list_all_sessions(
+                            &opendev_config::Paths::new(Some(working_dir.to_path_buf()))
+                                .global_projects_dir(),
+                        );
+                        if !all_sessions.is_empty() {
+                            eprintln!("Available sessions:");
+                            for (i, s) in all_sessions.iter().enumerate().take(10) {
+                                let title = s.title.as_deref().unwrap_or("(untitled)");
+                                let short_id = &s.id[..s.id.len().min(10)];
+                                eprintln!("  {}. {} ({})", i + 1, title, short_id);
+                            }
+                        }
+                        std::process::exit(1);
+                    }
                 }
             }
             None => {
@@ -491,6 +529,43 @@ fn load_session_preview(
         return None;
     }
     Some(messages.join("\n"))
+}
+
+/// Find a session by exact ID or slug (prefix match on ID or title).
+///
+/// Returns the session ID if found, `None` otherwise.
+fn find_session_by_id_or_slug(
+    session_dir: &std::path::Path,
+    query: &str,
+) -> Option<String> {
+    use opendev_history::SessionListing;
+    let listing = SessionListing::new(session_dir.to_path_buf());
+
+    // Try exact ID match first: check if the session file exists
+    let json_path = session_dir.join(format!("{}.json", query));
+    if json_path.exists() {
+        return Some(query.to_string());
+    }
+
+    // Try slug match: prefix match on session ID
+    let sessions = listing.list_sessions(None, true);
+    for s in &sessions {
+        if s.id.starts_with(query) {
+            return Some(s.id.clone());
+        }
+    }
+
+    // Try slug match: prefix match on title
+    let lower_query = query.to_lowercase();
+    for s in &sessions {
+        if let Some(ref title) = s.title {
+            if title.to_lowercase().contains(&lower_query) {
+                return Some(s.id.clone());
+            }
+        }
+    }
+
+    None
 }
 
 /// Replay recorded events from a JSONL file for debugging.

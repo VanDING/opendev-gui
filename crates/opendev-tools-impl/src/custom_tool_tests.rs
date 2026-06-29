@@ -180,3 +180,161 @@ async fn test_execute_failing_command() {
     assert!(!result.success);
     assert!(result.error.unwrap().contains("error msg"));
 }
+
+// ── Validation tests ──
+
+#[test]
+fn validate_valid_tool() {
+    let manifest = CustomToolManifest {
+        name: "test-tool".into(),
+        description: "A test tool".into(),
+        command: "./script.sh".into(),
+        parameters: serde_json::json!({"type": "object", "properties": {}}),
+        timeout_secs: 30,
+    };
+    assert!(validate_custom_tool(&manifest).is_ok());
+}
+
+#[test]
+fn validate_empty_name() {
+    let manifest = CustomToolManifest {
+        name: "".into(),
+        description: "".into(),
+        command: "echo hello".into(),
+        parameters: serde_json::json!({"type": "object", "properties": {}}),
+        timeout_secs: 30,
+    };
+    let result = validate_custom_tool(&manifest);
+    assert!(result.is_err());
+    assert!(result.unwrap_err().iter().any(|e| e.contains("empty")));
+}
+
+#[test]
+fn validate_name_with_spaces() {
+    let manifest = CustomToolManifest {
+        name: "my tool".into(),
+        description: "".into(),
+        command: "echo".into(),
+        parameters: serde_json::json!({"type": "object", "properties": {}}),
+        timeout_secs: 30,
+    };
+    let result = validate_custom_tool(&manifest);
+    assert!(result.is_err());
+}
+
+#[test]
+fn validate_shell_injection_in_command() {
+    let manifest = CustomToolManifest {
+        name: "bad-tool".into(),
+        description: "".into(),
+        command: "echo; rm -rf /".into(),
+        parameters: serde_json::json!({"type": "object", "properties": {}}),
+        timeout_secs: 30,
+    };
+    let result = validate_custom_tool(&manifest);
+    assert!(result.is_err());
+    assert!(result.unwrap_err().iter().any(|e| e.contains("';'")));
+}
+
+#[test]
+fn validate_empty_command() {
+    let manifest = CustomToolManifest {
+        name: "empty-tool".into(),
+        description: "".into(),
+        command: "".into(),
+        parameters: serde_json::json!({"type": "object", "properties": {}}),
+        timeout_secs: 30,
+    };
+    let result = validate_custom_tool(&manifest);
+    assert!(result.is_err());
+}
+
+#[test]
+fn validate_invalid_schema() {
+    let manifest = CustomToolManifest {
+        name: "bad-schema".into(),
+        description: "".into(),
+        command: "echo".into(),
+        parameters: serde_json::json!("string"), // Not an object
+        timeout_secs: 30,
+    };
+    let result = validate_custom_tool(&manifest);
+    assert!(result.is_err());
+}
+
+// ── Parameter substitution tests ──
+
+#[test]
+fn substitute_single_param() {
+    let mut args = std::collections::HashMap::new();
+    args.insert("file".to_string(), serde_json::json!("main.rs"));
+    let result = substitute_params("process {file}", &args);
+    assert_eq!(result, "process main.rs");
+}
+
+#[test]
+fn substitute_multiple_params() {
+    let mut args = std::collections::HashMap::new();
+    args.insert("from".to_string(), serde_json::json!("src"));
+    args.insert("to".to_string(), serde_json::json!("dst"));
+    let result = substitute_params("copy {from} -> {to}", &args);
+    assert_eq!(result, "copy src -> dst");
+}
+
+#[test]
+fn substitute_unknown_param_left_as_is() {
+    let mut args = std::collections::HashMap::new();
+    args.insert("known".to_string(), serde_json::json!("value"));
+    let result = substitute_params("process {known} and {unknown}", &args);
+    assert_eq!(result, "process value and {unknown}");
+}
+
+#[test]
+fn substitute_non_string_param() {
+    let mut args = std::collections::HashMap::new();
+    args.insert("count".to_string(), serde_json::json!(42));
+    let result = substitute_params("run {count} times", &args);
+    assert_eq!(result, "run 42 times");
+}
+
+// ── Output parsing tests ──
+
+#[test]
+fn parse_output_json_object() {
+    let stdout = r#"{"status": "ok", "result": "done"}"#;
+    let (display, parsed) = parse_tool_output(stdout);
+    assert!(parsed.is_some());
+    assert!(display.contains("status"));
+    assert!(display.contains("ok"));
+}
+
+#[test]
+fn parse_output_plain_text() {
+    let stdout = "Task completed successfully";
+    let (display, parsed) = parse_tool_output(stdout);
+    assert!(parsed.is_none());
+    assert_eq!(display, "Task completed successfully");
+}
+
+#[test]
+fn parse_output_empty() {
+    let (display, parsed) = parse_tool_output("");
+    assert!(parsed.is_none());
+    assert!(display.is_empty());
+}
+
+// ── Security verification tests ──
+
+#[test]
+fn verify_security_valid_command() {
+    assert!(verify_tool_security("./script.sh").is_ok());
+    assert!(verify_tool_security("python3 test.py").is_ok());
+}
+
+#[test]
+fn verify_security_rejects_dangerous() {
+    assert!(verify_tool_security("echo; ls").is_err());
+    assert!(verify_tool_security("cmd | grep x").is_err());
+    assert!(verify_tool_security("$SHELL").is_err());
+    assert!(verify_tool_security("`id`").is_err());
+}

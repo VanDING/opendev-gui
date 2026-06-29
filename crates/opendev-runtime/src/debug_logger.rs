@@ -148,6 +148,81 @@ impl SessionDebugLogger {
         );
     }
 
+    /// Log a tool execution with args and result.
+    ///
+    /// Logs the tool name, arguments, duration, and success/failure.
+    /// Args are truncated to prevent excessively large log entries.
+    pub fn log_tool_execution(
+        &self,
+        tool_name: &str,
+        args: &serde_json::Value,
+        duration_ms: u64,
+        success: bool,
+        result: &serde_json::Value,
+    ) {
+        let truncated_args = truncate_value(args);
+        let truncated_result = truncate_value(result);
+        self.log(
+            "tool_execution",
+            "tool",
+            serde_json::json!({
+                "tool": tool_name,
+                "args": truncated_args,
+                "duration_ms": duration_ms,
+                "success": success,
+                "result": truncated_result,
+            }),
+        );
+    }
+
+    /// Log a permission decision with details.
+    ///
+    /// Records the rule that was matched, the action taken (allow/deny/prompt),
+    /// and the tool/command that triggered it.
+    pub fn log_permission_decision(
+        &self,
+        tool_name: &str,
+        command: &str,
+        rule_pattern: Option<&str>,
+        action: &str,
+        granted: bool,
+    ) {
+        self.log(
+            "permission_decision",
+            "permissions",
+            serde_json::json!({
+                "tool": tool_name,
+                "command": command,
+                "rule_pattern": rule_pattern,
+                "action": action,
+                "granted": granted,
+            }),
+        );
+    }
+
+    /// Log a compaction event with details about what was compressed.
+    ///
+    /// Records before/after message counts, tokens freed, and the
+    /// compaction stage that was applied.
+    pub fn log_compaction(
+        &self,
+        stage: &str,
+        before_count: usize,
+        after_count: usize,
+        tokens_freed: u64,
+    ) {
+        self.log(
+            "compaction",
+            "context",
+            serde_json::json!({
+                "stage": stage,
+                "before_count": before_count,
+                "after_count": after_count,
+                "tokens_freed": tokens_freed,
+            }),
+        );
+    }
+
     /// Internal: write a JSONL entry to the debug file.
     fn write_entry(&self, event: &str, component: &str, data: Value) {
         let inner = match &self.inner {

@@ -1,6 +1,7 @@
 //! Subcommand handlers for setup, config, MCP, session, channel, and run commands.
 
 mod channel;
+mod remote;
 mod secret;
 
 use std::collections::HashMap;
@@ -13,6 +14,7 @@ use crate::cli::*;
 use crate::helpers::*;
 
 pub use channel::{handle_channel, handle_remote};
+pub use remote::RemoteSession;
 pub use secret::{handle_secret_doctor, handle_secret_migrate};
 
 /// Handle the top-level `opendev setup` command.
