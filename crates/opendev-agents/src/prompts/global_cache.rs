@@ -120,9 +120,9 @@ impl GlobalPromptCache {
     }
 }
 
-/// Get the OpenDev data directory (typically `~/.opendev/`).
+/// Get the OpenDev data directory (`~/.opendev/`).
 fn dirs_next() -> Option<PathBuf> {
-    dirs::data_dir().map(|d| d.join("opendev"))
+    dirs::home_dir().map(|d| d.join(".opendev"))
 }
 
 #[cfg(test)]

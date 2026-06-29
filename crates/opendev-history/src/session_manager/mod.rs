@@ -237,7 +237,15 @@ impl SessionManager {
     /// Falls back to reading messages from the JSON file for legacy format.
     pub fn load_session(&self, session_id: &str) -> std::io::Result<Session> {
         let json_path = self.session_dir.join(format!("{session_id}.json"));
-        self.load_from_file(&json_path)
+        let session = self.load_from_file(&json_path)?;
+
+        // Run validation checks and log any issues found.
+        let issues = Self::validate_session(&self.session_dir, session_id);
+        for issue in &issues {
+            tracing::warn!(session_id = %session_id, issue = %issue, "Session validation issue");
+        }
+
+        Ok(session)
     }
 
     /// Validate session files for consistency and integrity.

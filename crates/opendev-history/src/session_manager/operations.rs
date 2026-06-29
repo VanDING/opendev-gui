@@ -90,6 +90,37 @@ impl SessionManager {
 
         self.save_session(&forked)?;
 
+        // Update the parent session's subagent_sessions map to include the child.
+        match self.load_session(session_id) {
+            Ok(mut parent_session) => {
+                parent_session
+                    .subagent_sessions
+                    .entry("fork".to_string())
+                    .or_insert(forked.id.clone());
+                if let Err(e) = self.save_session(&parent_session) {
+                    tracing::warn!(
+                        parent = %session_id,
+                        child = %forked.id,
+                        error = %e,
+                        "Failed to update parent subagent_sessions after fork"
+                    );
+                } else {
+                    tracing::info!(
+                        parent = %session_id,
+                        child = %forked.id,
+                        "Updated parent subagent_sessions after fork"
+                    );
+                }
+            }
+            Err(e) => {
+                tracing::warn!(
+                    parent = %session_id,
+                    error = %e,
+                    "Failed to load parent session for subagent_sessions update"
+                );
+            }
+        }
+
         self.emit_event(
             &forked.id,
             SessionEvent::SessionForked {

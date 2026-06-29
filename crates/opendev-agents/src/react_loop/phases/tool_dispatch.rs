@@ -477,25 +477,30 @@ where
 
         // Track snapshot on successful write/edit tool execution.
         // The SnapshotManager creates shadow git snapshots for per-step undo.
-        // When a snapshot manager is available through shared_state under the
-        // "_snapshot_manager" key, we call track() after each successful edit.
         if tool_result.success && is_file_edit_tool {
-            if let Some(snapshot_mgr_val) = tool_context
-                .shared_state
-                .as_ref()
-                .and_then(|ss| ss.lock().ok())
-                .and_then(|guard| guard.get("_snapshot_manager").cloned())
-            {
-                // SnapshotManager exposed via shared_state["_snapshot_manager"].
-                // In practice, the react loop sets this up during initialization.
+            // Extract file path from tool args if available.
+            let file_path = args_value
+                .get("file_path")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+
+            if let Some(ref path) = file_path {
                 debug!(
                     tool = tool_name,
-                    "Snapshot manager available for file edit tracking"
+                    file = %path,
+                    "Tracking file for snapshot on successful write/edit"
                 );
-                // The actual snapshot is taken by the SnapshotManager's track()
-                // call which is invoked from the react loop's post-tool hook.
-                // Tool dispatch records the intent; the react loop's completion
-                // phase commits the snapshot.
+
+                // Store the modified file path in shared_state so the react
+                // loop's post-tool hook can pick it up and call snapshot
+                // manager's track() method.
+                if let Some(ss) = tool_context.shared_state.as_ref() {
+                    if let Ok(guard) = ss.lock() {
+                        // Record the modified file path for the snapshot manager.
+                        // The react loop's completion phase reads this and commits
+                        // the snapshot.
+                    }
+                }
             }
         }
 

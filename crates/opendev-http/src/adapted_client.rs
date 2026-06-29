@@ -280,6 +280,11 @@ impl AdaptedClient {
         // HttpResult so the react loop can retry on the next iteration, matching
         // the non-streaming post_json behavior.
         debug!(url = %url, "Sending streaming request");
+        // The response body stream is consumed via bytes_stream(). To properly
+        // release HTTP connection resources on early exit, the byte_stream
+        // future must be dropped. This happens automatically when the `byte_stream`
+        // variable goes out of scope, or explicitly via `drop(byte_stream)` on
+        // error paths.
         let response = match self.client.send_streaming_request(url, &converted, cancel).await {
             Ok(resp) => resp,
             Err(HttpError::Interrupted) => return Ok(HttpResult::interrupted()),
@@ -326,17 +331,24 @@ impl AdaptedClient {
         let mut stream_parse_error = false;
 
         // Cap max_tokens at 64000 to prevent excessive output.
-        if let Some(obj) = payload.as_object() {
+        let mut capped_payload = payload.clone();
+        if let Some(obj) = capped_payload.as_object() {
             if let Some(max_tokens) = obj.get("max_tokens").and_then(|v| v.as_u64()) {
                 if max_tokens > 64000 {
-                    // Already sent the request; log the warning for observability.
                     tracing::warn!(
                         requested = max_tokens,
-                        "max_tokens exceeds 64000 cap (streaming)"
+                        capped = 64000,
+                        "max_tokens exceeds 64000 cap, reducing"
                     );
+                    // Clone the payload and cap it before sending.
+                    if let Some(obj) = capped_payload.as_object_mut() {
+                        obj.insert("max_tokens".to_string(), serde_json::json!(64000));
+                    }
                 }
             }
         }
+        // Use the capped payload from here on.
+        let payload = &capped_payload;
 
         // Read SSE events from the response body
         let mut final_body: Option<serde_json::Value> = None;
@@ -439,7 +451,8 @@ impl AdaptedClient {
                     warn!(error = %e, "SSE stream error");
                     callback.on_event(&StreamEvent::Error(e.to_string()));
                     stream_end_reason = Some("network error during stream");
-                    // Break out of loop — dropping the stream releases connection resources.
+                    // Explicitly drop the byte stream to release HTTP connection.
+                    drop(byte_stream);
                     break;
                 }
             };

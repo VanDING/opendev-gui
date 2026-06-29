@@ -5,6 +5,8 @@
 //! and tracks denial counters to fall back to manual approval when the
 //! heuristic is consistently rejecting requests.
 
+pub mod xml_analysis;
+
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
