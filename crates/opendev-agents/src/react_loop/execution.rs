@@ -406,7 +406,7 @@ impl ReactLoop {
                         self,
                         &tool_calls,
                         messages,
-                        &state,
+                        &mut state,
                         &emitter,
                         &mut iter_metrics,
                         iter_start,

@@ -24,7 +24,7 @@ pub(in crate::react_loop) async fn execute_parallel<M>(
     react_loop: &ReactLoop,
     tool_calls: &[Value],
     messages: &mut Vec<Value>,
-    state: &LoopState,
+    state: &mut LoopState,
     emitter: &IterationEmitter<'_>,
     iter_metrics: &mut IterationMetrics,
     iter_start: std::time::Instant,
@@ -181,6 +181,21 @@ where
             "name": t_name,
             "content": formatted,
         }));
+
+        // Track background spawns for completion blocking.
+        // SpawnTeammate/Agent with task_id or Running in background.
+        // Matches the same logic in execute_sequential's tool_dispatch.rs.
+        if tool_result.success {
+            let is_bg_subagent = matches!(t_name.as_str(), "SpawnTeammate" | "Agent" | "spawn_subagent")
+                && tool_result.output.as_deref().is_some_and(|o| {
+                    o.contains("task_id:") || o.contains("Running in background")
+                });
+            let is_bg_bash = t_name.as_str() == "Bash"
+                && tool_result.metadata.contains_key("background_id");
+            if is_bg_subagent || is_bg_bash {
+                state.bg_tasks_spawned += 1;
+            }
+        }
     }
 
     // Track exploration tools for planning phase transition

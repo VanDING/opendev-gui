@@ -521,14 +521,17 @@ where
         // Track background task spawns for completion nudge.
         // SpawnTeammate always runs in background; SpawnSubagent does when
         // run_in_background=true. Both return "task_id:" on success.
-        if tool_result.success
-            && matches!(tool_name, "SpawnTeammate" | "Agent" | "spawn_subagent")
-            && tool_result
-                .output
-                .as_deref()
-                .is_some_and(|o| o.contains("task_id:") || o.contains("Running in background"))
-        {
-            state.bg_tasks_spawned += 1;
+        // Bash commands run with run_in_background=true also count.
+        if tool_result.success {
+            let is_bg_subagent = matches!(tool_name, "SpawnTeammate" | "Agent" | "spawn_subagent")
+                && tool_result.output.as_deref().is_some_and(|o| {
+                    o.contains("task_id:") || o.contains("Running in background")
+                });
+            let is_bg_bash = tool_name == "Bash"
+                && tool_result.metadata.contains_key("background_id");
+            if is_bg_subagent || is_bg_bash {
+                state.bg_tasks_spawned += 1;
+            }
         }
 
         // Capture skill model override from invoke_skill
@@ -1143,6 +1146,13 @@ async fn execute_concurrent_batch(
             record_artifact(ai, &t_name, &prep.args_value, &tool_result);
         }
 
+        // Track background spawns for completion blocking
+        if tool_result.success && t_name == "Bash"
+            && tool_result.metadata.contains_key("background_id")
+        {
+            state.bg_tasks_spawned += 1;
+        }
+
         // Emit result
         let output_str = tool_result_display_output(&tool_result);
         emitter.emit_tool_result(&tc_id, &t_name, &output_str, tool_result.success);
@@ -1495,6 +1505,13 @@ where
 
                 if tool_result.success && let Some(ai) = artifact_index {
                     record_artifact(ai, &t_name, &prep.args_value, &tool_result);
+                }
+
+                // Track background task spawns for completion blocking
+                if tool_result.success && t_name == "Bash"
+                    && tool_result.metadata.contains_key("background_id")
+                {
+                    state.bg_tasks_spawned += 1;
                 }
 
                 let output_str = tool_result_display_output(&tool_result);
