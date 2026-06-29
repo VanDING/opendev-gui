@@ -105,6 +105,21 @@ pub struct SubAgentSpec {
     /// omitted from this agent's system prompt.
     #[serde(default)]
     pub omit_instructions: bool,
+
+    /// Enable forked prompt caching for this subagent.
+    ///
+    /// When `true`, `isolation` is `None`, and the subagent has tool
+    /// restrictions (non-empty `tools`), the parent agent's conversation
+    /// history is cloned and the last assistant's tool_use blocks are
+    /// replaced with a placeholder result before appending the task.
+    /// This shares the prompt cache prefix between parent and child,
+    /// reducing token cost and latency by 5-13K tokens per subagent call.
+    ///
+    /// Only effective when the provider supports prompt caching (e.g.,
+    /// Anthropic prompt-caching-2024-07-31). Has no effect when
+    /// `isolation` is `Worktree`.
+    #[serde(default)]
+    pub use_forked_cache: bool,
 }
 
 /// Permission mode for an agent.

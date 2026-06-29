@@ -8,6 +8,7 @@ mod compaction;
 mod config;
 mod emitter;
 mod execution;
+pub(crate) mod forked_messages;
 mod helpers;
 mod loop_state;
 mod phases;

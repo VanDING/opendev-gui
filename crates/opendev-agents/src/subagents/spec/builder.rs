@@ -30,6 +30,7 @@ impl SubAgentSpec {
             isolation: Default::default(),
             background: false,
             omit_instructions: false,
+            use_forked_cache: false,
         }
     }
 
