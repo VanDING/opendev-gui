@@ -17,7 +17,7 @@ async fn test_with_health_check_interval() {
 async fn test_acquire_oauth_token_invalid_url() {
     let oauth = McpOAuthConfig {
         client_id: "test-client".to_string(),
-        client_secret: "test-secret".to_string(),
+        client_secret: "test-secret".to_string().into(),
         authorization_url: None,
         token_url: "http://127.0.0.1:1/nonexistent/token".to_string(),
         scope: Some("read write".to_string()),
@@ -32,7 +32,7 @@ async fn test_acquire_oauth_token_invalid_url() {
 fn test_oauth_config_struct() {
     let oauth = McpOAuthConfig {
         client_id: "cid".to_string(),
-        client_secret: "csecret".to_string(),
+        client_secret: "csecret".to_string().into(),
         authorization_url: None,
         token_url: "https://auth.example.com/token".to_string(),
         scope: Some("mcp:tools".to_string()),
@@ -48,7 +48,7 @@ fn test_oauth_config_struct() {
 fn test_oauth_config_serialization() {
     let oauth = McpOAuthConfig {
         client_id: "cid".to_string(),
-        client_secret: "csecret".to_string(),
+        client_secret: "csecret".to_string().into(),
         authorization_url: None,
         token_url: "https://auth.example.com/token".to_string(),
         scope: None,

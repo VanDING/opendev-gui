@@ -16,6 +16,7 @@ async fn test_permanently_failed_not_restarted() {
                 consecutive_failures: 10,
                 restart_attempts: MAX_RESTART_ATTEMPTS,
                 tools_removed: true,
+                crash_timestamps: Vec::new(),
             },
         );
     }
@@ -42,6 +43,7 @@ async fn test_restart_increments_attempts() {
                 consecutive_failures: 3,
                 restart_attempts: 0,
                 tools_removed: true,
+                crash_timestamps: Vec::new(),
             },
         );
     }
@@ -71,6 +73,7 @@ async fn test_max_restart_attempts_marks_permanently_failed() {
                 consecutive_failures: 5,
                 restart_attempts: MAX_RESTART_ATTEMPTS - 1,
                 tools_removed: true,
+                crash_timestamps: Vec::new(),
             },
         );
     }

@@ -179,6 +179,18 @@ pub fn load_config(config_path: &Path) -> McpResult<McpConfig> {
 }
 
 /// Save MCP configuration to a JSON file.
+/// Save MCP configuration to disk with atomic write and secure file permissions.
+///
+/// # Security properties
+///
+/// - **Atomic write**: content is written to a temp file then renamed, preventing
+///   partial writes and TOCTOU races.
+/// - **0o600 permissions** (Unix): the temp file is created with owner-only read/write
+///   to prevent other users from reading OAuth client secrets.
+/// - **SecretString**: `client_secret` in `McpOAuthConfig` is wrapped in
+///   `secrecy::SecretString` and serialized via a custom serializer that exposes
+///   the value only for serialization (the in-memory representation remains
+///   zeroable and protected from core dumps).
 pub fn save_config(config: &McpConfig, config_path: &Path) -> McpResult<()> {
     if let Some(parent) = config_path.parent() {
         std::fs::create_dir_all(parent).map_err(|e| {

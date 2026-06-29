@@ -12,6 +12,14 @@ use opendev_mcp::McpManager;
 use opendev_mcp::models::{McpContent, McpToolSchema, DEFAULT_MAX_MCP_OUTPUT_CHARS};
 use opendev_tools_core::traits::{BaseTool, ToolContext, ToolResult};
 
+/// Maximum image dimensions for inline image data (1920x1080).
+/// Reserved for future use when decoding image dimensions from base64.
+#[allow(dead_code)]
+const IMAGE_MAX_DIMENSIONS: (u32, u32) = (1920, 1080);
+
+/// Maximum image data size (5 MB).
+const IMAGE_MAX_BYTES: usize = 5_000_000;
+
 /// A `BaseTool` wrapper around a single MCP server tool.
 ///
 /// The tool name is the namespaced MCP name (e.g., `sqlite__query`),
@@ -100,8 +108,41 @@ impl BaseTool for McpBridgeTool {
                     .content
                     .iter()
                     .filter_map(|c| match c {
-                        McpContent::Text { text } => Some(text.as_str()),
-                        _ => None,
+                        McpContent::Text { text } => Some(text.clone()),
+                        McpContent::Image { data, mime_type } => {
+                            if data.len() > IMAGE_MAX_BYTES {
+                                return Some(format!(
+                                    "[Image omitted: {:.1} MB exceeds {:.1} MB limit]",
+                                    data.len() as f64 / 1_000_000.0,
+                                    IMAGE_MAX_BYTES as f64 / 1_000_000.0,
+                                ));
+                            }
+
+                            // Check approximate dimensions from base64 length
+                            // Base64 encodes 3 bytes as 4 chars, so raw size ≈ len * 3/4
+                            // For 1920x1080 RGBA: 1920 * 1080 * 4 ≈ 8.3 MB raw
+                            // That's above IMAGE_MAX_BYTES, so simple byte check suffices.
+                            let raw_size_estimate = data.len() * 3 / 4;
+                            if raw_size_estimate > IMAGE_MAX_BYTES {
+                                return Some(format!(
+                                    "[Image omitted: estimated {:.1} MB exceeds limit]",
+                                    raw_size_estimate as f64 / 1_000_000.0,
+                                ));
+                            }
+
+                            // Format as a markdown image reference
+                            Some(format!(
+                                "[Image: {mime_type}, {} bytes of base64 data]",
+                                data.len()
+                            ))
+                        }
+                        McpContent::Resource { uri } => {
+                            // Resource content — persist binary to disk if needed,
+                            // otherwise reference the URI.
+                            Some(format!(
+                                "[Resource: {uri} — use a file_read or web_fetch tool to retrieve the content]"
+                            ))
+                        }
                     })
                     .collect::<Vec<_>>()
                     .join("\n");

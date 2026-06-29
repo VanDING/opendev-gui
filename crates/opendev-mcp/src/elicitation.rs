@@ -78,7 +78,7 @@ impl ElicitationHandler {
     ///
     /// Returns an `ElicitRequest` describing what's needed and a receiver
     /// that will deliver the result when the user responds.
-    pub fn request_input(
+    pub async fn request_input(
         &self,
         schema: serde_json::Value,
         prompt: impl Into<String>,
@@ -102,10 +102,7 @@ impl ElicitationHandler {
         };
 
         // Store in pending map
-        let mut map = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current()
-                .block_on(async { self.pending.lock().await })
-        });
+        let mut map = self.pending.lock().await;
         map.insert(id.clone(), pending);
 
         (request, rx)
@@ -114,15 +111,12 @@ impl ElicitationHandler {
     /// Submit the result for a pending elicitation request.
     ///
     /// Returns `None` if the elicitation ID is unknown or already completed.
-    pub fn submit_result(
+    pub async fn submit_result(
         &self,
         elicitation_id: &str,
         values: HashMap<String, serde_json::Value>,
     ) -> Option<()> {
-        let mut map = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current()
-                .block_on(async { self.pending.lock().await })
-        });
+        let mut map = self.pending.lock().await;
 
         match map.remove(elicitation_id) {
             Some(pending) => {
@@ -138,20 +132,14 @@ impl ElicitationHandler {
     }
 
     /// Get a list of all pending elicitation requests.
-    pub fn pending_requests(&self) -> Vec<ElicitRequest> {
-        let map = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current()
-                .block_on(async { self.pending.lock().await })
-        });
+    pub async fn pending_requests(&self) -> Vec<ElicitRequest> {
+        let map = self.pending.lock().await;
         map.values().map(|p| p.request.clone()).collect()
     }
 
     /// Cancel a pending elicitation request.
-    pub fn cancel(&self, elicitation_id: &str) -> bool {
-        let mut map = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current()
-                .block_on(async { self.pending.lock().await })
-        });
+    pub async fn cancel(&self, elicitation_id: &str) -> bool {
+        let mut map = self.pending.lock().await;
         map.remove(elicitation_id).is_some()
     }
 
@@ -253,8 +241,8 @@ pub fn open_url_in_browser(url: &str) -> Result<(), String> {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_elicit_request_form() {
+    #[tokio::test]
+    async fn test_elicit_request_form() {
         let handler = ElicitationHandler::new();
         let schema = serde_json::json!({
             "type": "object",
@@ -265,7 +253,7 @@ mod tests {
             "required": ["name"]
         });
 
-        let (request, _rx) = handler.request_input(schema, "Please provide your info", ElicitMode::Form, None);
+        let (request, _rx) = handler.request_input(schema, "Please provide your info", ElicitMode::Form, None).await;
 
         assert_eq!(request.mode, ElicitMode::Form);
         assert!(request.prompt.contains("Please provide your info"));
@@ -273,8 +261,8 @@ mod tests {
         assert!(request.url.is_none());
     }
 
-    #[test]
-    fn test_elicit_request_url() {
+    #[tokio::test]
+    async fn test_elicit_request_url() {
         let handler = ElicitationHandler::new();
         let schema = serde_json::json!({"type": "object", "properties": {}});
 
@@ -283,57 +271,53 @@ mod tests {
             "Authorize in browser",
             ElicitMode::Url,
             Some("https://example.com/auth".to_string()),
-        );
+        ).await;
 
         assert_eq!(request.mode, ElicitMode::Url);
         assert_eq!(request.url.as_deref(), Some("https://example.com/auth"));
     }
 
-    #[test]
-    fn test_submit_result() {
+    #[tokio::test]
+    async fn test_submit_result() {
         let handler = ElicitationHandler::new();
         let schema = serde_json::json!({"type": "object", "properties": {}});
-        let (request, rx) = handler.request_input(schema, "test", ElicitMode::Form, None);
+        let (request, rx) = handler.request_input(schema, "test", ElicitMode::Form, None).await;
 
         let mut values = HashMap::new();
         values.insert("answer".to_string(), serde_json::json!(42));
 
         // Submit result
-        assert!(handler.submit_result(&request.elicitation_id, values.clone()).is_some());
+        assert!(handler.submit_result(&request.elicitation_id, values.clone()).await.is_some());
 
         // Should receive the result
-        let result = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current()
-                .block_on(async { rx.await })
-        });
-        let result = result.expect("should receive result");
+        let result = rx.await.expect("should receive result");
         assert_eq!(result.values["answer"], serde_json::json!(42));
     }
 
-    #[test]
-    fn test_submit_unknown_id() {
+    #[tokio::test]
+    async fn test_submit_unknown_id() {
         let handler = ElicitationHandler::new();
-        assert!(handler.submit_result("nonexistent", HashMap::new()).is_none());
+        assert!(handler.submit_result("nonexistent", HashMap::new()).await.is_none());
     }
 
-    #[test]
-    fn test_cancel_pending() {
+    #[tokio::test]
+    async fn test_cancel_pending() {
         let handler = ElicitationHandler::new();
         let schema = serde_json::json!({"type": "object", "properties": {}});
-        let (request, _rx) = handler.request_input(schema, "test", ElicitMode::Form, None);
+        let (request, _rx) = handler.request_input(schema, "test", ElicitMode::Form, None).await;
 
-        assert!(handler.cancel(&request.elicitation_id));
-        assert!(!handler.cancel(&request.elicitation_id)); // second cancel fails
+        assert!(handler.cancel(&request.elicitation_id).await);
+        assert!(!handler.cancel(&request.elicitation_id).await); // second cancel fails
     }
 
-    #[test]
-    fn test_pending_requests() {
+    #[tokio::test]
+    async fn test_pending_requests() {
         let handler = ElicitationHandler::new();
         let schema = serde_json::json!({"type": "object", "properties": {}});
-        let (_r1, _) = handler.request_input(schema.clone(), "first", ElicitMode::Form, None);
-        let (_r2, _) = handler.request_input(schema, "second", ElicitMode::Form, None);
+        let (_r1, _) = handler.request_input(schema.clone(), "first", ElicitMode::Form, None).await;
+        let (_r2, _) = handler.request_input(schema, "second", ElicitMode::Form, None).await;
 
-        assert_eq!(handler.pending_requests().len(), 2);
+        assert_eq!(handler.pending_requests().await.len(), 2);
     }
 
     #[test]

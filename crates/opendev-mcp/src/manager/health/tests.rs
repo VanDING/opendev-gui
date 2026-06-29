@@ -42,6 +42,7 @@ async fn test_health_check_success_resets_failures() {
                 consecutive_failures: 2,
                 restart_attempts: 0,
                 tools_removed: false,
+                crash_timestamps: Vec::new(),
             },
         );
     }
@@ -97,6 +98,7 @@ async fn test_get_all_health_states() {
                 consecutive_failures: 3,
                 restart_attempts: 1,
                 tools_removed: true,
+                crash_timestamps: Vec::new(),
             },
         );
     }
