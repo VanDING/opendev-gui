@@ -119,6 +119,14 @@ impl BaseTool for FileEditTool {
             .with_llm_suffix("ask your user to approve");
         }
 
+        // Ensure parent directory exists before any file operations.
+        // While file existence is verified above, this protects against
+        // concurrent parent-deletion races and satisfies the atomic write
+        // discipline: mkdir(parent) before the no-yield critical section.
+        if let Some(parent) = path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+
         // Acquire per-file lock — scoped so the guard drops before async diagnostics.
         // The entire read-edit-write sequence runs on a blocking thread via
         // spawn_blocking to avoid blocking the async runtime AND to keep the
