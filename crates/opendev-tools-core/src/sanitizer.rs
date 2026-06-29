@@ -173,6 +173,7 @@ impl ToolResultSanitizer {
                 error: truncated_error,
                 was_truncated: false,
                 overflow_path: None,
+                secrets_redacted: false,
             };
         }
 
@@ -184,6 +185,7 @@ impl ToolResultSanitizer {
                     error: error.map(String::from),
                     was_truncated: false,
                     overflow_path: None,
+                    secrets_redacted: false,
                 };
             }
         };
@@ -191,11 +193,13 @@ impl ToolResultSanitizer {
         let rule = match self.get_rule(tool_name) {
             Some(r) => r,
             None => {
+                let (redacted_output, secrets_redacted) = redact_secrets_if_needed(output_str, tool_name);
                 return SanitizedResult {
-                    output: Some(output_str.to_string()),
+                    output: Some(redacted_output),
                     error: None,
                     was_truncated: false,
                     overflow_path: None,
+                    secrets_redacted,
                 };
             }
         };
@@ -204,11 +208,13 @@ impl ToolResultSanitizer {
         let effective_limit = rule.effective_max_chars();
 
         if output_str.len() <= effective_limit {
+            let (redacted_output, secrets_redacted) = redact_secrets_if_needed(output_str, tool_name);
             return SanitizedResult {
-                output: Some(output_str.to_string()),
+                output: Some(redacted_output),
                 error: None,
                 was_truncated: false,
                 overflow_path: None,
+                secrets_redacted,
             };
         }
 
@@ -256,11 +262,16 @@ impl ToolResultSanitizer {
             "Truncated tool result"
         );
 
+        // Run secret detection on the truncated output
+        let (final_output, secrets_redacted) =
+            redact_secrets_if_needed(&format!("{truncated}{marker}"), tool_name);
+
         SanitizedResult {
-            output: Some(format!("{truncated}{marker}")),
+            output: Some(final_output),
             error: None,
             was_truncated: true,
             overflow_path,
+            secrets_redacted,
         }
     }
 
@@ -307,11 +318,14 @@ impl ToolResultSanitizer {
                             path.display()
                         ));
                     }
+                    let (final_output, secrets_redacted) =
+                        redact_secrets_if_needed(&format!("{truncated}{marker}"), tool_name);
                     return SanitizedResult {
-                        output: Some(format!("{truncated}{marker}")),
+                        output: Some(final_output),
                         error: None,
                         was_truncated: true,
                         overflow_path,
+                        secrets_redacted,
                     };
                 }
             }
@@ -344,6 +358,7 @@ impl ToolResultSanitizer {
                 error: truncated_error,
                 was_truncated: false,
                 overflow_path: None,
+                secrets_redacted: false,
             };
         }
 
@@ -355,6 +370,7 @@ impl ToolResultSanitizer {
                     error: error.map(String::from),
                     was_truncated: false,
                     overflow_path: None,
+                    secrets_redacted: false,
                 };
             }
         };
@@ -363,11 +379,13 @@ impl ToolResultSanitizer {
         let effective_limit = rule.effective_max_chars();
 
         if output_str.len() <= effective_limit {
+            let (redacted_output, secrets_redacted) = redact_secrets_if_needed(output_str, tool_name);
             return SanitizedResult {
-                output: Some(output_str.to_string()),
+                output: Some(redacted_output),
                 error: None,
                 was_truncated: false,
                 overflow_path: None,
+                secrets_redacted,
             };
         }
 
@@ -410,11 +428,15 @@ impl ToolResultSanitizer {
             "Truncated tool result via trait rule"
         );
 
+        let (final_output, secrets_redacted) =
+            redact_secrets_if_needed(&format!("{truncated}{marker}"), tool_name);
+
         SanitizedResult {
-            output: Some(format!("{truncated}{marker}")),
+            output: Some(final_output),
             error: None,
             was_truncated: true,
             overflow_path,
+            secrets_redacted,
         }
     }
 
@@ -521,6 +543,29 @@ pub fn cleanup_overflow_dir(dir: &Path) {
     }
 }
 
+/// Run secret detection on output text. If secrets are found, redact them,
+/// log a warning, and return the redacted text with a flag.
+fn redact_secrets_if_needed(output: &str, tool_name: &str) -> (String, bool) {
+    use opendev_runtime::secrets::{detect_secrets, redact_secrets};
+
+    let matches = detect_secrets(output);
+    if matches.is_empty() {
+        return (output.to_string(), false);
+    }
+
+    // Log detected secret kinds
+    let kinds: Vec<String> = matches.iter().map(|m| format!("{:?}", m.kind)).collect();
+    warn!(
+        tool = tool_name,
+        count = matches.len(),
+        kinds = %kinds.join(", "),
+        "Secrets detected and redacted in tool output"
+    );
+
+    let redacted = redact_secrets(output);
+    (redacted, true)
+}
+
 impl Default for ToolResultSanitizer {
     fn default() -> Self {
         Self::new()
@@ -536,6 +581,8 @@ pub struct SanitizedResult {
     /// Path to the overflow file containing the full untruncated output.
     /// Set only when `was_truncated` is true and overflow storage succeeded.
     pub overflow_path: Option<PathBuf>,
+    /// Whether secrets were detected and redacted from the output.
+    pub secrets_redacted: bool,
 }
 
 /// Apply a truncation strategy to text.

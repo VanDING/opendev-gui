@@ -116,9 +116,45 @@ pub fn is_protected_env(name: &str) -> bool {
     PROTECTED_ENV_PREFIXES.iter().any(|prefix| upper.starts_with(prefix))
 }
 
+/// GHA-specific sensitive env vars — only activated when `GITHUB_ACTIONS=true`.
+const GHA_SENSITIVE_EXACT: &[&str] = &[
+    "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
+    "ACTIONS_ID_TOKEN_REQUEST_URL",
+    "ACTIONS_RUNTIME_TOKEN",
+    "ACTIONS_RUNTIME_URL",
+    "ALL_INPUTS",
+    "OVERRIDE_GITHUB_TOKEN",
+    "DEFAULT_WORKFLOW_TOKEN",
+];
+
 /// Filter environment variables: strip sensitive ones, keep protected and benign ones.
+///
+/// When `GITHUB_ACTIONS=true`, additional GHA-specific environment variables
+/// are scrubbed, and `INPUT_<NAME>` variables are also stripped.
 pub fn filtered_env() -> HashMap<String, String> {
-    std::env::vars().filter(|(k, _)| !is_sensitive_env(k) || is_protected_env(k)).collect()
+    let is_gha = std::env::var("GITHUB_ACTIONS").as_deref() == Ok("true");
+
+    std::env::vars().filter(|(k, _)| {
+        // Standard sensitivity check
+        if !is_sensitive_env(k) || is_protected_env(k) {
+            // When running in GHA, also strip GHA-specific tokens and INPUT_ vars
+            if is_gha {
+                let upper = k.to_uppercase();
+                // Strip GHA-specific exact-match tokens
+                if GHA_SENSITIVE_EXACT.iter().any(|e| upper == *e) {
+                    return false;
+                }
+                // Strip INPUT_<NAME> duplicates (GitHub injects all action inputs)
+                if upper.starts_with("INPUT_") {
+                    return false;
+                }
+            }
+            true
+        } else {
+            false
+        }
+    })
+    .collect()
 }
 
 /// Apply env filter to a Command — clears env then adds filtered + protected vars.
@@ -174,5 +210,33 @@ mod tests {
         assert!(is_protected_env("CARGO_HOME"));
         assert!(is_protected_env("RUST_BACKTRACE"));
         assert!(is_protected_env("OPENDEV_DIR"));
+    }
+
+    #[test]
+    fn test_gha_sensitive_exact_matches() {
+        assert!(is_sensitive_env("ACTIONS_ID_TOKEN_REQUEST_TOKEN"));
+        assert!(is_sensitive_env("ACTIONS_RUNTIME_TOKEN"));
+
+        // These are caught by the `_TOKEN` suffix rule
+        for var in &["ACTIONS_ID_TOKEN_REQUEST_TOKEN", "ACTIONS_RUNTIME_TOKEN", "OVERRIDE_GITHUB_TOKEN", "DEFAULT_WORKFLOW_TOKEN"] {
+            assert!(is_sensitive_env(var), "{var} should be sensitive via _TOKEN suffix");
+        }
+    }
+
+    #[test]
+    fn test_gha_input_vars_not_sensitive_by_default() {
+        // INPUT_ vars are not in SENSITIVE_ENV_EXACT and don't match suffixes,
+        // but they are handled in filtered_env() when GITHUB_ACTIONS=true.
+        assert!(!is_sensitive_env("INPUT_FOO"));
+        assert!(!is_sensitive_env("INPUT_MY_VAR"));
+    }
+
+    #[test]
+    fn test_gha_specific_vars_add_to_suffix_rules() {
+        // ACTIONS_RUNTIME_URL doesn't match any suffix — it's added as an exact match
+        assert!(!is_sensitive_env("ACTIONS_RUNTIME_URL"));
+        assert!(!is_sensitive_env("ACTIONS_ID_TOKEN_REQUEST_URL"));
+        // ALL_INPUTS — no suffix match
+        assert!(!is_sensitive_env("ALL_INPUTS"));
     }
 }

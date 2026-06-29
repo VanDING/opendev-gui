@@ -49,10 +49,11 @@ fn test_error_not_truncated_when_short() {
 #[test]
 fn test_no_rule_no_truncation() {
     let sanitizer = ToolResultSanitizer::new();
-    let long_output = "x".repeat(50000);
+    // Use output that doesn't trigger Base64Blob detection (add spaces to break patterns).
+    let long_output = "hello world\n".repeat(3000); // ~36,000 chars, no base64 patterns
     let result = sanitizer.sanitize("custom_tool", true, Some(&long_output), None);
     assert!(!result.was_truncated);
-    assert_eq!(result.output.unwrap().len(), 50000);
+    assert_eq!(result.output.unwrap().len(), long_output.len());
 }
 
 #[test]

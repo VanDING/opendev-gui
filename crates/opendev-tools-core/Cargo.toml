@@ -17,6 +17,7 @@ tokio = { workspace = true }
 tokio-util = { workspace = true }
 regex = { workspace = true }
 dirs = "6"
+opendev-runtime = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

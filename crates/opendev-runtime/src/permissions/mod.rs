@@ -2,13 +2,41 @@
 //!
 //! Provides [`PermissionRuleSet`] for ordered, priority-based permission evaluation,
 //! with optional per-directory scoping via glob patterns.
+//!
+//! Also provides a global killswitch for bypass permissions (see [`enable_bypass_killswitch`]).
 
+mod dangerous_patterns;
 mod glob;
 
+pub use dangerous_patterns::{check_dangerous_pattern, DangerousAllowRule, WarningLevel};
 pub use glob::{glob_matches, glob_matches_path};
 
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
+
+/// Global killswitch for "bypass permissions" functionality.
+///
+/// When enabled, the "bypass" permission is blocked and any attempt to
+/// bypass the permission system will be denied. Useful for lockdown scenarios
+/// (e.g., CI/CD pipelines, production deployments).
+static BYPASS_KILLSWITCH_ENABLED: AtomicBool = AtomicBool::new(false);
+
+/// Enable the bypass permissions killswitch.
+///
+/// Once enabled, [`is_bypass_blocked`] will return `true`, and any code
+/// that respects this killswitch will deny bypass attempts.
+pub fn enable_bypass_killswitch() {
+    BYPASS_KILLSWITCH_ENABLED.store(true, Ordering::Relaxed);
+}
+
+/// Check whether the bypass permissions killswitch is active.
+///
+/// Returns `true` if `enable_bypass_killswitch()` was called, indicating
+/// that bypassing the permission system should be denied.
+pub fn is_bypass_blocked() -> bool {
+    BYPASS_KILLSWITCH_ENABLED.load(Ordering::Relaxed)
+}
 
 /// Action to take when a permission rule matches.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
