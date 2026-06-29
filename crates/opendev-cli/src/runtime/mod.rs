@@ -737,6 +737,41 @@ impl AgentRuntime {
         }
     }
 
+    /// Detect if a `ModelOverloaded` signal was received from the retry module
+    /// and handle it by switching to a fallback model.
+    ///
+    /// Returns the new model name if a switch occurred, or `None` if no switch
+    /// was needed. Logs a user-facing warning message.
+    ///
+    /// # Arguments
+    /// * `retry_signal` - The signal from `opendev_http::retry::with_retry`
+    /// * `http_client` - The HTTP client (for model info and switching)
+    /// * `model_name` - The current model name (will be updated if switched)
+    ///
+    /// # Returns
+    /// `Some(new_model)` if a fallback switch occurred, `None` otherwise.
+    pub fn handle_overload_signal(
+        http_client: &mut opendev_http::HttpClient,
+        model_name: &mut String,
+    ) -> Option<String> {
+        if let Some(fallback_model) = http_client.switch_model_on_overload() {
+            let old = model_name.clone();
+            *model_name = fallback_model.clone();
+            info!(
+                from = %old,
+                to = %fallback_model,
+                "⚠️ Switched to fallback model due to capacity (529 overload)"
+            );
+            eprintln!(
+                "⚠️ Model '{}' is overloaded. Switched to '{}' automatically.",
+                old, fallback_model,
+            );
+            Some(fallback_model)
+        } else {
+            None
+        }
+    }
+
     /// Switch to a new model, rebuilding the HTTP client if the provider changes.
     ///
     /// Returns the new model name for confirmation, or an error message.

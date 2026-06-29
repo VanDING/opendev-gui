@@ -216,6 +216,34 @@ impl EventStore {
         self.sessions_dir.join(format!("{}.events.jsonl", aggregate_id))
     }
 
+    /// Validate the integrity of an event store: check that all sequence
+    /// numbers are contiguous with no gaps or duplicates.
+    ///
+    /// Reads all events for the aggregate and verifies the seq values form
+    /// a monotonically increasing sequence starting at 1 with no gaps.
+    ///
+    /// Returns `Ok(())` if integrity is intact, or `Err` with details of
+    /// the first integrity violation found.
+    pub fn validate_integrity(&self, aggregate_id: &str) -> Result<(), String> {
+        let events = self.load(aggregate_id)?;
+        if events.is_empty() {
+            return Ok(()); // Empty store is valid
+        }
+
+        let mut expected_seq: u64 = 1;
+        for event in &events {
+            if event.seq != expected_seq {
+                return Err(format!(
+                    "Sequence gap or duplicate: expected seq={}, found seq={} \
+                     (event_type={}, id={})",
+                    expected_seq, event.seq, event.event_type, event.id,
+                ));
+            }
+            expected_seq += 1;
+        }
+        Ok(())
+    }
+
     /// Append events to the aggregate's event log. Returns the created envelopes.
     ///
     /// Acquires an exclusive file lock, reads the current max sequence number,

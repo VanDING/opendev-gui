@@ -2,6 +2,44 @@
 //!
 //! These functions convert OpenAI Responses API output back into the
 //! internal Chat Completions format used throughout the codebase.
+//!
+//! ## OpenAI Responses API Streaming Wire Format
+//!
+//! The Responses API uses SSE with JSON-only `data:` lines (no `event:` lines).
+//! The `type` field in each JSON object discriminates the event kind:
+//!
+//! ```text
+//! data: {"type": "response.output_text.delta", "delta": "Hello",  "output_index": 0}
+//!
+//! data: {"type": "response.function_call_arguments.delta", "delta": "{\"arg\"", "output_index": 1}
+//!
+//! data: {"type": "response.output_text.done", "text": "Hello world", "output_index": 0}
+//!
+//! data: {"type": "response.completed", "response": {...}}
+//! ```
+//!
+//! Key differences from OpenAI Chat Completions SSE:
+//! - No `event:` prefix lines — only `data:` lines with embedded `type` field
+//! - `response.output_text.delta` carries text deltas (separate from function args)
+//! - `response.function_call_arguments.delta` carries partial JSON for tool calls
+//! - Final event is `response.completed` (not `[DONE]`)
+//! - Reasoning comes via `response.reasoning.summary` events
+//! - Each output item (text, tool call, reasoning) has its own `output_index`
+//!
+//! ## Chat Completions API Streaming Wire Format (Legacy)
+//!
+//! ```text
+//! data: {"id":"...","object":"chat.completion.chunk","choices":[{"delta":{"content":"Hello"},"index":0}]}
+//!
+//! data: {"id":"...","object":"chat.completion.chunk","choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{\"arg\""}}}]},"index":0}]}
+//!
+//! data: [DONE]
+//! ```
+//!
+//! Key differences from Responses API:
+//! - Uses `choices[].delta.content` for text and `choices[].delta.tool_calls[]` for functions
+//! - Terminates with `data: [DONE]`
+//! - Has `event:` lines when using Azure or some proxy providers
 
 use serde_json::{Value, json};
 

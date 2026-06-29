@@ -369,6 +369,17 @@ impl AdaptedClient {
         // when the API sends heartbeat events but never completes.
         const MAX_STREAM_DURATION: std::time::Duration = std::time::Duration::from_secs(300);
 
+        // ── Stall/Watchdog Detection ──
+        // If >30s between any SSE data chunk, log a warning.
+        // If ENABLE_STREAM_WATCHDOG=true env var is set, abort after 90s idle.
+        const STALL_WARNING_SECS: u64 = 30;
+        const WATCHDOG_ABORT_SECS: u64 = 90;
+        let enable_watchdog = std::env::var("ENABLE_STREAM_WATCHDOG")
+            .ok()
+            .map(|v| v == "1" || v.to_lowercase() == "true")
+            .unwrap_or(false);
+        let mut last_data_time = std::time::Instant::now();
+
         loop {
             // Check total stream duration
             if stream_start.elapsed() > MAX_STREAM_DURATION {
@@ -378,6 +389,25 @@ impl AdaptedClient {
                 );
                 stream_end_reason = Some("stream duration exceeded 5 minutes");
                 break;
+            }
+
+            // ── Stall/Watchdog check before reading next chunk ──
+            let idle_duration = last_data_time.elapsed();
+            if idle_duration.as_secs() > STALL_WARNING_SECS {
+                warn!(
+                    idle_secs = idle_duration.as_secs(),
+                    "SSE stream stall detected: {}s since last data chunk",
+                    idle_duration.as_secs(),
+                );
+                if enable_watchdog && idle_duration.as_secs() > WATCHDOG_ABORT_SECS {
+                    warn!(
+                        idle_secs = idle_duration.as_secs(),
+                        "Stream watchdog aborting after {}s idle (ENABLE_STREAM_WATCHDOG=true)",
+                        idle_duration.as_secs(),
+                    );
+                    stream_end_reason = Some("watchdog abort (90s idle)");
+                    break;
+                }
             }
 
             let chunk_result =
@@ -415,6 +445,8 @@ impl AdaptedClient {
             };
 
             buf.extend_from_slice(&chunk);
+            // Update idle timer — data was received.
+            last_data_time = std::time::Instant::now();
 
             // Process complete lines from the buffer
             while let Some(newline_pos) = buf.iter().position(|&b| b == b'\n') {

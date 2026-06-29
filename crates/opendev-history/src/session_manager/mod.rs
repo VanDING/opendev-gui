@@ -240,6 +240,133 @@ impl SessionManager {
         self.load_from_file(&json_path)
     }
 
+    /// Validate session files for consistency and integrity.
+    ///
+    /// Checks:
+    /// 1. JSON metadata file exists and is parseable
+    /// 2. JSONL transcript file exists (if JSONL format is expected)
+    /// 3. No partial/corrupt JSONL lines (all lines valid JSON)
+    /// 4. Metadata session_id matches JSONL session_id (if both exist)
+    /// 5. Session is not too large (>100MB JSONL triggers a warning)
+    ///
+    /// Returns a list of issues found. An empty vec means the session is clean.
+    pub fn validate_session(session_dir: &Path, session_id: &str) -> Vec<String> {
+        let mut issues = Vec::new();
+
+        let json_path = session_dir.join(format!("{session_id}.json"));
+        let jsonl_path = session_dir.join(format!("{session_id}.jsonl"));
+
+        // 1. Check metadata file
+        if !json_path.exists() {
+            issues.push(format!("Missing metadata file: {}.json", session_id));
+            return issues; // Can't validate without metadata
+        }
+
+        let json_content = match std::fs::read_to_string(&json_path) {
+            Ok(c) => c,
+            Err(e) => {
+                issues.push(format!("Failed to read metadata file: {e}"));
+                return issues;
+            }
+        };
+
+        if json_content.trim().is_empty() {
+            issues.push("Metadata file is empty".to_string());
+        }
+
+        if let Err(e) = serde_json::from_str::<serde_json::Value>(&json_content) {
+            issues.push(format!("Invalid JSON in metadata file: {e}"));
+        }
+
+        // 2. Check JSONL file
+        if !jsonl_path.exists() {
+            // No JSONL file — might be legacy format, not necessarily an issue.
+            return issues;
+        }
+
+        let jsonl_content = match std::fs::read_to_string(&jsonl_path) {
+            Ok(c) => c,
+            Err(e) => {
+                issues.push(format!("Failed to read transcript file: {e}"));
+                return issues;
+            }
+        };
+
+        // 3. Check for partial/corrupt JSONL lines
+        if jsonl_content.trim().is_empty() {
+            issues.push("Transcript file is empty".to_string());
+            return issues;
+        }
+
+        let lines: Vec<&str> = jsonl_content.lines().collect();
+        for (i, line) in lines.iter().enumerate() {
+            let trimmed = line.trim();
+            if trimmed.is_empty() {
+                issues.push(format!("Empty line at line {}", i + 1));
+                continue;
+            }
+            if let Err(e) = serde_json::from_str::<serde_json::Value>(trimmed) {
+                issues.push(format!("Corrupt JSONL at line {}: {e}", i + 1));
+            }
+        }
+
+        // Check for trailing newline issues (partial last line)
+        if !jsonl_content.ends_with('\n') {
+            issues.push("Transcript file missing trailing newline".to_string());
+        }
+
+        // 4. Check metadata/JSONL sync: count messages in JSONL vs metadata
+        //    (only if both files are parseable)
+        if let Ok(meta) = serde_json::from_str::<serde_json::Value>(&json_content) {
+            if let Some(meta_msg_count) =
+                meta.get("messages").and_then(|m| m.as_array()).map(|a| a.len())
+            {
+                // Count non-empty lines in JSONL
+                let jsonl_msg_count = lines.iter().filter(|l| !l.trim().is_empty()).count();
+                if meta_msg_count != jsonl_msg_count {
+                    issues.push(format!(
+                        "Message count mismatch: metadata has {} messages, \
+                         transcript has {} lines",
+                        meta_msg_count, jsonl_msg_count,
+                    ));
+                }
+            }
+        }
+
+        // 5. Check file sizes
+        if let Ok(meta) = std::fs::metadata(&jsonl_path) {
+            let size_mb = meta.len() as f64 / (1024.0 * 1024.0);
+            if size_mb > 100.0 {
+                issues.push(format!(
+                    "Large session: {:.1} MB transcript (may impact performance)",
+                    size_mb,
+                ));
+            }
+        }
+
+        // 6. Check for stale .tmp files from interrupted writes
+        if let Ok(entries) = std::fs::read_dir(session_dir) {
+            for entry in entries.flatten() {
+                let name = entry.file_name().to_string_lossy().to_string();
+                if name.starts_with(&format!(".{session_id}")) && name.ends_with(".tmp") {
+                    if let Ok(modified) = entry.metadata().and_then(|m| m.modified()) {
+                        if let Ok(age) = modified.elapsed() {
+                            if age > std::time::Duration::from_secs(3600) {
+                                issues.push(format!(
+                                    "Stale .tmp file from crashed write: {name} \
+                                     (age: {:.0}s)",
+                                    age.as_secs_f64(),
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        issues
+    }
+
     /// Load a session from a specific file path.
     pub fn load_from_file(&self, json_path: &Path) -> std::io::Result<Session> {
         let content = std::fs::read_to_string(json_path)?;

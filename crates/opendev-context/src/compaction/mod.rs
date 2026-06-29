@@ -12,6 +12,7 @@ mod artifacts;
 mod compactor;
 mod levels;
 mod preview;
+mod snapshot;
 mod tokens;
 
 pub use artifacts::{ArtifactEntry, ArtifactIndex};

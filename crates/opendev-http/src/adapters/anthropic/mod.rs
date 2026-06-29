@@ -19,23 +19,126 @@ const ANTHROPIC_VERSION: &str = "2023-06-01";
 pub struct AnthropicAdapter {
     api_url: String,
     enable_caching: bool,
+    /// When true (default), uses the normalized OpenAI format internally.
+    /// When false, preserves Anthropic-native format (system as top-level field,
+    /// native tool format, native cache_control placement).
+    native_format: bool,
 }
 
 impl AnthropicAdapter {
     /// Create a new Anthropic adapter.
     pub fn new() -> Self {
-        Self { api_url: DEFAULT_API_URL.to_string(), enable_caching: true }
+        Self { api_url: DEFAULT_API_URL.to_string(), enable_caching: true, native_format: true }
     }
 
     /// Create with a custom API URL.
     pub fn with_url(url: impl Into<String>) -> Self {
-        Self { api_url: url.into(), enable_caching: true }
+        Self { api_url: url.into(), enable_caching: true, native_format: true }
     }
 
     /// Enable or disable prompt caching.
     pub fn with_caching(mut self, enable: bool) -> Self {
         self.enable_caching = enable;
         self
+    }
+
+    /// Set whether to use Anthropic-native format (false) or normalized
+    /// OpenAI-compatible format (true, default).
+    ///
+    /// When `native_format` is false, `convert_request` preserves:
+    /// - `system` as a top-level field (not injected as messages)
+    /// - Anthropic's native tool format (`name`, `description`, `input_schema`)
+    /// - Native `cache_control` placement on the stable system prompt prefix
+    /// - `temperature=1` when thinking is enabled (Anthropic requirement)
+    pub fn with_native_format(mut self, native: bool) -> Self {
+        self.native_format = native;
+        self
+    }
+
+    /// Convert request preserving Anthropic-native format.
+    ///
+    /// This is an alternative to `convert_request` that skips the normalization
+    /// to OpenAI Chat Completions format. Instead, it:
+    /// 1. Extracts the system message and places it at the top level as `system`
+    /// 2. Converts tool schemas to Anthropic's native format
+    /// 3. Places `cache_control: {type: "ephemeral"}` on the system block
+    ///    (the stable prefix that benefits from prompt caching)
+    /// 4. Keeps temperature=1 when thinking is enabled
+    pub fn convert_request_native(&self, mut payload: serde_json::Value) -> serde_json::Value {
+        // Extract and handle reasoning effort before other conversions
+        let reasoning_effort = payload
+            .as_object_mut()
+            .and_then(|obj| obj.remove("_reasoning_effort"))
+            .and_then(|v| v.as_str().map(String::from));
+
+        // Step 1: Extract system message to top-level field.
+        Self::extract_system(&mut payload);
+        // Step 2: Convert image blocks to Anthropic native format.
+        Self::convert_image_blocks(&mut payload);
+        // Step 3: Tools already in native format — but ensure they have
+        //         the correct Anthropic structure (name, description, input_schema).
+        Self::convert_tools(&mut payload);
+        // Step 4: Convert tool messages (tool role → user with tool_result blocks).
+        Self::convert_tool_messages(&mut payload);
+        // Step 5: Ensure max_tokens is set.
+        Self::ensure_max_tokens(&mut payload);
+
+        // Configure extended thinking.
+        let model = payload.get("model").and_then(|m| m.as_str()).unwrap_or("").to_string();
+        if let Some(ref effort) = reasoning_effort
+            && effort != "none"
+            && supports_thinking(&model)
+        {
+            if supports_adaptive_thinking(&model) {
+                payload["thinking"] = serde_json::json!({ "type": "adaptive" });
+            } else {
+                let budget_tokens: u64 = match effort.as_str() {
+                    "low" => 4000,
+                    "medium" => 16000,
+                    "high" => 31999,
+                    _ => 16000,
+                };
+                payload["thinking"] = serde_json::json!({
+                    "type": "enabled",
+                    "budget_tokens": budget_tokens
+                });
+                let current_max =
+                    payload.get("max_tokens").and_then(|v| v.as_u64()).unwrap_or(16384);
+                let min_max = budget_tokens + 1024;
+                if current_max < min_max {
+                    payload["max_tokens"] = serde_json::json!(min_max);
+                }
+            }
+            // Anthropic requires temperature=1 for extended thinking.
+            payload["temperature"] = serde_json::json!(1);
+        }
+
+        // Add cache_control to the system field (the stable prefix) instead of
+        // the last user message when in native mode. This is more efficient for
+        // Anthropic's prompt caching since the system prompt is stable across turns.
+        if self.enable_caching {
+            if let Some(system_val) = payload.get("system") {
+                if let Some(system_str) = system_val.as_str() {
+                    payload["system"] = serde_json::json!([{
+                        "type": "text",
+                        "text": system_str,
+                        "cache_control": {"type": "ephemeral"}
+                    }]);
+                }
+            }
+            // Also add cache_control to the last user message (supplemental).
+            Self::add_cache_control(&mut payload);
+        }
+
+        // Remove unsupported fields.
+        if let Some(obj) = payload.as_object_mut() {
+            obj.remove("n");
+            obj.remove("frequency_penalty");
+            obj.remove("presence_penalty");
+            obj.remove("logprobs");
+        }
+
+        payload
     }
 }
 
@@ -74,7 +177,12 @@ impl super::base::ProviderAdapter for AnthropicAdapter {
     }
 
     fn convert_request(&self, mut payload: Value) -> Value {
-        // Extract and handle reasoning effort before other conversions
+        if !self.native_format {
+            return self.convert_request_native(payload);
+        }
+
+        // Legacy normalized path: convert to OpenAI Chat Completions format
+        // and then normalize to Anthropic.
         let reasoning_effort = payload
             .as_object_mut()
             .and_then(|obj| obj.remove("_reasoning_effort"))

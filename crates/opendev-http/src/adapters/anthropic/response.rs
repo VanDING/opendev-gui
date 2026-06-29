@@ -3,6 +3,45 @@
 //! These functions convert Anthropic Messages API responses (both
 //! non-streaming and SSE streaming) back into the OpenAI Chat Completions
 //! format used internally.
+//!
+//! ## Anthropic Streaming SSE Wire Format
+//!
+//! Anthropic's streaming format uses named SSE events with the following
+//! structure:
+//!
+//! ```text
+//! event: message_start
+//! data: {"type": "message_start", "message": {...}}
+//!
+//! event: content_block_start
+//! data: {"type": "content_block_start", "index": 0, "content_block": {"type": "text", "text": ""}}
+//!
+//! event: content_block_delta
+//! data: {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "Hello"}}
+//!
+//! event: content_block_delta
+//! data: {"type": "content_block_delta", "index": 0, "delta": {"type": "thinking_delta", "thinking": "..."}}
+//!
+//! event: content_block_stop
+//! data: {"type": "content_block_stop", "index": 0}
+//!
+//! event: message_delta
+//! data: {"type": "message_delta", "delta": {"stop_reason": "end_turn"}, "usage": {...}}
+//!
+//! event: message_stop
+//! data: {"type": "message_stop"}
+//!
+//! event: ping
+//! data: {"type": "ping"}
+//! ```
+//!
+//! Key differences from OpenAI Chat Completions SSE:
+//! - Uses `event:` lines (named events) rather than just `data:` lines
+//! - Thinking content comes as `thinking_delta` (separate from `text_delta`)
+//! - Tool calls come as `tool_use` content blocks with `input_json_delta` deltas
+//! - The `type` field in the JSON data serves as a secondary discriminator
+//! - No `[DONE]` sentinel — stream ends with `message_stop` event
+//! - Heartbeats via `ping` events (no data payload)
 
 use serde_json::{Value, json};
 

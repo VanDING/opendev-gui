@@ -12,6 +12,7 @@ pub mod auth;
 pub mod circuit_breaker;
 pub mod client;
 pub mod models;
+pub mod retry;
 pub mod rotation;
 pub mod streaming;
 pub mod user_store;

@@ -33,11 +33,16 @@ impl Default for TimeoutConfig {
 /// - Exponential backoff retries on 429/503
 /// - Respect for `Retry-After` headers
 /// - Cancellation via `CancellationToken` (checked between retries and via `tokio::select!`)
+/// - Model fallback: when Opus-class models persistently return 529, auto-switch to Sonnet
 pub struct HttpClient {
     client: reqwest::Client,
     api_url: String,
     retry_config: RetryConfig,
     circuit_breaker: Option<std::sync::Arc<crate::circuit_breaker::CircuitBreaker>>,
+    /// The original model name before any fallback was applied.
+    original_model: Option<String>,
+    /// The currently active model name.
+    active_model: Option<String>,
 }
 
 impl HttpClient {
@@ -59,6 +64,8 @@ impl HttpClient {
             api_url: api_url.into(),
             retry_config: RetryConfig::default(),
             circuit_breaker: None,
+            original_model: None,
+            active_model: None,
         })
     }
 
@@ -499,6 +506,93 @@ impl HttpClient {
     /// Get the configured API URL.
     pub fn api_url(&self) -> &str {
         &self.api_url
+    }
+
+    /// Record the original model name for potential fallback.
+    pub fn set_model(&mut self, model: impl Into<String>) {
+        let model_str = model.into();
+        if self.original_model.is_none() {
+            self.original_model = Some(model_str.clone());
+        }
+        self.active_model = Some(model_str);
+    }
+
+    /// Get the currently active model name.
+    pub fn active_model(&self) -> Option<&str> {
+        self.active_model.as_deref()
+    }
+
+    /// Get the original model name (before fallback).
+    pub fn original_model(&self) -> Option<&str> {
+        self.original_model.as_deref()
+    }
+
+    /// Check if this is an Opus-class model (high-capacity, expensive).
+    fn is_opus_class(model: &str) -> bool {
+        let m = model.to_lowercase();
+        m.contains("opus")
+            || m.contains("claude-3-5") && !m.contains("sonnet")
+            || m.contains("claude-4") && !m.contains("sonnet")
+            || m.contains("claude-opus")
+            || m.contains("gpt-4-turbo")
+            || m.contains("gpt-4-32k")
+            || m.contains("gpt-4o") && !m.contains("mini")
+    }
+
+    /// Get the fallback (Sonnet-class) model for a given Opus-class model.
+    fn fallback_for(model: &str) -> Option<&'static str> {
+        let m = model.to_lowercase();
+        if m.contains("opus") {
+            if m.contains("3.5") || m.contains("3-5") {
+                return Some("claude-sonnet-4-20250514");
+            }
+            if m.contains("4") || m.contains("4.5") || m.contains("4-5") {
+                return Some("claude-sonnet-4-20250514");
+            }
+            return Some("claude-sonnet-4-20250514");
+        }
+        if m.contains("gpt-4") && !m.contains("mini") {
+            return Some("gpt-4o-mini");
+        }
+        None
+    }
+
+    /// When 529 persists 3+ times for Opus-class models, automatically switch
+    /// to Sonnet-class. Returns the fallback model name if a switch occurred,
+    /// or `None` if no switch was needed.
+    ///
+    /// This is called by the retry logic after detecting `ModelOverloaded` signals.
+    pub fn switch_model_on_overload(&mut self) -> Option<String> {
+        let current = self.active_model.as_deref()?;
+        if !Self::is_opus_class(current) {
+            return None; // Only switch for Opus-class models
+        }
+        let fallback = Self::fallback_for(current)?;
+        let fallback_str = fallback.to_string();
+
+        tracing::warn!(
+            from = current,
+            to = %fallback_str,
+            "Model overloaded: switching from Opus-class to fallback model"
+        );
+
+        self.active_model = Some(fallback_str.clone());
+        Some(fallback_str)
+    }
+
+    /// Restore the original model after fallback.
+    pub fn restore_original_model(&mut self) -> Option<String> {
+        let original = self.original_model.clone()?;
+        self.active_model = Some(original.clone());
+        Some(original)
+    }
+
+    /// Check if a model switch has occurred.
+    pub fn has_switched_model(&self) -> bool {
+        match (&self.original_model, &self.active_model) {
+            (Some(orig), Some(active)) => orig != active,
+            _ => false,
+        }
     }
 }
 
