@@ -154,6 +154,17 @@ impl Repl {
                 continue;
             }
 
+            // Detect paste (multi-line input): if the input is long or contains
+            // multiple sentences without being a known command, treat it as
+            // a single multi-line query.
+            let is_known_command = input.starts_with('/');
+            if !is_known_command && (input.len() > 200 || input.contains('\n') || input.contains('\r')) {
+                // Multi-line paste detected — process as a single query
+                self.state.last_prompt = input.to_string();
+                self.process_query(input).await?;
+                continue;
+            }
+
             if input.starts_with('/') {
                 self.handle_command(input);
 
@@ -186,15 +197,62 @@ impl Repl {
         Ok(())
     }
 
+    /// Known slash commands for auto-completion.
+    const SLASH_COMMANDS: &[&str] = &[
+        "/help", "/exit", "/clear", "/compact", "/status", "/cost", "/diff",
+        "/mode", "/plan", "/autonomy", "/thinking", "/init", "/review", "/commit",
+    ];
+
+    /// Attempt auto-completion for the current input.
+    fn auto_complete(&self, input: &str) -> Option<String> {
+        let trimmed = input.trim();
+        if trimmed.is_empty() {
+            return None;
+        }
+
+        // Slash command completion
+        if trimmed.starts_with('/') {
+            for &cmd in Self::SLASH_COMMANDS {
+                if cmd.starts_with(trimmed) && cmd != trimmed {
+                    return Some(cmd.to_string());
+                }
+            }
+        }
+
+        // File path completion (simple: check if input looks like a file path)
+        if trimmed.contains('/') || trimmed.contains('.') {
+            let path = std::path::Path::new(trimmed);
+            if let Some(parent) = path.parent() {
+                if parent.exists() {
+                    if let Ok(entries) = std::fs::read_dir(parent) {
+                        let prefix = path.file_name().map(|s| s.to_string_lossy()).unwrap_or_default();
+                        for entry in entries.flatten() {
+                            let name = entry.file_name().to_string_lossy().to_string();
+                            if name.starts_with(prefix.as_ref()) && name != prefix.as_ref() {
+                                let full = parent.join(&name);
+                                let display = full.to_string_lossy().to_string();
+                                return Some(display);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        None
+    }
+
     /// Print the welcome banner.
     fn print_welcome(&self) {
-        println!("OpenDev -- AI-powered coding assistant");
-        println!("Type /help for commands, /exit to quit.");
-        println!("Mode: {} | Autonomy: {}", self.state.mode, self.state.autonomy_level);
+        // Use ANSI color codes for welcome message
+        println!("\x1b[1mOpenDev\x1b[0m -- AI-powered coding assistant");
+        println!("Type \x1b[33m/help\x1b[0m for commands, \x1b[33m/exit\x1b[0m to quit.");
+        println!("Mode: \x1b[36m{}\x1b[0m | Autonomy: \x1b[35m{}\x1b[0m",
+            self.state.mode, self.state.autonomy_level);
         println!();
     }
 
-    /// Print the input prompt.
+    /// Print the input prompt with ANSI colors.
     fn print_prompt(&self) {
         let mode_indicator = match self.state.mode {
             OperationMode::Normal => ">",
@@ -238,9 +296,18 @@ impl Repl {
         self.state.last_error = result.error;
         self.state.last_latency_ms = result.latency_ms;
 
-        // Print the assistant response
+        // Print the assistant response with colored role indicators
         if !result.content.is_empty() {
-            println!("{}", result.content);
+            // Color-code based on content type
+            let content = &result.content;
+            if let Some(error) = &self.state.last_error {
+                println!("\x1b[31m{}\x1b[0m", content); // Red for errors
+                eprintln!("\x1b[31mError: {}\x1b[0m", error);
+            } else if content.contains("```") || content.contains("  ") {
+                println!("\x1b[32m{}\x1b[0m", content); // Green for code-heavy output
+            } else {
+                println!("{}", content);
+            }
         }
 
         Ok(())

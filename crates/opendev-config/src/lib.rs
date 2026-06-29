@@ -8,6 +8,7 @@
 //! - Environment-specific profiles (dev, prod, fast)
 //! - Poll-based config file watcher for hot-reload
 
+pub mod features;
 pub mod loader;
 pub mod migration;
 pub mod models_dev;

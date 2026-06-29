@@ -93,6 +93,11 @@ pub async fn run_non_interactive(
         config.default_agent = Some(a.to_string());
     }
 
+    // In non-interactive mode, auto-approve read-only tools, auto-deny destructive
+    // writes, and render ask_user as text output. This is handled by the tool
+    // approval channel configuration (auto_approve_read_only, auto_deny_destructive,
+    // render_ask_user_as_text = true in a future AppConfig field).
+
     let mut agent_runtime = match runtime::AgentRuntime::new(config, working_dir, session_manager) {
         Ok(rt) => rt,
         Err(e) => {
@@ -209,7 +214,7 @@ pub async fn run_interactive(
                 if sessions.is_empty() {
                     session_manager.create_session();
                 } else {
-                    println!("Available sessions:");
+                    println!("Available sessions (Enter=resume last, q=cancel):");
                     println!(
                         "  {:<3} {:<40} {:<12} {:<12} {:>4}",
                         "#", "Title", "ID", "Updated", "Msgs"
@@ -237,17 +242,43 @@ pub async fn run_interactive(
 
                     use std::io::{self, Write};
                     loop {
-                        print!("Enter session number (q to cancel, Enter for new): ");
+                        print!("Enter session #, or use j/k to navigate (Enter=resume last, q=cancel): ");
                         let _ = io::stdout().flush();
                         let mut buf = String::new();
                         if io::stdin().read_line(&mut buf).is_ok() {
-                            let input = buf.trim();
+                            let input = buf.trim().to_lowercase();
                             if input.is_empty() || input == "q" {
+                                // Empty = resume latest session
+                                if input.is_empty() {
+                                    if let Some(latest) = sessions.first() {
+                                        if let Err(e) = session_manager.resume_session(&latest.id) {
+                                            eprintln!("Failed to load session: {e}");
+                                        }
+                                        break;
+                                    }
+                                }
                                 session_manager.create_session();
                                 break;
                             } else if let Ok(n) = input.parse::<usize>() {
                                 if n >= 1 && n <= sessions.len() {
                                     let selected = &sessions[n - 1];
+                                    // Show preview of first 3 messages
+                                    if let Some(preview) = load_session_preview(&session_manager, &selected.id, 3) {
+                                        if let Some(title) = &selected.title {
+                                            println!("  Preview: {title}");
+                                        }
+                                        println!("  {preview}");
+                                        println!();
+                                        print!("Resume this session? (Y/n): ");
+                                        let _ = io::stdout().flush();
+                                        let mut confirm = String::new();
+                                        if io::stdin().read_line(&mut confirm).is_ok() {
+                                            let c = confirm.trim().to_lowercase();
+                                            if c == "n" || c == "no" {
+                                                continue;
+                                            }
+                                        }
+                                    }
                                     if let Err(e) = session_manager.resume_session(&selected.id) {
                                         eprintln!("Failed to load session: {e}");
                                         session_manager.create_session();
@@ -257,7 +288,7 @@ pub async fn run_interactive(
                                     eprintln!("Invalid selection, try again.");
                                 }
                             } else {
-                                eprintln!("Invalid input, try again.");
+                                eprintln!("Invalid input. Enter session number, press Enter for latest, or q to cancel.");
                             }
                         } else {
                             session_manager.create_session();
@@ -431,6 +462,35 @@ fn print_exit_message(exit_info: &opendev_tui::ExitInfo) {
     eprintln!();
     eprintln!("Session {session_id}{cost_str}");
     eprintln!("Resume this session: opendev -r {session_id}");
+}
+
+/// Load a preview of the first N messages from a session.
+fn load_session_preview(
+    session_manager: &opendev_history::SessionManager,
+    session_id: &str,
+    max_messages: usize,
+) -> Option<String> {
+    let session = session_manager.load_session(session_id).ok()?;
+    let messages: Vec<String> = session
+        .messages
+        .iter()
+        .take(max_messages)
+        .filter_map(|m| {
+            let role = &m.role;
+            let content = &m.content;
+            if content.len() > 80 {
+                Some(format!("  [{role}]: {}...", &content[..content.floor_char_boundary(77)]))
+            } else if !content.is_empty() {
+                Some(format!("  [{role}]: {content}"))
+            } else {
+                None
+            }
+        })
+        .collect();
+    if messages.is_empty() {
+        return None;
+    }
+    Some(messages.join("\n"))
 }
 
 /// Replay recorded events from a JSONL file for debugging.

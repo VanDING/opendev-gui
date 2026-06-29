@@ -1,7 +1,7 @@
 //! Marketplace client: fetch plugin listings, search, download/install from marketplace.
 
 use crate::manager::{PluginError, PluginManager, Result};
-use crate::models::{MarketplaceCatalog, MarketplaceInfo, PluginMetadata};
+use crate::models::{MarketplaceCatalog, MarketplaceInfo, PluginManifest, PluginMetadata};
 use chrono::Utc;
 use std::path::Path;
 use tracing::info;
@@ -226,6 +226,72 @@ impl PluginManager {
                     || p.description.to_lowercase().contains(&query_lower)
             })
             .collect())
+    }
+
+    /// Default marketplace registry URL (public community registry).
+    pub const DEFAULT_MARKETPLACE_REGISTRY: &str = "https://opendev-to.github.io/marketplace/index.json";
+
+    /// Validate a plugin manifest for structural correctness and version compatibility.
+    ///
+    /// Checks:
+    /// - Name is non-empty
+    /// - Version is valid semver
+    /// - Required fields are present
+    /// - Tools have names
+    pub fn validate_manifest(manifest: &PluginManifest) -> std::result::Result<(), Vec<String>> {
+        let mut errors = Vec::new();
+
+        if manifest.name.is_empty() {
+            errors.push("Plugin name is required".to_string());
+        }
+        if manifest.version.is_empty() {
+            errors.push("Plugin version is required".to_string());
+        } else {
+            // Basic semver check: should have at least x.y
+            let parts: Vec<&str> = manifest.version.split('.').collect();
+            if parts.len() < 2 {
+                errors.push(format!(
+                    "Invalid version '{}': expected semver format (e.g. 1.0.0)",
+                    manifest.version
+                ));
+            }
+        }
+        if manifest.tools.is_empty() && manifest.skills.is_empty() && manifest.prompts.is_empty() {
+            errors.push("Plugin must provide at least one tool, skill, or prompt".to_string());
+        }
+        for (i, tool) in manifest.tools.iter().enumerate() {
+            if tool.name.is_empty() {
+                errors.push(format!("Tool at index {i} has an empty name"));
+            }
+        }
+
+        if errors.is_empty() { Ok(()) } else { Err(errors) }
+    }
+
+    /// Check version compatibility between a plugin and the current runtime.
+    ///
+    /// Returns `Ok(())` if compatible, or an error message explaining the mismatch.
+    /// Uses semver-like comparison: major version must match.
+    pub fn check_version_compatibility(
+        plugin_version: &str,
+        runtime_version: &str,
+    ) -> std::result::Result<(), String> {
+        let plugin_parts: Vec<&str> = plugin_version.splitn(3, '.').collect();
+        let runtime_parts: Vec<&str> = runtime_version.splitn(3, '.').collect();
+
+        let plugin_major = plugin_parts.first().and_then(|s| s.parse::<u64>().ok());
+        let runtime_major = runtime_parts.first().and_then(|s| s.parse::<u64>().ok());
+
+        match (plugin_major, runtime_major) {
+            (Some(pm), Some(rm)) if pm == rm => Ok(()),
+            (Some(pm), Some(rm)) => Err(format!(
+                "Major version mismatch: plugin v{plugin_version} requires major version {pm}, \
+                 runtime is v{runtime_version} (major {rm})"
+            )),
+            _ => Err(format!(
+                "Could not parse version strings: plugin='{plugin_version}', runtime='{runtime_version}'"
+            )),
+        }
     }
 
     // ── Marketplace HTTP fetch (async) ─────────────────────────

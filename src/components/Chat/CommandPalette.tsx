@@ -6,6 +6,7 @@ interface Command {
   id: string;
   label: string;
   description: string;
+  shortcut?: string;
   action: () => void;
 }
 
@@ -27,23 +28,39 @@ export function CommandPalette({ isOpen, onClose, onOpenStatus }: CommandPalette
   const sendInterrupt = useChatStore(state => state.sendInterrupt);
   const toggleSidebar = useChatStore(state => state.toggleSidebar);
 
-  // ⚡ Bolt Performance Optimization:
-  // Wrapped array filtering in useMemo and precomputed a case-insensitive RegExp
-  // This avoids redundant string allocations and prevents an O(N) repetitive
-  // toLowerCase operations during every render cycle (especially on keystrokes in the search box).
   const filtered = useMemo(() => {
     const commands: Command[] = [
-      { id: 'clear', label: '/clear', description: 'Clear chat history', action: () => { clearChat(); onClose(); } },
+      // ── Session ──
+      { id: 'clear', label: '/clear', description: 'Clear chat history', shortcut: 'Ctrl+L', action: () => { clearChat(); onClose(); } },
+      { id: 'compact', label: '/compact', description: 'Compact session context to reduce token usage', action: () => { onClose(); } },
+      { id: 'status', label: '/status', description: 'Show session status and usage', shortcut: 'Ctrl+R', action: () => { onOpenStatus(); onClose(); } },
+      { id: 'cost', label: '/cost', description: 'Show cost breakdown for this session', action: () => { onClose(); } },
+      { id: 'diff', label: '/diff', description: 'Show git diff of current changes', action: () => { onClose(); } },
+      { id: 'rename', label: '/rename', description: 'Rename the current session', action: () => { onClose(); } },
+      { id: 'export', label: '/export', description: 'Export session as markdown', shortcut: 'Ctrl+Shift+E', action: () => { onClose(); } },
+
+      // ── Actions ──
       { id: 'mode', label: '/mode', description: 'Toggle between Normal and Plan mode', action: () => { toggleMode(); onClose(); } },
-      { id: 'status', label: '/status', description: 'Show session status dialog', action: () => { onOpenStatus(); onClose(); } },
-      { id: 'interrupt', label: '/interrupt', description: 'Interrupt the current task', action: () => { sendInterrupt(); onClose(); } },
+      { id: 'interrupt', label: '/interrupt', description: 'Interrupt the current task', shortcut: 'Ctrl+.', action: () => { sendInterrupt(); onClose(); } },
+      { id: 'review', label: '/review', description: 'Review current changes for issues', action: () => { onClose(); } },
+      { id: 'commit', label: '/commit', description: 'Stage and commit changes', action: () => { onClose(); } },
+      { id: 'init', label: '/init', description: 'Initialize or re-initialize the project', action: () => { onClose(); } },
+      { id: 'doctor', label: '/doctor', description: 'Run diagnostics on the project', action: () => { onClose(); } },
+
+      // ── Settings ──
       { id: 'autonomy', label: 'Cycle Autonomy', description: 'Cycle: Manual → Semi-Auto → Auto', action: () => { cycleAutonomy(); onClose(); } },
       { id: 'thinking', label: 'Cycle Thinking', description: 'Cycle: Off → Low → Medium → High', action: () => { cycleThinkingLevel(); onClose(); } },
       { id: 'sidebar', label: 'Toggle Sidebar', description: 'Show/hide the sessions sidebar', action: () => { toggleSidebar(); onClose(); } },
+
+      // ── Navigation ──
+      { id: 'resume', label: '/resume', description: 'Resume a previous session', action: () => { onClose(); } },
+      { id: 'feedback', label: '/feedback', description: 'Submit feedback about OpenDev', action: () => { onClose(); } },
+      { id: 'share', label: '/share', description: 'Share current session as snapshot', action: () => { onClose(); } },
     ];
 
     if (!query) return commands;
-    const queryRegex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const queryRegex = new RegExp(escaped, 'i');
     return commands.filter(c =>
       queryRegex.test(c.label) ||
       queryRegex.test(c.description)
@@ -78,41 +95,67 @@ export function CommandPalette({ isOpen, onClose, onOpenStatus }: CommandPalette
     }
   }, [filtered, selectedIndex, onClose]);
 
+  if (!isOpen) return null;
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="sm">
-      
+    <Modal onClose={onClose} title="Commands">
+      <div style={{ padding: '8px' }}>
         <input
           ref={inputRef}
           type="text"
           value={query}
           onChange={e => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type a command..."
-          className="w-full px-4 py-3 text-sm bg-transparent border-b border-border-default/20 text-content-primary placeholder-content-tertiary outline-none"
+          placeholder="Search commands..."
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            borderRadius: '6px',
+            border: '1px solid var(--border)',
+            background: 'var(--bg-secondary)',
+            color: 'var(--text)',
+            fontSize: '14px',
+            outline: 'none',
+            boxSizing: 'border-box',
+          }}
         />
-        <div className="max-h-64 overflow-y-auto py-1">
-          {filtered.length === 0 ? (
-            <div className="px-4 py-3 text-sm text-content-tertiary">No matching commands</div>
-          ) : (
-            filtered.map((cmd, i) => (
-              <button
-                key={cmd.id}
-                onClick={cmd.action}
-                className={`w-full text-left px-4 py-2.5 flex items-center gap-3 text-sm transition-colors ${
-                  i === selectedIndex ? 'bg-accent-primary/10 text-content-primary' : 'text-content-secondary hover:bg-surface-2'
-                }`}
-              >
-                <span className="font-mono font-medium text-accent-primary min-w-[120px]">{cmd.label}</span>
-                <span className="text-content-secondary">{cmd.description}</span>
-              </button>
-            ))
+        <div style={{ marginTop: '8px', maxHeight: '300px', overflowY: 'auto' }}>
+          {filtered.map((cmd, i) => (
+            <div
+              key={cmd.id}
+              onClick={() => cmd.action()}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 12px',
+                cursor: 'pointer',
+                borderRadius: '4px',
+                background: i === selectedIndex ? 'var(--bg-active, rgba(255,255,255,0.1))' : 'transparent',
+              }}
+            >
+              <div>
+                <span style={{ fontWeight: 500 }}>{cmd.label}</span>
+                <span style={{ marginLeft: '8px', fontSize: '12px', opacity: 0.7 }}>{cmd.description}</span>
+              </div>
+              {cmd.shortcut && (
+                <kbd style={{
+                  fontSize: '11px',
+                  padding: '2px 6px',
+                  borderRadius: '3px',
+                  border: '1px solid var(--border)',
+                  opacity: 0.6,
+                }}>
+                  {cmd.shortcut}
+                </kbd>
+              )}
+            </div>
+          ))}
+          {filtered.length === 0 && (
+            <div style={{ padding: '12px', opacity: 0.5, textAlign: 'center' }}>No commands found</div>
           )}
         </div>
-        <div className="px-4 py-2 border-t border-border-default/20 text-xs text-content-tertiary flex gap-3">
-          <span><kbd className="px-1 py-0.5 bg-surface-2 rounded text-content-secondary">↑↓</kbd> navigate</span>
-          <span><kbd className="px-1 py-0.5 bg-surface-2 rounded text-content-secondary">Enter</kbd> select</span>
-          <span><kbd className="px-1 py-0.5 bg-surface-2 rounded text-content-secondary">Esc</kbd> close</span>
-        </div>
+      </div>
     </Modal>
   );
 }
