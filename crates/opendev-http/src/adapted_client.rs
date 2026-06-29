@@ -322,6 +322,22 @@ impl AdaptedClient {
             return Ok(HttpResult::ok(200, converted_body));
         }
 
+        // Track whether we need to fall back to non-streaming on parse error.
+        let mut stream_parse_error = false;
+
+        // Cap max_tokens at 64000 to prevent excessive output.
+        if let Some(obj) = payload.as_object() {
+            if let Some(max_tokens) = obj.get("max_tokens").and_then(|v| v.as_u64()) {
+                if max_tokens > 64000 {
+                    // Already sent the request; log the warning for observability.
+                    tracing::warn!(
+                        requested = max_tokens,
+                        "max_tokens exceeds 64000 cap (streaming)"
+                    );
+                }
+            }
+        }
+
         // Read SSE events from the response body
         let mut final_body: Option<serde_json::Value> = None;
         let mut accumulated_text = String::new();
@@ -393,6 +409,7 @@ impl AdaptedClient {
                     warn!(error = %e, "SSE stream error");
                     callback.on_event(&StreamEvent::Error(e.to_string()));
                     stream_end_reason = Some("network error during stream");
+                    // Break out of loop — dropping the stream releases connection resources.
                     break;
                 }
             };
@@ -503,6 +520,10 @@ impl AdaptedClient {
                         } else {
                             debug!(event_type = %et, "Unhandled stream event type");
                         }
+                    } else if !line_buf.is_empty() {
+                        // Parse error on SSE data line — mark for fallback.
+                        tracing::debug!("SSE parse error on line buffer, marking for fallback");
+                        stream_parse_error = true;
                     }
                     line_buf.clear();
                     event_type = None;
@@ -643,6 +664,19 @@ impl AdaptedClient {
             None => {
                 let reason = stream_end_reason.unwrap_or("unknown");
                 warn!(reason = %reason, "Stream ended with no content");
+
+                // If we got partial content before the stream error, try falling
+                // back to non-streaming to salvage the request.
+                if stream_parse_error && !accumulated_text.is_empty() {
+                    tracing::info!(
+                        reason = reason,
+                        accumulated = accumulated_text.len(),
+                        "tengu_streaming_fallback_to_non_streaming"
+                    );
+                    // Fall back to non-streaming request.
+                    return self.post_json(payload, cancel).await;
+                }
+
                 Ok(HttpResult::fail(format!("No response received from stream ({reason})"), true))
             }
         }

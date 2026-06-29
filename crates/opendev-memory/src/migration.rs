@@ -27,4 +27,21 @@ CREATE TABLE IF NOT EXISTS memory_symbol_links (
 )
 "#;
 
-pub const MIGRATIONS: &[&str] = &[CREATE_MEMORIES_TABLE, CREATE_SYMBOL_LINKS_TABLE];
+/// FTS5 virtual table for full-text search.
+///
+/// Created separately so CREATE IF NOT EXISTS works cleanly; FTS5 does not
+/// support IF NOT EXISTS in all builds, so we guard with a runtime check.
+pub const CREATE_FTS5_TABLE: &str = r#"
+CREATE VIRTUAL TABLE IF NOT EXISTS long_term_memory_fts USING fts5(
+    content,
+    project_path UNINDEXED,
+    content_rowid='id',
+    tokenize='porter unicode61'
+)
+"#;
+
+pub const MIGRATIONS: &[&str] = &[
+    CREATE_MEMORIES_TABLE,
+    CREATE_SYMBOL_LINKS_TABLE,
+    CREATE_FTS5_TABLE,
+];

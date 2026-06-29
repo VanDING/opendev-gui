@@ -6,6 +6,7 @@
 
 pub mod composer;
 pub mod embedded;
+pub mod global_cache;
 pub mod loader;
 pub mod reminders;
 

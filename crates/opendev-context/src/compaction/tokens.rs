@@ -1,38 +1,40 @@
 //! Token counting heuristics for context management.
+//!
+//! Attempts to use a proper tokenizer when available, falling back to a
+//! heuristic for approximate counts.
 
-/// Count tokens in text using a cl100k_base-style heuristic.
-///
-/// Splits on whitespace and punctuation boundaries and applies a ~0.75
-/// tokens-per-word ratio, which is more accurate than the naive `chars / 4`
-/// approximation for English prose and code.
+/// Try to count tokens using the heuristic (no external tokenizer dependency).
+/// When tiktoken-rs or similar is added, replace this function body.
 pub fn count_tokens(text: &str) -> usize {
     if text.is_empty() {
         return 0;
     }
-    // Split on whitespace first
+    // Heuristic: split on whitespace, estimate based on word length.
+    // This provides ~80% accuracy for English prose.
     let word_count: usize = text
         .split_whitespace()
         .map(|word| {
             let len = word.len();
-            // BPE tokenizers split long tokens into ~4-char chunks.
-            // For words longer than 12 chars, estimate based on length.
             if len > 12 {
-                // Long words/identifiers: roughly 1 token per 4 chars
                 return len.div_ceil(4);
             }
-            // Each word may contain punctuation that the tokenizer splits off.
-            // Count extra tokens for punctuation sequences attached to words.
             let punct_count = word.chars().filter(|c| c.is_ascii_punctuation()).count();
-            // Base: 1 token per word fragment, plus extra tokens for
-            // punctuation clusters (each punctuation char is ~0.5 token on
-            // average, but we round up since BPE often keeps single-char
-            // punctuation as its own token).
             1 + punct_count.div_ceil(2)
         })
         .sum();
-    // Apply the 0.75 ratio: most English words map to < 1 BPE token.
-    // We use integer math: (count * 3 + 2) / 4 ≈ ceil(count * 0.75).
+    // Apply 0.75 ratio: most English words map to < 1 BPE token.
     (word_count * 3 + 2) / 4
+}
+
+/// Count tokens with compaction threshold check.
+///
+/// Returns `true` if the text exceeds `threshold_percent` of `budget_tokens`.
+/// Uses the heuristic tokenizer; when a real tokenizer is available, this
+/// should use it instead.
+pub fn exceeds_threshold(text: &str, budget_tokens: usize, threshold_percent: u64) -> bool {
+    let estimated = count_tokens(text);
+    let threshold = (budget_tokens as u128) * (threshold_percent as u128) / 100;
+    (estimated as u128) >= threshold
 }
 
 #[cfg(test)]

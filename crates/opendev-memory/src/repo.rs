@@ -16,10 +16,15 @@ impl MemoryRepo {
 
     pub async fn run_migrations(&self) -> Result<(), String> {
         for sql in crate::migration::MIGRATIONS {
-            sqlx::query(sql)
-                .execute(&self.pool)
-                .await
-                .map_err(|e| format!("Migration failed: {}", e))?;
+            let result = sqlx::query(sql).execute(&self.pool).await;
+            if let Err(ref e) = result {
+                // FTS5 may not be available in all SQLite builds; log and continue.
+                if sql.contains("fts5") {
+                    tracing::warn!(error = %e, "FTS5 not available (needs SQLite with FTS5 enabled)");
+                    continue;
+                }
+                return Err(format!("Migration failed: {}", e));
+            }
         }
         Ok(())
     }
@@ -109,7 +114,94 @@ impl MemoryRepo {
         Ok(())
     }
 
+    /// Search memory using FTS5 with LIKE fallback.
+    ///
+    /// First attempts an FTS5 MATCH query (requires the `long_term_memory_fts`
+    /// virtual table). If FTS5 is not available or the query fails, falls back
+    /// to the standard `LIKE` query.
     pub async fn search_fts(
+        &self,
+        query: &str,
+        project: Option<&Path>,
+        limit: usize,
+    ) -> Result<Vec<MemoryEntry>, String> {
+        // Try FTS5 first
+        let project_str = project.map(|p| p.to_string_lossy().to_string());
+        let fts_result = self.search_fts5(query, project_str.as_deref(), limit).await;
+        match fts_result {
+            Ok(results) if !results.is_empty() => return Ok(results),
+            Ok(_) => {} // FTS returned empty, fall through to LIKE
+            Err(_) => {} // FTS failed, fall through to LIKE
+        }
+
+        // Fallback: LIKE query
+        self.search_like(query, project, limit).await
+    }
+
+    /// FTS5-based search using MATCH syntax.
+    async fn search_fts5(
+        &self,
+        query: &str,
+        project: Option<&str>,
+        limit: usize,
+    ) -> Result<Vec<MemoryEntry>, String> {
+        // Clean the query for FTS5 — remove special chars
+        let fts_query = query
+            .split_whitespace()
+            .filter(|w| !w.is_empty())
+            .map(|w| {
+                // Escape FTS5 special characters and wrap in quotes if needed
+                if w.contains('"') || w.contains('\'') {
+                    format!("\"{}\"", w.replace('"', "\"\""))
+                } else {
+                    format!("\"{w}\"")
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(" AND ");
+
+        if fts_query.is_empty() {
+            return Err("empty query".to_string());
+        }
+
+        if let Some(p) = project {
+            sqlx::query_as::<_, MemoryRow>(
+                "SELECT id, content, category, confidence, source, project_path, importance, \
+                 access_count, last_accessed_at, expires_at, created_at, tags_json \
+                 FROM long_term_memory_fts \
+                 WHERE long_term_memory_fts MATCH ?1 AND project_path = ?2 \
+                 ORDER BY rank LIMIT ?3",
+            )
+            .bind(&fts_query)
+            .bind(p)
+            .bind(limit as i64)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| format!("fts5 search: {}", e))?
+            .into_iter()
+            .map(|r| r.try_into())
+            .collect::<Result<Vec<_>, String>>()
+        } else {
+            sqlx::query_as::<_, MemoryRow>(
+                "SELECT id, content, category, confidence, source, project_path, importance, \
+                 access_count, last_accessed_at, expires_at, created_at, tags_json \
+                 FROM long_term_memory_fts \
+                 WHERE long_term_memory_fts MATCH ?1 \
+                 ORDER BY rank LIMIT ?2",
+            )
+            .bind(&fts_query)
+            .bind(limit as i64)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| format!("fts5 search: {}", e))?
+            .into_iter()
+            .map(|r| r.try_into())
+            .collect::<Result<Vec<_>, String>>()
+        }
+    }
+
+    /// LIKE-based fallback search.
+    async fn search_like(
         &self,
         query: &str,
         project: Option<&Path>,

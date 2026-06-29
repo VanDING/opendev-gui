@@ -227,3 +227,25 @@ The todo tools haven't been used recently. If you're working on tasks that would
 
 --- task_proactive_reminder ---
 You have been working for several turns. If this is a multi-step task, consider whether you should pause to verify progress, run tests, or update the user on status.
+
+--- verification_nudge ---
+Before reporting the task as complete, verify your results:
+- If you edited code, check for any new LSP diagnostics.
+- If you ran commands, verify the output is correct.
+- If you modified configuration, test that it works.
+- Check that all subtasks from the plan are addressed.
+Use `TaskComplete` only when you've confirmed the work is correct.
+
+--- empty_output_nudge ---
+The last tool returned no output. This could mean:
+- The command ran successfully but produced no output (normal for some tools).
+- The command failed silently.
+- A file was empty or a search returned no results.
+If you expected output, try running the command again with verbose flags, or use a different approach to verify.
+
+--- stuck_loop_nudge ---
+You seem to be repeating the same action pattern without making progress. Consider:
+- Taking a step back and re-reading the task requirements.
+- Checking if you have all the information you need.
+- Asking the user for clarification if something is unclear.
+- Trying a completely different approach instead of retrying the same thing.

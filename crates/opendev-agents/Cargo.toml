@@ -28,6 +28,9 @@ thiserror = { workspace = true }
 regex = { workspace = true }
 futures = { workspace = true }
 dirs = "6"
+sha2 = { workspace = true }
+hex = "0.4"
+tempfile = { workspace = true }
 reqwest = { workspace = true }
 opendev-exec = { workspace = true }
 

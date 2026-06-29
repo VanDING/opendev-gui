@@ -43,7 +43,37 @@ impl SessionListing {
             sessions.retain(|s| s.owner_id.as_deref() == Some(owner));
         }
 
+        // Sort by updated_at descending (most recent activity first).
         sessions.sort_by_key(|b| std::cmp::Reverse(b.updated_at));
+        sessions
+    }
+
+    /// List sessions with optional search by title and pagination.
+    ///
+    /// `title_search` filters session titles by substring match (case-insensitive).
+    /// `limit` caps the number of results returned.
+    pub fn list_sessions_filtered(
+        &self,
+        owner_id: Option<&str>,
+        include_archived: bool,
+        title_search: Option<&str>,
+        limit: Option<usize>,
+    ) -> Vec<SessionMetadata> {
+        let mut sessions = self.list_sessions(owner_id, include_archived);
+
+        // Filter by title substring match (case-insensitive)
+        if let Some(pattern) = title_search {
+            let lower = pattern.to_lowercase();
+            sessions.retain(|s| {
+                s.title.as_ref().map_or(false, |t| t.to_lowercase().contains(&lower))
+            });
+        }
+
+        // Apply pagination limit
+        if let Some(max) = limit {
+            sessions.truncate(max);
+        }
+
         sessions
     }
 
