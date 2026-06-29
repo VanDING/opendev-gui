@@ -7,6 +7,34 @@
 
 use std::path::{Component, Path, PathBuf};
 
+/// Error returned for dangerous or unsupported path patterns.
+#[derive(Debug, Clone)]
+pub enum DangerousPath {
+    /// UNC path (\\server\share) — potential NTLM credential leak.
+    UncPath(String),
+    /// Tilde expansion variant that could be used for path traversal.
+    TildeExpansion(String),
+    /// Shell expansion syntax ($VAR, `${VAR}`, %TEMP%, =cmd).
+    ShellExpansion(String),
+    /// Glob pattern in write operation.
+    GlobPattern(String),
+}
+
+impl std::fmt::Display for DangerousPath {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::UncPath(p) => write!(f, "UNC path blocked (credential leak risk): {p}"),
+            Self::TildeExpansion(p) => {
+                write!(f, "Tilde expansion variant blocked: {p}")
+            }
+            Self::ShellExpansion(p) => {
+                write!(f, "Shell expansion syntax blocked: {p}")
+            }
+            Self::GlobPattern(p) => write!(f, "Glob pattern blocked in write operation: {p}"),
+        }
+    }
+}
+
 /// Expand tilde (`~`) and `$HOME` prefixes in a path string.
 ///
 /// - `~/foo` -> `/home/user/foo`
@@ -35,6 +63,89 @@ pub fn expand_home(path: &str) -> String {
             .unwrap_or_else(|| path.to_string());
     }
     path.to_string()
+}
+
+/// Check if a path is a UNC path (`\\server\share\...`) which could leak
+/// NTLM credentials via SMB authentication.
+pub fn is_vulnerable_unc_path(path: &str) -> Option<DangerousPath> {
+    if path.starts_with("\\\\") || path.starts_with("//") {
+        // True UNC paths start with double separator followed by non-separator.
+        let rest = &path[2..];
+        if !rest.is_empty() && !rest.starts_with('\\') && !rest.starts_with('/') {
+            return Some(DangerousPath::UncPath(path.to_string()));
+        }
+    }
+    None
+}
+
+/// Check if a path contains tilde expansion variants that could be exploited
+/// for path traversal or user enumeration.
+///
+/// Blocks: `~root`, `~+`, `~-` while allowing simple `~/` and `~`.
+pub fn contains_tilde_expansion(path: &str) -> Option<DangerousPath> {
+    // Match ~ followed by a non-/ character (expands to other user's home)
+    if path.starts_with('~') && path.len() > 1 && !path[1..].starts_with('/') {
+        return Some(DangerousPath::TildeExpansion(path.to_string()));
+    }
+    // Also check mid-path tilde expansions
+    if path.contains("/~") {
+        // Find the ~ and check what follows
+        if let Some(pos) = path.find("/~") {
+            let after_tilde = &path[pos + 2..];
+            if !after_tilde.is_empty() && !after_tilde.starts_with('/') {
+                return Some(DangerousPath::TildeExpansion(path.to_string()));
+            }
+        }
+    }
+    None
+}
+
+/// Check if a path contains shell expansion syntax that could execute
+/// arbitrary commands or leak environment variables.
+///
+/// Blocks: `$VAR`, `${VAR}`, `%TEMP%`, `=cmd` patterns.
+pub fn contains_shell_expansion(path: &str) -> Option<DangerousPath> {
+    // $VAR or ${VAR} expansion
+    if path.contains("${") || path.contains('$') && has_env_var_ref(path) {
+        return Some(DangerousPath::ShellExpansion(path.to_string()));
+    }
+    // Windows-style %VAR% expansion
+    if path.contains('%') && path.chars().filter(|&c| c == '%').count() >= 2 {
+        return Some(DangerousPath::ShellExpansion(path.to_string()));
+    }
+    // =cmd expansion (zsh equals expansion bypass)
+    if path.starts_with('=') || path.contains("/=") {
+        return Some(DangerousPath::ShellExpansion(path.to_string()));
+    }
+    None
+}
+
+/// Helper: check if path contains a $VAR reference (not just literal $).
+fn has_env_var_ref(path: &str) -> bool {
+    let bytes = path.as_bytes();
+    for (i, &b) in bytes.iter().enumerate() {
+        if b == b'$' && i + 1 < bytes.len() {
+            let next = bytes[i + 1];
+            // $ followed by letter, underscore, or digit is an env var
+            if next.is_ascii_alphabetic() || next == b'_' {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// Check if a path contains glob patterns, which should be blocked for write operations.
+pub fn contains_glob_pattern(path: &str) -> bool {
+    path.contains('*') || path.contains('?') || path.contains('[') || path.contains('{')
+}
+
+/// Run all dangerous path checks on a path.
+/// Returns the first dangerous match, or None if the path is safe.
+pub fn check_dangerous_path(path: &str) -> Option<DangerousPath> {
+    is_vulnerable_unc_path(path)
+        .or_else(|| contains_tilde_expansion(path))
+        .or_else(|| contains_shell_expansion(path))
 }
 
 /// Strip leading `.` and `./` components from a path, returning the
