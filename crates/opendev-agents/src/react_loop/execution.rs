@@ -360,6 +360,35 @@ impl ReactLoop {
                         DoomLoopAction::None => {}
                     }
 
+                    // Unified pre-dispatch: partition all non-subagent tools
+                    // using ParallelPolicy, execute concurrent batches in
+                    // parallel and single-element batches via execute_sequential.
+                    if let Some(action) = super::phases::dispatch_with_parallelism(
+                        self,
+                        &tool_calls,
+                        &response,
+                        messages,
+                        &mut state,
+                        &emitter,
+                        &mut iter_metrics,
+                        iter_start,
+                        tool_registry,
+                        tool_context,
+                        task_monitor,
+                        artifact_index,
+                        todo_manager,
+                        cancel,
+                        tool_approval_tx,
+                        streaming_executor.as_ref(),
+                    )
+                    .await
+                    {
+                        match action {
+                            super::types::LoopAction::Continue => continue,
+                            super::types::LoopAction::Return(result) => return result,
+                        }
+                    }
+
                     // Try parallel execution (all spawn_subagent calls)
                     if let Some(action) = super::phases::execute_parallel(
                         self,

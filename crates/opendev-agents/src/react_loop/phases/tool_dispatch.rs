@@ -24,6 +24,8 @@ use super::super::emitter::{IterationEmitter, tool_result_display_output};
 use super::super::loop_state::LoopState;
 use super::super::streaming_executor::StreamingToolExecutor;
 use super::super::types::{IterationMetrics, LoopAction, READ_OPS, ToolCallMetric};
+use futures::future;
+use tokio::sync::Semaphore;
 
 /// Execute tool calls sequentially, handling permissions, approval, and post-processing.
 ///
@@ -1229,6 +1231,392 @@ async fn execute_concurrent_batch(
     // Track exploration tools
     let tool_names: Vec<String> = preps.iter().map(|p| p.tool_name.clone()).collect();
     ReactLoop::track_exploration_tools(tool_context, &tool_names, messages);
+
+    None
+}
+
+// ---------------------------------------------------------------------------
+// Unified pre-dispatch: partition ALL non-subagent tool calls using
+// ParallelPolicy::partition_with_tools(), then execute multi-element batches
+// concurrently and single-element batches via execute_sequential.
+// ---------------------------------------------------------------------------
+
+/// Subagent tool names that should be handled by `execute_parallel` instead.
+const SUBAGENT_TOOLS: &[&str] = &["Agent", "spawn_subagent"];
+
+/// Maximum concurrent tools in a multi-element parallel batch.
+const PARALLEL_BATCH_CONCURRENCY: usize = 10;
+
+/// Unified pre-dispatch for all non-subagent tool calls.
+///
+/// Uses `ParallelPolicy::partition_with_tools()` to partition tool calls into
+/// ordered execution groups. Multi-element batches (concurrent-safe tools) are
+/// executed concurrently via `futures::join_all` with a `Semaphore(PARALLEL_BATCH_CONCURRENCY)`.
+/// Single-element batches (non-concurrent or isolated tools) fall through to
+/// the existing `execute_sequential` pipeline, preserving all permission, approval,
+/// and post-processing logic.
+///
+/// This replaces the previous try-fallthrough pattern (execute_parallel →
+/// execute_batched → execute_sequential) with a single partition-then-dispatch
+/// approach, ensuring mixed tool sets get optimal parallelism.
+#[allow(clippy::too_many_arguments)]
+pub(in crate::react_loop) async fn dispatch_with_parallelism<M>(
+    react_loop: &ReactLoop,
+    tool_calls: &[Value],
+    response: &crate::traits::LlmResponse,
+    messages: &mut Vec<Value>,
+    state: &mut LoopState,
+    emitter: &IterationEmitter<'_>,
+    iter_metrics: &mut IterationMetrics,
+    iter_start: std::time::Instant,
+    tool_registry: &Arc<ToolRegistry>,
+    tool_context: &ToolContext,
+    task_monitor: Option<&M>,
+    artifact_index: Option<&Mutex<ArtifactIndex>>,
+    todo_manager: Option<&Mutex<TodoManager>>,
+    cancel: Option<&CancellationToken>,
+    tool_approval_tx: Option<&opendev_runtime::ToolApprovalSender>,
+    streaming_executor: Option<&StreamingToolExecutor>,
+) -> Option<LoopAction>
+where
+    M: TaskMonitor + ?Sized,
+{
+    if tool_calls.is_empty() {
+        return None;
+    }
+
+    // Separate subagent calls (handled by execute_parallel) from general tools
+    let _subagent_indices: Vec<usize> = tool_calls
+        .iter()
+        .enumerate()
+        .filter(|(_, tc)| {
+            let name = tool_name_from(tc);
+            SUBAGENT_TOOLS.contains(&name)
+        })
+        .map(|(i, _)| i)
+        .collect();
+
+    let general_indices: Vec<usize> = tool_calls
+        .iter()
+        .enumerate()
+        .filter(|(_, tc)| {
+            let name = tool_name_from(tc);
+            !SUBAGENT_TOOLS.contains(&name) && !ReactLoop::is_task_complete(tc)
+        })
+        .map(|(i, _)| i)
+        .collect();
+
+    // Build ParallelToolCall structs for the partitioner using only general tools
+    let general_tool_calls: Vec<&Value> = general_indices.iter().map(|&i| &tool_calls[i]).collect();
+    let parallel_calls: Vec<ParallelToolCall> = general_tool_calls
+        .iter()
+        .map(|tc| {
+            let name = tool_name_from(tc).to_string();
+            let (args_value, _) = parse_tool_args(tc);
+            ParallelToolCall::new(name, args_value)
+        })
+        .collect();
+
+    // Look up tool instances for input-dependent concurrency decisions
+    let tool_instances: Vec<_> = parallel_calls
+        .iter()
+        .filter_map(|tc| tool_registry.get(&tc.name))
+        .collect();
+    let tool_refs: Vec<&dyn opendev_tools_core::BaseTool> =
+        tool_instances.iter().map(|t| t.as_ref()).collect();
+
+    let batches = if tool_refs.len() == parallel_calls.len() {
+        ParallelPolicy::partition_with_tools(&parallel_calls, &tool_refs)
+    } else {
+        // Fallback if some tools weren't found in registry
+        ParallelPolicy::partition(&parallel_calls)
+    };
+
+    info!(
+        batch_count = batches.len(),
+        general_tools = general_indices.len(),
+        "Dispatch with parallelism for general tools"
+    );
+
+    let total_tool_count = tool_calls.len();
+    let mut any_tool_failed = false;
+
+    for batch in &batches {
+        // Check for interruption between batches
+        let interrupted_by_monitor = task_monitor.is_some_and(|m| m.should_interrupt());
+        let interrupted_by_cancel = cancel.is_some_and(|c| c.is_cancelled());
+        if interrupted_by_monitor || interrupted_by_cancel {
+            if task_monitor.is_some_and(|m| m.is_background_requested()) {
+                info!(
+                    iteration = state.iteration,
+                    "Background requested during dispatched tools — yielding"
+                );
+                iter_metrics.total_duration_ms = iter_start.elapsed().as_millis() as u64;
+                react_loop.push_metrics(iter_metrics.clone());
+                return Some(LoopAction::Return(Ok(
+                    crate::traits::AgentResult::backgrounded(messages.clone()),
+                )));
+            }
+            // Stub remaining general tool calls
+            for remaining_batch in &batches[batches.iter().position(|b| std::ptr::eq(b, batch)).unwrap()..] {
+                for &idx in remaining_batch {
+                    let actual_idx = general_indices[idx];
+                    let tc = &tool_calls[actual_idx];
+                    messages.push(serde_json::json!({
+                        "role": "tool",
+                        "tool_call_id": tool_call_id_from(tc),
+                        "name": tool_name_from(tc),
+                        "content": "Error: Interrupted by user",
+                    }));
+                }
+            }
+
+            let partial = crate::agent_types::PartialResult::from_interrupted_state(
+                messages,
+                response.content.as_deref(),
+                state.iteration,
+                0,
+                total_tool_count,
+            );
+            iter_metrics.total_duration_ms = iter_start.elapsed().as_millis() as u64;
+            react_loop.push_metrics(iter_metrics.clone());
+            let mut result = crate::traits::AgentResult::interrupted(messages.clone());
+            result.partial_result = Some(partial);
+            return Some(LoopAction::Return(Ok(result)));
+        }
+
+        if batch.len() == 1 {
+            // Single-element batch: run through full sequential pipeline
+            // (permissions, approval gates, subdir instructions, etc.)
+            let idx = general_indices[batch[0]];
+            let tc = &tool_calls[idx];
+
+            if let Some(action) = execute_sequential(
+                react_loop,
+                std::slice::from_ref(tc),
+                response,
+                messages,
+                state,
+                emitter,
+                iter_metrics,
+                iter_start,
+                tool_registry,
+                tool_context,
+                task_monitor,
+                artifact_index,
+                todo_manager,
+                cancel,
+                tool_approval_tx,
+                streaming_executor,
+            )
+            .await
+            {
+                return Some(action);
+            }
+        } else {
+            // Multi-element batch: all tools are concurrent-safe, run in parallel
+            let batch_actual_indices: Vec<usize> =
+                batch.iter().map(|&bi| general_indices[bi]).collect();
+
+            let semaphore = Arc::new(Semaphore::new(PARALLEL_BATCH_CONCURRENCY));
+
+            // Pre-process: parse args, normalize, emit tool_started
+            struct Prep {
+                tool_call_id: String,
+                tool_name: String,
+                args_value: Value,
+                args_map: std::collections::HashMap<String, Value>,
+            }
+
+            let mut preps: Vec<Prep> = Vec::with_capacity(batch.len());
+            for &actual_idx in &batch_actual_indices {
+                let tc = &tool_calls[actual_idx];
+                let tool_name = tool_name_from(tc).to_string();
+                let tool_call_id = tool_call_id_from(tc).to_string();
+                let (args_value, args_map) = parse_tool_args(tc);
+
+                let wd_str = tool_context.working_dir.to_string_lossy().to_string();
+                let args_map = opendev_tools_core::normalizer::normalize_params(
+                    &tool_name,
+                    args_map,
+                    Some(&wd_str),
+                );
+
+                emitter.emit_tool_started(&tool_call_id, &tool_name, &args_map);
+                preps.push(Prep { tool_call_id, tool_name, args_value, args_map });
+            }
+
+            // Spawn concurrent tool executions
+            let futures: Vec<_> = preps
+                .iter()
+                .map(|prep| {
+                    let tool_name = prep.tool_name.clone();
+                    let tool_call_id = prep.tool_call_id.clone();
+                    let args_map = prep.args_map.clone();
+                    let exec_ctx = match cancel {
+                        Some(ct) => {
+                            let mut ctx = tool_context.clone();
+                            ctx.cancel_token = Some(ct.child_token());
+                            ctx
+                        }
+                        None => tool_context.clone(),
+                    };
+                    let sem = Arc::clone(&semaphore);
+
+                    async move {
+                        let _permit = sem.acquire().await;
+                        let start = std::time::Instant::now();
+                        let result = tool_registry
+                            .execute(&tool_name, args_map, &exec_ctx)
+                            .instrument(tracing::info_span!(
+                                "tool_execution_dispatch",
+                                tool_name = %tool_name,
+                                tool_call_id = %tool_call_id,
+                            ))
+                            .await;
+                        let duration_ms = start.elapsed().as_millis() as u64;
+                        (tool_call_id, tool_name, result, duration_ms)
+                    }
+                })
+                .collect();
+
+            // Await all parallel tools
+            let results = future::join_all(futures).await;
+
+            // Process results in original order
+            for (i, (tc_id, t_name, tool_result, duration_ms)) in results.into_iter().enumerate() {
+                let prep = &preps[i];
+
+                iter_metrics.tool_calls.push(ToolCallMetric {
+                    tool_name: t_name.clone(),
+                    duration_ms,
+                    success: tool_result.success,
+                });
+
+                if tool_result.success && let Some(ai) = artifact_index {
+                    record_artifact(ai, &t_name, &prep.args_value, &tool_result);
+                }
+
+                let output_str = tool_result_display_output(&tool_result);
+                emitter.emit_tool_result(&tc_id, &t_name, &output_str, tool_result.success);
+                emitter.emit_tool_finished(&tc_id, tool_result.success);
+
+                let _result_summary = opendev_runtime::summarize_tool_result(
+                    &t_name,
+                    tool_result.output.as_deref(),
+                    if tool_result.success { None } else { tool_result.error.as_deref() },
+                );
+                debug!(tool = %t_name, summary = %_result_summary, "Tool result summary (dispatch)");
+
+                let mut result_value = if tool_result.success {
+                    serde_json::json!({
+                        "success": true,
+                        "output": tool_result.output.as_deref().unwrap_or(""),
+                    })
+                } else {
+                    serde_json::json!({
+                        "success": false,
+                        "error": tool_result.error.as_deref().unwrap_or("Tool execution failed"),
+                    })
+                };
+                if let Some(ref suffix) = tool_result.llm_suffix {
+                    result_value["llm_suffix"] = serde_json::json!(suffix);
+                }
+
+                let formatted = ReactLoop::format_tool_result(&t_name, &result_value);
+                messages.push(serde_json::json!({
+                    "role": "tool",
+                    "tool_call_id": tc_id,
+                    "name": t_name,
+                    "content": formatted,
+                }));
+
+                // Reset proactive reminder counters
+                if tool_result.success {
+                    state.proactive_reminders.reset("task_proactive_reminder");
+                }
+
+                // Subdirectory instruction injection
+                if tool_result.success
+                    && matches!(t_name.as_str(), "Read" | "read_file" | "Grep" | "grep")
+                {
+                    let file_path_str = prep
+                        .args_value
+                        .get("file_path")
+                        .or_else(|| prep.args_value.get("path"))
+                        .and_then(|v| v.as_str());
+                    if let Some(fp) = file_path_str {
+                        let path = std::path::Path::new(fp);
+                        let instructions = state.subdir_tracker.check_file_read(path);
+                        for instr in &instructions {
+                            let note = format!(
+                                "The following project instructions apply to files in this directory ({}):\n\n{}",
+                                instr.relative_path, instr.content,
+                            );
+                            append_directive(messages, &note);
+                            debug!(
+                                path = %instr.relative_path,
+                                "Injected subdirectory instruction file (dispatch)"
+                            );
+                        }
+                    }
+                }
+
+                // Error directive after tool failure
+                if !tool_result.success {
+                    any_tool_failed = true;
+                    let error_text = tool_result.error.as_deref().unwrap_or("");
+                    let error_type = ReactLoop::classify_error(error_text);
+                    let nudge_name = format!("nudge_{error_type}");
+                    let nudge = get_reminder(&nudge_name, &[]);
+                    if nudge.is_empty() {
+                        let generic = get_reminder("failed_tool_nudge", &[]);
+                        if !generic.is_empty() {
+                            append_directive(messages, &generic);
+                        }
+                    } else {
+                        append_directive(messages, &nudge);
+                    }
+                }
+            }
+
+            // Track exploration tools for planning phase transition
+            let tool_names: Vec<String> = preps.iter().map(|p| p.tool_name.clone()).collect();
+            ReactLoop::track_exploration_tools(tool_context, &tool_names, messages);
+        }
+    }
+
+    // Consecutive reads detection
+    let all_reads = tool_calls.iter().all(|tc| {
+        let name = tool_name_from(tc);
+        READ_OPS.contains(&name)
+    });
+    if all_reads && !any_tool_failed {
+        state.consecutive_reads += 1;
+        if state.consecutive_reads >= 5 {
+            let nudge = get_reminder("consecutive_reads_nudge", &[]);
+            if !nudge.is_empty() {
+                append_directive(messages, &nudge);
+            }
+            state.consecutive_reads = 0;
+        }
+    } else {
+        state.consecutive_reads = 0;
+    }
+
+    // All-todos-complete signal
+    if !state.all_todos_complete_nudged
+        && let Some(mgr) = todo_manager
+        && let Ok(mgr) = mgr.lock()
+        && mgr.has_todos()
+        && !mgr.has_incomplete_todos()
+    {
+        state.all_todos_complete_nudged = true;
+        let nudge = get_reminder("all_todos_complete_nudge", &[]);
+        if !nudge.is_empty() {
+            append_nudge(messages, &nudge);
+        }
+    }
 
     None
 }
