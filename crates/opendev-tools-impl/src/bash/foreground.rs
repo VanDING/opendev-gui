@@ -15,6 +15,7 @@ use super::helpers::{
     IDLE_TIMEOUT, MAX_OUTPUT_CHARS, MAX_TIMEOUT, command_failure_suffix, kill_process_group,
     prepare_command, truncate_output,
 };
+use super::patterns::MAX_FOREGROUND_MS;
 
 impl BashTool {
     pub(super) async fn run_foreground(
@@ -151,6 +152,18 @@ impl BashTool {
                 Ok(Some(status)) => break Ok(status),
                 Ok(None) => {}
                 Err(e) => break Err(format!("Failed to wait on child: {e}")),
+            }
+
+            // Check auto-background promotion: if this command is recognized
+            // as a long-running command and has exceeded the foreground budget,
+            // log a warning suggesting the LLM re-run in background.
+            if start.elapsed() >= Duration::from_millis(MAX_FOREGROUND_MS)
+                && super::patterns::is_auto_background_command(command)
+            {
+                tracing::info!(
+                    duration_ms = start.elapsed().as_millis(),
+                    "Command exceeded foreground budget — consider backgrounding"
+                );
             }
 
             // Check absolute timeout

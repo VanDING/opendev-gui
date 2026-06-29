@@ -58,10 +58,14 @@ const INTERACTIVE_PATTERNS: &[&str] = &[
 ];
 
 // ---------------------------------------------------------------------------
-// Server-command patterns (auto-promote to background)
+// Auto-background command patterns.
+//
+// These commands are promoted to background automatically because they
+// are long-running (servers, watchers, monitors) rather than producing
+// useful foreground output.
 // ---------------------------------------------------------------------------
 
-const SERVER_PATTERNS: &[&str] = &[
+const AUTO_BACKGROUND_PATTERNS: &[&str] = &[
     // Python web servers
     r"flask\s+run",
     r"python.*manage\.py\s+runserver",
@@ -96,6 +100,17 @@ const SERVER_PATTERNS: &[&str] = &[
     // Java
     r"mvn.*spring-boot:run",
     r"gradle.*bootRun",
+    // Background watchers / monitors
+    r"\bsleep\s+\d+",         // Sleep commands
+    r"\btail\s+-f\b",         // Tail follow
+    r"\binotifywait\b",       // File watchers
+    r"\byes\b",               // yes infinite stream
+    r"\btop\b",               // System monitors
+    r"\bhtop\b",
+    r"\bwatch\b",
+    r"\bping\b",              // Network monitors
+    r"\btcpdump\b",
+    r"\bngrok\b",             // Tunnel services
     // Generic
     r"live-server",
     r"http-server",
@@ -123,14 +138,31 @@ impl CompiledPatterns {
     }
 }
 
-static SERVER_COMPILED: LazyLock<CompiledPatterns> =
-    LazyLock::new(|| CompiledPatterns::new(SERVER_PATTERNS));
+static AUTO_BACKGROUND_COMPILED: LazyLock<CompiledPatterns> =
+    LazyLock::new(|| CompiledPatterns::new(AUTO_BACKGROUND_PATTERNS));
 
 static INTERACTIVE_COMPILED: LazyLock<CompiledPatterns> =
     LazyLock::new(|| CompiledPatterns::new(INTERACTIVE_PATTERNS));
 
+/// Maximum time a command runs in the foreground before auto-background promotion.
+/// Default: 15 seconds.
+pub const MAX_FOREGROUND_MS: u64 = 15000;
+
+/// Check if a command should be auto-promoted to background execution.
+///
+/// Returns `true` for commands that are known to be long-running or
+/// continuously running (servers, watchers, monitors, blocking commands).
+///
+/// This replaces the previous `is_server_command` with a broader set of
+/// background-worthy patterns. When matched, the bash tool automatically
+/// backgrounds the command after `MAX_FOREGROUND_MS` of foreground execution.
+pub(crate) fn is_auto_background_command(command: &str) -> bool {
+    AUTO_BACKGROUND_COMPILED.matches(command)
+}
+
+/// Legacy alias for backward compatibility.
 pub(crate) fn is_server_command(command: &str) -> bool {
-    SERVER_COMPILED.matches(command)
+    is_auto_background_command(command)
 }
 
 pub(crate) fn needs_auto_confirm(command: &str) -> bool {
