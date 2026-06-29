@@ -1275,7 +1275,9 @@ async fn execute_concurrent_batch(
 // concurrently and single-element batches via execute_sequential.
 // ---------------------------------------------------------------------------
 
-/// Subagent tool names that should be handled by `execute_parallel` instead.
+/// Subagent tool names (kept for reference — handled via normal tool_registry.execute
+/// through execute_sequential single-element batches in dispatch_with_parallelism).
+#[allow(dead_code)]
 const SUBAGENT_TOOLS: &[&str] = &["Agent", "spawn_subagent"];
 
 /// Maximum concurrent tools in a multi-element parallel batch.
@@ -1319,30 +1321,21 @@ where
         return None;
     }
 
-    // Separate subagent calls (handled by execute_parallel) from general tools
-    let _subagent_indices: Vec<usize> = tool_calls
+    // Collect ALL non-task_complete tool indices — this now includes subagent
+    // tools (Agent/spawn_subagent). They are partitioned by ParallelPolicy:
+    // subagent tools that are not concurrent-safe get single-element batches
+    // that fall through to execute_sequential (which processes them correctly
+    // via tool_registry.execute). Concurrent-safe ones may share batches.
+    let all_indices: Vec<usize> = tool_calls
         .iter()
         .enumerate()
-        .filter(|(_, tc)| {
-            let name = tool_name_from(tc);
-            SUBAGENT_TOOLS.contains(&name)
-        })
+        .filter(|(_, tc)| !ReactLoop::is_task_complete(tc))
         .map(|(i, _)| i)
         .collect();
 
-    let general_indices: Vec<usize> = tool_calls
-        .iter()
-        .enumerate()
-        .filter(|(_, tc)| {
-            let name = tool_name_from(tc);
-            !SUBAGENT_TOOLS.contains(&name) && !ReactLoop::is_task_complete(tc)
-        })
-        .map(|(i, _)| i)
-        .collect();
-
-    // Build ParallelToolCall structs for the partitioner using only general tools
-    let general_tool_calls: Vec<&Value> = general_indices.iter().map(|&i| &tool_calls[i]).collect();
-    let parallel_calls: Vec<ParallelToolCall> = general_tool_calls
+    // Build ParallelToolCall structs for the partitioner using all tools
+    let all_tool_calls: Vec<&Value> = all_indices.iter().map(|&i| &tool_calls[i]).collect();
+    let parallel_calls: Vec<ParallelToolCall> = all_tool_calls
         .iter()
         .map(|tc| {
             let name = tool_name_from(tc).to_string();
@@ -1368,8 +1361,10 @@ where
 
     info!(
         batch_count = batches.len(),
-        general_tools = general_indices.len(),
-        "Dispatch with parallelism for general tools"
+        total_tools = all_indices.len(),
+        "dispatch_with_parallelism: partitioned {} tools into {} batches",
+        all_indices.len(),
+        batches.len(),
     );
 
     let total_tool_count = tool_calls.len();
@@ -1391,10 +1386,10 @@ where
                     crate::traits::AgentResult::backgrounded(messages.clone()),
                 )));
             }
-            // Stub remaining general tool calls
+            // Stub remaining tool calls
             for remaining_batch in &batches[batches.iter().position(|b| std::ptr::eq(b, batch)).unwrap()..] {
                 for &idx in remaining_batch {
-                    let actual_idx = general_indices[idx];
+                    let actual_idx = all_indices[idx];
                     let tc = &tool_calls[actual_idx];
                     messages.push(serde_json::json!({
                         "role": "tool",
@@ -1422,7 +1417,7 @@ where
         if batch.len() == 1 {
             // Single-element batch: run through full sequential pipeline
             // (permissions, approval gates, subdir instructions, etc.)
-            let idx = general_indices[batch[0]];
+            let idx = all_indices[batch[0]];
             let tc = &tool_calls[idx];
 
             if let Some(action) = execute_sequential(
@@ -1450,7 +1445,7 @@ where
         } else {
             // Multi-element batch: all tools are concurrent-safe, run in parallel
             let batch_actual_indices: Vec<usize> =
-                batch.iter().map(|&bi| general_indices[bi]).collect();
+                batch.iter().map(|&bi| all_indices[bi]).collect();
 
             let semaphore = Arc::new(Semaphore::new(PARALLEL_BATCH_CONCURRENCY));
 

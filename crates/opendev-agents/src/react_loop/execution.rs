@@ -373,10 +373,16 @@ impl ReactLoop {
                         DoomLoopAction::None => {}
                     }
 
-                    // Unified pre-dispatch: partition all non-subagent tools
+                    // Unified dispatch: partition ALL tools (general + subagent)
                     // using ParallelPolicy, execute concurrent batches in
                     // parallel and single-element batches via execute_sequential.
-                    if let Some(action) = super::phases::dispatch_with_parallelism(
+                    //
+                    // This replaces the previous try-fallthrough pattern where
+                    // execute_parallel → execute_batched → execute_sequential each
+                    // re-processed the full tool_calls slice, risking double execution.
+                    // Single-element batches still route through execute_sequential
+                    // for proper permission/approval/post-processing handling.
+                    let dispatch_returned = super::phases::dispatch_with_parallelism(
                         self,
                         &tool_calls,
                         &response,
@@ -394,94 +400,83 @@ impl ReactLoop {
                         tool_approval_tx,
                         streaming_executor.as_ref(),
                     )
-                    .await
+                    .await;
+
+                    // dispatch_with_parallelism returns None only when tool_calls
+                    // is empty. We keep the legacy paths as a safety net for this
+                    // edge case, but they are never reached in normal operation.
+                    if dispatch_returned.is_none()
+                        && !tool_calls.is_empty()
                     {
-                        match action {
-                            super::types::LoopAction::Continue => {
-                                state.transition = Some(super::types::LoopTransition::NextTurn);
-                                continue;
-                            }
-                            super::types::LoopAction::Return(result) => return result,
-                        }
+                        // Log a warning if we reach here — it means something
+                        // unexpected happened in dispatch_with_parallelism and
+                        // we're falling back to the legacy sequential path.
+                        tracing::warn!(
+                            iteration = state.iteration,
+                            tool_count = tool_calls.len(),
+                            "dispatch_with_parallelism returned None — falling back to legacy sequential"
+                        );
                     }
 
-                    // Try parallel execution (all spawn_subagent calls)
-                    if let Some(action) = super::phases::execute_parallel(
-                        self,
-                        &tool_calls,
-                        messages,
-                        &mut state,
-                        &emitter,
-                        &mut iter_metrics,
-                        iter_start,
-                        response.content.as_deref(),
-                        tool_registry,
-                        tool_context,
-                        task_monitor,
-                        cancel,
-                    )
-                    .await
-                    {
-                        match action {
-                            super::types::LoopAction::Continue => {
-                                state.transition = Some(super::types::LoopTransition::NextTurn);
-                                continue;
+                    // Execute legacy paths as fallback only when dispatch returned None
+                    // AND the tool_calls slice has items (likely all subagent tools).
+                    if dispatch_returned.is_none() {
+                        // Try parallel execution (all spawn_subagent calls)
+                        if let Some(action) = super::phases::execute_parallel(
+                            self,
+                            &tool_calls,
+                            messages,
+                            &mut state,
+                            &emitter,
+                            &mut iter_metrics,
+                            iter_start,
+                            response.content.as_deref(),
+                            tool_registry,
+                            tool_context,
+                            task_monitor,
+                            cancel,
+                        )
+                        .await
+                        {
+                            match action {
+                                super::types::LoopAction::Continue => {
+                                    state.transition = Some(super::types::LoopTransition::NextTurn);
+                                    continue;
+                                }
+                                super::types::LoopAction::Return(result) => return result,
                             }
-                            super::types::LoopAction::Return(result) => return result,
                         }
-                    }
 
-                    // Try batched execution (read-only parallelism)
-                    if let Some(action) = super::phases::execute_batched(
-                        self,
-                        &tool_calls,
-                        &response,
-                        messages,
-                        &mut state,
-                        &emitter,
-                        &mut iter_metrics,
-                        iter_start,
-                        tool_registry,
-                        tool_context,
-                        task_monitor,
-                        artifact_index,
-                        todo_manager,
-                        cancel,
-                        tool_approval_tx,
-                        streaming_executor.as_ref(),
-                    )
-                    .await
-                    {
-                        match action {
-                            super::types::LoopAction::Continue => {
-                                state.transition = Some(super::types::LoopTransition::NextTurn);
-                                continue;
+                        // Sequential fallback as last resort
+                        if let Some(action) = super::phases::execute_sequential(
+                            self,
+                            &tool_calls,
+                            &response,
+                            messages,
+                            &mut state,
+                            &emitter,
+                            &mut iter_metrics,
+                            iter_start,
+                            tool_registry,
+                            tool_context,
+                            task_monitor,
+                            artifact_index,
+                            todo_manager,
+                            cancel,
+                            tool_approval_tx,
+                            streaming_executor.as_ref(),
+                        )
+                        .await
+                        {
+                            match action {
+                                super::types::LoopAction::Continue => {
+                                    state.transition = Some(super::types::LoopTransition::NextTurn);
+                                    continue;
+                                }
+                                super::types::LoopAction::Return(result) => return result,
                             }
-                            super::types::LoopAction::Return(result) => return result,
                         }
-                    }
-
-                    // Sequential tool execution (fallback for single tools / no parallelism)
-                    if let Some(action) = super::phases::execute_sequential(
-                        self,
-                        &tool_calls,
-                        &response,
-                        messages,
-                        &mut state,
-                        &emitter,
-                        &mut iter_metrics,
-                        iter_start,
-                        tool_registry,
-                        tool_context,
-                        task_monitor,
-                        artifact_index,
-                        todo_manager,
-                        cancel,
-                        tool_approval_tx,
-                        streaming_executor.as_ref(),
-                    )
-                    .await
-                    {
+                    } else if let Some(action) = dispatch_returned {
                         match action {
                             super::types::LoopAction::Continue => {
                                 state.transition = Some(super::types::LoopTransition::NextTurn);
