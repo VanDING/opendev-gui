@@ -5,13 +5,17 @@
 
 mod framing;
 mod http;
+mod inprocess;
 mod process;
 mod sse;
 mod stdio;
+mod websocket;
 
 pub use http::HttpTransport;
+pub use inprocess::McpInProcessTransport;
 pub use sse::SseTransport;
 pub use stdio::StdioTransport;
+pub use websocket::McpWebSocketTransport;
 
 use async_trait::async_trait;
 use tokio::time::Duration;

@@ -149,6 +149,7 @@ fn test_prepare_expands_oauth_env_vars() {
         oauth: Some(McpOAuthConfig {
             client_id: "client".to_string(),
             client_secret: "${MCP_OAUTH_SECRET}".to_string(),
+            authorization_url: None,
             token_url: "https://auth.example.com/token".to_string(),
             scope: Some("read".to_string()),
         }),

@@ -5650,19 +5650,25 @@ name = "opendev-mcp"
 version = "0.1.9"
 dependencies = [
  "async-trait",
+ "base64 0.22.1",
+ "chrono",
  "futures",
+ "open",
  "opendev-config",
  "opendev-exec",
  "opendev-models",
+ "rand 0.8.6",
  "regex",
  "reqwest 0.13.4",
  "secrecy",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
  "tempfile",
  "thiserror 2.0.18",
  "tokio",
  "tracing",
+ "url",
  "uuid",
 ]
 

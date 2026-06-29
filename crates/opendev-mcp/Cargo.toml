@@ -20,6 +20,12 @@ futures = { workspace = true }
 uuid = { workspace = true }
 opendev-exec = { workspace = true }
 secrecy = { version = "0.10", features = ["serde"] }
+sha2 = { workspace = true }
+rand = "0.8"
+base64 = "0.22"
+chrono = { workspace = true }
+url = { workspace = true }
+open = "5"
 
 [dev-dependencies]
 tempfile = { workspace = true }

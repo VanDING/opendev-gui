@@ -40,6 +40,9 @@ pub struct McpOAuthConfig {
     /// OAuth client secret.
     #[serde(serialize_with = "serialize_secret_string")]
     pub client_secret: secrecy::SecretString,
+    /// Authorization endpoint URL (for Authorization Code flow).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub authorization_url: Option<String>,
     /// Token endpoint URL.
     pub token_url: String,
     /// OAuth scope (space-separated).
@@ -54,6 +57,7 @@ impl PartialEq for McpOAuthConfig {
                 == secrecy::ExposeSecret::expose_secret(&other.client_secret)
             && self.token_url == other.token_url
             && self.scope == other.scope
+            && self.authorization_url == other.authorization_url
     }
 }
 
@@ -290,6 +294,7 @@ pub fn prepare_server_config(config: &McpServerConfig) -> McpServerConfig {
             client_id: expand_env_vars(&o.client_id),
             client_secret: expand_env_vars(secrecy::ExposeSecret::expose_secret(&o.client_secret))
                 .into(),
+            authorization_url: o.authorization_url.clone(),
             token_url: expand_env_vars(&o.token_url),
             scope: o.scope.as_ref().map(|s| expand_env_vars(s)),
         }),
