@@ -5,6 +5,7 @@ mod background;
 mod foreground;
 mod helpers;
 mod patterns;
+mod readonly_validation;
 
 /// Check if a command matches known dangerous patterns (e.g., `rm -rf /`, `git push --force`).
 pub fn is_dangerous_command(command: &str) -> bool {
@@ -49,7 +50,7 @@ fn is_single_command_read_only(cmd: &str) -> bool {
     // Extract just the command name (strip path)
     let cmd_name = base.rsplit('/').next().unwrap_or(base);
 
-    matches!(
+    if !matches!(
         cmd_name,
         "ls"
             | "cat"
@@ -101,6 +102,8 @@ fn is_single_command_read_only(cmd: &str) -> bool {
             | "jq"
             | "yq"
             | "xargs"
+            | "fd"
+            | "fdfind"
             | "tee" // tee in a pipe is ambiguous, but usually safe in this context
             | "test"
             | "["
@@ -114,7 +117,28 @@ fn is_single_command_read_only(cmd: &str) -> bool {
             | "python3"
             | "ruby"
             | "go"
-    ) && !is_write_subcommand(cmd)
+    ) {
+        return false;
+    }
+
+    // Check for write subcommands (e.g. sed -i, git push)
+    if is_write_subcommand(cmd) {
+        return false;
+    }
+
+    // Check sed execute flag (s/pat/repl/e) — executes replacement as code
+    if cmd_name == "sed" {
+        if let Some(_reason) = opendev_exec::sed_validation::validate_sed_command(cmd) {
+            return false;
+        }
+    }
+
+    // Per-command flag-level validation (xargs, fd, git diff)
+    if !readonly_validation::validate_readonly_command(cmd).safe {
+        return false;
+    }
+
+    true
 }
 
 /// Check if a command has a write-oriented subcommand.

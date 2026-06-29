@@ -15,6 +15,7 @@ pub mod backends;
 pub mod bash_ast;
 pub mod bash_security;
 pub mod capability;
+pub mod sed_validation;
 pub mod env_filter;
 pub mod net_filter;
 pub mod patterns;
