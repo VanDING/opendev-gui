@@ -12,6 +12,7 @@
 
 pub mod backend;
 pub mod backends;
+pub mod bash_ast;
 pub mod capability;
 pub mod env_filter;
 pub mod net_filter;
