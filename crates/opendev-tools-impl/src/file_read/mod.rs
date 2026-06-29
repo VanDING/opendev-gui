@@ -197,41 +197,9 @@ impl BaseTool for FileReadTool {
             ));
         }
 
-        #[cfg(feature = "read_dedup")]
-        let file_mtime: Option<std::time::SystemTime> = meta.modified().ok();
-
-        #[cfg(feature = "read_dedup")]
-        if let Some(mtime) = file_mtime {
-            use dedup::{check_dedup, format_unchanged_response};
-            // If mtime has not changed and the content hash matches cache,
-            // skip the full read and return cached metadata.
-            let path_for_dedup = path.clone();
-            let content_for_dedup = match tokio::task::spawn_blocking(move || {
-                std::fs::read_to_string(&path_for_dedup)
-            })
-            .await
-            {
-                Ok(Ok(c)) => c,
-                _ => String::new(),
-            };
-
-            if !content_for_dedup.is_empty() {
-                match check_dedup(&path, mtime, &content_for_dedup) {
-                    dedup::DedupCheck::Unchanged { total_lines, next_offset } => {
-                        return ToolResult::ok(format_unchanged_response(
-                            file_path,
-                            total_lines,
-                            next_offset,
-                        ));
-                    }
-                    dedup::DedupCheck::Changed => {
-                        // Content changed — continue with full read below
-                    }
-                }
-            }
-        }
-
-        // Check for binary content
+        // Read file content — once.
+        // When read_dedup is enabled, this read also feeds the dedup cache,
+        // avoiding a second read for hash computation.
         let path_for_read = path.clone();
         let bytes = match tokio::task::spawn_blocking(move || std::fs::read(&path_for_read)).await {
             Ok(Ok(data)) => data,
@@ -239,6 +207,7 @@ impl BaseTool for FileReadTool {
             Err(join_err) => return ToolResult::fail(format!("Task join error: {join_err}")),
         };
 
+        // Check for binary content
         if is_binary_file(&path, &bytes) {
             return ToolResult::fail(format!(
                 "Binary file detected: {file_path} ({} bytes). Use a specialized tool for binary files.",
@@ -249,6 +218,27 @@ impl BaseTool for FileReadTool {
         let content = String::from_utf8_lossy(&bytes);
         let lines: Vec<&str> = content.lines().collect();
         let total_lines = lines.len();
+
+        // Dedup check — uses the already-read content, no extra read needed.
+        #[cfg(feature = "read_dedup")]
+        if let Some(mtime) = meta.modified().ok() {
+            use dedup::{check_dedup, format_unchanged_response};
+            match check_dedup(&path, mtime, &content) {
+                dedup::DedupCheck::Unchanged { total_lines, next_offset } => {
+                    return ToolResult::ok(format_unchanged_response(
+                        file_path,
+                        total_lines,
+                        next_offset,
+                    ));
+                }
+                dedup::DedupCheck::Changed => {
+                    // Content changed — continue with full processing below.
+                    // Content will be cached via update_dedup after processing.
+                }
+            }
+        }
+        #[cfg(not(feature = "read_dedup"))]
+        let _ = &content; // Keep alive for non-feature builds
 
         // Apply offset (1-based) and limit
         let start = if offset > 0 { offset - 1 } else { 0 };
@@ -327,10 +317,11 @@ impl BaseTool for FileReadTool {
 
         // Update dedup cache after successful read
         #[cfg(feature = "read_dedup")]
-        if let Some(mtime) = file_mtime {
+        if let Ok(mtime) = meta.modified() {
             use dedup::update_dedup;
             let next_off = if has_more { Some(next_offset) } else { None };
-            update_dedup(&path, mtime, &content, total_lines, next_off);
+            let content_str: &str = &content;
+            update_dedup(&path, mtime, content_str, total_lines, next_off);
         }
 
         ToolResult::ok_with_metadata(output, metadata)
