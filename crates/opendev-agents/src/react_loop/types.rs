@@ -85,6 +85,45 @@ pub enum TurnResult {
     Interrupted,
 }
 
+/// Tag describing why the ReAct loop continued to the next iteration.
+///
+/// Mirrors Claude Code's `transition` field in its state, which provides
+/// `'collapse_drain_retry'`, `'max_output_tokens_recovery'`, etc. — invaluable
+/// for debugging and observability of loop control flow.
+///
+/// Some variants (MaxTokensEscalate, MaxTokensRecovery, StopHookBlocking,
+/// TokenBudgetContinue) are reserved for future use at additional continue
+/// sites in the loop. They match the full CC transition taxonomy.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)]
+pub(super) enum LoopTransition {
+    /// Normal continuation after tool execution completes.
+    NextTurn,
+    /// Continue after collapsing the drain retry mechanism.
+    CollapseDrainRetry,
+    /// Continue because max output tokens triggered an escalation.
+    MaxTokensEscalate,
+    /// Continue after recovering from max output tokens.
+    MaxTokensRecovery,
+    /// Continue because a stop hook blocked completion.
+    StopHookBlocking,
+    /// Continue because the token budget limit was reached.
+    TokenBudgetContinue,
+}
+
+impl std::fmt::Display for LoopTransition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NextTurn => write!(f, "next_turn"),
+            Self::CollapseDrainRetry => write!(f, "collapse_drain_retry"),
+            Self::MaxTokensEscalate => write!(f, "max_tokens_escalate"),
+            Self::MaxTokensRecovery => write!(f, "max_tokens_recovery"),
+            Self::StopHookBlocking => write!(f, "stop_hook_blocking"),
+            Self::TokenBudgetContinue => write!(f, "token_budget_continue"),
+        }
+    }
+}
+
 /// Control flow signal returned by extracted phase functions.
 ///
 /// Used to propagate `continue` and `return` semantics from extracted

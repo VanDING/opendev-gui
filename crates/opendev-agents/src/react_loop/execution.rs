@@ -251,6 +251,12 @@ impl ReactLoop {
                 }
                 Err(super::types::LoopAction::Continue) => {
                     consecutive_llm_errors += 1;
+                    state.transition = Some(super::types::LoopTransition::CollapseDrainRetry);
+                    debug!(
+                        iteration = state.iteration,
+                        consecutive_errors = consecutive_llm_errors,
+                        "CollapseDrainRetry — LLM call continuation"
+                    );
                     if consecutive_llm_errors > MAX_LLM_RETRIES {
                         return Err(AgentError::LlmError(format!(
                             "LLM call failed after {MAX_LLM_RETRIES} consecutive retries"
@@ -315,7 +321,10 @@ impl ReactLoop {
                         todo_manager,
                         event_callback,
                     ) {
-                        super::types::LoopAction::Continue => continue,
+                        super::types::LoopAction::Continue => {
+                            state.transition = Some(super::types::LoopTransition::NextTurn);
+                            continue;
+                        }
                         super::types::LoopAction::Return(result) => return result,
                     }
                 }
@@ -384,7 +393,10 @@ impl ReactLoop {
                     .await
                     {
                         match action {
-                            super::types::LoopAction::Continue => continue,
+                            super::types::LoopAction::Continue => {
+                                state.transition = Some(super::types::LoopTransition::NextTurn);
+                                continue;
+                            }
                             super::types::LoopAction::Return(result) => return result,
                         }
                     }
@@ -407,7 +419,10 @@ impl ReactLoop {
                     .await
                     {
                         match action {
-                            super::types::LoopAction::Continue => continue,
+                            super::types::LoopAction::Continue => {
+                                state.transition = Some(super::types::LoopTransition::NextTurn);
+                                continue;
+                            }
                             super::types::LoopAction::Return(result) => return result,
                         }
                     }
@@ -434,7 +449,10 @@ impl ReactLoop {
                     .await
                     {
                         match action {
-                            super::types::LoopAction::Continue => continue,
+                            super::types::LoopAction::Continue => {
+                                state.transition = Some(super::types::LoopTransition::NextTurn);
+                                continue;
+                            }
                             super::types::LoopAction::Return(result) => return result,
                         }
                     }
@@ -461,18 +479,29 @@ impl ReactLoop {
                     .await
                     {
                         match action {
-                            super::types::LoopAction::Continue => continue,
+                            super::types::LoopAction::Continue => {
+                                state.transition = Some(super::types::LoopTransition::NextTurn);
+                                continue;
+                            }
                             super::types::LoopAction::Return(result) => return result,
                         }
                     }
                 }
                 TurnResult::Continue => {
+                    state.transition = Some(super::types::LoopTransition::NextTurn);
                     // LLM returned failure, loop will retry
                 }
             }
 
             // Finalize metrics for this iteration
             iter_metrics.total_duration_ms = iter_start.elapsed().as_millis() as u64;
+            if let Some(transition) = state.transition {
+                debug!(
+                    iteration = state.iteration,
+                    transition = %transition,
+                    "Loop iteration completed with transition"
+                );
+            }
             self.push_metrics(iter_metrics);
         }
     }

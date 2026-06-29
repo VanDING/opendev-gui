@@ -18,6 +18,7 @@ use crate::doom_loop::DoomLoopDetector;
 use crate::prompts::reminders::{
     MessageClass, ProactiveReminderConfig, ProactiveReminderScheduler,
 };
+use super::types::LoopTransition;
 
 /// Mutable state that persists across iterations of the ReAct loop.
 ///
@@ -64,6 +65,12 @@ pub(super) struct LoopState {
     pub collector_runner: CollectorRunner,
     /// Shared flag set by safety phase after compaction.
     pub compaction_flag: Arc<AtomicBool>,
+
+    /// Why the current iteration continued (set at each `continue` site).
+    ///
+    /// Mirrors Claude Code's `transition` field. Set before every `continue`
+    /// in `execution.rs` and logged via tracing for loop debuggability.
+    pub transition: Option<LoopTransition>,
 }
 
 impl LoopState {
@@ -121,6 +128,7 @@ impl LoopState {
             activated_tools: HashSet::new(),
             collector_runner: CollectorRunner::new(collectors),
             compaction_flag,
+            transition: None,
             // Note: todo reminders are handled by TodoStateCollector (live data).
             // Only task_proactive_reminder remains here as a static template nudge.
             proactive_reminders: ProactiveReminderScheduler::new(vec![ProactiveReminderConfig {
