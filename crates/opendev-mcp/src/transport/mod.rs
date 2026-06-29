@@ -29,7 +29,7 @@ pub(super) const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Transport trait for communicating with MCP servers.
 #[async_trait]
-pub trait McpTransport: Send + Sync {
+pub trait McpTransport: Send + Sync + std::fmt::Debug {
     /// Connect the transport (e.g., spawn child process).
     async fn connect(&mut self) -> McpResult<()>;
 

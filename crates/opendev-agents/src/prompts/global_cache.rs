@@ -86,6 +86,7 @@ impl GlobalPromptCache {
     /// Store content in the cache.
     pub fn store(&self, hash: &str, content: &str) {
         let path = self.cache_dir.join(format!("{hash}.txt"));
+        let _ = std::fs::create_dir_all(&self.cache_dir);
         let _ = std::fs::write(&path, content);
     }
 

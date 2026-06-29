@@ -37,6 +37,16 @@ pub struct StdioTransport {
     notification_rx: Arc<Mutex<Option<tokio::sync::mpsc::UnboundedReceiver<JsonRpcNotification>>>>,
 }
 
+impl std::fmt::Debug for StdioTransport {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("StdioTransport")
+            .field("command", &self.command)
+            .field("args", &self.args)
+            .field("env_len", &self.env.len())
+            .finish()
+    }
+}
+
 impl StdioTransport {
     pub fn new(command: String, args: Vec<String>, env: HashMap<String, String>) -> Self {
         let (notification_tx, notification_rx) = tokio::sync::mpsc::unbounded_channel();

@@ -309,8 +309,18 @@ impl EventStore {
             if line.trim().is_empty() {
                 continue;
             }
-            let envelope: EventEnvelope = serde_json::from_str(&line)
-                .map_err(|e| format!("parse line {} failed: {e}", i + 1))?;
+            // Skip corrupted lines gracefully instead of failing the entire load.
+            let envelope: EventEnvelope = match serde_json::from_str(&line) {
+                Ok(e) => e,
+                Err(e) => {
+                    tracing::warn!(
+                        line = i + 1,
+                        error = %e,
+                        "Skipping corrupted event line"
+                    );
+                    continue;
+                }
+            };
             envelopes.push(envelope);
         }
 

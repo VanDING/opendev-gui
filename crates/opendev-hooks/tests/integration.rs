@@ -241,10 +241,10 @@ async fn stdin_payload_includes_all_fields() {
 // Hook event coverage
 // ========================================================================
 
-/// All 10 hook events should roundtrip through as_str/from_config_str.
+/// All hook events should roundtrip through as_str/from_config_str.
 #[test]
 fn all_hook_events_roundtrip() {
-    assert_eq!(HookEvent::ALL.len(), 10);
+    assert_eq!(HookEvent::ALL.len(), 11);
     for event in HookEvent::ALL {
         let s = event.as_str();
         let parsed = HookEvent::from_config_str(s);

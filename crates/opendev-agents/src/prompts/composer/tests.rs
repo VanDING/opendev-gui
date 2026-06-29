@@ -190,7 +190,10 @@ fn test_compose_two_part_with_vars() {
 
     let (stable, dynamic) = composer.compose_two_part_with_vars(&HashMap::new(), &vars);
     assert_eq!(stable, "Stable value");
-    assert_eq!(dynamic, "Dynamic value");
+    assert_eq!(
+        dynamic,
+        "\n__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__\nDynamic value"
+    );
 }
 
 #[test]

@@ -115,24 +115,41 @@ pub fn save_features() -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+
+    /// Serializes access to the global FEATURES store during tests.
+    /// Without this, parallel tests in other crates that access
+    /// is_feature_enabled/disable_feature race against our assertions.
+    static TEST_LOCK: std::sync::LazyLock<Mutex<()>> =
+        std::sync::LazyLock::new(|| Mutex::new(()));
+
+    /// Reset the global feature store for test isolation.
+    fn reset_features() {
+        let mut guard = FEATURES.write().unwrap_or_else(|e| e.into_inner());
+        let defaults = default_features();
+        *guard = defaults;
+    }
 
     #[test]
     fn test_defaults_are_enabled() {
-        init_features();
+        let _lock = TEST_LOCK.lock().unwrap();
+        reset_features();
         assert!(is_feature_enabled("streaming"));
         assert!(is_feature_enabled("memory"));
     }
 
     #[test]
     fn test_disable_killswitch() {
-        init_features();
+        let _lock = TEST_LOCK.lock().unwrap();
+        reset_features();
         disable_feature("streaming");
         assert!(!is_feature_enabled("streaming"));
     }
 
     #[test]
     fn test_re_enable() {
-        init_features();
+        let _lock = TEST_LOCK.lock().unwrap();
+        reset_features();
         disable_feature("agent_team");
         assert!(!is_feature_enabled("agent_team"));
         enable_feature("agent_team");
@@ -141,13 +158,14 @@ mod tests {
 
     #[test]
     fn test_unknown_feature_defaults_to_true() {
-        init_features();
+        let _lock = TEST_LOCK.lock().unwrap();
         assert!(is_feature_enabled("nonexistent_feature"));
     }
 
     #[test]
     fn test_all_features_returns_snapshot() {
-        init_features();
+        let _lock = TEST_LOCK.lock().unwrap();
+        reset_features();
         let all = all_features();
         assert!(all.contains_key("streaming"));
         assert!(all.contains_key("memory"));

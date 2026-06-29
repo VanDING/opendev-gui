@@ -118,9 +118,9 @@ fn stage1_analysis(xml_input: &str) -> Option<XmlAnalysisDecision> {
         "chmod 777",
         "chown -R",
         "git push --force",
-        "curl.*| bash",
-        "wget.*| sh",
-        "base64.*decode.*|",
+        " | bash",
+        " | sh",
+        "base64 --decode |",
     ];
 
     for pattern in &dangerous_patterns {

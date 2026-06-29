@@ -9,6 +9,7 @@ use crate::error::{McpError, McpResult};
 use crate::models::{JsonRpcNotification, JsonRpcRequest, JsonRpcResponse};
 
 /// HTTP transport: communicates with a remote server via HTTP POST requests.
+#[derive(Debug)]
 pub struct HttpTransport {
     url: String,
     #[allow(dead_code)]

@@ -9,6 +9,7 @@ use crate::error::{McpError, McpResult};
 use crate::models::{JsonRpcNotification, JsonRpcRequest, JsonRpcResponse};
 
 /// SSE transport: communicates with a server using Server-Sent Events.
+#[derive(Debug)]
 pub struct SseTransport {
     url: String,
     #[allow(dead_code)]

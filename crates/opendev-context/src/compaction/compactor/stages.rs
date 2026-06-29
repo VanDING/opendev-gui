@@ -8,7 +8,7 @@ use std::collections::{HashMap, HashSet};
 
 use tracing::info;
 
-use super::super::levels::OptimizationLevel;
+use crate::compaction::levels::OptimizationLevel;
 use super::super::preview::summarize_tool_output;
 use super::super::tokens::count_tokens;
 use super::super::{

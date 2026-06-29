@@ -4,7 +4,7 @@
 //! - Message filtering preserves tool_call_id pairing
 //! - Compaction preserves conversation semantics
 
-use opendev_context::{ApiMessage, compactor::ContextCompactor};
+use opendev_context::compaction::{ApiMessage, ContextCompactor};
 
 fn make_msg(role: &str, content: &str) -> ApiMessage {
     let mut msg = ApiMessage::new();

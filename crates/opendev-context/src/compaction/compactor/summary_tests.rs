@@ -130,7 +130,7 @@ fn test_sanitize_for_summarization_handles_array_content() {
 
 #[test]
 fn test_check_usage_returns_compact_at_99_percent() {
-    use super::super::levels::OptimizationLevel;
+    use crate::compaction::levels::OptimizationLevel;
 
     let mut compactor = ContextCompactor::new(10_000);
     let msgs = vec![make_msg("user", "hello"); 100];
@@ -148,7 +148,7 @@ fn test_check_usage_returns_compact_at_99_percent() {
 
 #[test]
 fn test_check_usage_returns_warning_at_70_percent() {
-    use super::super::levels::OptimizationLevel;
+    use crate::compaction::levels::OptimizationLevel;
 
     let mut compactor = ContextCompactor::new(10_000);
     let msgs = vec![make_msg("user", "hello"); 5];
@@ -161,7 +161,7 @@ fn test_check_usage_returns_warning_at_70_percent() {
 
 #[test]
 fn test_check_usage_returns_none_below_70() {
-    use super::super::levels::OptimizationLevel;
+    use crate::compaction::levels::OptimizationLevel;
 
     let mut compactor = ContextCompactor::new(10_000);
     let msgs = vec![make_msg("user", "hello")];
@@ -285,7 +285,7 @@ fn test_apply_llm_compaction_preserves_artifact_index_on_empty() {
     ];
 
     let compacted = compactor.apply_llm_compaction(msgs, "Summary text", 2);
-    assert_eq!(compacted.len(), 3); // system + summary + 1 tail (keep_recent=2)
+    assert_eq!(compacted.len(), 4); // system + summary + 2 tail (keep_recent=2)
 
     let summary_content = compacted[1]
         .get("content")
