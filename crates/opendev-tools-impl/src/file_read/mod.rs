@@ -3,6 +3,9 @@
 mod binary;
 mod suggestions;
 
+#[cfg(feature = "read_dedup")]
+mod dedup;
+
 use std::collections::HashMap;
 
 use opendev_tools_core::{BaseTool, ToolContext, ToolResult};
@@ -194,6 +197,40 @@ impl BaseTool for FileReadTool {
             ));
         }
 
+        #[cfg(feature = "read_dedup")]
+        let file_mtime: Option<std::time::SystemTime> = meta.modified().ok();
+
+        #[cfg(feature = "read_dedup")]
+        if let Some(mtime) = file_mtime {
+            use dedup::{check_dedup, format_unchanged_response};
+            // If mtime has not changed and the content hash matches cache,
+            // skip the full read and return cached metadata.
+            let path_for_dedup = path.clone();
+            let content_for_dedup = match tokio::task::spawn_blocking(move || {
+                std::fs::read_to_string(&path_for_dedup)
+            })
+            .await
+            {
+                Ok(Ok(c)) => c,
+                _ => String::new(),
+            };
+
+            if !content_for_dedup.is_empty() {
+                match check_dedup(&path, mtime, &content_for_dedup) {
+                    dedup::DedupCheck::Unchanged { total_lines, next_offset } => {
+                        return ToolResult::ok(format_unchanged_response(
+                            file_path,
+                            total_lines,
+                            next_offset,
+                        ));
+                    }
+                    dedup::DedupCheck::Changed => {
+                        // Content changed — continue with full read below
+                    }
+                }
+            }
+        }
+
         // Check for binary content
         let path_for_read = path.clone();
         let bytes = match tokio::task::spawn_blocking(move || std::fs::read(&path_for_read)).await {
@@ -286,6 +323,14 @@ impl BaseTool for FileReadTool {
         }
         if byte_truncated {
             metadata.insert("truncated".into(), serde_json::json!(true));
+        }
+
+        // Update dedup cache after successful read
+        #[cfg(feature = "read_dedup")]
+        if let Some(mtime) = file_mtime {
+            use dedup::update_dedup;
+            let next_off = if has_more { Some(next_offset) } else { None };
+            update_dedup(&path, mtime, &content, total_lines, next_off);
         }
 
         ToolResult::ok_with_metadata(output, metadata)
