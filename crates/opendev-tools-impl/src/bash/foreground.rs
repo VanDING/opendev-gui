@@ -265,7 +265,13 @@ impl BashTool {
                     } else {
                         display_output
                     };
-                    ToolResult::ok_with_metadata(final_output, metadata)
+                    let mut result = ToolResult::ok_with_metadata(final_output, metadata);
+                    if overflow_result.is_some() {
+                        result = result.with_llm_suffix(
+                            "use read_file with offset to see the full truncated output"
+                        );
+                    }
+                    result
                 } else {
                     let suffix = command_failure_suffix(exit_code, &combined);
                     ToolResult {

@@ -80,7 +80,8 @@ impl BaseTool for FileWriteTool {
                 "Refusing to write to {}: {} — this file likely contains secrets. \
                  If you need to modify it, ask the user to do so manually.",
                 file_path, reason
-            ));
+            ))
+            .with_llm_suffix("ask your user to approve");
         }
 
         // Create parent directories if needed
@@ -175,13 +176,20 @@ impl BaseTool for FileWriteTool {
         let mut output = format!("Wrote {bytes} bytes ({lines} lines) to {file_path}{fmt_note}");
 
         // Collect LSP diagnostics after write
-        if let Some(diag_output) =
+        let has_diags = if let Some(diag_output) =
             diagnostics_helper::collect_post_edit_diagnostics(ctx, &path).await
         {
             output.push_str(&diag_output);
-        }
+            true
+        } else {
+            false
+        };
 
-        ToolResult::ok_with_metadata(output, metadata)
+        let mut result = ToolResult::ok_with_metadata(output, metadata);
+        if has_diags {
+            result = result.with_llm_suffix("fix the error before proceeding");
+        }
+        result
     }
 }
 

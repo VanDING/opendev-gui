@@ -212,5 +212,6 @@ impl BashTool {
         };
 
         ToolResult::ok_with_metadata(msg, metadata)
+            .with_llm_suffix("check later with get_background_result")
     }
 }

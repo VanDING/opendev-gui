@@ -115,7 +115,8 @@ impl BaseTool for FileEditTool {
                 "Refusing to edit {}: {} — this file likely contains secrets. \
                  If you need to modify it, ask the user to do so manually.",
                 file_path, reason
-            ));
+            ))
+            .with_llm_suffix("ask your user to approve");
         }
 
         // Acquire per-file lock — scoped so the guard drops before async diagnostics.
@@ -248,13 +249,20 @@ impl BaseTool for FileEditTool {
 
         // Collect LSP diagnostics after edit (requires no lock held)
         let mut output_text = output_text;
-        if let Some(diag_output) =
+        let has_diags = if let Some(diag_output) =
             diagnostics_helper::collect_post_edit_diagnostics(ctx, &path).await
         {
             output_text.push_str(&diag_output);
-        }
+            true
+        } else {
+            false
+        };
 
-        ToolResult::ok_with_metadata(output_text, metadata)
+        let mut result = ToolResult::ok_with_metadata(output_text, metadata);
+        if has_diags {
+            result = result.with_llm_suffix("fix the error before proceeding");
+        }
+        result
     }
 }
 

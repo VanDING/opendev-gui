@@ -385,11 +385,13 @@ impl BaseTool for BashTool {
         match decision {
             Decision::Deny { reason } => {
                 tracing::warn!(command = %command, reason = %reason, "BashTool: command denied by policy");
-                return ToolResult::fail(format!("Denied by sandbox policy: {reason}"));
+                return ToolResult::fail(format!("Denied by sandbox policy: {reason}"))
+                    .with_llm_suffix("ask your user to approve this command");
             }
             Decision::Prompt { reason, .. } => {
                 // For now, treat prompts as deny (until approval UI integration)
-                return ToolResult::fail(format!("Command requires approval: {reason}"));
+                return ToolResult::fail(format!("Command requires approval: {reason}"))
+                    .with_llm_suffix("ask your user to approve this command");
             }
             _ => {} // Allow / AllowWith proceed
         }
