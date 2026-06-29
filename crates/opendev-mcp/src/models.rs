@@ -152,6 +152,37 @@ pub struct McpToolSchema {
     pub server_name: String,
     /// Original tool name on the server.
     pub original_name: String,
+    /// Maximum output characters for this MCP tool.
+    /// When exceeded, output is truncated with a marker.
+    pub max_mcp_output_chars: usize,
+}
+
+/// Default max MCP output before truncation (25,000 chars ≈ ~6K tokens).
+pub const DEFAULT_MAX_MCP_OUTPUT_CHARS: usize = 25_000;
+
+impl McpToolSchema {
+    pub fn new(
+        name: String,
+        description: String,
+        parameters: serde_json::Value,
+        server_name: String,
+        original_name: String,
+    ) -> Self {
+        Self {
+            name,
+            description,
+            parameters,
+            server_name,
+            original_name,
+            max_mcp_output_chars: DEFAULT_MAX_MCP_OUTPUT_CHARS,
+        }
+    }
+
+    /// Set the max output chars for this tool.
+    pub fn with_max_output_chars(mut self, max_chars: usize) -> Self {
+        self.max_mcp_output_chars = max_chars;
+        self
+    }
 }
 
 /// JSON-RPC request for MCP protocol.

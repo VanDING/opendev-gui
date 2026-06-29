@@ -187,13 +187,13 @@ fn test_mcp_prompt_result() {
 
 #[test]
 fn test_mcp_tool_schema_namespacing() {
-    let schema = McpToolSchema {
-        name: "my_server__read_file".to_string(),
-        description: "Read a file".to_string(),
-        parameters: serde_json::json!({"type": "object"}),
-        server_name: "my_server".to_string(),
-        original_name: "read_file".to_string(),
-    };
+    let schema = McpToolSchema::new(
+        "my_server__read_file".to_string(),
+        "Read a file".to_string(),
+        serde_json::json!({"type": "object"}),
+        "my_server".to_string(),
+        "read_file".to_string(),
+    );
 
     assert!(schema.name.contains("__"));
     assert_eq!(schema.original_name, "read_file");

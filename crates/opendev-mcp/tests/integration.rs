@@ -169,16 +169,16 @@ fn mcp_tool_result_success_and_error() {
 /// McpToolSchema correctly namespaces tool names.
 #[test]
 fn mcp_tool_schema_namespacing() {
-    let schema = McpToolSchema {
-        name: "sqlite__query".to_string(),
-        description: "Run a SQL query".to_string(),
-        parameters: serde_json::json!({
+    let schema = McpToolSchema::new(
+        "sqlite__query".to_string(),
+        "Run a SQL query".to_string(),
+        serde_json::json!({
             "type": "object",
             "properties": {"sql": {"type": "string"}}
         }),
-        server_name: "sqlite".to_string(),
-        original_name: "query".to_string(),
-    };
+        "sqlite".to_string(),
+        "query".to_string(),
+    );
 
     assert_eq!(schema.name, "sqlite__query");
     assert_eq!(schema.server_name, "sqlite");

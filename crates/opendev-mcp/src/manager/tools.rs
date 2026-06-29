@@ -238,13 +238,13 @@ impl McpManager {
             let sanitized_server = sanitize_mcp_name(server_name);
             for tool in &conn.tools {
                 let sanitized_tool = sanitize_mcp_name(&tool.name);
-                schemas.push(McpToolSchema {
-                    name: format!("{}__{}", sanitized_server, sanitized_tool),
-                    description: tool.description.clone(),
-                    parameters: tool.input_schema.clone(),
-                    server_name: server_name.clone(),
-                    original_name: tool.name.clone(),
-                });
+                schemas.push(McpToolSchema::new(
+                    format!("{}__{}", sanitized_server, sanitized_tool),
+                    tool.description.clone(),
+                    tool.input_schema.clone(),
+                    server_name.clone(),
+                    tool.name.clone(),
+                ));
             }
         }
 

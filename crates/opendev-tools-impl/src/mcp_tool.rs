@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use opendev_mcp::McpManager;
-use opendev_mcp::models::{McpContent, McpToolSchema};
+use opendev_mcp::models::{McpContent, McpToolSchema, DEFAULT_MAX_MCP_OUTPUT_CHARS};
 use opendev_tools_core::traits::{BaseTool, ToolContext, ToolResult};
 
 /// A `BaseTool` wrapper around a single MCP server tool.
@@ -29,6 +29,8 @@ pub struct McpBridgeTool {
     original_name: String,
     /// Shared MCP manager for dispatching calls.
     manager: Arc<McpManager>,
+    /// Maximum output characters. When exceeded, output is truncated.
+    max_output_chars: usize,
 }
 
 impl std::fmt::Debug for McpBridgeTool {
@@ -51,6 +53,7 @@ impl McpBridgeTool {
             server_name: schema.server_name.clone(),
             original_name: schema.original_name.clone(),
             manager,
+            max_output_chars: schema.max_mcp_output_chars,
         }
     }
 }
@@ -93,7 +96,7 @@ impl BaseTool for McpBridgeTool {
         match self.manager.call_tool(&self.server_name, &self.original_name, arguments).await {
             Ok(result) => {
                 // Convert MCP content blocks to a single output string
-                let output = result
+                let mut output = result
                     .content
                     .iter()
                     .filter_map(|c| match c {
@@ -102,6 +105,17 @@ impl BaseTool for McpBridgeTool {
                     })
                     .collect::<Vec<_>>()
                     .join("\n");
+
+                // Truncate if output exceeds the per-tool budget
+                if output.len() > self.max_output_chars {
+                    let truncated = &output[..self.max_output_chars];
+                    let marker = format!(
+                        "\n\n[OUTPUT TRUNCATED - exceeded {} character limit. \
+                         Use the MCP tool with more specific parameters to get targeted results.]",
+                        self.max_output_chars
+                    );
+                    output = format!("{truncated}{marker}");
+                }
 
                 if result.is_error {
                     ToolResult::fail(if output.is_empty() {

@@ -2,13 +2,13 @@ use super::*;
 
 #[test]
 fn test_bridge_tool_name_prefixed() {
-    let schema = McpToolSchema {
-        name: "sqlite__query".to_string(),
-        description: "Run a SQL query".to_string(),
-        parameters: serde_json::json!({"type": "object", "properties": {"sql": {"type": "string"}}}),
-        server_name: "sqlite".to_string(),
-        original_name: "query".to_string(),
-    };
+    let schema = McpToolSchema::new(
+        "sqlite__query".to_string(),
+        "Run a SQL query".to_string(),
+        serde_json::json!({"type": "object", "properties": {"sql": {"type": "string"}}}),
+        "sqlite".to_string(),
+        "query".to_string(),
+    );
     let manager = Arc::new(McpManager::new(None));
     let tool = McpBridgeTool::from_schema(&schema, manager);
 
@@ -25,13 +25,13 @@ fn test_bridge_tool_schema() {
         },
         "required": ["path"]
     });
-    let schema = McpToolSchema {
-        name: "fs__read".to_string(),
-        description: "Read a file".to_string(),
-        parameters: input_schema.clone(),
-        server_name: "fs".to_string(),
-        original_name: "read".to_string(),
-    };
+    let schema = McpToolSchema::new(
+        "fs__read".to_string(),
+        "Read a file".to_string(),
+        input_schema.clone(),
+        "fs".to_string(),
+        "read".to_string(),
+    );
     let manager = Arc::new(McpManager::new(None));
     let tool = McpBridgeTool::from_schema(&schema, manager);
 
@@ -40,13 +40,13 @@ fn test_bridge_tool_schema() {
 
 #[test]
 fn test_bridge_tool_fallback_schema() {
-    let schema = McpToolSchema {
-        name: "test__noop".to_string(),
-        description: "No-op".to_string(),
-        parameters: serde_json::Value::Null,
-        server_name: "test".to_string(),
-        original_name: "noop".to_string(),
-    };
+    let schema = McpToolSchema::new(
+        "test__noop".to_string(),
+        "No-op".to_string(),
+        serde_json::Value::Null,
+        "test".to_string(),
+        "noop".to_string(),
+    );
     let manager = Arc::new(McpManager::new(None));
     let tool = McpBridgeTool::from_schema(&schema, manager);
 

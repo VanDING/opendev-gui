@@ -107,6 +107,12 @@ pub struct McpServerConfig {
     /// If None, uses the default timeout (30 seconds).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timeout: Option<u64>,
+
+    /// Maximum output size in characters for this server's tools.
+    /// When exceeded, the tool output is truncated with a marker.
+    /// If None, uses the default (25,000 chars).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_result_size: Option<usize>,
 }
 
 /// Default MCP request timeout in milliseconds.
@@ -136,6 +142,7 @@ impl Default for McpServerConfig {
             transport: TransportType::Stdio,
             oauth: None,
             timeout: None,
+            max_result_size: None,
         }
     }
 }
@@ -287,6 +294,7 @@ pub fn prepare_server_config(config: &McpServerConfig) -> McpServerConfig {
             scope: o.scope.as_ref().map(|s| expand_env_vars(s)),
         }),
         timeout: config.timeout,
+        max_result_size: config.max_result_size,
     }
 }
 
