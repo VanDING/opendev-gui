@@ -158,14 +158,78 @@ impl BashTool {
 
             // Check auto-background promotion: if this command is recognized
             // as a long-running command and has exceeded the foreground budget,
-            // log a warning suggesting the LLM re-run in background.
+            // promote it to the background store.
             if start.elapsed() >= Duration::from_millis(MAX_FOREGROUND_MS)
                 && super::patterns::is_auto_background_command(command)
             {
                 tracing::info!(
                     duration_ms = start.elapsed().as_millis(),
-                    "Command exceeded foreground budget — consider backgrounding"
+                    "Command exceeded foreground budget — promoting to background"
                 );
+
+                // Kill the foreground process group.
+                kill_process_group(pgid);
+                let _ = child.wait().await;
+
+                // Collect partial output.
+                let stdout_captured = stdout_lines.lock().await.clone();
+                let stderr_captured = stderr_lines.lock().await.clone();
+                let startup_output = stdout_captured.join("\n");
+
+                // Re-spawn the command as a background process.
+                let bg_id = self.next_id().await;
+                let mut bg_cmd = Command::new("sh");
+                bg_cmd.arg("-c").arg(&exec_command).current_dir(working_dir);
+                opendev_exec::env_filter::apply(bg_cmd.as_std_mut());
+                if let Err(e) = backend.apply(bg_cmd.as_std_mut(), &exec_request) {
+                    tracing::error!(error = %e, "Auto-background sandbox apply failed");
+                    let msg = format!(
+                        "Command exceeded foreground budget, but could not \
+                         re-apply sandbox for backgrounding: {e}"
+                    );
+                    break Err(msg);
+                }
+                bg_cmd.stdout(std::process::Stdio::piped());
+                bg_cmd.stderr(std::process::Stdio::piped());
+                #[cfg(unix)]
+                unsafe {
+                    bg_cmd.pre_exec(|| { libc::setpgid(0, 0); Ok(()) });
+                }
+
+                match bg_cmd.spawn() {
+                    Ok(mut bg_child) => {
+                        let bg_pid = bg_child.id().unwrap_or(0);
+                        let bg_pgid = bg_pid;
+                        // Take pipes before constructing BackgroundProcess.
+                        let _bg_stdout = bg_child.stdout.take();
+                        let _bg_stderr = bg_child.stderr.take();
+
+                        let bp = super::helpers::BackgroundProcess {
+                            id: bg_id, command: command.to_string(),
+                            pid: bg_pid, pgid: bg_pgid,
+                            started_at: Instant::now(),
+                            stdout_lines: stdout_captured.clone(),
+                            stderr_lines: stderr_captured.clone(),
+                            child: bg_child,
+                        };
+                        self.background.lock().await.insert(bg_id, bp);
+
+                        let mut metadata = HashMap::new();
+                        metadata.insert("background_id".into(), serde_json::json!(bg_id));
+                        metadata.insert("pid".into(), serde_json::json!(bg_pid));
+                        let msg = if startup_output.is_empty() {
+                            format!("Command auto-promoted to background (id={bg_id}, pid={bg_pid})")
+                        } else {
+                            format!("Command auto-promoted to background (id={bg_id}, pid={bg_pid})\nStartup output:\n{startup_output}")
+                        };
+                        return ToolResult::ok_with_metadata(msg, metadata)
+                            .with_llm_suffix("check later with get_background_result");
+                    }
+                    Err(e) => {
+                        let msg = format!("Command exceeded foreground budget, but background spawn failed: {e}");
+                        break Err(msg);
+                    }
+                }
             }
 
             // Check absolute timeout

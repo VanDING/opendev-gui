@@ -74,6 +74,11 @@ impl BaseTool for FileWriteTool {
 
         let path = resolve_file_path(file_path, &ctx.working_dir);
 
+        // Validate path safety before writing.
+        if let Some(danger) = opendev_tools_core::path::check_dangerous_path(file_path) {
+            return ToolResult::fail(format!("{danger}"));
+        }
+
         // Warn about writing to sensitive files.
         if let Some(reason) = is_sensitive_file(&path) {
             return ToolResult::fail(format!(

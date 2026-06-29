@@ -103,6 +103,11 @@ impl BaseTool for FileEditTool {
             return ToolResult::fail("old_string and new_string are identical");
         }
 
+        // Validate path safety before processing.
+        if let Some(danger) = opendev_tools_core::path::check_dangerous_path(file_path) {
+            return ToolResult::fail(format!("{danger}"));
+        }
+
         let path = resolve_file_path(file_path, &ctx.working_dir);
 
         if !path.exists() {

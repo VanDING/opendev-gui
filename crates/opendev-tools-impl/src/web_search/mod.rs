@@ -25,6 +25,12 @@ const BRAVE_API_URL: &str = "https://api.search.brave.com/res/v1/web/search";
 /// Environment variable for Brave Search API key.
 const BRAVE_API_KEY_ENV: &str = "BRAVE_SEARCH_API_KEY";
 
+/// Environment variable for SerpAPI API key.
+const SERPAPI_API_KEY_ENV: &str = "SERPAPI_API_KEY";
+
+/// SerpAPI search endpoint.
+const SERPAPI_API_URL: &str = "https://serpapi.com/search";
+
 /// Search backend options.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SearchBackend {
@@ -40,6 +46,8 @@ impl SearchBackend {
     fn try_available() -> Self {
         if std::env::var(BRAVE_API_KEY_ENV).ok().filter(|k| !k.is_empty()).is_some() {
             Self::Brave
+        } else if std::env::var(SERPAPI_API_KEY_ENV).ok().filter(|k| !k.is_empty()).is_some() {
+            Self::SerpApi
         } else {
             Self::DdgFallback
         }
@@ -150,9 +158,13 @@ impl BaseTool for WebSearchTool {
                 }
             }
             SearchBackend::SerpApi => {
-                // Not yet implemented; fall back to DDG.
-                tracing::warn!("SerpAPI backend not yet implemented; falling back to DDG");
-                search_ddg(query, max_results).await
+                match search_serpapi(query, max_results).await {
+                    Ok(r) => r,
+                    Err(e) => {
+                        tracing::warn!("SerpAPI search failed: {e}; falling back to DDG");
+                        search_ddg(query, max_results).await
+                    }
+                }
             }
             SearchBackend::DdgFallback => {
                 search_ddg(query, max_results).await
@@ -250,6 +262,62 @@ async fn search_brave(query: &str, max_results: usize) -> Result<Vec<SearchResul
                     let url = item.get("url")?.as_str()?.to_string();
                     let snippet = item
                         .get("description")
+                        .and_then(|d| d.as_str())
+                        .unwrap_or("")
+                        .to_string();
+                    Some(SearchResult { title, url, snippet })
+                })
+                .take(max_results)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+
+    Ok(results)
+}
+
+/// Search via SerpAPI. Requires `SERPAPI_API_KEY` env var.
+async fn search_serpapi(query: &str, max_results: usize) -> Result<Vec<SearchResult>, String> {
+    let api_key = std::env::var(SERPAPI_API_KEY_ENV)
+        .map_err(|_| "SERPAPI_API_KEY not set".to_string())?;
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(15))
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
+
+    let url = format!(
+        "{}?q={}&api_key={}&engine=google&num={}",
+        SERPAPI_API_URL,
+        urlencode(query),
+        api_key,
+        max_results
+    );
+    let response = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|e| format!("SerpAPI request failed: {e}"))?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        return Err(format!("SerpAPI returned HTTP {status}"));
+    }
+
+    let body: serde_json::Value = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse SerpAPI response: {e}"))?;
+
+    let results = body
+        .get("organic_results")
+        .and_then(|r| r.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|item| {
+                    let title = item.get("title")?.as_str()?.to_string();
+                    let url = item.get("link")?.as_str()?.to_string();
+                    let snippet = item
+                        .get("snippet")
                         .and_then(|d| d.as_str())
                         .unwrap_or("")
                         .to_string();

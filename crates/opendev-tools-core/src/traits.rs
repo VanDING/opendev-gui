@@ -96,6 +96,9 @@ pub enum ToolError {
     #[error("Permission denied: {0}")]
     PermissionDenied(String),
 
+    #[error("Dangerous path: {0}")]
+    DangerousPath(String),
+
     #[error("Interrupted by user")]
     Interrupted,
 
