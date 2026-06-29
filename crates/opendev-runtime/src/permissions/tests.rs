@@ -125,10 +125,21 @@ fn test_is_sensitive_file() {
     assert!(is_sensitive_file("id_ed25519"));
     assert!(is_sensitive_file(".npmrc"));
     assert!(is_sensitive_file(".pypirc"));
+    assert!(is_sensitive_file(".gitconfig"));
+    assert!(is_sensitive_file(".gitmodules"));
+    assert!(is_sensitive_file(".bashrc"));
+    assert!(is_sensitive_file(".zshrc"));
+    assert!(is_sensitive_file(".profile"));
+    assert!(is_sensitive_file(".ripgreprc"));
+    assert!(is_sensitive_file(".mcp.json"));
+    assert!(is_sensitive_file(".claude.json"));
+    assert!(is_sensitive_file("Makefile"));
+    assert!(is_sensitive_file("Cargo.toml"));
+    assert!(is_sensitive_file(".github/workflows/ci.yml"));
+    assert!(is_sensitive_file(".github/workflows/deploy.yml"));
 
     // Non-sensitive files
     assert!(!is_sensitive_file("main.rs"));
-    assert!(!is_sensitive_file("Cargo.toml"));
     assert!(!is_sensitive_file("README.md"));
     assert!(!is_sensitive_file(".envrc")); // not .env
 }

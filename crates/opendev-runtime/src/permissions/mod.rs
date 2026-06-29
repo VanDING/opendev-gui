@@ -50,6 +50,11 @@ pub fn is_sensitive_file(path: &str) -> bool {
     let filename = path.rsplit('/').next().unwrap_or(path);
     let lower = filename.to_lowercase();
 
+    // GitHub Actions workflow files (CI injection risk)
+    if path.contains(".github/workflows/") && lower.ends_with(".yml") {
+        return true;
+    }
+
     // .env and .env.* (but allow .env.example, .env.sample, .env.template)
     if lower == ".env" {
         return true;
@@ -58,7 +63,7 @@ pub fn is_sensitive_file(path: &str) -> bool {
         return !matches!(suffix, "example" | "sample" | "template");
     }
 
-    // Other common credential files
+    // Other common credential and configuration files
     matches!(
         lower.as_str(),
         "credentials.json"
@@ -67,6 +72,16 @@ pub fn is_sensitive_file(path: &str) -> bool {
             | "id_ed25519"
             | ".npmrc"
             | ".pypirc"
+            | ".gitconfig"
+            | ".gitmodules"
+            | ".bashrc"
+            | ".zshrc"
+            | ".profile"
+            | ".ripgreprc"
+            | ".mcp.json"
+            | ".claude.json"
+            | "makefile"
+            | "cargo.toml"
     )
 }
 
