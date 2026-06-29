@@ -41,6 +41,52 @@ impl Curator {
         skill.last_used = Some(now);
         skill.status = SkillStatus::Active;
     }
+
+    /// Build a system prompt contribution listing available skills.
+    ///
+    /// Returns a formatted string that can be injected into the system prompt
+    /// as a `<system-reminder>` section (similar to CC's `<system-reminder>`
+    /// skill listing pattern).  Skills are listed with names and descriptions.
+    ///
+    /// Only injectable (Active) skills are included.
+    pub fn prompt_contribution(skills: &[SkillMetadata]) -> Option<String> {
+        let active: Vec<&SkillMetadata> = skills.iter().filter(|s| s.status.is_injectable()).collect();
+        if active.is_empty() {
+            return None;
+        }
+
+        let mut sorted = active;
+        sorted.sort_by(|a, b| (&a.namespace, &a.name).cmp(&(&b.namespace, &b.name)));
+
+        let mut lines = Vec::new();
+        lines.push("# Available Skills".to_string());
+        lines.push(String::new());
+        lines.push(
+            "Use `invoke_skill` to load and activate a skill. Skills provide \
+             specialized knowledge and workflows for specific tasks."
+                .to_string(),
+        );
+        lines.push(String::new());
+
+        for skill in &sorted {
+            let name = if skill.namespace == "default" {
+                skill.name.clone()
+            } else {
+                format!("{}:{}", skill.namespace, skill.name)
+            };
+            lines.push(format!("- **{name}**: {}", skill.description));
+        }
+
+        // Add lazy-loading hint: companion files are discovered on first invoke.
+        lines.push(String::new());
+        lines.push(
+            "(Skills are loaded lazily — companion files and additional context \
+             are discovered on first invocation.)"
+                .to_string(),
+        );
+
+        Some(lines.join("\n"))
+    }
 }
 
 #[cfg(test)]

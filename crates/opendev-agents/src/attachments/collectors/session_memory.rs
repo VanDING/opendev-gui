@@ -25,23 +25,37 @@ const MAX_CHARS_PER_MESSAGE: usize = 2000;
 
 const EXTRACTION_PROMPT: &str = "\
 You are a session note-taker. Given recent conversation messages, extract \
-a structured summary. Return ONLY the markdown content (no code fences). \
-Use these sections, omitting empty ones:\n\
+a structured summary following the template below. \
+Return ONLY the markdown content (no code fences). \
+Use all sections, omitting any that have no content.\n\
 \n\
-## Current State\n\
-What the user is currently working on.\n\
+# Session Title\n\
+A concise title summarizing the session's main goal or outcome.\n\
 \n\
-## Key Files Modified\n\
-Files that were created, edited, or discussed.\n\
+# Current State\n\
+What the user is currently working on, the state of the project, \
+and any active tasks or investigations.\n\
 \n\
-## Errors & Corrections\n\
-Bugs found, mistakes corrected, approaches abandoned.\n\
+# Task specification\n\
+What specific tasks were attempted or completed during this session. \
+Include acceptance criteria or requirements that were discussed.\n\
 \n\
-## Learnings\n\
-Non-obvious discoveries, patterns, conventions found.\n\
+# Files and Functions\n\
+Files that were created, edited, read, or discussed. \
+For each file, list the specific functions, structs, classes, or \
+sections that were modified or referenced.\n\
 \n\
-## Worklog\n\
-Brief chronological list of what was done.";
+# Workflow\n\
+The sequence of actions taken: what was done in what order, \
+any builds/commands that were run, and their outcomes.\n\
+\n\
+# Errors & Corrections\n\
+Bugs found, mistakes corrected, approaches abandoned, \
+compilation errors resolved, and any troubleshooting steps taken.\n\
+\n\
+# Learnings\n\
+Non-obvious discoveries, patterns, conventions found, \
+project-specific rules, and architectural decisions made.";
 
 /// Session memory collector that auto-extracts conversation notes.
 pub struct SessionMemoryCollector {
@@ -152,6 +166,64 @@ impl SessionMemoryCollector {
         // Update MEMORY.md index
         let _ = update_memory_index_after_session(&memory_dir);
     }
+}
+
+/// Compact session memory: read back the most recent session notes to restore
+/// context after a context window compaction or clear.
+///
+/// This reads the latest session notes file from the project's memory directory
+/// and returns the content as a formatted string to be injected back into the
+/// system prompt, allowing the agent to maintain continuity across compactions.
+pub fn read_session_memory_summary(working_dir: &Path) -> Option<String> {
+    let paths = opendev_config::paths::Paths::new(Some(working_dir.to_path_buf()));
+    let memory_dir = paths.project_memory_dir();
+
+    if !memory_dir.exists() {
+        return None;
+    }
+
+    let mut session_files: Vec<_> = std::fs::read_dir(&memory_dir)
+        .ok()?
+        .filter_map(|entry| {
+            let entry = entry.ok()?;
+            let path = entry.path();
+            let name = path.file_name()?.to_string_lossy().to_string();
+            if name.starts_with("session-") && name.ends_with(".md") && name != "MEMORY.md" {
+                let mtime = std::fs::metadata(&path).ok()?.modified().ok()?;
+                Some((path, mtime, name))
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    // Sort by modification time, most recent first.
+    session_files.sort_by(|a, b| b.1.cmp(&a.1));
+
+    // Read the most recent session file.
+    let (latest_path, _, _) = session_files.first()?;
+    let content = std::fs::read_to_string(latest_path).ok()?;
+
+    // Strip YAML frontmatter (if any).
+    let body = if let Some(end) = content.find("---\n") {
+        let after = &content[end + 4..];
+        after.trim()
+    } else {
+        content.trim()
+    };
+
+    if body.is_empty() {
+        return None;
+    }
+
+    Some(format!(
+        "# Previous Session Context\n\
+         \n\
+         The following is a summary from a prior session. Use it to restore \
+         continuity and understand what was previously discussed and decided.\n\
+         \n\
+         {body}"
+    ))
 }
 
 /// Simplified MEMORY.md index update (reuse logic from MemoryTool).

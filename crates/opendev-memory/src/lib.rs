@@ -7,6 +7,7 @@ pub mod migration;
 pub mod provider;
 pub mod repo;
 pub mod short_term;
+pub mod symbol_links;
 pub mod types;
 pub mod write_gate;
 

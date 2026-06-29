@@ -14,7 +14,7 @@ pub enum AgentMode {
 }
 
 impl AgentMode {
-    pub(super) fn default_mode() -> Self {
+    pub(crate) fn default_mode() -> Self {
         Self::default()
     }
 

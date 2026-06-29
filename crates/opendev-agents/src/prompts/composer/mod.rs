@@ -244,6 +244,12 @@ impl PromptComposer {
     /// the dynamic part changes per session/turn.
     /// - Stable = `Static` + `Cached` sections
     /// - Dynamic = `Uncached` sections
+    ///
+    /// A `__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__` marker string is inserted between
+    /// the stable and dynamic halves. This enables API-level splitting for
+    /// Anthropic's `splitSysPromptPrefix` — the marker acts as a well-known
+    /// delimiter that the LLM provider can use to partition the system prompt
+    /// into cacheable and non-cacheable segments.
     pub fn compose_two_part(&mut self, context: &PromptContext) -> (String, String) {
         let indices = self.filtered_sorted_indices(context);
         let mut stable_parts = Vec::new();
@@ -264,7 +270,17 @@ impl PromptComposer {
         }
 
         self.section_overrides.clear();
-        (stable_parts.join("\n\n"), dynamic_parts.join("\n\n"))
+        let stable = stable_parts.join("\n\n");
+        let dynamic = dynamic_parts.join("\n\n");
+
+        // Insert the boundary marker between stable and dynamic sections so
+        // the API layer can split the system prompt at this well-known point
+        // for Anthropic's prompt caching (`splitSysPromptPrefix`).
+        if !dynamic.is_empty() {
+            (stable, format!("\n__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__\n{}", dynamic))
+        } else {
+            (stable, dynamic)
+        }
     }
 
     /// Compose two-part prompt with variable substitution on both halves.
