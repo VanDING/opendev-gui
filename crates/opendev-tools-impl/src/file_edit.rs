@@ -5,6 +5,9 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, LazyLock, Mutex};
 
+#[cfg(unix)]
+use std::os::unix::fs::OpenOptionsExt;
+
 use opendev_tools_core::{BaseTool, ToolContext, ToolResult};
 
 use crate::diagnostics_helper;
@@ -180,11 +183,25 @@ impl BaseTool for FileEditTool {
                 // --- Generate unified diff preview ---
                 let diff_text = edit_replacers::unified_diff(&file_path, &content, &new_content, 3);
 
-                // --- Atomic write ---
+                // --- Atomic write with 0o600 temp file ---
                 let dir = path.parent().unwrap_or(Path::new("."));
                 let tmp_path = dir.join(format!(".{}.tmp", uuid::Uuid::new_v4()));
 
-                if let Err(e) = std::fs::write(&tmp_path, &new_content) {
+                // Create temp file with restricted permissions (0o600) to prevent
+                // leaking secrets through world-readable temp files.
+                let write_result = {
+                    use std::io::Write;
+                    let mut opts = std::fs::OpenOptions::new();
+                    opts.write(true).create_new(true);
+                    #[cfg(unix)]
+                    opts.mode(0o600);
+                    match opts.open(&tmp_path) {
+                        Ok(mut file) => file.write_all(new_content.as_bytes()),
+                        Err(e) => return Err(format!("Failed to create temp file: {e}")),
+                    }
+                };
+                if let Err(e) = write_result {
+                    let _ = std::fs::remove_file(&tmp_path);
                     return Err(format!("Failed to write temp file: {e}"));
                 }
                 if let Err(e) = std::fs::rename(&tmp_path, &path) {

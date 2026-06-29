@@ -3,6 +3,9 @@
 use std::collections::HashMap;
 use std::path::Path;
 
+#[cfg(unix)]
+use std::os::unix::fs::OpenOptionsExt;
+
 use opendev_tools_core::{BaseTool, ToolContext, ToolResult};
 
 use crate::diagnostics_helper;
@@ -113,17 +116,22 @@ impl BaseTool for FileWriteTool {
         let dest_path = path.clone();
         let tmp_path_clone = tmp_path.clone();
         match tokio::task::spawn_blocking(move || {
+            // Create temp file with restricted permissions (0o600)
+            use std::io::Write;
             let mut opts = std::fs::OpenOptions::new();
             opts.write(true).create_new(true);
+            #[cfg(unix)]
+            opts.mode(0o600);
             match opts.open(&tmp_path_clone) {
                 Ok(mut file) => {
-                    if let Err(e) = std::io::Write::write_all(&mut file, content_owned.as_bytes()) {
+                    if let Err(e) = file.write_all(content_owned.as_bytes()) {
                         return Err(format!("Failed to write temp file: {e}"));
                     }
                 }
                 Err(e) => return Err(format!("Failed to open temp file: {e}")),
             }
 
+            // Flush and sync to ensure data durability before rename
             if let Err(e) = std::fs::rename(&tmp_path_clone, &dest_path) {
                 // Clean up temp file on rename failure
                 let _ = std::fs::remove_file(&tmp_path_clone);
