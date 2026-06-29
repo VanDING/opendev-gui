@@ -66,6 +66,16 @@ pub(super) struct LoopState {
     /// Shared flag set by safety phase after compaction.
     pub compaction_flag: Arc<AtomicBool>,
 
+    /// Reference-based error watermark: the UUID of the last error surfaced
+    /// to the LLM. Only errors with IDs > this reference are surfaced in
+    /// subsequent turns, preventing index-shift bugs in ring buffers.
+    ///
+    /// Each error logged during tool execution should carry a UUID. When
+    /// errors are about to be surfaced, compare against this watermark and
+    /// only include errors with IDs that sort after it. Update this field
+    /// after surfacing.
+    pub last_surfaced_error_id: Option<String>,
+
     /// Why the current iteration continued (set at each `continue` site).
     ///
     /// Mirrors Claude Code's `transition` field. Set before every `continue`
@@ -128,6 +138,7 @@ impl LoopState {
             activated_tools: HashSet::new(),
             collector_runner: CollectorRunner::new(collectors),
             compaction_flag,
+            last_surfaced_error_id: None,
             transition: None,
             // Note: todo reminders are handled by TodoStateCollector (live data).
             // Only task_proactive_reminder remains here as a static template nudge.
@@ -137,6 +148,35 @@ impl LoopState {
                 turns_between: 10,
                 class: MessageClass::Nudge,
             }]),
+        }
+    }
+
+    /// Check whether an error with the given UUID should be surfaced to the LLM,
+    /// based on the reference-based error watermark.
+    ///
+    /// Returns `true` if the error has not been surfaced before (its UUID sorts
+    /// after the last surfaced error's UUID, or no errors have been surfaced yet).
+    ///
+    /// When the caller surfaces the error, it MUST call `mark_error_surfaced(id)`
+    /// to advance the watermark.
+    pub fn should_surface_error(&self, error_id: &str) -> bool {
+        match &self.last_surfaced_error_id {
+            None => true, // No errors surfaced yet — surface all
+            Some(last) => error_id > last.as_str(), // Lexicographic UUID comparison
+        }
+    }
+
+    /// Advance the error watermark to the given UUID, marking it as surfaced.
+    ///
+    /// Call this AFTER surfacing an error that was approved by
+    /// `should_surface_error()`. Only updates if the new ID is greater
+    /// than the current watermark (lexicographic UUID comparison).
+    pub fn mark_error_surfaced(&mut self, error_id: impl Into<String>) {
+        let new_id = error_id.into();
+        match &self.last_surfaced_error_id {
+            None => self.last_surfaced_error_id = Some(new_id),
+            Some(last) if new_id > *last => self.last_surfaced_error_id = Some(new_id),
+            _ => {} // Keep existing watermark if new ID is not greater
         }
     }
 }
