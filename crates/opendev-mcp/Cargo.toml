@@ -26,6 +26,8 @@ base64 = "0.22"
 chrono = { workspace = true }
 url = { workspace = true }
 open = "5"
+tokio-tungstenite = "0.24"
+http = "1"
 
 [dev-dependencies]
 tempfile = { workspace = true }

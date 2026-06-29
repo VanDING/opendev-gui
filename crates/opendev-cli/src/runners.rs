@@ -93,10 +93,12 @@ pub async fn run_non_interactive(
         config.default_agent = Some(a.to_string());
     }
 
-    // In non-interactive mode, auto-approve read-only tools, auto-deny destructive
-    // writes, and render ask_user as text output. This is handled by the tool
-    // approval channel configuration (auto_approve_read_only, auto_deny_destructive,
-    // render_ask_user_as_text = true in a future AppConfig field).
+    // In non-interactive mode, enable auto-mode so read-only tools are
+    // auto-approved by the classifier and destructive writes require
+    // explicit confirmation.
+    config.auto_mode.enabled = true;
+    config.auto_mode.max_operations = 100;
+    config.auto_mode.dangerous_operations_require_approval = true;
 
     let mut agent_runtime = match runtime::AgentRuntime::new(config, working_dir, session_manager) {
         Ok(rt) => rt,
