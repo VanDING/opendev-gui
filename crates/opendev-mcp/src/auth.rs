@@ -6,6 +6,7 @@
 use secrecy::SecretString;
 
 use crate::config::McpOAuthConfig;
+use crate::error::McpError;
 
 // ---------------------------------------------------------------------------
 // Auth flow detection
@@ -279,11 +280,159 @@ impl McpTokenCache {
 }
 
 // ---------------------------------------------------------------------------
+// Token refresh and exchange
+// ---------------------------------------------------------------------------
+
+/// Build a URL-encoded body string for a POST request.
+fn urlencode_body(pairs: &[(&str, &str)]) -> String {
+    let mut body = String::new();
+    for (i, (key, val)) in pairs.iter().enumerate() {
+        if i > 0 {
+            body.push('&');
+        }
+        body.push_str(&urlencode_param(key));
+        body.push('=');
+        body.push_str(&urlencode_param(val));
+    }
+    body
+}
+
+/// Percent-encode a single form parameter value.
+fn urlencode_param(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    for byte in s.bytes() {
+        match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => {
+                result.push(byte as char);
+            }
+            b' ' => result.push('+'),
+            _ => {
+                result.push_str(&format!("%{:02X}", byte));
+            }
+        }
+    }
+    result
+}
+
+/// Post a URL-encoded form body to a token endpoint and parse the JSON response.
+async fn post_token_request(
+    token_url: &str,
+    body_pairs: &[(&str, &str)],
+) -> std::result::Result<serde_json::Value, McpError> {
+    let client = reqwest::Client::new();
+    let body = urlencode_body(body_pairs);
+
+    let response = client
+        .post(token_url)
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(body)
+        .send()
+        .await
+        .map_err(|e| McpError::Transport(format!("Token request failed: {e}")))?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        let text = response.text().await.unwrap_or_default();
+        return Err(McpError::Transport(format!(
+            "Token request returned HTTP {status}: {text}"
+        )));
+    }
+
+    response
+        .json()
+        .await
+        .map_err(|e| McpError::Transport(format!("Failed to parse token response: {e}")))
+}
+
+/// Parse the common fields from a token endpoint JSON response.
+fn parse_token_response(json: &serde_json::Value) -> std::result::Result<McpTokenCache, McpError> {
+    let access_token = json
+        .get("access_token")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| McpError::Transport("No access_token in response".to_string()))?;
+
+    let refresh_token = json
+        .get("refresh_token")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
+    let expires_at = json
+        .get("expires_in")
+        .and_then(|v| v.as_i64())
+        .map(|secs| chrono::Utc::now() + chrono::Duration::seconds(secs));
+
+    Ok(McpTokenCache::new(access_token.to_string(), refresh_token, expires_at))
+}
+
+/// Refresh an access token using a refresh token.
+///
+/// POSTs to the token endpoint with `grant_type=refresh_token` and returns
+/// a new [`McpTokenCache`] with the fresh tokens.
+pub async fn refresh_access_token(
+    refresh_token: &str,
+    token_url: &str,
+    client_id: &str,
+) -> std::result::Result<McpTokenCache, McpError> {
+    tracing::info!(token_url = %token_url, "Attempting token refresh");
+
+    let json = post_token_request(
+        token_url,
+        &[
+            ("grant_type", "refresh_token"),
+            ("refresh_token", refresh_token),
+            ("client_id", client_id),
+        ],
+    )
+    .await?;
+
+    let result = parse_token_response(&json)?;
+    tracing::info!("Token refresh succeeded");
+    Ok(result)
+}
+
+/// Exchange an authorization code for tokens (Authorization Code flow).
+///
+/// POSTs to the token endpoint with `grant_type=authorization_code`,
+/// the authorization `code`, `code_verifier` (PKCE), and `redirect_uri`.
+pub async fn exchange_auth_code(
+    code: &str,
+    code_verifier: &str,
+    redirect_uri: &str,
+    config: &AuthorizationCodeConfig,
+) -> std::result::Result<McpTokenCache, McpError> {
+    use secrecy::ExposeSecret;
+
+    tracing::info!(
+        token_url = %config.token_url,
+        "Exchanging authorization code for tokens"
+    );
+
+    let mut pairs = vec![
+        ("grant_type", "authorization_code"),
+        ("code", code),
+        ("code_verifier", code_verifier),
+        ("redirect_uri", redirect_uri),
+        ("client_id", &config.client_id),
+    ];
+
+    let secret = ExposeSecret::expose_secret(&config.client_secret);
+    if !secret.is_empty() {
+        pairs.push(("client_secret", secret));
+    }
+
+    let json = post_token_request(&config.token_url, &pairs).await?;
+    let result = parse_token_response(&json)?;
+    tracing::info!("Authorization code exchange succeeded");
+    Ok(result)
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use super::*;
 
     #[test]

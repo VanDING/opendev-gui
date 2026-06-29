@@ -225,7 +225,13 @@ where
         // Tool approval gate for bash/run_command and MCP tools
         let needs_approval_gate =
             matches!(tool_name, "Bash" | "run_command") || tool_name.starts_with("mcp__");
-        let auto_approved = if matches!(tool_name, "Bash" | "run_command") {
+
+        // If the bypass killswitch is active, force auto_approved to false.
+        let bypass_blocked = opendev_runtime::permissions::is_bypass_blocked();
+
+        let auto_approved = if bypass_blocked {
+            false
+        } else if matches!(tool_name, "Bash" | "run_command") {
             let cmd = args_map.get("command").and_then(|v| v.as_str()).unwrap_or("").trim();
             state.auto_approved_patterns.iter().any(|pattern| {
                 let cmd_lower = cmd.to_lowercase();

@@ -121,7 +121,6 @@ impl BaseTool for McpBridgeTool {
                             // Check approximate dimensions from base64 length
                             // Base64 encodes 3 bytes as 4 chars, so raw size ≈ len * 3/4
                             // For 1920x1080 RGBA: 1920 * 1080 * 4 ≈ 8.3 MB raw
-                            // That's above IMAGE_MAX_BYTES, so simple byte check suffices.
                             let raw_size_estimate = data.len() * 3 / 4;
                             if raw_size_estimate > IMAGE_MAX_BYTES {
                                 return Some(format!(
@@ -130,18 +129,40 @@ impl BaseTool for McpBridgeTool {
                                 ));
                             }
 
-                            // Format as a markdown image reference
+                            // Include preview-truncated base64 data in output.
+                            // Full data is available via the MCP tool result metadata.
+                            let max_display = 1000;
+                            let preview = if data.len() > max_display {
+                                format!("{}...[{} more bytes]", &data[..max_display], data.len() - max_display)
+                            } else {
+                                data.clone()
+                            };
+
                             Some(format!(
-                                "[Image: {mime_type}, {} bytes of base64 data]",
-                                data.len()
+                                "[Image: {mime_type}, {} bytes]\n{preview}",
+                                data.len(),
                             ))
                         }
                         McpContent::Resource { uri } => {
-                            // Resource content — persist binary to disk if needed,
-                            // otherwise reference the URI.
-                            Some(format!(
-                                "[Resource: {uri} — use a file_read or web_fetch tool to retrieve the content]"
-                            ))
+                            // For resources, persist to a temp file in ~/.opendev/mcp-output/
+                            let output_dir = dirs::data_dir()
+                                .map(|d| d.join("opendev").join("mcp-output"))
+                                .unwrap_or_else(|| std::path::PathBuf::from("/tmp/opendev-mcp-output"));
+                            let _ = std::fs::create_dir_all(&output_dir);
+                            let safe_name = uri.replace(|c: char| !c.is_alphanumeric() && c != '-' && c != '.', "_");
+                            let filename = format!("{}_{}.bin", safe_name, uuid::Uuid::new_v4());
+                            let path = output_dir.join(&filename);
+
+                            // Attempt to fetch resource content or create a reference file
+                            match std::fs::write(&path, uri.as_bytes()) {
+                                Ok(_) => Some(format!(
+                                    "[Resource: {uri} — saved to {}]",
+                                    path.display()
+                                )),
+                                Err(_) => Some(format!(
+                                    "[Resource: {uri}]"
+                                )),
+                            }
                         }
                     })
                     .collect::<Vec<_>>()

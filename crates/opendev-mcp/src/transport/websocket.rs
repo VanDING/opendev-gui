@@ -1,163 +1,58 @@
 //! WebSocket transport for MCP server connections.
 //!
 //! Provides an [`McpTransport`] implementation that communicates with an
-//! MCP server over WebSocket connections with keepalive and reconnection.
+//! MCP server over WebSocket connections.
 //!
-//! NOTE: The actual WebSocket connection requires `tokio-tungstenite` (or
-//! similar). This implementation provides the structural scaffolding and
-//! will need a real WebSocket crate dependency to function. The default
-//! fallback is a placeholder that returns a "not yet implemented" error.
-
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use tokio::time::{sleep, Duration};
+//! # WebSocket dependency
+//!
+//! Full WebSocket support requires `tokio-tungstenite` as a dependency.
+//! This implementation provides the structural scaffolding and returns
+//! clear errors guiding the user to add the dependency.
+//!
+//! When `tokio-tungstenite` is available, replace the placeholder
+//! `send_request` with:
+//!
+//! ```ignore
+//! use tokio_tungstenite::connect_async;
+//! use futures_util::StreamExt;
+//!
+//! let (ws_stream, _) = connect_async(&url).await?;
+//! let (write, read) = ws_stream.split();
+//! ```
 
 use crate::error::{McpError, McpResult};
 use crate::models::{JsonRpcNotification, JsonRpcRequest, JsonRpcResponse};
 use crate::transport::McpTransport;
 
-/// Default initial reconnect delay (1 second).
-const INITIAL_RECONNECT_DELAY: Duration = Duration::from_secs(1);
-
-/// Maximum reconnect delay (30 seconds).
-const MAX_RECONNECT_DELAY: Duration = Duration::from_secs(30);
-
 /// WebSocket transport for MCP server communication.
 ///
-/// # TODO
-/// Replace the placeholder connection logic with a real WebSocket
-/// implementation using `tokio-tungstenite`:
+/// Placeholder implementation that returns clear error messages
+/// guiding the developer to add `tokio-tungstenite`.
 ///
-/// ```ignore
-/// use tokio_tungstenite::connect_async;
-/// let (ws_stream, _) = connect_async(&url).await?;
-/// let (write, read) = ws_stream.split();
-/// ```
+/// When implementing:
+/// 1. Connect via WebSocket in `connect()`
+/// 2. Keep connection alive with periodic ping/pong
+/// 3. On disconnect, attempt reconnection with exponential backoff:
+///    1s, 2s, 4s, 8s, max 30s
+/// 4. On graceful close, shut down cleanly
 #[derive(Debug)]
 pub struct McpWebSocketTransport {
     /// WebSocket endpoint URL.
     url: String,
     /// HTTP headers to send during upgrade.
+    #[allow(dead_code)]
     headers: std::collections::HashMap<String, String>,
     /// Whether the transport is currently connected.
-    connected: Arc<Mutex<bool>>,
-    /// Channel for sending JSON-RPC requests to the connection task.
-    request_tx: Option<tokio::sync::mpsc::UnboundedSender<InternalMessage>>,
-    /// Channel for receiving notifications from the server.
-    notification_tx: Option<tokio::sync::mpsc::UnboundedSender<JsonRpcNotification>>,
-    /// Receiver for notifications (taken by `take_notification_receiver`).
-    notification_rx: Option<tokio::sync::mpsc::UnboundedReceiver<JsonRpcNotification>>,
-}
-
-/// Internal message for the WebSocket connection task.
-#[derive(Debug)]
-enum InternalMessage {
-    Request {
-        id: serde_json::Value,
-        method: String,
-        params: Option<std::collections::HashMap<String, serde_json::Value>>,
-        response_tx: tokio::sync::oneshot::Sender<McpResult<JsonRpcResponse>>,
-    },
-    Close,
+    connected: std::sync::atomic::AtomicBool,
 }
 
 impl McpWebSocketTransport {
     /// Create a new WebSocket transport.
     pub fn new(url: String, headers: std::collections::HashMap<String, String>) -> Self {
-        let (notification_tx, notification_rx) = tokio::sync::mpsc::unbounded_channel();
         Self {
             url,
             headers,
-            connected: Arc::new(Mutex::new(false)),
-            request_tx: None,
-            notification_tx: Some(notification_tx),
-            notification_rx: Some(notification_rx),
-        }
-    }
-
-    /// Run the WebSocket connection with keepalive pings and reconnection.
-    ///
-    /// This spawns the background task that manages the WebSocket lifecycle.
-    async fn run_connection(
-        url: String,
-        _headers: std::collections::HashMap<String, String>,
-        request_rx: tokio::sync::mpsc::UnboundedReceiver<InternalMessage>,
-        notification_tx: tokio::sync::mpsc::UnboundedSender<JsonRpcNotification>,
-        connected: Arc<Mutex<bool>>,
-    ) {
-        let mut request_rx = request_rx;
-        let mut reconnect_delay = INITIAL_RECONNECT_DELAY;
-
-        loop {
-            // ---------------------------------------------------------------
-            // TODO: Replace with real WebSocket connection:
-            //
-            // use tokio_tungstenite::connect_async;
-            // use futures_util::StreamExt;
-            //
-            // let (ws_stream, _) = connect_async(&url).await?;
-            // let (mut write, read) = ws_stream.split();
-            //
-            // // Start keepalive ping/pong task
-            // let ping_handle = tokio::spawn(async move {
-            //     loop {
-            //         tokio::time::sleep(Duration::from_secs(15)).await;
-            //         write.send(Message::Ping(vec![])).await.ok();
-            //     }
-            // });
-            // ---------------------------------------------------------------
-
-            // Placeholder: mark as connected briefly, then break for reconnect
-            {
-                let mut c = connected.lock().await;
-                *c = true;
-            }
-
-            // Wait for requests or close signal (simulated with a short sleep
-                        // since there's no real WebSocket to poll).
-                        tokio::select! {
-                            msg = request_rx.recv() => {
-                                match msg {
-                                    Some(InternalMessage::Request { id: _id, params: _params, response_tx, .. }) => {
-                                        let _ = response_tx.send(Err(McpError::Transport(
-                                            "WebSocket transport is a placeholder; \
-                                             add tokio-tungstenite dependency for real WebSocket support"
-                                                .to_string(),
-                                        )));
-                                    }
-                                    Some(InternalMessage::Close) | None => {
-                                        // Normal shutdown
-                                        let mut c = connected.lock().await;
-                                        *c = false;
-                                        return;
-                                    }
-                                }
-                            }
-                            _ = sleep(Duration::from_millis(100)) => {
-                                // Small sleep to yield the task; real impl would poll the WS stream.
-                            }
-                        }
-
-            // Mark as disconnected
-            {
-                let mut c = connected.lock().await;
-                *c = false;
-            }
-
-            // Exponential backoff reconnection
-            tokio::select! {
-                _ = sleep(reconnect_delay) => {}
-                _ = async {
-                    // If we receive a Close while waiting to reconnect, exit.
-                    while let Ok(msg) = request_rx.try_recv() {
-                        if let InternalMessage::Close = msg {
-                            return;
-                        }
-                    }
-                } => { return; }
-            }
-
-            reconnect_delay = (reconnect_delay * 2).min(MAX_RECONNECT_DELAY);
+            connected: std::sync::atomic::AtomicBool::new(false),
         }
     }
 }
@@ -165,72 +60,50 @@ impl McpWebSocketTransport {
 #[async_trait::async_trait]
 impl McpTransport for McpWebSocketTransport {
     async fn connect(&mut self) -> McpResult<()> {
-        let (request_tx, request_rx) = tokio::sync::mpsc::unbounded_channel();
-        self.request_tx = Some(request_tx);
-
-        let url = self.url.clone();
-        let headers = self.headers.clone();
-        let notification_tx = self
-            .notification_tx
-            .clone()
-            .ok_or_else(|| McpError::Transport("notification channel already taken".to_string()))?;
-        let connected = self.connected.clone();
-
-        tokio::spawn(Self::run_connection(url, headers, request_rx, notification_tx, connected));
-
-        Ok(())
+        let _ = &self.url;
+        // TODO: Implement real WebSocket connection using tokio-tungstenite:
+        //
+        //   let (ws_stream, _) = tokio_tungstenite::connect_async(&self.url).await
+        //       .map_err(|e| McpError::Transport(format!("WebSocket connect failed: {e}")))?;
+        //   self.connected.store(true, Ordering::Relaxed);
+        //
+        // Then spawn a background task to:
+        //   - Read incoming messages and dispatch to request/response matching
+        //   - Send periodic ping frames every 15 seconds for keepalive
+        //   - On connection loss, attempt reconnection with exponential backoff:
+        //     1s, 2s, 4s, 8s, max 30s
+        Err(McpError::Transport(
+            "WebSocket transport requires `tokio-tungstenite` dependency. \
+             Add it to Cargo.toml and implement the connect_async call."
+                .to_string(),
+        ))
     }
 
     async fn send_request(&self, request: &JsonRpcRequest) -> McpResult<JsonRpcResponse> {
-        let tx = self.request_tx.as_ref().ok_or_else(|| {
-            McpError::Transport("WebSocket transport not connected".to_string())
-        })?;
-
-        let (response_tx, response_rx) = tokio::sync::oneshot::channel();
-
-        tx.send(InternalMessage::Request {
-            id: serde_json::json!(request.id),
-            method: request.method.clone(),
-            params: request.params.clone(),
-            response_tx,
-        })
-        .map_err(|_| McpError::Transport("WebSocket connection task died".to_string()))?;
-
-        response_rx
-            .await
-            .map_err(|_| McpError::Transport("response channel closed".to_string()))?
+        let _ = request;
+        Err(McpError::Transport(
+            "WebSocket transport requires `tokio-tungstenite` dependency. \
+             Cannot send requests until the WebSocket connection is implemented."
+                .to_string(),
+        ))
     }
 
     async fn send_notification(&self, _notification: &JsonRpcNotification) -> McpResult<()> {
         Err(McpError::Transport(
-            "WebSocket notifications not yet supported".to_string(),
+            "WebSocket transport requires `tokio-tungstenite` dependency.".to_string(),
         ))
     }
 
     async fn close(&self) -> McpResult<()> {
-        if let Some(tx) = self.request_tx.as_ref() {
-            let _ = tx.send(InternalMessage::Close);
-        }
-        let mut c = self.connected.lock().await;
-        *c = false;
+        self.connected.store(false, std::sync::atomic::Ordering::Relaxed);
         Ok(())
     }
 
     fn is_connected(&self) -> bool {
-        // Best-effort check; if we can't acquire the lock, assume disconnected.
-        match self.connected.try_lock() {
-            Ok(guard) => *guard,
-            Err(_) => false,
-        }
+        self.connected.load(std::sync::atomic::Ordering::Relaxed)
     }
 
     fn transport_type(&self) -> &str {
         "websocket"
-    }
-
-    async fn take_notification_receiver(
-        &mut self,
-    ) -> Option<tokio::sync::mpsc::UnboundedReceiver<JsonRpcNotification>> {
-        self.notification_rx.take()
     }
 }

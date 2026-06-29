@@ -193,7 +193,11 @@ impl ToolResultSanitizer {
         let rule = match self.get_rule(tool_name) {
             Some(r) => r,
             None => {
-                let (redacted_output, secrets_redacted) = redact_secrets_if_needed(output_str, tool_name);
+                let (redacted_output, secrets_redacted, secret_note) = redact_secrets_if_needed(output_str, tool_name);
+                let redacted_output = match secret_note {
+                    Some(note) => format!("{redacted_output}\n\n{note}"),
+                    None => redacted_output,
+                };
                 return SanitizedResult {
                     output: Some(redacted_output),
                     error: None,
@@ -208,7 +212,11 @@ impl ToolResultSanitizer {
         let effective_limit = rule.effective_max_chars();
 
         if output_str.len() <= effective_limit {
-            let (redacted_output, secrets_redacted) = redact_secrets_if_needed(output_str, tool_name);
+            let (redacted_output, secrets_redacted, secret_note) = redact_secrets_if_needed(output_str, tool_name);
+            let redacted_output = match secret_note {
+                Some(note) => format!("{redacted_output}\n\n{note}"),
+                None => redacted_output,
+            };
             return SanitizedResult {
                 output: Some(redacted_output),
                 error: None,
@@ -263,8 +271,12 @@ impl ToolResultSanitizer {
         );
 
         // Run secret detection on the truncated output
-        let (final_output, secrets_redacted) =
+        let (final_output, secrets_redacted, secret_note) =
             redact_secrets_if_needed(&format!("{truncated}{marker}"), tool_name);
+        let final_output = match secret_note {
+            Some(note) => format!("{final_output}\n\n{note}"),
+            None => final_output,
+        };
 
         SanitizedResult {
             output: Some(final_output),
@@ -318,8 +330,12 @@ impl ToolResultSanitizer {
                             path.display()
                         ));
                     }
-                    let (final_output, secrets_redacted) =
+                    let (final_output, secrets_redacted, secret_note) =
                         redact_secrets_if_needed(&format!("{truncated}{marker}"), tool_name);
+                    let final_output = match secret_note {
+                        Some(note) => format!("{final_output}\n\n{note}"),
+                        None => final_output,
+                    };
                     return SanitizedResult {
                         output: Some(final_output),
                         error: None,
@@ -379,7 +395,11 @@ impl ToolResultSanitizer {
         let effective_limit = rule.effective_max_chars();
 
         if output_str.len() <= effective_limit {
-            let (redacted_output, secrets_redacted) = redact_secrets_if_needed(output_str, tool_name);
+            let (redacted_output, secrets_redacted, secret_note) = redact_secrets_if_needed(output_str, tool_name);
+            let redacted_output = match secret_note {
+                Some(note) => format!("{redacted_output}\n\n{note}"),
+                None => redacted_output,
+            };
             return SanitizedResult {
                 output: Some(redacted_output),
                 error: None,
@@ -428,8 +448,12 @@ impl ToolResultSanitizer {
             "Truncated tool result via trait rule"
         );
 
-        let (final_output, secrets_redacted) =
+        let (final_output, secrets_redacted, secret_note) =
             redact_secrets_if_needed(&format!("{truncated}{marker}"), tool_name);
+        let final_output = match secret_note {
+            Some(note) => format!("{final_output}\n\n{note}"),
+            None => final_output,
+        };
 
         SanitizedResult {
             output: Some(final_output),
@@ -545,12 +569,12 @@ pub fn cleanup_overflow_dir(dir: &Path) {
 
 /// Run secret detection on output text. If secrets are found, redact them,
 /// log a warning, and return the redacted text with a flag.
-fn redact_secrets_if_needed(output: &str, tool_name: &str) -> (String, bool) {
+fn redact_secrets_if_needed(output: &str, tool_name: &str) -> (String, bool, Option<String>) {
     use opendev_runtime::secrets::{detect_secrets, redact_secrets};
 
     let matches = detect_secrets(output);
     if matches.is_empty() {
-        return (output.to_string(), false);
+        return (output.to_string(), false, None);
     }
 
     // Log detected secret kinds
@@ -563,7 +587,12 @@ fn redact_secrets_if_needed(output: &str, tool_name: &str) -> (String, bool) {
     );
 
     let redacted = redact_secrets(output);
-    (redacted, true)
+    let llm_note = Some(format!(
+        "[SECRETS REDACTED: {} secret(s) of types {}]",
+        matches.len(),
+        kinds.join(", ")
+    ));
+    (redacted, true, llm_note)
 }
 
 impl Default for ToolResultSanitizer {
