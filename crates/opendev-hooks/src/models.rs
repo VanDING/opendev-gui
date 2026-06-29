@@ -115,6 +115,10 @@ pub struct HookCommand {
     /// Timeout in seconds (clamped to 1..=600).
     #[serde(default = "default_timeout")]
     pub timeout: u32,
+
+    /// Additional environment variables to set when executing the hook.
+    #[serde(default)]
+    pub env: HashMap<String, String>,
 }
 
 fn default_command_type() -> String {
@@ -128,7 +132,12 @@ fn default_timeout() -> u32 {
 impl HookCommand {
     /// Create a new hook command with defaults.
     pub fn new(command: impl Into<String>) -> Self {
-        Self { r#type: "command".to_string(), command: command.into(), timeout: 60 }
+        Self {
+            r#type: "command".to_string(),
+            command: command.into(),
+            timeout: 60,
+            env: HashMap::new(),
+        }
     }
 
     /// Create a new hook command with a custom timeout.
@@ -137,7 +146,14 @@ impl HookCommand {
             r#type: "command".to_string(),
             command: command.into(),
             timeout: timeout.clamp(1, 600),
+            env: HashMap::new(),
         }
+    }
+
+    /// Create a hook command with custom environment variables.
+    pub fn with_env(mut self, env: HashMap<String, String>) -> Self {
+        self.env = env;
+        self
     }
 
     /// The effective timeout, clamped to the valid range.

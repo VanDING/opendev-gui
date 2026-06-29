@@ -1482,3 +1482,15 @@ code:not(pre code) {
 
 /* (Corner HUD brackets removed — too noisy, no real value.)
    (CRT scan lines + vignette removed — invisible at opacity, not adding value.) */
+
+/* ===== Subagent pulse-border animation ===== */
+@keyframes pulse-border {
+  0%, 100% { border-color: rgba(59, 130, 246, 0.3); }
+  50% { border-color: rgba(59, 130, 246, 1); }
+}
+.animate-pulse-border {
+  animation: pulse-border 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 0.5rem;
+}

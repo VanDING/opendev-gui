@@ -279,27 +279,36 @@ pub async fn run_interactive(
                     println!();
 
                     use std::io::{self, Write};
+                    let mut current_selection: usize = 0;
                     loop {
-                        print!("Enter session #, or use j/k to navigate (Enter=resume last, q=cancel): ");
+                        print!("Enter #, j/k to select (Enter=resume selected, q=cancel): ");
                         let _ = io::stdout().flush();
                         let mut buf = String::new();
                         if io::stdin().read_line(&mut buf).is_ok() {
                             let input = buf.trim().to_lowercase();
-                            if input.is_empty() || input == "q" {
-                                // Empty = resume latest session
-                                if input.is_empty() {
-                                    if let Some(latest) = sessions.first() {
-                                        if let Err(e) = session_manager.resume_session(&latest.id) {
-                                            eprintln!("Failed to load session: {e}");
-                                        }
-                                        break;
+                            if input == "j" {
+                                current_selection = (current_selection + 1).min(sessions.len().saturating_sub(1));
+                                continue;
+                            } else if input == "k" {
+                                current_selection = current_selection.saturating_sub(1);
+                                continue;
+                            } else if input == "q" {
+                                session_manager.create_session();
+                                break;
+                            } else if input.is_empty() {
+                                // Enter with no input: resume currently selected session
+                                if let Some(selected) = sessions.get(current_selection) {
+                                    if let Err(e) = session_manager.resume_session(&selected.id) {
+                                        eprintln!("Failed to load session: {e}");
                                     }
+                                    break;
                                 }
                                 session_manager.create_session();
                                 break;
                             } else if let Ok(n) = input.parse::<usize>() {
                                 if n >= 1 && n <= sessions.len() {
-                                    let selected = &sessions[n - 1];
+                                    current_selection = n - 1;
+                                    let selected = &sessions[current_selection];
                                     // Show preview of first 3 messages
                                     if let Some(preview) = load_session_preview(&session_manager, &selected.id, 3) {
                                         if let Some(title) = &selected.title {

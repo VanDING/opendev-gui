@@ -1,7 +1,47 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useChatStore } from '../../stores/chat';
 import { MarkdownContent } from './MarkdownContent';
 import { Modal } from '../ui/Modal';
+
+/** Simple line-based diff: compares two strings line-by-line, returns diff lines. */
+function computeLineDiff(oldText: string, newText: string): { type: 'same' | 'added' | 'removed'; text: string }[] {
+  const oldLines = oldText.split('\n');
+  const newLines = newText.split('\n');
+  const result: { type: 'same' | 'added' | 'removed'; text: string }[] = [];
+  const maxLen = Math.max(oldLines.length, newLines.length);
+  for (let i = 0; i < maxLen; i++) {
+    if (i < oldLines.length && i < newLines.length) {
+      if (oldLines[i] === newLines[i]) {
+        result.push({ type: 'same', text: oldLines[i] });
+      } else {
+        result.push({ type: 'removed', text: oldLines[i] });
+        result.push({ type: 'added', text: newLines[i] });
+      }
+    } else if (i < oldLines.length) {
+      result.push({ type: 'removed', text: oldLines[i] });
+    } else {
+      result.push({ type: 'added', text: newLines[i] });
+    }
+  }
+  return result;
+}
+
+function DiffView({ oldText, newText }: { oldText: string; newText: string }) {
+  const diff = computeLineDiff(oldText, newText);
+  return (
+    <>
+      {diff.map((line, i) => {
+        if (line.type === 'same') {
+          return <div key={i} className="text-content-tertiary">  {line.text}</div>;
+        } else if (line.type === 'added') {
+          return <div key={i} className="text-diff-added-text bg-green-900/20">+ {line.text}</div>;
+        } else {
+          return <div key={i} className="text-diff-removed-text bg-red-900/20">- {line.text}</div>;
+        }
+      })}
+    </>
+  );
+}
 
 /** Archive a plan to ~/.opendev/plans/ for later reference. */
 function archivePlan(requestId: string, planContent: string, decision: string): void {
@@ -36,6 +76,13 @@ export function PlanApprovalDialog() {
   const [autoAcceptEdits, setAutoAcceptEdits] = useState(false);
   const [showDiff, setShowDiff] = useState(false);
   const [focusIndex, setFocusIndex] = useState<number>(0);
+  const previousPlanRef = useRef<string | null>(null);
+  const previousPlanContent = previousPlanRef.current;
+  if (pendingPlanApproval && !previousPlanRef.current) {
+    previousPlanRef.current = pendingPlanApproval.plan_content;
+  } else if (!pendingPlanApproval) {
+    previousPlanRef.current = null;
+  }
 
   const options = [
     {
@@ -163,15 +210,11 @@ export function PlanApprovalDialog() {
   return (
     <Modal isOpen={!!pendingPlanApproval} onClose={handleRevise} title="Plan Ready for Review" size="lg">
       {/* Plan diff toggle */}
-      {showDiff && (
+      {showDiff && previousPlanContent && (
         <div className="border-b border-border-default/15 px-6 py-3 bg-surface-2/50">
           <div className="text-xs font-semibold text-content-tertiary uppercase mb-2">Plan Diff (previous → current)</div>
-          <div className="font-mono text-xs text-content-secondary bg-surface-primary rounded p-2 overflow-x-auto max-h-32 overflow-y-auto">
-            <span className="text-diff-added-text">+ Added new implementation steps</span>
-            <br />
-            <span className="text-diff-removed-text">- Removed outdated approach</span>
-            <br />
-            <span className="text-diff-header-text">@@ -10,7 +10,9 @@ ...</span>
+          <div className="font-mono text-xs text-content-secondary bg-surface-primary rounded p-2 overflow-x-auto max-h-48 overflow-y-auto">
+            <DiffView oldText={previousPlanContent} newText={pendingPlanApproval.plan_content} />
           </div>
         </div>
       )}

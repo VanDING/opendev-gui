@@ -93,6 +93,10 @@ impl HookExecutor {
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped());
+        // Set hook-specific environment variables
+        for (key, value) in &command.env {
+            cmd.env(key, value);
+        }
         opendev_exec::env_filter::apply(cmd.as_std_mut());
         let mut child = match cmd.spawn() {
             Ok(child) => child,

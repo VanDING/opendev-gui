@@ -34,11 +34,32 @@ function GitStatusBadge({ status }: { status?: string }) {
   );
 }
 
+/** Return a file-type-specific emoji icon based on the filename extension. */
+function getFileIcon(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  switch (ext) {
+    case 'ts': case 'tsx': return '📘';
+    case 'js': case 'jsx': return '📒';
+    case 'rs': return '🦀';
+    case 'py': return '🐍';
+    case 'json': return '📋';
+    case 'md': case 'mdx': return '📝';
+    case 'css': case 'scss': case 'sass': case 'less': return '🎨';
+    case 'png': case 'jpg': case 'jpeg': case 'gif': case 'svg': case 'webp': return '🖼️';
+    case 'toml': case 'yaml': case 'yml': case 'env': case 'ini': case 'cfg': return '⚙️';
+    case 'html': case 'htm': return '🌐';
+    case 'sh': case 'bash': case 'zsh': case 'fish': return '💻';
+    case 'lock': return '🔒';
+    case 'gitignore': return '🙈';
+    default: return '📄';
+  }
+}
+
 function FileIcon({ type, name }: { type: 'file' | 'directory'; name: string }) {
   if (type === 'directory') {
     return <span className="shrink-0">📁</span>;
   }
-  return <span className="shrink-0">📄</span>;
+  return <span className="shrink-0">{getFileIcon(name)}</span>;
 }
 
 interface TreeNodeProps {

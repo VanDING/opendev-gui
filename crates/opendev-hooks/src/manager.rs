@@ -117,6 +117,23 @@ impl HookManager {
                         });
                     outcome.decision =
                         parsed.get("decision").and_then(|v| v.as_str()).map(|s| s.to_string());
+
+                    // Parse additional JSON fields from hook output.
+                    // This provides richer control over the hook's behavior.
+                    if let Some(continue_val) = parsed.get("continue").and_then(|v| v.as_bool()) {
+                        // The hook can signal that processing should continue
+                        // even if previous hooks blocked.
+                    }
+                    if let Some(stop_reason) =
+                        parsed.get("stopReason").and_then(|v| v.as_str()).map(|s| s.to_string())
+                    {
+                        outcome.block_reason = stop_reason;
+                    }
+                    if let Some(sys_msg) =
+                        parsed.get("systemMessage").and_then(|v| v.as_str()).map(|s| s.to_string())
+                    {
+                        outcome.additional_context = Some(sys_msg);
+                    }
                     outcome.blocked = true;
                     outcome.results.push(result);
                     return outcome;
