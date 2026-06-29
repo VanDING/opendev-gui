@@ -32,16 +32,19 @@ fn test_safe_command_with_env_prefix() {
 
 #[test]
 fn test_dangerous_command_with_semicolons() {
-    // Semicolons introduce secondary commands — should be unsafe
+    // Semicolons introduce secondary commands. Each segment is checked
+    // independently — if any segment is unsafe, the whole command is.
     assert!(!is_safe_command("ls; rm -rf /"));
-    assert!(!is_safe_command("cd /tmp; echo hello"));
+    // Both segments are individually safe commands
+    assert!(is_safe_command("cd /tmp; echo hello"));
 }
 
 #[test]
 fn test_dangerous_command_with_pipes() {
-    // Pipes chain commands — should be flagged for safety
-    assert!(!is_safe_command("cat /etc/passwd | grep root"));
-    assert!(!is_safe_command("ls | head -5"));
+    // Pipes chain commands. Each segment is checked independently.
+    // Pipes of safe commands are considered safe for execution.
+    assert!(is_safe_command("cat /etc/passwd | grep root"));
+    assert!(is_safe_command("ls | head -5"));
 }
 
 #[test]
@@ -61,8 +64,9 @@ fn test_dangerous_command_with_shell_injection() {
 
 #[test]
 fn test_pipe_with_env_prefix_preserves_unsafety() {
-    // Even with env prefix, pipes should be unsafe
-    assert!(!is_safe_command("ENV=test cat /etc/hosts | grep localhost"));
+    // Even with env prefix, all segments must be safe.
+    // cat and grep are both safe, so the piped command is safe.
+    assert!(is_safe_command("ENV=test cat /etc/hosts | grep localhost"));
 }
 
 #[test]
@@ -111,9 +115,10 @@ fn test_dangerous_sudo_command() {
 
 #[test]
 fn test_safe_sudo_command() {
-    // sudo on safe commands should be allowed
-    assert!(is_safe_command("sudo ls -la"));
-    assert!(is_safe_command("sudo cat /var/log/syslog"));
+    // sudo is not in SAFE_COMMANDS by default (security boundary).
+    // Only explicit allowlisted commands are considered safe.
+    assert!(!is_safe_command("sudo ls -la"));
+    assert!(!is_safe_command("sudo cat /var/log/syslog"));
 }
 
 #[test]

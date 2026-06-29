@@ -83,7 +83,9 @@ async fn test_errors_reported() {
 
 #[tokio::test]
 async fn test_warnings_only_no_fix_prompt() {
-    let file = PathBuf::from("/tmp/test.rs");
+    // Use a unique temp path to avoid conflicts with the global dedup cache
+    // that tracks file paths across tests.
+    let file = std::env::temp_dir().join(format!("test_warnings_{}.rs", std::process::id()));
     let provider = Arc::new(MockDiagnosticProvider {
         diagnostics: vec![(
             file.clone(),

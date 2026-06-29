@@ -621,23 +621,23 @@ fn urlencoding(s: &str) -> String {
         .replace('"', "%22")
         .replace('\'', "%27")
 }
-
 /// Select the active backend based on configuration.
 ///
-/// Returns `CdpBrowserBackend` when Chrome CDP endpoint is reachable
-/// (via `CHROME_CDP_URL` env var or default `http://localhost:9222`).
-/// Otherwise falls back to `HttpBrowserBackend`.
+/// Returns `CdpBrowserBackend` when `CHROME_CDP_URL` is explicitly set
+/// (or default `http://localhost:9222` is detected via env var).
+/// Falls back to `HttpBrowserBackend` when CDP is not configured.
 pub fn select_backend() -> Box<dyn BrowserBackend> {
     let cdp_url = std::env::var("CHROME_CDP_URL").unwrap_or_else(|_| DEFAULT_CDP_URL.to_string());
 
-    // Quick probe: check if the CDP endpoint is reachable.
-    let is_cdp_available = match tokio::runtime::Handle::try_current() {
-        Ok(handle) => tokio::task::block_in_place(|| {
-            handle
-                .block_on(async { reqwest::get(&format!("{cdp_url}/json/version")).await.is_ok() })
-        }),
-        Err(_) => false,
-    };
+    // Quick probe: check if the CDP endpoint is reachable via TCP connect.
+    let is_cdp_available = std::net::TcpStream::connect_timeout(
+        &std::net::SocketAddr::new(
+            std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST),
+            cdp_url.split(':').last().and_then(|p| p.parse::<u16>().ok()).unwrap_or(9222),
+        ),
+        std::time::Duration::from_millis(500),
+    )
+    .is_ok();
 
     if is_cdp_available {
         tracing::info!(cdp_url = %cdp_url, "Using CDP browser backend");

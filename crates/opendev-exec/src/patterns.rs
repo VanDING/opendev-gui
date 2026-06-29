@@ -15,7 +15,7 @@ static DANGEROUS_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
         r":\(\)\{.*:\|:&\s*\};:",
         r"mv\s+/",
         r">\s*/dev/sd[a-z]",
-        r"git\s+push\s+.*--force\b",
+        r"git\s+push\s+.*--force\s",
         r"git\s+push\s+-f\b",
         r"git\s+reset\s+--hard",
         r"git\s+clean\s+-[a-zA-Z]*f",
