@@ -15,7 +15,10 @@ use crate::transport::McpTransport;
 ///
 /// Takes a method name and optional params (as `HashMap`), returns a JSON-RPC response.
 pub type JsonRpcHandler = Arc<
-    dyn Fn(&str, Option<std::collections::HashMap<String, serde_json::Value>>) -> McpResult<serde_json::Value>
+    dyn Fn(
+            &str,
+            Option<std::collections::HashMap<String, serde_json::Value>>,
+        ) -> McpResult<serde_json::Value>
         + Send
         + Sync,
 >;
@@ -44,7 +47,13 @@ impl McpInProcessTransport {
     /// it with the request's `id`).
     pub fn new<H>(handler: H) -> Self
     where
-        H: Fn(&str, Option<std::collections::HashMap<String, serde_json::Value>>) -> McpResult<serde_json::Value> + Send + Sync + 'static,
+        H: Fn(
+                &str,
+                Option<std::collections::HashMap<String, serde_json::Value>>,
+            ) -> McpResult<serde_json::Value>
+            + Send
+            + Sync
+            + 'static,
     {
         let (notification_tx, notification_rx) = tokio::sync::mpsc::unbounded_channel();
         Self {
@@ -150,7 +159,10 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    fn test_handler(method: &str, _params: Option<std::collections::HashMap<String, serde_json::Value>>) -> McpResult<serde_json::Value> {
+    fn test_handler(
+        method: &str,
+        _params: Option<std::collections::HashMap<String, serde_json::Value>>,
+    ) -> McpResult<serde_json::Value> {
         match method {
             "ping" => Ok(json!({})),
             "echo" => Ok(json!({"echoed": true})),
@@ -226,9 +238,11 @@ mod tests {
     #[tokio::test]
     async fn test_from_handler() {
         let handler: JsonRpcHandler = Arc::new(
-            |method, _params: Option<std::collections::HashMap<String, serde_json::Value>>| match method {
-                "ping" => Ok(json!({"pong": true})),
-                _ => Err(McpError::Protocol("unknown".to_string())),
+            |method, _params: Option<std::collections::HashMap<String, serde_json::Value>>| {
+                match method {
+                    "ping" => Ok(json!({"pong": true})),
+                    _ => Err(McpError::Protocol("unknown".to_string())),
+                }
             },
         );
         let mut transport = McpInProcessTransport::from_handler(handler);

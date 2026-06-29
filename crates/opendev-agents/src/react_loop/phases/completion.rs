@@ -55,10 +55,7 @@ fn count_completed_background_tasks(messages: &[Value]) -> usize {
 }
 
 /// Hook: block completion when spawned background tasks haven't reported back.
-fn background_tasks_hook(
-    state: &mut LoopState,
-    messages: &mut Vec<Value>,
-) -> Option<LoopAction> {
+fn background_tasks_hook(state: &mut LoopState, messages: &mut Vec<Value>) -> Option<LoopAction> {
     if state.bg_tasks_spawned == 0 {
         return None;
     }
@@ -149,10 +146,7 @@ fn implicit_completion_hook(
         && let Some(task) = react_loop.config.original_task.as_deref()
     {
         state.completion_nudge_sent = true;
-        info!(
-            iteration = state.iteration,
-            "Completion nudge firing — pre-nudge check"
-        );
+        info!(iteration = state.iteration, "Completion nudge firing — pre-nudge check");
         let nudge = get_reminder("implicit_completion_nudge", &[("original_task", task)]);
         append_nudge(messages, &nudge);
         return Some(LoopAction::Continue);

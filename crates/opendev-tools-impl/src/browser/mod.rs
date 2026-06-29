@@ -13,7 +13,7 @@ use std::collections::HashMap;
 
 use opendev_tools_core::{BaseTool, ToolContext, ToolDisplayMeta, ToolResult};
 
-use cdp_backend::{select_backend, BrowserBackend};
+use cdp_backend::{BrowserBackend, select_backend};
 
 /// Maximum page body size to process (5 MB).
 const MAX_PAGE_SIZE: usize = 5 * 1024 * 1024;

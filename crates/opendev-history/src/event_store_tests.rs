@@ -614,12 +614,10 @@ fn test_replay_with_tombstones() {
     let all2 = store.load("sess-v7").unwrap();
     let effective = EventStore::effective_events(&all2);
     assert_eq!(effective.len(), 2);
-    assert!(
-        effective.iter().any(|e| matches!(
-            serde_json::from_value::<SessionEvent>(e.data.clone()).unwrap(),
-            SessionEvent::TitleChanged { ref title, .. } if title == "Original"
-        ))
-    );
+    assert!(effective.iter().any(|e| matches!(
+        serde_json::from_value::<SessionEvent>(e.data.clone()).unwrap(),
+        SessionEvent::TitleChanged { ref title, .. } if title == "Original"
+    )));
 }
 
 #[test]
@@ -668,9 +666,7 @@ async fn test_concurrent_event_append() {
             store
                 .append(
                     "concurrent-sess",
-                    vec![SessionEvent::TitleChanged {
-                        title: format!("Concurrent title {i}"),
-                    }],
+                    vec![SessionEvent::TitleChanged { title: format!("Concurrent title {i}") }],
                 )
                 .unwrap();
         }));
@@ -715,12 +711,14 @@ fn test_corrupted_event_line_skipped() {
 
     // Append a corrupted line.
     lines.push("INVALID JSON LINE{{{".to_string());
-    lines.push(serde_json::to_string(&EventEnvelope::new(
-        "corrupt-sess",
-        2,
-        &SessionEvent::TitleChanged { title: "After corruption".into() },
-    ))
-    .unwrap());
+    lines.push(
+        serde_json::to_string(&EventEnvelope::new(
+            "corrupt-sess",
+            2,
+            &SessionEvent::TitleChanged { title: "After corruption".into() },
+        ))
+        .unwrap(),
+    );
 
     std::fs::write(&path, lines.join("\n")).unwrap();
 
@@ -747,7 +745,11 @@ fn test_integrity_fails_on_duplicate_seq() {
         metadata: HashMap::new(),
     };
     let e1 = EventEnvelope::new("dup-sess", 1, &event);
-    let e2 = EventEnvelope::new("dup-sess", 1, &SessionEvent::TitleChanged { title: "Duplicate".into() });
+    let e2 = EventEnvelope::new(
+        "dup-sess",
+        1,
+        &SessionEvent::TitleChanged { title: "Duplicate".into() },
+    );
 
     let content = format!(
         "{}\n{}\n",

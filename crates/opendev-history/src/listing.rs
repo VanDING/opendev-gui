@@ -64,9 +64,8 @@ impl SessionListing {
         // Filter by title substring match (case-insensitive)
         if let Some(pattern) = title_search {
             let lower = pattern.to_lowercase();
-            sessions.retain(|s| {
-                s.title.as_ref().map_or(false, |t| t.to_lowercase().contains(&lower))
-            });
+            sessions
+                .retain(|s| s.title.as_ref().map_or(false, |t| t.to_lowercase().contains(&lower)));
         }
 
         // Apply pagination limit

@@ -3,8 +3,8 @@
 //! Fires once per session (suppress_after = true) and injects a formatted
 //! list of all discovered skills, sourced from the SkillLoader.
 
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use tracing::debug;
 

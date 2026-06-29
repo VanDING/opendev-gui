@@ -11,7 +11,7 @@ use std::collections::HashMap;
 
 use opendev_tools_core::{BaseTool, ToolContext, ToolResult};
 
-use parser::{filter_by_domain, parse_ddg_html, urlencoded as urlencode, SearchResult};
+use parser::{SearchResult, filter_by_domain, parse_ddg_html, urlencoded as urlencode};
 
 /// Default number of search results to return.
 const DEFAULT_MAX_RESULTS: usize = 10;
@@ -148,27 +148,21 @@ impl BaseTool for WebSearchTool {
         let backend = SearchBackend::try_available();
 
         let results = match backend {
-            SearchBackend::Brave => {
-                match search_brave(query, max_results).await {
-                    Ok(r) => r,
-                    Err(e) => {
-                        tracing::warn!("Brave Search API failed: {e}; falling back to DDG");
-                        search_ddg(query, max_results).await
-                    }
+            SearchBackend::Brave => match search_brave(query, max_results).await {
+                Ok(r) => r,
+                Err(e) => {
+                    tracing::warn!("Brave Search API failed: {e}; falling back to DDG");
+                    search_ddg(query, max_results).await
                 }
-            }
-            SearchBackend::SerpApi => {
-                match search_serpapi(query, max_results).await {
-                    Ok(r) => r,
-                    Err(e) => {
-                        tracing::warn!("SerpAPI search failed: {e}; falling back to DDG");
-                        search_ddg(query, max_results).await
-                    }
+            },
+            SearchBackend::SerpApi => match search_serpapi(query, max_results).await {
+                Ok(r) => r,
+                Err(e) => {
+                    tracing::warn!("SerpAPI search failed: {e}; falling back to DDG");
+                    search_ddg(query, max_results).await
                 }
-            }
-            SearchBackend::DdgFallback => {
-                search_ddg(query, max_results).await
-            }
+            },
+            SearchBackend::DdgFallback => search_ddg(query, max_results).await,
         };
 
         // Filter by domain
@@ -224,8 +218,8 @@ impl BaseTool for WebSearchTool {
 
 /// Search via Brave Search API.
 async fn search_brave(query: &str, max_results: usize) -> Result<Vec<SearchResult>, String> {
-    let api_key = std::env::var(BRAVE_API_KEY_ENV)
-        .map_err(|_| "BRAVE_SEARCH_API_KEY not set".to_string())?;
+    let api_key =
+        std::env::var(BRAVE_API_KEY_ENV).map_err(|_| "BRAVE_SEARCH_API_KEY not set".to_string())?;
 
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(15))
@@ -246,10 +240,8 @@ async fn search_brave(query: &str, max_results: usize) -> Result<Vec<SearchResul
         return Err(format!("Brave Search returned HTTP {status}"));
     }
 
-    let body: serde_json::Value = response
-        .json()
-        .await
-        .map_err(|e| format!("Failed to parse Brave Search response: {e}"))?;
+    let body: serde_json::Value =
+        response.json().await.map_err(|e| format!("Failed to parse Brave Search response: {e}"))?;
 
     let results = body
         .get("web")
@@ -260,11 +252,8 @@ async fn search_brave(query: &str, max_results: usize) -> Result<Vec<SearchResul
                 .filter_map(|item| {
                     let title = item.get("title")?.as_str()?.to_string();
                     let url = item.get("url")?.as_str()?.to_string();
-                    let snippet = item
-                        .get("description")
-                        .and_then(|d| d.as_str())
-                        .unwrap_or("")
-                        .to_string();
+                    let snippet =
+                        item.get("description").and_then(|d| d.as_str()).unwrap_or("").to_string();
                     Some(SearchResult { title, url, snippet })
                 })
                 .take(max_results)
@@ -277,8 +266,8 @@ async fn search_brave(query: &str, max_results: usize) -> Result<Vec<SearchResul
 
 /// Search via SerpAPI. Requires `SERPAPI_API_KEY` env var.
 async fn search_serpapi(query: &str, max_results: usize) -> Result<Vec<SearchResult>, String> {
-    let api_key = std::env::var(SERPAPI_API_KEY_ENV)
-        .map_err(|_| "SERPAPI_API_KEY not set".to_string())?;
+    let api_key =
+        std::env::var(SERPAPI_API_KEY_ENV).map_err(|_| "SERPAPI_API_KEY not set".to_string())?;
 
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(15))
@@ -292,21 +281,16 @@ async fn search_serpapi(query: &str, max_results: usize) -> Result<Vec<SearchRes
         api_key,
         max_results
     );
-    let response = client
-        .get(&url)
-        .send()
-        .await
-        .map_err(|e| format!("SerpAPI request failed: {e}"))?;
+    let response =
+        client.get(&url).send().await.map_err(|e| format!("SerpAPI request failed: {e}"))?;
 
     if !response.status().is_success() {
         let status = response.status();
         return Err(format!("SerpAPI returned HTTP {status}"));
     }
 
-    let body: serde_json::Value = response
-        .json()
-        .await
-        .map_err(|e| format!("Failed to parse SerpAPI response: {e}"))?;
+    let body: serde_json::Value =
+        response.json().await.map_err(|e| format!("Failed to parse SerpAPI response: {e}"))?;
 
     let results = body
         .get("organic_results")
@@ -316,11 +300,8 @@ async fn search_serpapi(query: &str, max_results: usize) -> Result<Vec<SearchRes
                 .filter_map(|item| {
                     let title = item.get("title")?.as_str()?.to_string();
                     let url = item.get("link")?.as_str()?.to_string();
-                    let snippet = item
-                        .get("snippet")
-                        .and_then(|d| d.as_str())
-                        .unwrap_or("")
-                        .to_string();
+                    let snippet =
+                        item.get("snippet").and_then(|d| d.as_str()).unwrap_or("").to_string();
                     Some(SearchResult { title, url, snippet })
                 })
                 .take(max_results)

@@ -39,10 +39,7 @@ fn test_transport_not_connected_initially() {
 #[test]
 fn test_transport_default_config_works() {
     // Test with minimal config (command-only)
-    let config = McpServerConfig {
-        command: "echo".into(),
-        ..Default::default()
-    };
+    let config = McpServerConfig { command: "echo".into(), ..Default::default() };
 
     let transport = create_transport(&config).unwrap();
     assert_eq!(transport.transport_type(), "stdio");
@@ -162,10 +159,7 @@ fn test_npx_without_args_fails() {
 
 #[test]
 fn test_default_transport_is_stdio() {
-    let config = McpServerConfig {
-        command: "echo".into(),
-        ..Default::default()
-    };
+    let config = McpServerConfig { command: "echo".into(), ..Default::default() };
 
     assert_eq!(config.transport, opendev_mcp::config::TransportType::Stdio);
 }

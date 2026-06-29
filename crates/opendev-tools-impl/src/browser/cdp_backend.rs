@@ -12,7 +12,10 @@ use std::collections::HashMap;
 
 use opendev_tools_core::{ToolContext, ToolResult};
 
-use super::{build_client, extract_title, extract_visible_text, normalize_url, MAX_PAGE_SIZE, MAX_TEXT_LENGTH};
+use super::{
+    MAX_PAGE_SIZE, MAX_TEXT_LENGTH, build_client, extract_title, extract_visible_text,
+    normalize_url,
+};
 
 /// Browser backend trait — each method maps to a browser tool action.
 #[async_trait::async_trait]
@@ -135,11 +138,8 @@ impl BrowserBackend for HttpBrowserBackend {
 
         let text = extract_visible_text(&body);
         let truncated = text.len() > MAX_TEXT_LENGTH;
-        let text = if truncated {
-            format!("{}...\n[truncated]", &text[..MAX_TEXT_LENGTH])
-        } else {
-            text
-        };
+        let text =
+            if truncated { format!("{}...\n[truncated]", &text[..MAX_TEXT_LENGTH]) } else { text };
 
         ToolResult::ok(text)
     }
@@ -197,7 +197,8 @@ impl BrowserBackend for HttpBrowserBackend {
         match write_result {
             Ok(_) => {
                 let mut metadata = HashMap::new();
-                metadata.insert("screenshot_path".into(), serde_json::json!(path.to_string_lossy()));
+                metadata
+                    .insert("screenshot_path".into(), serde_json::json!(path.to_string_lossy()));
                 metadata.insert("format".into(), serde_json::json!("html"));
                 metadata.insert(
                     "note".into(),
@@ -254,9 +255,7 @@ impl BrowserBackend for HttpBrowserBackend {
     }
 
     async fn tabs_list(&self) -> ToolResult {
-        ToolResult::ok(
-            "No browser context open (HTTP-only mode). Use 'navigate' to fetch a page.",
-        )
+        ToolResult::ok("No browser context open (HTTP-only mode). Use 'navigate' to fetch a page.")
     }
 
     async fn tab_close(&self, _target: Option<&str>) -> ToolResult {
@@ -327,15 +326,10 @@ impl CdpBrowserBackend {
     async fn list_tabs(&self) -> Result<Vec<CdpTab>, String> {
         let client = Self::client()?;
         let url = format!("{}/json", self.cdp_url);
-        let resp = client
-            .get(&url)
-            .send()
-            .await
-            .map_err(|e| format!("Failed to list CDP tabs: {e}"))?;
-        let tabs: Vec<CdpTab> = resp
-            .json()
-            .await
-            .map_err(|e| format!("Failed to parse CDP tab list: {e}"))?;
+        let resp =
+            client.get(&url).send().await.map_err(|e| format!("Failed to list CDP tabs: {e}"))?;
+        let tabs: Vec<CdpTab> =
+            resp.json().await.map_err(|e| format!("Failed to parse CDP tab list: {e}"))?;
         Ok(tabs)
     }
 
@@ -348,26 +342,16 @@ impl CdpBrowserBackend {
             .send()
             .await
             .map_err(|e| format!("Failed to open URL via CDP: {e}"))?;
-        let body: serde_json::Value = resp
-            .json()
-            .await
-            .map_err(|e| format!("Failed to parse CDP new tab response: {e}"))?;
-        Ok(body
-            .get("id")
-            .and_then(|v| v.as_str())
-            .unwrap_or("")
-            .to_string())
+        let body: serde_json::Value =
+            resp.json().await.map_err(|e| format!("Failed to parse CDP new tab response: {e}"))?;
+        Ok(body.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string())
     }
 
     /// Close a tab by its target ID.
     async fn close_tab(&self, target_id: &str) -> Result<(), String> {
         let client = Self::client()?;
         let url = format!("{}/json/close/{}", self.cdp_url, target_id);
-        client
-            .get(&url)
-            .send()
-            .await
-            .map_err(|e| format!("Failed to close CDP tab: {e}"))?;
+        client.get(&url).send().await.map_err(|e| format!("Failed to close CDP tab: {e}"))?;
         Ok(())
     }
 
@@ -375,11 +359,7 @@ impl CdpBrowserBackend {
     async fn activate_tab(&self, target_id: &str) -> Result<(), String> {
         let client = Self::client()?;
         let url = format!("{}/json/activate/{}", self.cdp_url, target_id);
-        client
-            .get(&url)
-            .send()
-            .await
-            .map_err(|e| format!("Failed to activate CDP tab: {e}"))?;
+        client.get(&url).send().await.map_err(|e| format!("Failed to activate CDP tab: {e}"))?;
         Ok(())
     }
 }
@@ -550,9 +530,7 @@ impl BrowserBackend for CdpBrowserBackend {
     }
 
     async fn wait(&self, selector: &str) -> ToolResult {
-        ToolResult::fail(format!(
-            "Wait for '{selector}' via CDP requires WebSocket support."
-        ))
+        ToolResult::fail(format!("Wait for '{selector}' via CDP requires WebSocket support."))
     }
 
     async fn evaluate(&self, _js_code: &str) -> ToolResult {
@@ -575,7 +553,13 @@ impl BrowserBackend for CdpBrowserBackend {
                     } else {
                         tab.title.clone()
                     };
-                    output.push_str(&format!("  {}. {} (id: {}, url: {})\n", i + 1, title, tab.id, tab.url));
+                    output.push_str(&format!(
+                        "  {}. {} (id: {}, url: {})\n",
+                        i + 1,
+                        title,
+                        tab.id,
+                        tab.url
+                    ));
                 }
                 ToolResult::ok(output)
             }
@@ -644,20 +628,14 @@ fn urlencoding(s: &str) -> String {
 /// (via `CHROME_CDP_URL` env var or default `http://localhost:9222`).
 /// Otherwise falls back to `HttpBrowserBackend`.
 pub fn select_backend() -> Box<dyn BrowserBackend> {
-    let cdp_url =
-        std::env::var("CHROME_CDP_URL").unwrap_or_else(|_| DEFAULT_CDP_URL.to_string());
+    let cdp_url = std::env::var("CHROME_CDP_URL").unwrap_or_else(|_| DEFAULT_CDP_URL.to_string());
 
     // Quick probe: check if the CDP endpoint is reachable.
     let is_cdp_available = match tokio::runtime::Handle::try_current() {
-        Ok(handle) => {
-            tokio::task::block_in_place(|| {
-                handle.block_on(async {
-                    reqwest::get(&format!("{cdp_url}/json/version"))
-                        .await
-                        .is_ok()
-                })
-            })
-        }
+        Ok(handle) => tokio::task::block_in_place(|| {
+            handle
+                .block_on(async { reqwest::get(&format!("{cdp_url}/json/version")).await.is_ok() })
+        }),
         Err(_) => false,
     };
 

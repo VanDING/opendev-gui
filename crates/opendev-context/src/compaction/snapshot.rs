@@ -65,8 +65,7 @@ impl SnapshotCollector {
             let detail = if entry.last_details.is_empty() {
                 String::new()
             } else {
-                let truncated: String =
-                    entry.last_details.chars().take(80).collect();
+                let truncated: String = entry.last_details.chars().take(80).collect();
                 format!(" — {}", truncated)
             };
 
@@ -74,10 +73,7 @@ impl SnapshotCollector {
         }
 
         if entries.len() > 50 {
-            lines.push(format!(
-                "\n... and {} more files (showing first 50)",
-                entries.len() - 50,
-            ));
+            lines.push(format!("\n... and {} more files (showing first 50)", entries.len() - 50,));
         }
 
         lines.push(String::new());

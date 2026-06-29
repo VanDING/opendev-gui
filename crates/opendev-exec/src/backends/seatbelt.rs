@@ -237,10 +237,7 @@ mod tests {
 
     #[test]
     fn profile_denies_specific_domains() {
-        let req = make_request(
-            true, vec![], vec![], vec![],
-            vec!["malicious.example.com"],
-        );
+        let req = make_request(true, vec![], vec![], vec![], vec!["malicious.example.com"]);
         let profile = build_seatbelt_profile(&req);
         assert!(profile.contains("(allow network-outbound (remote \"*\"))"));
         assert!(profile.contains("(deny network-outbound (remote \"malicious.example.com\"))"));
@@ -248,11 +245,8 @@ mod tests {
 
     #[test]
     fn profile_combined_allow_and_deny_domains() {
-        let req = make_request(
-            true, vec![], vec![],
-            vec!["good.example.com"],
-            vec!["bad.example.com"],
-        );
+        let req =
+            make_request(true, vec![], vec![], vec!["good.example.com"], vec!["bad.example.com"]);
         let profile = build_seatbelt_profile(&req);
         assert!(profile.contains("(allow network-outbound (remote \"good.example.com\"))"));
         assert!(!profile.contains("(allow network-outbound (remote \"*\"))"));

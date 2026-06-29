@@ -158,7 +158,9 @@ impl Repl {
             // multiple sentences without being a known command, treat it as
             // a single multi-line query.
             let is_known_command = input.starts_with('/');
-            if !is_known_command && (input.len() > 200 || input.contains('\n') || input.contains('\r')) {
+            if !is_known_command
+                && (input.len() > 200 || input.contains('\n') || input.contains('\r'))
+            {
                 // Multi-line paste detected — process as a single query
                 self.state.last_prompt = input.to_string();
                 self.process_query(input).await?;
@@ -199,8 +201,20 @@ impl Repl {
 
     /// Known slash commands for auto-completion.
     const SLASH_COMMANDS: &[&str] = &[
-        "/help", "/exit", "/clear", "/compact", "/status", "/cost", "/diff",
-        "/mode", "/plan", "/autonomy", "/thinking", "/init", "/review", "/commit",
+        "/help",
+        "/exit",
+        "/clear",
+        "/compact",
+        "/status",
+        "/cost",
+        "/diff",
+        "/mode",
+        "/plan",
+        "/autonomy",
+        "/thinking",
+        "/init",
+        "/review",
+        "/commit",
     ];
 
     /// Attempt auto-completion for the current input.
@@ -225,7 +239,8 @@ impl Repl {
             if let Some(parent) = path.parent() {
                 if parent.exists() {
                     if let Ok(entries) = std::fs::read_dir(parent) {
-                        let prefix = path.file_name().map(|s| s.to_string_lossy()).unwrap_or_default();
+                        let prefix =
+                            path.file_name().map(|s| s.to_string_lossy()).unwrap_or_default();
                         for entry in entries.flatten() {
                             let name = entry.file_name().to_string_lossy().to_string();
                             if name.starts_with(prefix.as_ref()) && name != prefix.as_ref() {
@@ -247,8 +262,10 @@ impl Repl {
         // Use ANSI color codes for welcome message
         println!("\x1b[1mOpenDev\x1b[0m -- AI-powered coding assistant");
         println!("Type \x1b[33m/help\x1b[0m for commands, \x1b[33m/exit\x1b[0m to quit.");
-        println!("Mode: \x1b[36m{}\x1b[0m | Autonomy: \x1b[35m{}\x1b[0m",
-            self.state.mode, self.state.autonomy_level);
+        println!(
+            "Mode: \x1b[36m{}\x1b[0m | Autonomy: \x1b[35m{}\x1b[0m",
+            self.state.mode, self.state.autonomy_level
+        );
         println!();
     }
 

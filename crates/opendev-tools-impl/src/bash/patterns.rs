@@ -101,16 +101,16 @@ const AUTO_BACKGROUND_PATTERNS: &[&str] = &[
     r"mvn.*spring-boot:run",
     r"gradle.*bootRun",
     // Background watchers / monitors
-    r"\bsleep\s+\d+",         // Sleep commands
-    r"\btail\s+-f\b",         // Tail follow
-    r"\binotifywait\b",       // File watchers
-    r"\byes\b",               // yes infinite stream
-    r"\btop\b",               // System monitors
+    r"\bsleep\s+\d+",   // Sleep commands
+    r"\btail\s+-f\b",   // Tail follow
+    r"\binotifywait\b", // File watchers
+    r"\byes\b",         // yes infinite stream
+    r"\btop\b",         // System monitors
     r"\bhtop\b",
     r"\bwatch\b",
-    r"\bping\b",              // Network monitors
+    r"\bping\b", // Network monitors
     r"\btcpdump\b",
-    r"\bngrok\b",             // Tunnel services
+    r"\bngrok\b", // Tunnel services
     // Generic
     r"live-server",
     r"http-server",

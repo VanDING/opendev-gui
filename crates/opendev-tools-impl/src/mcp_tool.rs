@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use opendev_mcp::McpManager;
-use opendev_mcp::models::{McpContent, McpToolSchema, DEFAULT_MAX_MCP_OUTPUT_CHARS};
+use opendev_mcp::models::{DEFAULT_MAX_MCP_OUTPUT_CHARS, McpContent, McpToolSchema};
 use opendev_tools_core::traits::{BaseTool, ToolContext, ToolResult};
 
 /// Maximum image dimensions for inline image data (1920x1080).
@@ -133,35 +133,38 @@ impl BaseTool for McpBridgeTool {
                             // Full data is available via the MCP tool result metadata.
                             let max_display = 1000;
                             let preview = if data.len() > max_display {
-                                format!("{}...[{} more bytes]", &data[..max_display], data.len() - max_display)
+                                format!(
+                                    "{}...[{} more bytes]",
+                                    &data[..max_display],
+                                    data.len() - max_display
+                                )
                             } else {
                                 data.clone()
                             };
 
-                            Some(format!(
-                                "[Image: {mime_type}, {} bytes]\n{preview}",
-                                data.len(),
-                            ))
+                            Some(format!("[Image: {mime_type}, {} bytes]\n{preview}", data.len(),))
                         }
                         McpContent::Resource { uri } => {
                             // For resources, persist to a temp file in ~/.opendev/mcp-output/
                             let output_dir = dirs::data_dir()
                                 .map(|d| d.join("opendev").join("mcp-output"))
-                                .unwrap_or_else(|| std::path::PathBuf::from("/tmp/opendev-mcp-output"));
+                                .unwrap_or_else(|| {
+                                    std::path::PathBuf::from("/tmp/opendev-mcp-output")
+                                });
                             let _ = std::fs::create_dir_all(&output_dir);
-                            let safe_name = uri.replace(|c: char| !c.is_alphanumeric() && c != '-' && c != '.', "_");
+                            let safe_name = uri.replace(
+                                |c: char| !c.is_alphanumeric() && c != '-' && c != '.',
+                                "_",
+                            );
                             let filename = format!("{}_{}.bin", safe_name, uuid::Uuid::new_v4());
                             let path = output_dir.join(&filename);
 
                             // Attempt to fetch resource content or create a reference file
                             match std::fs::write(&path, uri.as_bytes()) {
-                                Ok(_) => Some(format!(
-                                    "[Resource: {uri} — saved to {}]",
-                                    path.display()
-                                )),
-                                Err(_) => Some(format!(
-                                    "[Resource: {uri}]"
-                                )),
+                                Ok(_) => {
+                                    Some(format!("[Resource: {uri} — saved to {}]", path.display()))
+                                }
+                                Err(_) => Some(format!("[Resource: {uri}]")),
                             }
                         }
                     })

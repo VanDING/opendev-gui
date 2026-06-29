@@ -3,15 +3,15 @@
 //! Provides an [`McpTransport`] implementation that communicates with an
 //! MCP server over WebSocket connections using `tokio-tungstenite`.
 
+use futures::SinkExt;
+use futures::StreamExt;
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tokio::sync::Mutex;
-use tokio::time::{sleep, Duration};
+use tokio::time::{Duration, sleep};
 use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::Message;
-use futures::StreamExt;
-use futures::SinkExt;
 
 use crate::error::{McpError, McpResult};
 use crate::models::{JsonRpcNotification, JsonRpcRequest, JsonRpcResponse};
@@ -28,10 +28,7 @@ const PING_INTERVAL: Duration = Duration::from_secs(15);
 
 /// Internal message to the WebSocket task.
 enum WsCommand {
-    Send {
-        payload: String,
-        response_tx: tokio::sync::oneshot::Sender<McpResult<String>>,
-    },
+    Send { payload: String, response_tx: tokio::sync::oneshot::Sender<McpResult<String>> },
     Close,
 }
 
@@ -72,9 +69,7 @@ impl McpWebSocketTransport {
 
         loop {
             // Build request with headers using http crate
-            let mut req_builder = http::Request::builder()
-                .uri(&url)
-                .method("GET");
+            let mut req_builder = http::Request::builder().uri(&url).method("GET");
             for (key, value) in headers.iter() {
                 if let (Ok(name), Ok(val)) = (
                     http::HeaderName::from_bytes(key.as_bytes()),
@@ -170,9 +165,7 @@ impl McpWebSocketTransport {
 
             // Fail all pending requests
             for (_, tx) in pending.drain() {
-                let _ = tx.send(Err(McpError::Transport(
-                    "WebSocket disconnected".to_string(),
-                )));
+                let _ = tx.send(Err(McpError::Transport("WebSocket disconnected".to_string())));
             }
 
             match result {
@@ -219,16 +212,17 @@ impl McpTransport for McpWebSocketTransport {
         let (tx, rx) = tokio::sync::oneshot::channel();
 
         let cmd_tx = self.cmd_tx.lock().await;
-        let tx_sender = cmd_tx.as_ref().ok_or_else(|| {
-            McpError::Transport("WebSocket not connected".to_string())
-        })?;
+        let tx_sender = cmd_tx
+            .as_ref()
+            .ok_or_else(|| McpError::Transport("WebSocket not connected".to_string()))?;
 
         tx_sender
             .send(WsCommand::Send { payload: payload_str, response_tx: tx })
             .map_err(|_| McpError::Transport("WebSocket task died".to_string()))?;
         drop(cmd_tx);
 
-        let result = rx.await
+        let result = rx
+            .await
             .map_err(|_| McpError::Transport("WebSocket response channel closed".to_string()))?;
         // result is McpResult<String> from the Oneshot
         let response_str: String = result?;
@@ -238,9 +232,7 @@ impl McpTransport for McpWebSocketTransport {
     }
 
     async fn send_notification(&self, _notification: &JsonRpcNotification) -> McpResult<()> {
-        Err(McpError::Transport(
-            "WebSocket notifications not yet supported".to_string(),
-        ))
+        Err(McpError::Transport("WebSocket notifications not yet supported".to_string()))
     }
 
     async fn close(&self) -> McpResult<()> {

@@ -71,11 +71,7 @@ impl ContextCollector for IdeStateCollector {
             count
         );
 
-        Some(Attachment {
-            name: "ide_state",
-            content,
-            class: MessageClass::Nudge,
-        })
+        Some(Attachment { name: "ide_state", content, class: MessageClass::Nudge })
     }
 
     fn did_fire(&self, turn: usize) {

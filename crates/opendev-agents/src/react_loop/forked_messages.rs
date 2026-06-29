@@ -91,33 +91,30 @@ impl ForkedMessageBuilder {
 
         // If no system message was found in parent, prepend one
         if !found_system {
-            messages.insert(
-                0,
-                serde_json::json!({"role": "system", "content": system_prompt}),
-            );
+            messages.insert(0, serde_json::json!({"role": "system", "content": system_prompt}));
         }
 
         // Find the last assistant message and replace tool_use blocks
-        if let Some(last_assistant) = messages.iter_mut().rev().find(|m| {
-            m.get("role").and_then(|r| r.as_str()) == Some("assistant")
-        }) {
+        if let Some(last_assistant) = messages
+            .iter_mut()
+            .rev()
+            .find(|m| m.get("role").and_then(|r| r.as_str()) == Some("assistant"))
+        {
             // Check if this assistant message has tool_calls
-            if last_assistant.get("tool_calls").and_then(|t| t.as_array()).is_some_and(|arr| {
-                !arr.is_empty()
-            }) {
+            if last_assistant
+                .get("tool_calls")
+                .and_then(|t| t.as_array())
+                .is_some_and(|arr| !arr.is_empty())
+            {
                 // Replace tool_use blocks with placeholder results
-                let tool_calls = last_assistant["tool_calls"]
-                    .as_array()
-                    .cloned()
-                    .unwrap_or_default();
+                let tool_calls =
+                    last_assistant["tool_calls"].as_array().cloned().unwrap_or_default();
 
                 let mut new_content = String::new();
 
                 // Preserve existing content text if any
-                if let Some(text) = last_assistant
-                    .get("content")
-                    .and_then(|c| c.as_str())
-                    .filter(|c| !c.is_empty())
+                if let Some(text) =
+                    last_assistant.get("content").and_then(|c| c.as_str()).filter(|c| !c.is_empty())
                 {
                     new_content.push_str(text);
                     new_content.push_str("\n\n");
@@ -162,7 +159,11 @@ mod tests {
     use super::*;
     use crate::subagents::spec::{IsolationMode, SubAgentSpec};
 
-    fn test_spec(use_forked_cache: bool, isolation: IsolationMode, tools: Vec<String>) -> SubAgentSpec {
+    fn test_spec(
+        use_forked_cache: bool,
+        isolation: IsolationMode,
+        tools: Vec<String>,
+    ) -> SubAgentSpec {
         SubAgentSpec {
             name: "test".to_string(),
             description: "Test agent".to_string(),
@@ -188,31 +189,22 @@ mod tests {
 
     #[test]
     fn test_should_fork_true() {
-        let spec = test_spec(
-            true,
-            IsolationMode::None,
-            vec!["Read".to_string(), "Grep".to_string()],
-        );
+        let spec =
+            test_spec(true, IsolationMode::None, vec!["Read".to_string(), "Grep".to_string()]);
         assert!(ForkedMessageBuilder::should_fork(&spec));
     }
 
     #[test]
     fn test_should_fork_false_no_cache() {
-        let spec = test_spec(
-            false,
-            IsolationMode::None,
-            vec!["Read".to_string(), "Grep".to_string()],
-        );
+        let spec =
+            test_spec(false, IsolationMode::None, vec!["Read".to_string(), "Grep".to_string()]);
         assert!(!ForkedMessageBuilder::should_fork(&spec));
     }
 
     #[test]
     fn test_should_fork_false_worktree() {
-        let spec = test_spec(
-            true,
-            IsolationMode::Worktree,
-            vec!["Read".to_string(), "Grep".to_string()],
-        );
+        let spec =
+            test_spec(true, IsolationMode::Worktree, vec!["Read".to_string(), "Grep".to_string()]);
         assert!(!ForkedMessageBuilder::should_fork(&spec));
     }
 
@@ -238,11 +230,8 @@ mod tests {
             serde_json::json!({"role": "tool", "tool_call_id": "call_123", "content": "file content"}),
         ];
 
-        let spec = test_spec(
-            true,
-            IsolationMode::None,
-            vec!["Read".to_string(), "Grep".to_string()],
-        );
+        let spec =
+            test_spec(true, IsolationMode::None, vec!["Read".to_string(), "Grep".to_string()]);
 
         let result = ForkedMessageBuilder::build(
             &parent_messages,
@@ -263,10 +252,7 @@ mod tests {
         // Last assistant should have tool_calls replaced
         assert_eq!(messages[2]["role"], "assistant");
         assert!(messages[2]["content"].as_str().unwrap().contains("Fork started"));
-        assert_eq!(
-            messages[2]["tool_calls"].as_array().unwrap().len(),
-            0
-        );
+        assert_eq!(messages[2]["tool_calls"].as_array().unwrap().len(), 0);
 
         // Tool result should be preserved
         assert_eq!(messages[3]["role"], "tool");
@@ -288,11 +274,7 @@ mod tests {
             serde_json::json!({"role": "assistant", "content": "I'm fine, thanks!"}),
         ];
 
-        let spec = test_spec(
-            true,
-            IsolationMode::None,
-            vec!["Read".to_string()],
-        );
+        let spec = test_spec(true, IsolationMode::None, vec!["Read".to_string()]);
 
         let result = ForkedMessageBuilder::build(
             &parent_messages,
@@ -314,15 +296,9 @@ mod tests {
 
     #[test]
     fn test_build_no_system_message() {
-        let parent_messages = vec![
-            serde_json::json!({"role": "user", "content": "Hello"}),
-        ];
+        let parent_messages = vec![serde_json::json!({"role": "user", "content": "Hello"})];
 
-        let spec = test_spec(
-            true,
-            IsolationMode::None,
-            vec!["Read".to_string()],
-        );
+        let spec = test_spec(true, IsolationMode::None, vec!["Read".to_string()]);
 
         let result = ForkedMessageBuilder::build(
             &parent_messages,
@@ -348,9 +324,7 @@ mod tests {
 
     #[test]
     fn test_build_returns_none_when_no_fork() {
-        let parent_messages = vec![
-            serde_json::json!({"role": "user", "content": "Hello"}),
-        ];
+        let parent_messages = vec![serde_json::json!({"role": "user", "content": "Hello"})];
 
         let spec = test_spec(false, IsolationMode::None, vec!["Read".to_string()]);
 

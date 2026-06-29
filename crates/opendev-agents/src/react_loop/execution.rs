@@ -405,9 +405,7 @@ impl ReactLoop {
                     // dispatch_with_parallelism returns None only when tool_calls
                     // is empty. We keep the legacy paths as a safety net for this
                     // edge case, but they are never reached in normal operation.
-                    if dispatch_returned.is_none()
-                        && !tool_calls.is_empty()
-                    {
+                    if dispatch_returned.is_none() && !tool_calls.is_empty() {
                         // Log a warning if we reach here — it means something
                         // unexpected happened in dispatch_with_parallelism and
                         // we're falling back to the legacy sequential path.

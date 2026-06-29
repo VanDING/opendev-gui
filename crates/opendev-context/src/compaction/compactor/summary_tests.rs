@@ -205,10 +205,7 @@ fn test_build_compaction_payload_returns_valid_structure() {
 #[test]
 fn test_build_compaction_payload_returns_none_for_few_messages() {
     let compactor = ContextCompactor::new(10_000);
-    let msgs = vec![
-        make_msg("user", "hi"),
-        make_msg("assistant", "hello"),
-    ];
+    let msgs = vec![make_msg("user", "hi"), make_msg("assistant", "hello")];
 
     let result = compactor.build_compaction_payload(&msgs, "system", "model");
     assert!(result.is_none());
@@ -242,16 +239,10 @@ fn test_apply_llm_compaction_maintains_structure_and_adds_artifact_summary() {
     assert_eq!(compacted.len(), 1 + 1 + 3);
 
     // First message preserved (system).
-    assert_eq!(
-        compacted[0].get("role").and_then(|r| r.as_str()),
-        Some("system")
-    );
+    assert_eq!(compacted[0].get("role").and_then(|r| r.as_str()), Some("system"));
 
     // Summary message contains both LLM summary and artifact index.
-    let summary_content = compacted[1]
-        .get("content")
-        .and_then(|c| c.as_str())
-        .unwrap_or("");
+    let summary_content = compacted[1].get("content").and_then(|c| c.as_str()).unwrap_or("");
     assert!(summary_content.contains("[CONVERSATION SUMMARY]"));
     assert!(summary_content.contains(summary));
     assert!(summary_content.contains("Artifact Index"));
@@ -259,14 +250,8 @@ fn test_apply_llm_compaction_maintains_structure_and_adds_artifact_summary() {
     assert!(summary_content.contains("src/lib.rs"));
 
     // Tail preserved (3 most recent messages).
-    assert_eq!(
-        compacted[2].get("role").and_then(|r| r.as_str()),
-        Some("user")
-    );
-    assert_eq!(
-        compacted[2].get("content").and_then(|c| c.as_str()),
-        Some("Looks good, proceed")
-    );
+    assert_eq!(compacted[2].get("role").and_then(|r| r.as_str()), Some("user"));
+    assert_eq!(compacted[2].get("content").and_then(|c| c.as_str()), Some("Looks good, proceed"));
 
     // Calibration state was invalidated.
     assert_eq!(compactor.api_prompt_tokens, 0);
@@ -287,10 +272,7 @@ fn test_apply_llm_compaction_preserves_artifact_index_on_empty() {
     let compacted = compactor.apply_llm_compaction(msgs, "Summary text", 2);
     assert_eq!(compacted.len(), 4); // system + summary + 2 tail (keep_recent=2)
 
-    let summary_content = compacted[1]
-        .get("content")
-        .and_then(|c| c.as_str())
-        .unwrap_or("");
+    let summary_content = compacted[1].get("content").and_then(|c| c.as_str()).unwrap_or("");
     assert!(summary_content.contains("[CONVERSATION SUMMARY]"));
     // No artifact section since none were recorded.
     assert!(!summary_content.contains("Artifact Index"));

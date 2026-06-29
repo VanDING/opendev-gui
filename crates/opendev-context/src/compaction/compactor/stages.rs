@@ -8,7 +8,6 @@ use std::collections::{HashMap, HashSet};
 
 use tracing::info;
 
-use crate::compaction::levels::OptimizationLevel;
 use super::super::preview::summarize_tool_output;
 use super::super::tokens::count_tokens;
 use super::super::{
@@ -16,6 +15,7 @@ use super::super::{
     TOOL_OUTPUT_SUMMARIZE_THRESHOLD,
 };
 use super::ContextCompactor;
+use crate::compaction::levels::OptimizationLevel;
 
 impl ContextCompactor {
     /// Build a mapping from tool_call_id to tool function name.

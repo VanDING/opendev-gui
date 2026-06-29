@@ -204,10 +204,7 @@ impl McpManager {
         let mut health_states = self.health_states.write().await;
         let state = health_states.entry(server_name.to_string()).or_default();
         state.mark_needs_auth();
-        warn!(
-            server = server_name,
-            "MCP server requires authentication (HTTP 401)"
-        );
+        warn!(server = server_name, "MCP server requires authentication (HTTP 401)");
         drop(health_states);
         self.remove_failed_server(server_name).await;
     }

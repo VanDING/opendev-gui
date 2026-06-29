@@ -38,11 +38,7 @@ impl GlobalPromptCache {
         let base = dirs_next().unwrap_or_else(|| PathBuf::from("."));
         let cache_dir = base.join(CACHE_SUBDIR);
         let _ = std::fs::create_dir_all(&cache_dir);
-        Self {
-            cache_dir,
-            version: version.into(),
-            config_hash: config_hash.into(),
-        }
+        Self { cache_dir, version: version.into(), config_hash: config_hash.into() }
     }
 
     /// Compute the SHA-256 hash of content.
@@ -106,11 +102,7 @@ impl GlobalPromptCache {
     ///
     /// If the content is already cached, returns the cached version.
     /// Otherwise, renders via `render_fn`, caches the result, and returns it.
-    pub fn get_or_compute(
-        &self,
-        content: &str,
-        render_fn: impl FnOnce(&str) -> String,
-    ) -> String {
+    pub fn get_or_compute(&self, content: &str, render_fn: impl FnOnce(&str) -> String) -> String {
         let hash = self.hash_content(content);
         if let Some(cached) = self.load(&hash) {
             return cached;
@@ -150,10 +142,7 @@ mod tests {
     fn test_hash_changes_with_version() {
         let cache1 = GlobalPromptCache::new("1.0", "default");
         let cache2 = GlobalPromptCache::new("2.0", "default");
-        assert_ne!(
-            cache1.hash_content("same content"),
-            cache2.hash_content("same content")
-        );
+        assert_ne!(cache1.hash_content("same content"), cache2.hash_content("same content"));
     }
 
     #[test]

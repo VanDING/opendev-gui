@@ -8,7 +8,7 @@
 mod dangerous_patterns;
 mod glob;
 
-pub use dangerous_patterns::{check_dangerous_pattern, DangerousAllowRule, WarningLevel};
+pub use dangerous_patterns::{DangerousAllowRule, WarningLevel, check_dangerous_pattern};
 pub use glob::{glob_matches, glob_matches_path};
 
 use serde::{Deserialize, Serialize};

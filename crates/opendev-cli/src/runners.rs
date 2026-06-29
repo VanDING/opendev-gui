@@ -289,7 +289,8 @@ pub async fn run_interactive(
                         if io::stdin().read_line(&mut buf).is_ok() {
                             let input = buf.trim().to_lowercase();
                             if input == "j" {
-                                current_selection = (current_selection + 1).min(sessions.len().saturating_sub(1));
+                                current_selection =
+                                    (current_selection + 1).min(sessions.len().saturating_sub(1));
                                 continue;
                             } else if input == "k" {
                                 current_selection = current_selection.saturating_sub(1);
@@ -312,7 +313,9 @@ pub async fn run_interactive(
                                     current_selection = n - 1;
                                     let selected = &sessions[current_selection];
                                     // Show preview of first 3 messages
-                                    if let Some(preview) = load_session_preview(&session_manager, &selected.id, 3) {
+                                    if let Some(preview) =
+                                        load_session_preview(&session_manager, &selected.id, 3)
+                                    {
                                         if let Some(title) = &selected.title {
                                             println!("  Preview: {title}");
                                         }
@@ -337,7 +340,9 @@ pub async fn run_interactive(
                                     eprintln!("Invalid selection, try again.");
                                 }
                             } else {
-                                eprintln!("Invalid input. Enter session number, press Enter for latest, or q to cancel.");
+                                eprintln!(
+                                    "Invalid input. Enter session number, press Enter for latest, or q to cancel."
+                                );
                             }
                         } else {
                             session_manager.create_session();
@@ -545,10 +550,7 @@ fn load_session_preview(
 /// Find a session by exact ID or slug (prefix match on ID or title).
 ///
 /// Returns the session ID if found, `None` otherwise.
-fn find_session_by_id_or_slug(
-    session_dir: &std::path::Path,
-    query: &str,
-) -> Option<String> {
+fn find_session_by_id_or_slug(session_dir: &std::path::Path, query: &str) -> Option<String> {
     use opendev_history::SessionListing;
     let listing = SessionListing::new(session_dir.to_path_buf());
 

@@ -331,7 +331,10 @@ pub fn validate_custom_tool(manifest: &CustomToolManifest) -> Result<(), Vec<Str
 /// let result = substitute_params("process {file}", &args);
 /// assert_eq!(result, "process src/main.rs");
 /// ```
-pub fn substitute_params(command: &str, args: &std::collections::HashMap<String, serde_json::Value>) -> String {
+pub fn substitute_params(
+    command: &str,
+    args: &std::collections::HashMap<String, serde_json::Value>,
+) -> String {
     let mut result = command.to_string();
     for (key, value) in args {
         let placeholder = format!("{{{}}}", key);

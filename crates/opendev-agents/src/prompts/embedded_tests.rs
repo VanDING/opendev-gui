@@ -85,11 +85,7 @@ fn test_all_factory_sections_have_embedded_templates() {
     // Verifies all 22+ system/main sections in the factory are embedded
     let main_templates = system_main_templates();
     let section_count = names.len();
-    assert!(
-        section_count >= 22,
-        "Expected at least 22 registered sections, got {}",
-        section_count,
-    );
+    assert!(section_count >= 22, "Expected at least 22 registered sections, got {}", section_count,);
     assert!(
         main_templates.len() >= 22,
         "Expected at least 22 system/main embedded templates, got {}",
@@ -121,15 +117,7 @@ fn test_known_templates_exist() {
             path,
         );
         let content = get_embedded(path);
-        assert!(
-            content.is_some(),
-            "Required template '{}' not found via get_embedded()",
-            path,
-        );
-        assert!(
-            !content.unwrap().is_empty(),
-            "Required template '{}' is empty",
-            path,
-        );
+        assert!(content.is_some(), "Required template '{}' not found via get_embedded()", path,);
+        assert!(!content.unwrap().is_empty(), "Required template '{}' is empty", path,);
     }
 }

@@ -80,7 +80,10 @@ fn parse_retry_after_header(value: &str) -> Option<Duration> {
         let now = chrono::Utc::now();
         let duration = dt.signed_duration_since(now);
         if duration.num_seconds() > 0 {
-            return Some(Duration::from_secs(duration.num_seconds() as u64).min(Duration::from_millis(MAX_DELAY_MS)));
+            return Some(
+                Duration::from_secs(duration.num_seconds() as u64)
+                    .min(Duration::from_millis(MAX_DELAY_MS)),
+            );
         }
     }
     None
@@ -163,9 +166,7 @@ where
                     overload_count += 1;
                     warn!(
                         attempt,
-                        overload_count,
-                        "Model overloaded (529), response: {:?}",
-                        result.error,
+                        overload_count, "Model overloaded (529), response: {:?}", result.error,
                     );
                     if overload_count >= MAX_OVERLOAD_RETRIES {
                         signal = RetrySignal::ModelOverloaded;
@@ -197,11 +198,7 @@ where
                 if status == Some(429) || status == Some(503) {
                     if attempt < MAX_RETRIES {
                         let delay = retry_after_or_backoff(&result, attempt);
-                        warn!(
-                            status,
-                            attempt,
-                            "Rate limited, retrying in {:?}", delay
-                        );
+                        warn!(status, attempt, "Rate limited, retrying in {:?}", delay);
                         tokio::time::sleep(delay).await;
                         last_result = Some(result);
                         continue;
@@ -214,10 +211,10 @@ where
                     if let Some(suggested_max) = is_context_overflow(error) {
                         warn!(
                             attempt,
-                            "Context overflow detected, suggested max_tokens: {}",
-                            suggested_max
+                            "Context overflow detected, suggested max_tokens: {}", suggested_max
                         );
-                        signal = RetrySignal::ContextOverflow { suggested_max_tokens: suggested_max };
+                        signal =
+                            RetrySignal::ContextOverflow { suggested_max_tokens: suggested_max };
                         // Don't retry on context overflow — caller must adjust.
                         return RetryResult { result, retries: attempt, signal };
                     }
@@ -308,10 +305,9 @@ mod tests {
 
     #[tokio::test]
     async fn immediate_success_no_retries() {
-        let result = with_retry(|_| async {
-            Ok(HttpResult::ok(200, serde_json::json!({"ok": true})))
-        })
-        .await;
+        let result =
+            with_retry(|_| async { Ok(HttpResult::ok(200, serde_json::json!({"ok": true}))) })
+                .await;
         assert_eq!(result.retries, 0);
         assert!(result.result.success);
         assert_eq!(result.signal, RetrySignal::None);
@@ -427,8 +423,7 @@ mod tests {
 
     #[test]
     fn detect_context_overflow_openai() {
-        let result =
-            is_context_overflow("This model's maximum context length is 128000 tokens");
+        let result = is_context_overflow("This model's maximum context length is 128000 tokens");
         assert_eq!(result, Some(64000)); // half for output
     }
 

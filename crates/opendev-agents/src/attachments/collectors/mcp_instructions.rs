@@ -14,10 +14,7 @@ pub struct McpInstructionsCollector {
 
 impl McpInstructionsCollector {
     pub fn new() -> Self {
-        Self {
-            was_connected: AtomicBool::new(false),
-            has_fired: AtomicBool::new(false),
-        }
+        Self { was_connected: AtomicBool::new(false), has_fired: AtomicBool::new(false) }
     }
 
     /// Notify the collector that MCP servers connected.

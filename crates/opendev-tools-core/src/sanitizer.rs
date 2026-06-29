@@ -138,7 +138,11 @@ impl ToolResultSanitizer {
             if let Some(existing) = rules.get(&tool_name) {
                 rules.insert(
                     tool_name,
-                    TruncationRule { max_chars, strategy: existing.strategy.clone(), max_result_size_chars: None },
+                    TruncationRule {
+                        max_chars,
+                        strategy: existing.strategy.clone(),
+                        max_result_size_chars: None,
+                    },
                 );
             } else {
                 rules.insert(tool_name, TruncationRule::head(max_chars));
@@ -193,7 +197,8 @@ impl ToolResultSanitizer {
         let rule = match self.get_rule(tool_name) {
             Some(r) => r,
             None => {
-                let (redacted_output, secrets_redacted, secret_note) = redact_secrets_if_needed(output_str, tool_name);
+                let (redacted_output, secrets_redacted, secret_note) =
+                    redact_secrets_if_needed(output_str, tool_name);
                 let redacted_output = match secret_note {
                     Some(note) => format!("{redacted_output}\n\n{note}"),
                     None => redacted_output,
@@ -212,7 +217,8 @@ impl ToolResultSanitizer {
         let effective_limit = rule.effective_max_chars();
 
         if output_str.len() <= effective_limit {
-            let (redacted_output, secrets_redacted, secret_note) = redact_secrets_if_needed(output_str, tool_name);
+            let (redacted_output, secrets_redacted, secret_note) =
+                redact_secrets_if_needed(output_str, tool_name);
             let redacted_output = match secret_note {
                 Some(note) => format!("{redacted_output}\n\n{note}"),
                 None => redacted_output,
@@ -395,7 +401,8 @@ impl ToolResultSanitizer {
         let effective_limit = rule.effective_max_chars();
 
         if output_str.len() <= effective_limit {
-            let (redacted_output, secrets_redacted, secret_note) = redact_secrets_if_needed(output_str, tool_name);
+            let (redacted_output, secrets_redacted, secret_note) =
+                redact_secrets_if_needed(output_str, tool_name);
             let redacted_output = match secret_note {
                 Some(note) => format!("{redacted_output}\n\n{note}"),
                 None => redacted_output,

@@ -229,7 +229,8 @@ impl PluginManager {
     }
 
     /// Default marketplace registry URL (public community registry).
-    pub const DEFAULT_MARKETPLACE_REGISTRY: &str = "https://opendev-to.github.io/marketplace/index.json";
+    pub const DEFAULT_MARKETPLACE_REGISTRY: &str =
+        "https://opendev-to.github.io/marketplace/index.json";
 
     /// Validate a plugin manifest for structural correctness and version compatibility.
     ///

@@ -85,17 +85,13 @@ pub struct ValidationResult {
 /// any known dangerous flag patterns.
 pub fn validate_readonly_command(command: &str) -> ValidationResult {
     // -- xargs ----------------------------------------------------------------
-    if RE_XARGS_I_STANDALONE.is_match(command)
-        || RE_XARGS_I_COMBINED.is_match(command)
-    {
+    if RE_XARGS_I_STANDALONE.is_match(command) || RE_XARGS_I_COMBINED.is_match(command) {
         return ValidationResult {
             safe: false,
             reason: Some("xargs with -i flag is unsafe (use POSIX -I '{}' instead)".into()),
         };
     }
-    if RE_XARGS_E_STANDALONE.is_match(command)
-        || RE_XARGS_E_COMBINED.is_match(command)
-    {
+    if RE_XARGS_E_STANDALONE.is_match(command) || RE_XARGS_E_COMBINED.is_match(command) {
         return ValidationResult {
             safe: false,
             reason: Some("xargs with -e flag is unsafe (use POSIX -E 'EOF' instead)".into()),
@@ -130,10 +126,7 @@ pub fn validate_readonly_command(command: &str) -> ValidationResult {
         };
     }
 
-    ValidationResult {
-        safe: true,
-        reason: None,
-    }
+    ValidationResult { safe: true, reason: None }
 }
 
 // ---------------------------------------------------------------------------

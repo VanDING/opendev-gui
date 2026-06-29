@@ -4,7 +4,7 @@
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use crate::attachments::{Attachment, ContextCollector, TurnContext, CadenceGate};
+use crate::attachments::{Attachment, CadenceGate, ContextCollector, TurnContext};
 use crate::prompts::reminders::MessageClass;
 
 /// Collects the current agent listing for subagent dispatch decisions.

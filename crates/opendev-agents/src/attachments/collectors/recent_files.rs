@@ -37,7 +37,8 @@ impl ContextCollector for RecentFilesCollector {
                 // Look for file paths in tool results
                 for line in content.lines() {
                     let lower = line.to_lowercase();
-                    if lower.contains("wrote") || lower.contains("edited") || lower.contains("read") {
+                    if lower.contains("wrote") || lower.contains("edited") || lower.contains("read")
+                    {
                         if let Some(path) = line.split_whitespace().find(|w| w.contains('/')) {
                             let clean = path.trim_matches(|c: char| c == '.' || c == '"');
                             if !files.contains(&clean) {

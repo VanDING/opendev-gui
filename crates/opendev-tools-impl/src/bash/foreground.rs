@@ -193,7 +193,10 @@ impl BashTool {
                 bg_cmd.stderr(std::process::Stdio::piped());
                 #[cfg(unix)]
                 unsafe {
-                    bg_cmd.pre_exec(|| { libc::setpgid(0, 0); Ok(()) });
+                    bg_cmd.pre_exec(|| {
+                        libc::setpgid(0, 0);
+                        Ok(())
+                    });
                 }
 
                 match bg_cmd.spawn() {
@@ -205,8 +208,10 @@ impl BashTool {
                         let _bg_stderr = bg_child.stderr.take();
 
                         let bp = super::helpers::BackgroundProcess {
-                            id: bg_id, command: command.to_string(),
-                            pid: bg_pid, pgid: bg_pgid,
+                            id: bg_id,
+                            command: command.to_string(),
+                            pid: bg_pid,
+                            pgid: bg_pgid,
                             started_at: Instant::now(),
                             stdout_lines: stdout_captured.clone(),
                             stderr_lines: stderr_captured.clone(),
@@ -218,15 +223,21 @@ impl BashTool {
                         metadata.insert("background_id".into(), serde_json::json!(bg_id));
                         metadata.insert("pid".into(), serde_json::json!(bg_pid));
                         let msg = if startup_output.is_empty() {
-                            format!("Command auto-promoted to background (id={bg_id}, pid={bg_pid})")
+                            format!(
+                                "Command auto-promoted to background (id={bg_id}, pid={bg_pid})"
+                            )
                         } else {
-                            format!("Command auto-promoted to background (id={bg_id}, pid={bg_pid})\nStartup output:\n{startup_output}")
+                            format!(
+                                "Command auto-promoted to background (id={bg_id}, pid={bg_pid})\nStartup output:\n{startup_output}"
+                            )
                         };
                         return ToolResult::ok_with_metadata(msg, metadata)
                             .with_llm_suffix("check later with get_background_result");
                     }
                     Err(e) => {
-                        let msg = format!("Command exceeded foreground budget, but background spawn failed: {e}");
+                        let msg = format!(
+                            "Command exceeded foreground budget, but background spawn failed: {e}"
+                        );
                         break Err(msg);
                     }
                 }
@@ -334,7 +345,7 @@ impl BashTool {
                     let mut result = ToolResult::ok_with_metadata(final_output, metadata);
                     if overflow_result.is_some() {
                         result = result.with_llm_suffix(
-                            "use read_file with offset to see the full truncated output"
+                            "use read_file with offset to see the full truncated output",
                         );
                     }
                     result

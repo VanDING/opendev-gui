@@ -120,8 +120,7 @@ mod tests {
     /// Serializes access to the global FEATURES store during tests.
     /// Without this, parallel tests in other crates that access
     /// is_feature_enabled/disable_feature race against our assertions.
-    static TEST_LOCK: std::sync::LazyLock<Mutex<()>> =
-        std::sync::LazyLock::new(|| Mutex::new(()));
+    static TEST_LOCK: std::sync::LazyLock<Mutex<()>> = std::sync::LazyLock::new(|| Mutex::new(()));
 
     /// Reset the global feature store for test isolation.
     fn reset_features() {

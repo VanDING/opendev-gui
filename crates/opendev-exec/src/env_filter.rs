@@ -134,27 +134,28 @@ const GHA_SENSITIVE_EXACT: &[&str] = &[
 pub fn filtered_env() -> HashMap<String, String> {
     let is_gha = std::env::var("GITHUB_ACTIONS").as_deref() == Ok("true");
 
-    std::env::vars().filter(|(k, _)| {
-        // Standard sensitivity check
-        if !is_sensitive_env(k) || is_protected_env(k) {
-            // When running in GHA, also strip GHA-specific tokens and INPUT_ vars
-            if is_gha {
-                let upper = k.to_uppercase();
-                // Strip GHA-specific exact-match tokens
-                if GHA_SENSITIVE_EXACT.iter().any(|e| upper == *e) {
-                    return false;
+    std::env::vars()
+        .filter(|(k, _)| {
+            // Standard sensitivity check
+            if !is_sensitive_env(k) || is_protected_env(k) {
+                // When running in GHA, also strip GHA-specific tokens and INPUT_ vars
+                if is_gha {
+                    let upper = k.to_uppercase();
+                    // Strip GHA-specific exact-match tokens
+                    if GHA_SENSITIVE_EXACT.iter().any(|e| upper == *e) {
+                        return false;
+                    }
+                    // Strip INPUT_<NAME> duplicates (GitHub injects all action inputs)
+                    if upper.starts_with("INPUT_") {
+                        return false;
+                    }
                 }
-                // Strip INPUT_<NAME> duplicates (GitHub injects all action inputs)
-                if upper.starts_with("INPUT_") {
-                    return false;
-                }
+                true
+            } else {
+                false
             }
-            true
-        } else {
-            false
-        }
-    })
-    .collect()
+        })
+        .collect()
 }
 
 /// Apply env filter to a Command — clears env then adds filtered + protected vars.
@@ -218,7 +219,12 @@ mod tests {
         assert!(is_sensitive_env("ACTIONS_RUNTIME_TOKEN"));
 
         // These are caught by the `_TOKEN` suffix rule
-        for var in &["ACTIONS_ID_TOKEN_REQUEST_TOKEN", "ACTIONS_RUNTIME_TOKEN", "OVERRIDE_GITHUB_TOKEN", "DEFAULT_WORKFLOW_TOKEN"] {
+        for var in &[
+            "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
+            "ACTIONS_RUNTIME_TOKEN",
+            "OVERRIDE_GITHUB_TOKEN",
+            "DEFAULT_WORKFLOW_TOKEN",
+        ] {
             assert!(is_sensitive_env(var), "{var} should be sensitive via _TOKEN suffix");
         }
     }

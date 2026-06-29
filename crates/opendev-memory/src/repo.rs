@@ -130,7 +130,7 @@ impl MemoryRepo {
         let fts_result = self.search_fts5(query, project_str.as_deref(), limit).await;
         match fts_result {
             Ok(results) if !results.is_empty() => return Ok(results),
-            Ok(_) => {} // FTS returned empty, fall through to LIKE
+            Ok(_) => {}  // FTS returned empty, fall through to LIKE
             Err(_) => {} // FTS failed, fall through to LIKE
         }
 

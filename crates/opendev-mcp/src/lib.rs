@@ -21,9 +21,9 @@ pub mod manager;
 pub mod models;
 pub mod transport;
 
-pub use auth::{detect_auth_flow, generate_pkce_pair, McpAuthFlow, McpTokenCache};
+pub use auth::{McpAuthFlow, McpTokenCache, detect_auth_flow, generate_pkce_pair};
 pub use config::{McpConfig, McpOAuthConfig, McpServerConfig, TransportType};
-pub use elicitation::{ElicitMode, ElicitationHandler, ElicitRequest, ElicitResult};
+pub use elicitation::{ElicitMode, ElicitRequest, ElicitResult, ElicitationHandler};
 pub use error::{McpError, McpResult};
 pub use manager::McpManager;
 pub use models::{

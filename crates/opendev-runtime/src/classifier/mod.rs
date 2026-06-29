@@ -32,14 +32,8 @@ impl ApprovalDecision {
 }
 
 /// Tools that are always safe to auto-approve.
-pub const SAFE_ALLOWLISTED_TOOLS: &[&str] = &[
-    "Read",
-    "Grep",
-    "Glob",
-    "WebFetch",
-    "WebSearch",
-    "TaskList",
-];
+pub const SAFE_ALLOWLISTED_TOOLS: &[&str] =
+    &["Read", "Grep", "Glob", "WebFetch", "WebSearch", "TaskList"];
 
 /// Heuristic-based approval classifier with denial tracking.
 ///
@@ -81,10 +75,7 @@ impl ApprovalClassifier {
 
     /// Create a classifier with a known workspace root.
     pub fn with_workspace(root: impl Into<String>) -> Self {
-        Self {
-            workspace_root: Some(root.into()),
-            ..Default::default()
-        }
+        Self { workspace_root: Some(root.into()), ..Default::default() }
     }
 
     /// Configure the denial thresholds.
@@ -233,11 +224,8 @@ impl ApprovalClassifier {
     /// Evaluate a Bash tool invocation.
     fn evaluate_bash(&mut self, args: &HashMap<String, serde_json::Value>) -> ApprovalDecision {
         // Extract the command string.
-        let command = args
-            .get("command")
-            .or_else(|| args.get("cmd"))
-            .and_then(|v| v.as_str())
-            .unwrap_or("");
+        let command =
+            args.get("command").or_else(|| args.get("cmd")).and_then(|v| v.as_str()).unwrap_or("");
 
         if command.trim().is_empty() {
             self.record_denial();

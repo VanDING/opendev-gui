@@ -130,10 +130,7 @@ fn test_oauth_config_deserialization() {
     let server = &config.mcp_servers["auth-server"];
     let oauth = server.oauth.as_ref().unwrap();
     assert_eq!(oauth.client_id, "my-client");
-    assert_eq!(
-        secrecy::ExposeSecret::expose_secret(&oauth.client_secret),
-        "my-secret"
-    );
+    assert_eq!(secrecy::ExposeSecret::expose_secret(&oauth.client_secret), "my-secret");
     assert_eq!(oauth.token_url, "https://auth.example.com/token");
     assert_eq!(oauth.scope.as_deref(), Some("mcp:read mcp:write"));
 }
@@ -160,10 +157,7 @@ fn test_prepare_expands_oauth_env_vars() {
     };
     let prepared = prepare_server_config(&config);
     let oauth = prepared.oauth.unwrap();
-    assert_eq!(
-        secrecy::ExposeSecret::expose_secret(&oauth.client_secret),
-        "expanded_secret"
-    );
+    assert_eq!(secrecy::ExposeSecret::expose_secret(&oauth.client_secret), "expanded_secret");
     // SAFETY: test-only cleanup.
     unsafe { std::env::remove_var("MCP_OAUTH_SECRET") };
 }

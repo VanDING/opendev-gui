@@ -8,6 +8,7 @@ use std::sync::atomic::AtomicBool;
 use opendev_memory::MemoryFacade;
 use tokio::sync::Mutex as AsyncMutex;
 
+use super::types::LoopTransition;
 use crate::attachments::CollectorRunner;
 use crate::attachments::collectors::{
     CabinetMemoryReader, CabinetMemoryWriter, CompactionCollector, DateChangeCollector,
@@ -18,7 +19,6 @@ use crate::doom_loop::DoomLoopDetector;
 use crate::prompts::reminders::{
     MessageClass, ProactiveReminderConfig, ProactiveReminderScheduler,
 };
-use super::types::LoopTransition;
 
 /// Mutable state that persists across iterations of the ReAct loop.
 ///
@@ -161,7 +161,7 @@ impl LoopState {
     /// to advance the watermark.
     pub fn should_surface_error(&self, error_id: &str) -> bool {
         match &self.last_surfaced_error_id {
-            None => true, // No errors surfaced yet — surface all
+            None => true,                           // No errors surfaced yet — surface all
             Some(last) => error_id > last.as_str(), // Lexicographic UUID comparison
         }
     }

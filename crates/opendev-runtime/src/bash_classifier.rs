@@ -72,9 +72,7 @@ fn extract_executable(command: &str) -> Option<String> {
     }
 
     // Split on shell operators and take the first segment.
-    let first_segment = trimmed
-        .split(|c: char| c == ' ' || c == '\t')
-        .next()?;
+    let first_segment = trimmed.split(|c: char| c == ' ' || c == '\t').next()?;
 
     // Strip path prefix (/usr/bin/git → git).
     let basename = first_segment.rsplit('/').next().unwrap_or(first_segment);
@@ -136,21 +134,12 @@ fn contains_dangerous_pattern(command: &str) -> bool {
 
     // Highly destructive commands.
     let dangerous_exes: HashSet<&str> = [
-        "dd",
-        "mkfs",
-        "fdisk",
-        "parted",
-        "mkswap",
-        "shred",
-        "wipefs",
-        "pvcreate",
-        "vgcreate",
-        "lvcreate",
-        "pvremove",
-        "vgremove",
-        "lvremove",
+        "dd", "mkfs", "fdisk", "parted", "mkswap", "shred", "wipefs", "pvcreate", "vgcreate",
+        "lvcreate", "pvremove", "vgremove", "lvremove",
     ]
-    .iter().copied().collect();
+    .iter()
+    .copied()
+    .collect();
 
     // Parse the first token to get the executable.
     if let Some(exe) = extract_executable(command) {
@@ -181,10 +170,7 @@ fn contains_dangerous_pattern(command: &str) -> bool {
 
     // Dangerous sudo patterns (sudo with destructive command).
     if trimmed.starts_with("sudo ") {
-        let sudo_rest = trimmed
-            .strip_prefix("sudo ")
-            .map(|s| s.trim())
-            .unwrap_or("");
+        let sudo_rest = trimmed.strip_prefix("sudo ").map(|s| s.trim()).unwrap_or("");
 
         // Check if sudo is used with a dangerous exe.
         if let Some(sudo_exe) = extract_executable(sudo_rest) {
@@ -302,7 +288,10 @@ mod tests {
     #[test]
     fn curl_maps_to_request_keyword() {
         assert_eq!(
-            BashClassifier::evaluate("curl https://api.example.com", "Make an HTTP request to the API"),
+            BashClassifier::evaluate(
+                "curl https://api.example.com",
+                "Make an HTTP request to the API"
+            ),
             BashClassification::Allowed
         );
     }
@@ -310,7 +299,10 @@ mod tests {
     #[test]
     fn mkdir_maps_to_create_keyword() {
         assert_eq!(
-            BashClassifier::evaluate("mkdir -p build/output", "Create a directory for build output"),
+            BashClassifier::evaluate(
+                "mkdir -p build/output",
+                "Create a directory for build output"
+            ),
             BashClassification::Allowed
         );
     }

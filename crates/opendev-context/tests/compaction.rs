@@ -108,11 +108,8 @@ fn test_compaction_preserves_recent_context() {
     );
 
     // The most recent assistant message should be preserved in the tail
-    let last_content = compacted
-        .last()
-        .and_then(|m| m.get("content"))
-        .and_then(|c| c.as_str())
-        .unwrap_or("");
+    let last_content =
+        compacted.last().and_then(|m| m.get("content")).and_then(|c| c.as_str()).unwrap_or("");
     assert!(
         last_content.contains("Response 19"),
         "Last message should be preserved: {}",

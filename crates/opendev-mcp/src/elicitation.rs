@@ -69,9 +69,7 @@ struct PendingElicitation {
 impl ElicitationHandler {
     /// Create a new elicitation handler.
     pub fn new() -> Self {
-        Self {
-            pending: Arc::new(Mutex::new(HashMap::new())),
-        }
+        Self { pending: Arc::new(Mutex::new(HashMap::new())) }
     }
 
     /// Request user input for a given JSON Schema.
@@ -88,18 +86,10 @@ impl ElicitationHandler {
         let id = Uuid::new_v4().to_string();
         let (tx, rx) = tokio::sync::oneshot::channel();
 
-        let request = ElicitRequest {
-            mode,
-            schema,
-            elicitation_id: id.clone(),
-            prompt: prompt.into(),
-            url,
-        };
+        let request =
+            ElicitRequest { mode, schema, elicitation_id: id.clone(), prompt: prompt.into(), url };
 
-        let pending = PendingElicitation {
-            request: request.clone(),
-            result_tx: tx,
-        };
+        let pending = PendingElicitation { request: request.clone(), result_tx: tx };
 
         // Store in pending map
         let mut map = self.pending.lock().await;
@@ -120,10 +110,7 @@ impl ElicitationHandler {
 
         match map.remove(elicitation_id) {
             Some(pending) => {
-                let result = ElicitResult {
-                    elicitation_id: elicitation_id.to_string(),
-                    values,
-                };
+                let result = ElicitResult { elicitation_id: elicitation_id.to_string(), values };
                 let _ = pending.result_tx.send(result);
                 Some(())
             }
@@ -165,28 +152,18 @@ impl ElicitationHandler {
             .unwrap_or_default();
 
         for (name, prop_schema) in properties {
-            let prop_type = prop_schema
-                .get("type")
-                .and_then(|t| t.as_str())
-                .unwrap_or("string")
-                .to_string();
+            let prop_type =
+                prop_schema.get("type").and_then(|t| t.as_str()).unwrap_or("string").to_string();
 
-            let description = prop_schema
-                .get("description")
-                .and_then(|d| d.as_str())
-                .unwrap_or("")
-                .to_string();
+            let description =
+                prop_schema.get("description").and_then(|d| d.as_str()).unwrap_or("").to_string();
 
             let default = prop_schema.get("default").cloned();
 
             let enum_values = prop_schema
                 .get("enum")
                 .and_then(|e| e.as_array())
-                .map(|arr| {
-                    arr.iter()
-                        .filter_map(|v| v.as_str().map(|s| s.to_string()))
-                        .collect()
-                });
+                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect());
 
             fields.push(FormField {
                 name: name.clone(),
@@ -253,7 +230,8 @@ mod tests {
             "required": ["name"]
         });
 
-        let (request, _rx) = handler.request_input(schema, "Please provide your info", ElicitMode::Form, None).await;
+        let (request, _rx) =
+            handler.request_input(schema, "Please provide your info", ElicitMode::Form, None).await;
 
         assert_eq!(request.mode, ElicitMode::Form);
         assert!(request.prompt.contains("Please provide your info"));
@@ -266,12 +244,14 @@ mod tests {
         let handler = ElicitationHandler::new();
         let schema = serde_json::json!({"type": "object", "properties": {}});
 
-        let (request, _rx) = handler.request_input(
-            schema,
-            "Authorize in browser",
-            ElicitMode::Url,
-            Some("https://example.com/auth".to_string()),
-        ).await;
+        let (request, _rx) = handler
+            .request_input(
+                schema,
+                "Authorize in browser",
+                ElicitMode::Url,
+                Some("https://example.com/auth".to_string()),
+            )
+            .await;
 
         assert_eq!(request.mode, ElicitMode::Url);
         assert_eq!(request.url.as_deref(), Some("https://example.com/auth"));
@@ -361,7 +341,8 @@ mod tests {
 
     #[test]
     fn test_schema_to_form_fields_empty() {
-        let fields = ElicitationHandler::schema_to_form_fields(&serde_json::json!({"type": "object"}));
+        let fields =
+            ElicitationHandler::schema_to_form_fields(&serde_json::json!({"type": "object"}));
         assert!(fields.is_empty());
     }
 }

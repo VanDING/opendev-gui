@@ -60,10 +60,7 @@ pub fn check_dedup(path: &std::path::Path, current_mtime: SystemTime, content: &
     let cache = guard.as_mut();
     match cache.and_then(|c| c.get(path)) {
         Some(entry) if entry.mtime == current_mtime && entry.quick_hash == quick_hash(content) => {
-            DedupCheck::Unchanged {
-                total_lines: entry.total_lines,
-                next_offset: entry.next_offset,
-            }
+            DedupCheck::Unchanged { total_lines: entry.total_lines, next_offset: entry.next_offset }
         }
         _ => DedupCheck::Changed,
     }
@@ -81,12 +78,7 @@ pub fn update_dedup(
     let cache = guard.get_or_insert_with(HashMap::new);
     cache.insert(
         path.to_path_buf(),
-        CachedEntry {
-            mtime,
-            quick_hash: quick_hash(content),
-            total_lines,
-            next_offset,
-        },
+        CachedEntry { mtime, quick_hash: quick_hash(content), total_lines, next_offset },
     );
 }
 
@@ -102,9 +94,8 @@ pub fn format_unchanged_response(
     total_lines: usize,
     next_offset: Option<usize>,
 ) -> String {
-    let mut output = format!(
-        "file_unchanged: true ({file_path})\nfile length: {total_lines} lines"
-    );
+    let mut output =
+        format!("file_unchanged: true ({file_path})\nfile length: {total_lines} lines");
     if let Some(offset) = next_offset {
         output.push_str(&format!("\nprevious_offset: {offset}"));
     }

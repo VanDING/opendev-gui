@@ -62,10 +62,7 @@ pub struct AuthorizationCodeConfig {
 impl From<&McpOAuthConfig> for AuthorizationCodeConfig {
     fn from(oauth: &McpOAuthConfig) -> Self {
         Self {
-            authorization_url: oauth
-                .authorization_url
-                .clone()
-                .unwrap_or_default(),
+            authorization_url: oauth.authorization_url.clone().unwrap_or_default(),
             token_url: oauth.token_url.clone(),
             client_id: oauth.client_id.clone(),
             client_secret: oauth.client_secret.clone(),
@@ -86,7 +83,8 @@ impl From<&McpOAuthConfig> for AuthorizationCodeConfig {
 // PKCE helpers
 // ---------------------------------------------------------------------------
 
-const PKCE_VERIFIER_CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+const PKCE_VERIFIER_CHARS: &[u8] =
+    b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
 
 /// Generate a PKCE code verifier and its corresponding code challenge.
 ///
@@ -131,18 +129,15 @@ fn base64_url_encode(data: &[u8]) -> String {
 /// Binds a `TcpListener` on a random available port, returns the port
 /// number and a `oneshot::Receiver` that will deliver the authorization
 /// `code` extracted from the query parameters.
-pub async fn start_redirect_server(
-) -> Result<(u16, tokio::sync::oneshot::Receiver<String>), String> {
+pub async fn start_redirect_server() -> Result<(u16, tokio::sync::oneshot::Receiver<String>), String>
+{
     use tokio::sync::oneshot;
 
     // Bind on random port
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
         .await
         .map_err(|e| format!("Failed to bind redirect server: {e}"))?;
-    let port = listener
-        .local_addr()
-        .map_err(|e| format!("Failed to get local addr: {e}"))?
-        .port();
+    let port = listener.local_addr().map_err(|e| format!("Failed to get local addr: {e}"))?.port();
 
     let (tx, rx) = oneshot::channel();
 
@@ -252,8 +247,7 @@ impl McpTokenCache {
     ) -> Self {
         Self {
             access_token: SecretString::new(access_token.into().into_boxed_str()),
-            refresh_token: refresh_token
-                .map(|s| SecretString::new(s.into().into_boxed_str())),
+            refresh_token: refresh_token.map(|s| SecretString::new(s.into().into_boxed_str())),
             expires_at,
         }
     }
@@ -273,9 +267,7 @@ impl McpTokenCache {
 
     /// Get the refresh token string, if available.
     pub fn refresh_token_str(&self) -> Option<&str> {
-        self.refresh_token
-            .as_ref()
-            .map(|s| secrecy::ExposeSecret::expose_secret(s))
+        self.refresh_token.as_ref().map(|s| secrecy::ExposeSecret::expose_secret(s))
     }
 }
 
@@ -333,9 +325,7 @@ async fn post_token_request(
     if !response.status().is_success() {
         let status = response.status();
         let text = response.text().await.unwrap_or_default();
-        return Err(McpError::Transport(format!(
-            "Token request returned HTTP {status}: {text}"
-        )));
+        return Err(McpError::Transport(format!("Token request returned HTTP {status}: {text}")));
     }
 
     response
@@ -351,10 +341,7 @@ fn parse_token_response(json: &serde_json::Value) -> std::result::Result<McpToke
         .and_then(|v| v.as_str())
         .ok_or_else(|| McpError::Transport("No access_token in response".to_string()))?;
 
-    let refresh_token = json
-        .get("refresh_token")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string());
+    let refresh_token = json.get("refresh_token").and_then(|v| v.as_str()).map(|s| s.to_string());
 
     let expires_at = json
         .get("expires_in")

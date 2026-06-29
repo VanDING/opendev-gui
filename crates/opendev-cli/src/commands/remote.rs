@@ -132,7 +132,10 @@ impl RemoteSession {
                 // - messages from the remote WebSocket
                 // - file sync events
                 // - cancellation signal
-                debug!("Remote session running (attempt {}/{})", attempt, self.config.max_reconnect_attempts);
+                debug!(
+                    "Remote session running (attempt {}/{})",
+                    attempt, self.config.max_reconnect_attempts
+                );
                 tokio::time::sleep(Duration::from_secs(1)).await;
                 continue;
             }
@@ -140,7 +143,10 @@ impl RemoteSession {
             // Reconnection with exponential backoff
             let delay_ms = self.config.reconnect_base_ms * (2u64).pow(attempt - 1);
             let delay = Duration::from_millis(delay_ms.min(30_000)); // Cap at 30s
-            self.status = RemoteStatus::Reconnecting { attempt, max_attempts: self.config.max_reconnect_attempts };
+            self.status = RemoteStatus::Reconnecting {
+                attempt,
+                max_attempts: self.config.max_reconnect_attempts,
+            };
             warn!(
                 attempt,
                 max = self.config.max_reconnect_attempts,
@@ -198,10 +204,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_connect_success() {
-        let config = RemoteConfig {
-            url: "ws://localhost:8080/ws".to_string(),
-            ..Default::default()
-        };
+        let config =
+            RemoteConfig { url: "ws://localhost:8080/ws".to_string(), ..Default::default() };
         let mut session = RemoteSession::new(config);
         let result = session.connect().await;
         // Currently placeholder — always succeeds.

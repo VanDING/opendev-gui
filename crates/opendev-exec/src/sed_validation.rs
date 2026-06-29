@@ -19,11 +19,7 @@ const SED_FLAG_CLASS: &str = r"[gpsIlnw0-9]*e";
 /// the flags contain the `e` (execute) character.
 fn sed_e_pattern(delim: char) -> String {
     // Escape the delimiter for use in a character class and regex
-    let d = if delim == '/' {
-        "/".to_string()
-    } else {
-        format!("\\{}", delim)
-    };
+    let d = if delim == '/' { "/".to_string() } else { format!("\\{}", delim) };
     // Pattern: s<delim>non-delim*<delim>non-delim*<delim>flags-containing-e
     // The [^<delim>]* captures pattern and replacement text
     format!(
@@ -32,7 +28,6 @@ fn sed_e_pattern(delim: char) -> String {
         flags = SED_FLAG_CLASS
     )
 }
-
 
 // ── Pre-compiled regexes ──────────────────────────────────────────────────
 

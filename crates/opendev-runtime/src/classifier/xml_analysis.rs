@@ -160,11 +160,7 @@ fn stage2_analysis(xml_input: &str) -> XmlAnalysisResult {
     let summary = format!(
         "Tool: {}, Description: {}, Files: {}",
         tool,
-        if description.len() > 100 {
-            format!("{}...", &description[..100])
-        } else {
-            description
-        },
+        if description.len() > 100 { format!("{}...", &description[..100]) } else { description },
         if files.is_empty() { "none" } else { &files },
     );
 

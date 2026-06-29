@@ -84,25 +84,15 @@ impl BashAstParser {
         let trimmed = command.trim();
 
         if trimmed.is_empty() {
-            return Err(BashAstError::ParseError(
-                "command is empty or whitespace-only".into(),
-            ));
+            return Err(BashAstError::ParseError("command is empty or whitespace-only".into()));
         }
 
         let (argv, errors) = self.parse_fallback(trimmed, start)?;
 
         let safe = errors.is_empty();
-        let parse_error = if errors.is_empty() {
-            None
-        } else {
-            Some(errors.join("; "))
-        };
+        let parse_error = if errors.is_empty() { None } else { Some(errors.join("; ")) };
 
-        Ok(ParsedCommand {
-            argv,
-            safe,
-            parse_error,
-        })
+        Ok(ParsedCommand { argv, safe, parse_error })
     }
 
     /// Returns `true` if the command parsed successfully with no errors.
@@ -430,10 +420,7 @@ mod tests {
         assert!(!result.safe, "process substitution should be unsafe");
         assert!(result.parse_error.is_some());
         let err = result.parse_error.as_ref().unwrap();
-        assert!(
-            err.contains("<(...)"),
-            "error should mention <(...): got {err}"
-        );
+        assert!(err.contains("<(...)"), "error should mention <(...): got {err}");
     }
 
     #[test]
@@ -454,10 +441,7 @@ mod tests {
         let result = parser.parse("echo $(whoami)").unwrap();
         assert!(!result.safe, "command substitution should be unsafe");
         let err = result.parse_error.as_ref().unwrap();
-        assert!(
-            err.contains("$(...)"),
-            "error should mention $(...): got {err}"
-        );
+        assert!(err.contains("$(...)"), "error should mention $(...): got {err}");
     }
 
     #[test]
@@ -506,10 +490,7 @@ mod tests {
     #[test]
     fn empty_string_is_untrusted() {
         let parser = BashAstParser::new();
-        assert!(
-            parser.is_untrusted(""),
-            "empty string should be untrusted (fail-closed)"
-        );
+        assert!(parser.is_untrusted(""), "empty string should be untrusted (fail-closed)");
         assert!(parser.extract_argv("").is_none());
     }
 
@@ -565,14 +546,8 @@ mod tests {
         assert!(!parser.is_untrusted("ls -la"));
         // Errors produce untrusted.
         assert!(parser.is_untrusted(""), "empty is untrusted");
-        assert!(
-            parser.is_untrusted("$(danger)"),
-            "substitution is untrusted"
-        );
-        assert!(
-            parser.is_untrusted("'unclosed"),
-            "unclosed quote is untrusted"
-        );
+        assert!(parser.is_untrusted("$(danger)"), "substitution is untrusted");
+        assert!(parser.is_untrusted("'unclosed"), "unclosed quote is untrusted");
     }
 
     // ---- edge cases --------------------------------------------------------

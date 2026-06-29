@@ -32,9 +32,9 @@ const MAX_OUTPUT_CHARS: usize = 2000;
 /// Minimum time between diagnostic queries for the same file (dedup window).
 const DEDUP_WINDOW_MS: u128 = 500;
 
+use std::collections::HashMap;
 /// Simple dedup cache: tracks last query time per file path.
 use std::sync::Mutex;
-use std::collections::HashMap;
 
 static DIAG_DEDUP_CACHE: std::sync::LazyLock<Mutex<HashMap<std::path::PathBuf, Instant>>> =
     std::sync::LazyLock::new(|| Mutex::new(HashMap::new()));
@@ -109,10 +109,8 @@ pub async fn collect_post_edit_diagnostics(ctx: &ToolContext, file_path: &Path) 
     if output.len() > MAX_OUTPUT_CHARS {
         let mut truncated = String::with_capacity(MAX_OUTPUT_CHARS + 50);
         truncated.push_str(&output[..MAX_OUTPUT_CHARS]);
-        truncated.push_str(&format!(
-            "\n[...diagnostic output truncated at {} chars]",
-            MAX_OUTPUT_CHARS
-        ));
+        truncated
+            .push_str(&format!("\n[...diagnostic output truncated at {} chars]", MAX_OUTPUT_CHARS));
         output = truncated;
     }
 

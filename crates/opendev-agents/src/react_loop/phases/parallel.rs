@@ -186,12 +186,13 @@ where
         // SpawnTeammate/Agent with task_id or Running in background.
         // Matches the same logic in execute_sequential's tool_dispatch.rs.
         if tool_result.success {
-            let is_bg_subagent = matches!(t_name.as_str(), "SpawnTeammate" | "Agent" | "spawn_subagent")
-                && tool_result.output.as_deref().is_some_and(|o| {
-                    o.contains("task_id:") || o.contains("Running in background")
-                });
-            let is_bg_bash = t_name.as_str() == "Bash"
-                && tool_result.metadata.contains_key("background_id");
+            let is_bg_subagent =
+                matches!(t_name.as_str(), "SpawnTeammate" | "Agent" | "spawn_subagent")
+                    && tool_result.output.as_deref().is_some_and(|o| {
+                        o.contains("task_id:") || o.contains("Running in background")
+                    });
+            let is_bg_bash =
+                t_name.as_str() == "Bash" && tool_result.metadata.contains_key("background_id");
             if is_bg_subagent || is_bg_bash {
                 state.bg_tasks_spawned += 1;
             }

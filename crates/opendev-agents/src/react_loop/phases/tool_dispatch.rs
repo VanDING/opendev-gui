@@ -479,10 +479,8 @@ where
         // The SnapshotManager creates shadow git snapshots for per-step undo.
         if tool_result.success && is_file_edit_tool {
             // Extract file path from tool args if available.
-            let file_path = args_value
-                .get("file_path")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string());
+            let file_path =
+                args_value.get("file_path").and_then(|v| v.as_str()).map(|s| s.to_string());
 
             if let Some(ref path) = file_path {
                 debug!(
@@ -559,11 +557,12 @@ where
         // Bash commands run with run_in_background=true also count.
         if tool_result.success {
             let is_bg_subagent = matches!(tool_name, "SpawnTeammate" | "Agent" | "spawn_subagent")
-                && tool_result.output.as_deref().is_some_and(|o| {
-                    o.contains("task_id:") || o.contains("Running in background")
-                });
-            let is_bg_bash = tool_name == "Bash"
-                && tool_result.metadata.contains_key("background_id");
+                && tool_result
+                    .output
+                    .as_deref()
+                    .is_some_and(|o| o.contains("task_id:") || o.contains("Running in background"));
+            let is_bg_bash =
+                tool_name == "Bash" && tool_result.metadata.contains_key("background_id");
             if is_bg_subagent || is_bg_bash {
                 state.bg_tasks_spawned += 1;
             }
@@ -1182,7 +1181,8 @@ async fn execute_concurrent_batch(
         }
 
         // Track background spawns for completion blocking
-        if tool_result.success && t_name == "Bash"
+        if tool_result.success
+            && t_name == "Bash"
             && tool_result.metadata.contains_key("background_id")
         {
             state.bg_tasks_spawned += 1;
@@ -1356,10 +1356,8 @@ where
         .collect();
 
     // Look up tool instances for input-dependent concurrency decisions
-    let tool_instances: Vec<_> = parallel_calls
-        .iter()
-        .filter_map(|tc| tool_registry.get(&tc.name))
-        .collect();
+    let tool_instances: Vec<_> =
+        parallel_calls.iter().filter_map(|tc| tool_registry.get(&tc.name)).collect();
     let tool_refs: Vec<&dyn opendev_tools_core::BaseTool> =
         tool_instances.iter().map(|t| t.as_ref()).collect();
 
@@ -1393,12 +1391,14 @@ where
                 );
                 iter_metrics.total_duration_ms = iter_start.elapsed().as_millis() as u64;
                 react_loop.push_metrics(iter_metrics.clone());
-                return Some(LoopAction::Return(Ok(
-                    crate::traits::AgentResult::backgrounded(messages.clone()),
-                )));
+                return Some(LoopAction::Return(Ok(crate::traits::AgentResult::backgrounded(
+                    messages.clone(),
+                ))));
             }
             // Stub remaining tool calls
-            for remaining_batch in &batches[batches.iter().position(|b| std::ptr::eq(b, batch)).unwrap()..] {
+            for remaining_batch in
+                &batches[batches.iter().position(|b| std::ptr::eq(b, batch)).unwrap()..]
+            {
                 for &idx in remaining_batch {
                     let actual_idx = all_indices[idx];
                     let tc = &tool_calls[actual_idx];
@@ -1533,12 +1533,15 @@ where
                     success: tool_result.success,
                 });
 
-                if tool_result.success && let Some(ai) = artifact_index {
+                if tool_result.success
+                    && let Some(ai) = artifact_index
+                {
                     record_artifact(ai, &t_name, &prep.args_value, &tool_result);
                 }
 
                 // Track background task spawns for completion blocking
-                if tool_result.success && t_name == "Bash"
+                if tool_result.success
+                    && t_name == "Bash"
                     && tool_result.metadata.contains_key("background_id")
                 {
                     state.bg_tasks_spawned += 1;

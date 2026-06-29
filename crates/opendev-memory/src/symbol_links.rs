@@ -59,14 +59,12 @@ static TS_CLASS_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
 
 /// Pattern to match TypeScript interface definitions.
 static TS_INTERFACE_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?m)^\s*(export\s+)?interface\s+(\w+)")
-        .expect("valid regex: TS interface pattern")
+    Regex::new(r"(?m)^\s*(export\s+)?interface\s+(\w+)").expect("valid regex: TS interface pattern")
 });
 
 /// Pattern to match TypeScript type definitions.
 static TS_TYPE_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?m)^\s*(export\s+)?type\s+(\w+)")
-        .expect("valid regex: TS type pattern")
+    Regex::new(r"(?m)^\s*(export\s+)?type\s+(\w+)").expect("valid regex: TS type pattern")
 });
 
 /// Extract symbol names from edited file content.
@@ -168,26 +166,19 @@ pub async fn automatically_link_symbols(
     for symbol in &symbols {
         // Search for memory entries that mention this symbol.
         let bare_name = symbol.split_whitespace().last().unwrap_or(symbol);
-        let entries = memory
-            .recall_by_symbol(bare_name, Some(project_dir), 10)
-            .await
-            .unwrap_or_default();
+        let entries =
+            memory.recall_by_symbol(bare_name, Some(project_dir), 10).await.unwrap_or_default();
 
         for entry in &entries {
             // Link the matched memory entry to the symbol.
-            if memory
-                .link_symbol(&entry.id, bare_name, bare_name, project_dir)
-                .await
-                .is_ok()
-            {
+            if memory.link_symbol(&entry.id, bare_name, bare_name, project_dir).await.is_ok() {
                 links_created += 1;
             }
         }
 
         // Also search by content containing the symbol name using recall_within_budget.
-        if let Ok(content_entries) = memory
-            .recall_by_symbol_within_budget(bare_name, Some(project_dir), 10)
-            .await
+        if let Ok(content_entries) =
+            memory.recall_by_symbol_within_budget(bare_name, Some(project_dir), 10).await
         {
             for entry in &content_entries {
                 if memory

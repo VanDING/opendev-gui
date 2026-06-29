@@ -4,11 +4,9 @@
 //! - Memory write gate correctly classifies all 5 tiers
 //! - Decay scoring produces expected ranking
 
-use opendev_memory::{
-    MemoryCategory, MemoryEntry, MemorySource,
-};
-use opendev_memory::decay::MemoryDecay;
 use chrono::{Duration, Utc};
+use opendev_memory::decay::MemoryDecay;
+use opendev_memory::{MemoryCategory, MemoryEntry, MemorySource};
 
 // ─── Write Gate Classification Tests ─────────────────────────────────────────
 
@@ -16,8 +14,8 @@ use chrono::{Duration, Utc};
 fn test_write_gate_classifies_all_5_tiers() {
     // The WriteGate::classify method takes content as &str and returns
     // the classification tier based on content analysis.
-    use opendev_memory::write_gate::WriteGate;
     use opendev_memory::WriteGateTier;
+    use opendev_memory::write_gate::WriteGate;
 
     // These are heuristic-based classifications that the WriteGate
     // performs on the content string alone.
@@ -26,34 +24,49 @@ fn test_write_gate_classifies_all_5_tiers() {
     let result = WriteGate::classify("Decision: Use Axum for the web framework");
     // The result should be a valid WriteGateTier variant
     match result {
-        WriteGateTier::Working | WriteGateTier::Register | WriteGateTier::Daily
-        | WriteGateTier::TransientNoise | WriteGateTier::StructuredPrefix => {}
+        WriteGateTier::Working
+        | WriteGateTier::Register
+        | WriteGateTier::Daily
+        | WriteGateTier::TransientNoise
+        | WriteGateTier::StructuredPrefix => {}
     }
 
     let result = WriteGate::classify("I want to use PostgreSQL");
     match result {
-        WriteGateTier::Working | WriteGateTier::Register | WriteGateTier::Daily
-        | WriteGateTier::TransientNoise | WriteGateTier::StructuredPrefix => {}
+        WriteGateTier::Working
+        | WriteGateTier::Register
+        | WriteGateTier::Daily
+        | WriteGateTier::TransientNoise
+        | WriteGateTier::StructuredPrefix => {}
     }
 
     let result = WriteGate::classify("It might be using SQLite");
     match result {
-        WriteGateTier::Working | WriteGateTier::Register | WriteGateTier::Daily
-        | WriteGateTier::TransientNoise | WriteGateTier::StructuredPrefix => {}
+        WriteGateTier::Working
+        | WriteGateTier::Register
+        | WriteGateTier::Daily
+        | WriteGateTier::TransientNoise
+        | WriteGateTier::StructuredPrefix => {}
     }
 
     // Questions
     let result = WriteGate::classify("Should we use Redis or Memcached?");
     match result {
-        WriteGateTier::Working | WriteGateTier::Register | WriteGateTier::Daily
-        | WriteGateTier::TransientNoise | WriteGateTier::StructuredPrefix => {}
+        WriteGateTier::Working
+        | WriteGateTier::Register
+        | WriteGateTier::Daily
+        | WriteGateTier::TransientNoise
+        | WriteGateTier::StructuredPrefix => {}
     }
 
     // Definite statements
     let result = WriteGate::classify("The project uses Python 3.12");
     match result {
-        WriteGateTier::Working | WriteGateTier::Register | WriteGateTier::Daily
-        | WriteGateTier::TransientNoise | WriteGateTier::StructuredPrefix => {}
+        WriteGateTier::Working
+        | WriteGateTier::Register
+        | WriteGateTier::Daily
+        | WriteGateTier::TransientNoise
+        | WriteGateTier::StructuredPrefix => {}
     }
 }
 

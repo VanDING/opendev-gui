@@ -50,7 +50,8 @@ impl Curator {
     ///
     /// Only injectable (Active) skills are included.
     pub fn prompt_contribution(skills: &[SkillMetadata]) -> Option<String> {
-        let active: Vec<&SkillMetadata> = skills.iter().filter(|s| s.status.is_injectable()).collect();
+        let active: Vec<&SkillMetadata> =
+            skills.iter().filter(|s| s.status.is_injectable()).collect();
         if active.is_empty() {
             return None;
         }
